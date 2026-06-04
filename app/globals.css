@@ -1,0 +1,125 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Bayside Dysphagia Diagnostics Color Palette */
+  --navy: #1a2e44;
+  --navy-light: #243d5c;
+  --teal: #2a7f7f;
+  --teal-light: #3a9999;
+  --gold: #5b9fd4;
+  --gold-light: #85bbdf;
+  --cream: #f8f5f0;
+  --gray-light: #eef1f4;
+  --gray-mid: #7a8a99;
+  --text-primary: #2c3e50;
+  --text-light: #5a6a7a;
+
+  /* Semantic tokens */
+  --background: #ffffff;
+  --foreground: #2c3e50;
+  --card: #ffffff;
+  --card-foreground: #2c3e50;
+  --popover: #ffffff;
+  --popover-foreground: #2c3e50;
+  --primary: #1a2e44;
+  --primary-foreground: #ffffff;
+  --secondary: #f8f5f0;
+  --secondary-foreground: #1a2e44;
+  --muted: #eef1f4;
+  --muted-foreground: #5a6a7a;
+  --accent: #2a7f7f;
+  --accent-foreground: #ffffff;
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: #dde5ef;
+  --input: #dde5ef;
+  --ring: #2a7f7f;
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans), 'Source Sans 3', system-ui, sans-serif;
+  --font-serif: var(--font-serif), 'Playfair Display', Georgia, serif;
+  --font-mono: 'Geist Mono', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Custom colors for the site */
+  --color-navy: var(--navy);
+  --color-navy-light: var(--navy-light);
+  --color-teal: var(--teal);
+  --color-teal-light: var(--teal-light);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-cream: var(--cream);
+  --color-gray-light: var(--gray-light);
+  --color-gray-mid: var(--gray-mid);
+  --color-text-primary: var(--text-primary);
+  --color-text-light: var(--text-light);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Source Sans 3', var(--font-sans), system-ui, sans-serif;
+    line-height: 1.7;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Animation classes */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 0.65s ease both;
+}
+
+.delay-1 {
+  animation-delay: 0.1s;
+}
+
+.delay-2 {
+  animation-delay: 0.22s;
+}
+
+.delay-3 {
+  animation-delay: 0.34s;
+}
