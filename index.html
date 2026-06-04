@@ -1300,6 +1300,81 @@
     font-weight: 600;
   }
 
+
+  /* HAMBURGER MENU */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 4px;
+    background: none;
+    border: none;
+  }
+
+  .hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--white);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+
+  .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: 68px;
+    left: 0;
+    right: 0;
+    background: var(--navy);
+    z-index: 99;
+    padding: 1rem 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .mobile-menu.open { display: block; }
+
+  .mobile-menu a {
+    display: block;
+    padding: 0.85rem 2rem;
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .mobile-menu a:hover { background: rgba(255,255,255,0.06); color: var(--gold-light); }
+
+  .mobile-menu a.mobile-cta {
+    margin: 1rem 2rem 0.5rem;
+    background: var(--gold);
+    color: var(--navy);
+    font-weight: 700;
+    border-radius: 4px;
+    text-align: center;
+    border-bottom: none;
+    padding: 0.75rem 1rem;
+    display: block;
+  }
+
+  .mobile-menu a.mobile-cta:hover { background: var(--gold-light); }
+
+  @media (max-width: 768px) {
+    .hamburger { display: flex; }
+    .nav-links { display: none !important; }
+    .trust-bar-inner { flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+    .trust-item { white-space: normal; font-size: 0.82rem; }
+    .trust-divider { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -1320,7 +1395,22 @@
     <li><a href="#meet">Meet the Clinician</a></li>
     <li><a href="#contact" class="nav-cta">Contact Us</a></li>
   </ul>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#why-fees" onclick="closeMenu()">Why FEES</a>
+  <a href="#who-benefits" onclick="closeMenu()">Who Benefits</a>
+  <a href="#checklists" onclick="closeMenu()">Referral Process</a>
+  <a href="#what-to-expect" onclick="closeMenu()">What to Expect</a>
+  <a href="#billing" onclick="closeMenu()">Billing</a>
+  <a href="#faqs" onclick="closeMenu()">FAQ's</a>
+  <a href="#meet" onclick="closeMenu()">Meet the Clinician</a>
+  <a href="#contact-form" onclick="closeMenu()" class="mobile-cta">Contact Us</a>
+</div>
 
 <!-- HERO -->
 <div class="hero">
@@ -2054,6 +2144,29 @@
         btn.nextElementSibling.classList.add('open');
       }
     });
+  });
+</script>
+<script>
+  function toggleMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const btn = document.getElementById('hamburger');
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+  }
+
+  function closeMenu() {
+    document.getElementById('mobile-menu').classList.remove('open');
+    document.getElementById('hamburger').classList.remove('open');
+  }
+
+  // Close menu when clicking outside
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('mobile-menu');
+    const btn = document.getElementById('hamburger');
+    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.classList.remove('open');
+      btn.classList.remove('open');
+    }
   });
 </script>
 </body>
