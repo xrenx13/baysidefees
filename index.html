@@ -264,6 +264,17 @@
     background: #ccc;
   }
 
+  /* SCROLL OFFSET FOR STICKY NAV */
+  section, div[id] {
+    scroll-margin-top: 80px;
+  }
+
+  @media (max-width: 768px) {
+    section, div[id] {
+      scroll-margin-top: 100px;
+    }
+  }
+
   /* SECTION COMMONS */
   section { padding: 5rem 2.5rem; }
 
