@@ -39,12 +39,13 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: var(--navy);
+    background: #081e3d;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 2.5rem;
-    height: 68px;
+    min-height: 68px;
+    height: auto;
     box-shadow: 0 2px 20px rgba(0,0,0,0.25);
   }
 
@@ -1328,11 +1329,12 @@
   .mobile-menu {
     display: none;
     position: fixed;
-    top: 68px;
+    top: 0;
+    padding-top: 80px;
     left: 0;
     right: 0;
-    background: var(--navy);
-    z-index: 99;
+    background: #081e3d;
+    z-index: 98;
     padding: 1rem 0;
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     border-top: 1px solid rgba(255,255,255,0.1);
@@ -1373,6 +1375,7 @@
     .trust-bar-inner { flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
     .trust-item { white-space: normal; font-size: 0.82rem; }
     .trust-divider { display: none; }
+    nav { padding: 0.6rem 1rem; }
   }
 
 
@@ -2110,6 +2113,8 @@
   function toggleMenu() {
     const menu = document.getElementById('mobile-menu');
     const btn = document.getElementById('hamburger');
+    const nav = document.querySelector('nav');
+    menu.style.top = nav.offsetHeight + 'px';
     menu.classList.toggle('open');
     btn.classList.toggle('open');
   }
