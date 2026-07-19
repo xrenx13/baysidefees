@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>References | Bayside Dysphagia Diagnostics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #081e3d;
+    --teal: #2a7f7f;
+    --teal-light: #3a9999;
+    --gold-light: #85bbdf;
+    --white: #ffffff;
+    --gray-light: #eef1f4;
+    --text: #2c3e50;
+    --text-light: #5a6a7a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text);
+    background: var(--gray-light);
+    line-height: 1.7;
+  }
+
+  header {
+    background: var(--navy);
+    padding: 1.5rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.25);
+  }
+
+  .header-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .header-back {
+    font-size: 0.85rem;
+    color: var(--gold-light);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s;
+  }
+
+  .header-back:hover { opacity: 0.75; }
+
+  main {
+    max-width: 860px;
+    margin: 3rem auto;
+    padding: 0 2rem;
+  }
+
+  .page-label {
+    font-size: 0.73rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    color: var(--navy);
+    margin-bottom: 0.5rem;
+  }
+
+  .intro {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #dde5ef;
+  }
+
+  .references-list {
+    list-style: none;
+    padding: 0;
+    counter-reset: ref-counter;
+  }
+
+  .references-list li {
+    counter-increment: ref-counter;
+    display: flex;
+    gap: 1rem;
+    font-size: 0.93rem;
+    color: var(--text);
+    line-height: 1.8;
+    padding: 1.2rem 1.5rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid #dde5ef;
+    margin-bottom: 0.75rem;
+    transition: box-shadow 0.2s;
+  }
+
+  .references-list li:hover { box-shadow: 0 4px 16px rgba(26,46,68,0.08); }
+
+  .references-list li::before {
+    content: counter(ref-counter);
+    font-weight: 700;
+    color: var(--white);
+    background: var(--teal);
+    min-width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+  }
+
+  em { font-style: italic; }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.82rem;
+    color: var(--text-light);
+    margin-top: 3rem;
+    border-top: 1px solid #dde5ef;
+  }
+
+  footer a { color: var(--teal); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="header-brand">Bayside Dysphagia Diagnostics</span>
+  <a href="index.html" class="header-back">← Back to Site</a>
+</header>
+
+<main>
+  <div class="page-label">Research Citations</div>
+  <h1>References</h1>
+  <p class="intro">The following peer-reviewed research supports the clinical and statistical information presented on the Bayside Dysphagia Diagnostics website.</p>
+
+  <ol class="references-list">
+    <li>Aslam M, Vaezi MF. Dysphagia in the elderly. <em>Gastroenterol Hepatol (N Y).</em> 2013 Dec;9(12):784-95. PMID: 24772045; PMCID: PMC3999993.</li>
+    <li>Hansen T, Nielsen RL, Houlind MB, et al. Dysphagia Prevalence, Time Course, and Association with Probable Sarcopenia, Inactivity, Malnutrition, and Disease Status in Older Patients Admitted to an Emergency Department: A Secondary Analysis of Cohort Study Data. <em>Geriatrics (Basel).</em> 2021;6(2):46. doi:10.3390/geriatrics6020046</li>
+    <li>Engh MCN, Speyer R. Management of Dysphagia in Nursing Homes: A National Survey. <em>Dysphagia.</em> 2022;37(2):266-276. doi:10.1007/s00455-021-10275-7</li>
+    <li>Thiyagalingam S, Kulinski A, Thorsteinsdottir B, et al. Dysphagia in Older Adults. <em>Mayo Clinic Proceedings.</em> 2021;96:488-497.</li>
+    <li>Morley J. Dysphagia and Aspiration. <em>Journal of the American Medical Directors Association.</em> 2015;16:631-634.</li>
+    <li>Saito T, Hayashi K, Nakazawa H, Yagihashi F, Oikawa LO, Ota T. A Significant Association of Malnutrition with Dysphagia in Acute Patients. <em>Dysphagia.</em> 2018;33(2):258-265. doi:10.1007/s00455-017-9855-6</li>
+    <li>Wirth R, Pourhassan M, Streicher M, et al. The Impact of Dysphagia on Mortality of Nursing Home Residents: Results From the nutritionDay Project. <em>Journal of the American Medical Directors Association.</em> 2018;19:775-778.</li>
+    <li>Miles A, McFarlane M, Scott S, Hunting A. Cough response to aspiration in thin and thick fluids during FEES in hospitalized inpatients. <em>Int J Lang Commun Disord.</em> 2018;53(5):909-918. doi:10.1111/1460-6984.12401</li>
+    <li>Tanrıverdi M, Heybeli C, Çalım ÖF, et al. The relationship between oropharyngeal dysphagia and dehydration in older adults. <em>BMC Geriatr.</em> 2024;24(1):885. doi:10.1186/s12877-024-05492-2</li>
+    <li>Langmore SE, Skarupski KA, Park PS, Fries BE. Predictors of aspiration pneumonia in nursing home residents. <em>Dysphagia.</em> 2002. doi:10.1007/s00455-002-0072-1</li>
+    <li>Leder SB, Espinosa MS. Aspiration risk after acute stroke: Comparison of clinical examination and fiberoptic endoscopic evaluation of swallowing. <em>Dysphagia.</em> 2002;17:214-218.</li>
+    <li>Smith CH, Logemann JA, Colangelo LA, Rademaker AW, Pauloski BR. Incidence and patient characteristics associated with silent aspiration in the acute care setting. <em>Dysphagia.</em> 1999;14:1-7.</li>
+    <li>Smithard DG, O'Neill PA, Park C, et al. Can bedside assessment reliably exclude aspiration following acute stroke? <em>Age and Ageing.</em> 1998;27(2):99-106.</li>
+    <li>Murray J, Langmore SE, Ginsberg S, Dostie A. The significance of oropharyngeal secretions and swallowing frequency in predicting aspiration. <em>Dysphagia.</em> 1996;11:99-103.</li>
+    <li>Langmore SE, Logemann JA. After the clinical bedside swallowing examination: What next? <em>AJSLP.</em> 1991;September:13-20.</li>
+  </ol>
+</main>
+
+<footer>
+  <p>© <span id="year"></span> Bayside Dysphagia Diagnostics · Cape Cod &amp; South Shore, Massachusetts · <a href="index.html">Back to Site</a></p>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</footer>
+
+</body>
+</html>
