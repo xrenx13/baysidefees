@@ -1232,88 +1232,12 @@
     box-shadow: 0 4px 24px rgba(26,46,68,0.08);
   }
 
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
+  .contact-form-wrap--embed {
+    padding: 1.5rem;
+    overflow: hidden;
   }
 
-  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .form-group label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--navy);
-    letter-spacing: 0.02em;
-  }
-
-  .form-group input,
-  .form-group textarea {
-    padding: 0.75rem 1rem;
-    border: 1.5px solid #d0dce8;
-    border-radius: 6px;
-    font-family: 'Source Sans 3', sans-serif;
-    font-size: 0.95rem;
-    color: var(--text);
-    background: var(--white);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    outline: none;
-    width: 100%;
-  }
-
-  .form-group input:focus,
-  .form-group textarea:focus {
-    border-color: var(--teal);
-    box-shadow: 0 0 0 3px rgba(42,127,127,0.1);
-  }
-
-  .form-group textarea {
-    resize: vertical;
-    min-height: 130px;
-  }
-
-  .form-hipaa-note {
-    font-size: 0.78rem;
-    color: #c0392b;
-    font-weight: 600;
-    margin-top: 0.3rem;
-    line-height: 1.5;
-  }
-
-  .form-submit {
-    width: 100%;
-    padding: 0.95rem;
-    background: var(--teal);
-    color: var(--white);
-    border: none;
-    border-radius: 6px;
-    font-family: 'Source Sans 3', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: 0.04em;
-    transition: background 0.2s, transform 0.15s;
-    margin-top: 0.5rem;
-  }
-
-  .form-submit:hover { background: var(--teal-light); transform: translateY(-1px); }
-
-  .form-success {
-    display: none;
-    text-align: center;
-    padding: 2rem;
-    color: var(--teal);
-    font-size: 1.05rem;
-    font-weight: 600;
-  }
+  @media (max-width: 600px) { .contact-form-wrap--embed { padding: 0.75rem; } }
 
 
   /* HAMBURGER MENU */
@@ -2056,94 +1980,19 @@
     <h2 class="section-title">Contact Bayside Dysphagia Diagnostics</h2>
     <p class="section-intro">Fill out the form below and our team will be in touch shortly.</p>
 
-    <div class="contact-form-wrap">
-      <div id="form-success" class="form-success">
-        ✓ Thank you! We'll be in touch shortly.
-      </div>
-      <div id="contact-form-inner">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="first-name">First Name *</label>
-            <input type="text" id="first-name" placeholder="Jane" required />
-          </div>
-          <div class="form-group">
-            <label for="last-name">Last Name *</label>
-            <input type="text" id="last-name" placeholder="Smith" required />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="email">Email Address *</label>
-            <input type="email" id="email" placeholder="jane@facility.com" required />
-          </div>
-          <div class="form-group">
-            <label for="phone">Phone Number</label>
-            <input type="tel" id="phone" placeholder="(508) 000-0000" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="facility">Facility / Company Name *</label>
-            <input type="text" id="facility" placeholder="Facility name" required />
-          </div>
-          <div class="form-group">
-            <label for="role">Title / Role</label>
-            <input type="text" id="role" placeholder="e.g. Director of Rehab, SLP" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="message">Message</label>
-          <textarea id="message" placeholder="How can we help you?"></textarea>
-          <div class="form-hipaa-note">⚠ NOTE: Please do not include any patient information as this form is not HIPAA compliant.</div>
-        </div>
-        <button class="form-submit" onclick="handleFormSubmit()">Send Message</button>
-      </div>
+    <div class="contact-form-wrap contact-form-wrap--embed">
+      <iframe
+        id="sp-contact-iframe"
+        src="https://baysidedysphagiadiagnostics.clientsecure.me/contact-widget"
+        width="100%"
+        height="1210"
+        frameborder="0"
+        style="border:none; display:block;"
+        title="Contact Bayside Dysphagia Diagnostics">
+      </iframe>
     </div>
   </div>
 </section>
-
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>
-  (function() {
-    emailjs.init({ publicKey: "930VsRPKFsMXL5-Yi" });
-  })();
-
-  function handleFormSubmit() {
-    const first = document.getElementById('first-name').value.trim();
-    const last = document.getElementById('last-name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const facility = document.getElementById('facility').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const role = document.getElementById('role').value.trim();
-    const message = document.getElementById('message').value.trim();
-
-    if (!first || !last || !email || !facility) {
-      alert('Please fill in all required fields (marked with *).');
-      return;
-    }
-
-    const btn = document.querySelector('.form-submit');
-    btn.textContent = 'Sending...';
-    btn.disabled = true;
-
-    emailjs.send("service_lh0eplg", "template_x569xuc", {
-      name: first + ' ' + last,
-      email: email,
-      phone: phone,
-      facility: facility,
-      role: role,
-      message: message
-    }).then(function() {
-      document.getElementById('contact-form-inner').style.display = 'none';
-      document.getElementById('form-success').style.display = 'block';
-    }, function(error) {
-      btn.textContent = 'Send Message';
-      btn.disabled = false;
-      alert('Something went wrong. Please try again or email us directly at info@baysidefees.com');
-      console.error('EmailJS error:', error);
-    });
-  }
-</script>
 
 <!-- CANCELLATION -->
 <div class="cancel-section">
