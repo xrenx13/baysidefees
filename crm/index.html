@@ -1358,6 +1358,46 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
 
   const hasUpcomingMeeting = (a) => !!upcomingByAccount[a.AccountId];
 
+  // Calendar-sourced meetings for the top-of-page summary — fetched once on
+  // mount. null = still loading.
+  const [calendarMeetings, setCalendarMeetings] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    apiPost('getTopUpcomingMeetings', {}).then(response => {
+      if (cancelled) return;
+      setCalendarMeetings(response.success ? response.result : []);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Combines note-detected upcoming activity with calendar-matched meetings
+  // into one list, soonest first, capped at 3, for the summary at the top
+  // of the page.
+  const topUpcomingMeetings = useMemo(() => {
+    const noteItems = accounts
+      .filter(a => upcomingByAccount[a.AccountId])
+      .map(a => ({
+        source: 'note',
+        accountId: a.AccountId,
+        accountName: a.AccountName,
+        date: upcomingByAccount[a.AccountId].date,
+        title: upcomingByAccount[a.AccountId].note.NoteText
+      }));
+
+    const calendarItems = (calendarMeetings || []).map(m => ({
+      source: 'calendar',
+      accountId: m.accountId,
+      accountName: m.accountName,
+      date: new Date(m.date),
+      title: m.title,
+      url: m.url
+    }));
+
+    return [...noteItems, ...calendarItems]
+      .sort((a, b) => a.date - b.date)
+      .slice(0, 3);
+  }, [accounts, upcomingByAccount, calendarMeetings]);
+
   const filtered = accounts.filter(a => {
     const matchesFilter = filter === 'All' ? true
       : filter === 'Follow-up' ? hasFollowUp(a)
@@ -1415,6 +1455,45 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
           </button>
         </div>
       </div>
+
+      {topUpcomingMeetings.length > 0 && (
+        <div className="bg-white rounded-xl border border-skyblue-100 p-5 mb-6">
+          <h2 className="font-display text-base text-navy-900 mb-3">Upcoming Meetings</h2>
+          <div className="space-y-1">
+            {topUpcomingMeetings.map((item, i) => {
+              const inner = (
+                <React.Fragment>
+                  <div>
+                    <p className="text-sm font-medium text-navy-900">{item.accountName}</p>
+                    <p className="text-xs text-navy-700/60">
+                      {item.source === 'calendar' ? '📅 ' : '📝 '}
+                      {item.title.length > 60 ? item.title.slice(0, 60) + '…' : item.title}
+                    </p>
+                  </div>
+                  <p className="text-xs text-teal-600 shrink-0">{formatShortDate(item.date)}</p>
+                </React.Fragment>
+              );
+              const rowClass = "w-full text-left flex items-start justify-between gap-3 hover:bg-skyblue-100/30 -mx-2 px-2 py-1.5 rounded-lg transition";
+              return item.source === 'calendar' ? (
+                <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" className={rowClass}>
+                  {inner}
+                </a>
+              ) : (
+                <button
+                  key={i}
+                  onClick={() => {
+                    const account = accounts.find(a => a.AccountId === item.accountId);
+                    if (account) onSelect(account);
+                  }}
+                  className={rowClass}
+                >
+                  {inner}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-4 mb-5 flex-wrap">
         <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 flex-wrap">
