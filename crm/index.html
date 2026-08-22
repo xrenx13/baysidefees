@@ -391,16 +391,39 @@ function Suggestions({ id, options }) {
 // ---------------------------------------------------------------------
 // API helpers
 // ---------------------------------------------------------------------
+function getSessionToken() {
+  return sessionStorage.getItem('bdd_crm_session_token') || '';
+}
+
+// If the backend ever says a request is unauthorized (session expired,
+// revoked, etc.), clear local session state and reload back to the sign-in
+// gate rather than leaving the app in a broken half-logged-in state.
+function handleUnauthorized() {
+  sessionStorage.removeItem('bdd_crm_unlocked');
+  sessionStorage.removeItem('bdd_crm_session_token');
+  sessionStorage.removeItem('bdd_crm_user_email');
+  window.location.reload();
+}
+
 async function apiGet() {
-  const res = await fetch(`${API_URL}?action=all`);
-  return res.json();
+  const res = await fetch(`${API_URL}?action=all&token=${encodeURIComponent(getSessionToken())}`);
+  const result = await res.json();
+  if (result.error === 'Unauthorized — please sign in again') {
+    handleUnauthorized();
+    return { accounts: [], contacts: [], connections: [], notes: [] };
+  }
+  return result;
 }
 async function apiPost(action, payload) {
   const res = await fetch(API_URL, {
     method: 'POST',
-    body: JSON.stringify({ action, ...payload })
+    body: JSON.stringify({ action, token: getSessionToken(), ...payload })
   });
-  return res.json();
+  const result = await res.json();
+  if (result.error === 'Unauthorized — please sign in again') {
+    handleUnauthorized();
+  }
+  return result;
 }
 
 // ---------------------------------------------------------------------
@@ -424,6 +447,7 @@ function Gate({ onUnlock }) {
       const result = await apiPost('verifyGoogleLogin', { idToken: response.credential });
       if (result.success) {
         sessionStorage.setItem('bdd_crm_user_email', result.result.email);
+        sessionStorage.setItem('bdd_crm_session_token', result.result.sessionToken);
         unlock();
       } else {
         setError(result.error || "That Google account isn't authorized for this app.");
@@ -1324,7 +1348,9 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
 // Root app
 // ---------------------------------------------------------------------
 function App() {
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('bdd_crm_unlocked') === 'true');
+  const [unlocked, setUnlocked] = useState(() =>
+    sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token')
+  );
   const [data, setData] = useState({ accounts: [], contacts: [], connections: [], notes: [] });
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list' | 'detail' | 'create'
