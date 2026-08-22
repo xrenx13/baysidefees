@@ -959,8 +959,122 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
 // ---------------------------------------------------------------------
 // Account list
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// Map view — plots accounts as pins using their address, geocoded on the
+// fly via Google's client-side Geocoder and cached back to the Sheet
+// (Latitude/Longitude) so repeat visits don't re-geocode every address.
+// ---------------------------------------------------------------------
+function MapView({ accounts, onSelect }) {
+  const mapRef = useRef(null);
+  const markersRef = useRef([]);
+  const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'no-key'
+
+  useEffect(() => {
+    let cancelled = false;
+
+    loadGoogleMaps(GOOGLE_MAPS_API_KEY).then(async (google) => {
+      if (cancelled || !mapRef.current) return;
+
+      const map = new google.maps.Map(mapRef.current, {
+        center: { lat: 41.7, lng: -70.3 }, // roughly Cape Cod
+        zoom: 10,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+      });
+
+      // Let info-window "View account" buttons (raw HTML, outside React)
+      // call back into the app.
+      window.__crmSelectAccount = (accountId) => {
+        const account = accounts.find(a => a.AccountId === accountId);
+        if (account) onSelect(account);
+      };
+
+      const geocoder = new google.maps.Geocoder();
+      const bounds = new google.maps.LatLngBounds();
+      const accountsWithAddress = accounts.filter(a => a.Address);
+
+      for (const a of accountsWithAddress) {
+        if (cancelled) return;
+        let lat = parseFloat(a.Latitude);
+        let lng = parseFloat(a.Longitude);
+
+        if (!lat || !lng) {
+          try {
+            const result = await new Promise((resolve, reject) => {
+              geocoder.geocode({ address: a.Address }, (results, geoStatus) => {
+                if (geoStatus === 'OK' && results && results[0]) resolve(results[0]);
+                else reject(geoStatus);
+              });
+            });
+            lat = result.geometry.location.lat();
+            lng = result.geometry.location.lng();
+            // Cache so this address never needs re-geocoding.
+            apiPost('updateAccount', { data: { AccountId: a.AccountId, Latitude: lat, Longitude: lng } });
+          } catch (err) {
+            continue; // couldn't geocode this address — skip its pin
+          }
+        }
+
+        if (cancelled) return;
+        const position = { lat, lng };
+        const marker = new google.maps.Marker({
+          position,
+          map,
+          title: a.AccountName,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: a.Status === 'Customer' ? '#0f766e' : '#a9c6dc',
+            fillOpacity: 1,
+            strokeColor: '#081e3d',
+            strokeWeight: 1.5
+          }
+        });
+        const infoWindow = new google.maps.InfoWindow({
+          content: `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:160px;">
+            <strong style="color:#081e3d;">${a.AccountName}</strong><br/>
+            <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${a.Status}</span><br/>
+            <button onclick="window.__crmSelectAccount('${a.AccountId}')" style="margin-top:6px;background:#0f766e;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">View account</button>
+          </div>`
+        });
+        marker.addListener('click', () => infoWindow.open(map, marker));
+        markersRef.current.push(marker);
+        bounds.extend(position);
+      }
+
+      if (!bounds.isEmpty()) map.fitBounds(bounds);
+      if (!cancelled) setStatus('ready');
+    }).catch(() => setStatus('no-key'));
+
+    return () => {
+      cancelled = true;
+      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current = [];
+    };
+  }, [accounts]);
+
+  if (status === 'no-key') {
+    return (
+      <div className="bg-white rounded-xl border border-skyblue-100 p-10 text-center text-navy-700/50 text-sm">
+        Map view needs a Google Maps API key configured in GOOGLE_MAPS_API_KEY — see the README.
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-skyblue-100 overflow-hidden">
+      {status === 'loading' && (
+        <p className="text-center text-navy-700/40 text-sm py-3">Plotting accounts…</p>
+      )}
+      <div ref={mapRef} className="w-full h-[500px]"></div>
+    </div>
+  );
+}
+
 function AccountList({ accounts, contacts, connections, notes, onSelect, onCreate }) {
   const [filter, setFilter] = useState('All');
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
   const [query, setQuery] = useState('');
 
   const matchesQuery = (a) => {
@@ -1069,47 +1183,66 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
           placeholder="Search accounts, contacts, notes..."
           className="border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[180px]"
         />
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="bg-white rounded-xl border border-skyblue-100">
-          <p className="text-navy-700/40 text-sm p-6 text-center">No accounts match yet — add one to get started.</p>
+        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1">
+          {['list', 'map'].map(mode => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${
+                viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
+              }`}
+            >
+              {mode}
+            </button>
+          ))}
         </div>
-      )}
-
-      <div className="space-y-6">
-        {groups.map(({ town, accounts: townAccounts }) => (
-          <div key={town}>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1">
-              {town} <span className="opacity-60">({townAccounts.length})</span>
-            </h3>
-            <div className="bg-white rounded-xl border border-skyblue-100 divide-y divide-skyblue-100">
-              {townAccounts.map(a => (
-                <button
-                  key={a.AccountId}
-                  onClick={() => onSelect(a)}
-                  className="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 transition"
-                >
-                  <div>
-                    <p className="font-medium text-navy-900">{a.AccountName}</p>
-                    <p className="text-sm text-navy-700/50">{a.Address || a.Phone || '—'}</p>
-                    {upcomingByAccount[a.AccountId] && (
-                      <p className="text-xs text-teal-600 mt-0.5">
-                        {formatShortDate(upcomingByAccount[a.AccountId].date)} — {upcomingByAccount[a.AccountId].note.NoteText.slice(0, 60)}{upcomingByAccount[a.AccountId].note.NoteText.length > 60 ? '…' : ''}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FollowUpBadge nextFollowUp={a.NextFollowUp} />
-                    <UpcomingActivityBadge upcoming={upcomingByAccount[a.AccountId]} />
-                    <StatusPill status={a.Status} />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
       </div>
+
+      {viewMode === 'map' ? (
+        <MapView accounts={filtered} onSelect={onSelect} />
+      ) : (
+        <React.Fragment>
+          {filtered.length === 0 && (
+            <div className="bg-white rounded-xl border border-skyblue-100">
+              <p className="text-navy-700/40 text-sm p-6 text-center">No accounts match yet — add one to get started.</p>
+            </div>
+          )}
+
+          <div className="space-y-6">
+            {groups.map(({ town, accounts: townAccounts }) => (
+              <div key={town}>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1">
+                  {town} <span className="opacity-60">({townAccounts.length})</span>
+                </h3>
+                <div className="bg-white rounded-xl border border-skyblue-100 divide-y divide-skyblue-100">
+                  {townAccounts.map(a => (
+                    <button
+                      key={a.AccountId}
+                      onClick={() => onSelect(a)}
+                      className="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 transition"
+                    >
+                      <div>
+                        <p className="font-medium text-navy-900">{a.AccountName}</p>
+                        <p className="text-sm text-navy-700/50">{a.Address || a.Phone || '—'}</p>
+                        {upcomingByAccount[a.AccountId] && (
+                          <p className="text-xs text-teal-600 mt-0.5">
+                            {formatShortDate(upcomingByAccount[a.AccountId].date)} — {upcomingByAccount[a.AccountId].note.NoteText.slice(0, 60)}{upcomingByAccount[a.AccountId].note.NoteText.length > 60 ? '…' : ''}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FollowUpBadge nextFollowUp={a.NextFollowUp} />
+                        <UpcomingActivityBadge upcoming={upcomingByAccount[a.AccountId]} />
+                        <StatusPill status={a.Status} />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </React.Fragment>
+      )}
     </div>
   );
 }
