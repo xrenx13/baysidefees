@@ -59,7 +59,7 @@ const APP_PASSWORD = "baysidefees";
 // Google Places integration for Account Name -> Address/Phone/Website autofill.
 // Leave the placeholder in place and this simply does nothing (Account Name
 // stays a plain text field). See README for how to get a key.
-const GOOGLE_MAPS_API_KEY = "PASTE_YOUR_GOOGLE_MAPS_API_KEY_HERE";
+const GOOGLE_MAPS_API_KEY = "AIzaSyCwnUXXywRbu2kVsNMtYdvyMfDYuPaJm94";
 
 let googleMapsLoadPromise = null;
 function loadGoogleMaps(apiKey) {
@@ -173,6 +173,134 @@ function getTown(address) {
   }
 
   return 'Unknown';
+}
+
+// ---------------------------------------------------------------------
+// Follow-up date helpers
+// ---------------------------------------------------------------------
+function todayDateString() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Returns 'overdue' | 'today' | 'upcoming' | null (no date set, or unparseable)
+function followUpStatus(nextFollowUp) {
+  if (!nextFollowUp) return null;
+  const clean = String(nextFollowUp).slice(0, 10); // tolerate a stray timestamp suffix
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(clean)) return null;
+  const today = todayDateString();
+  if (clean < today) return 'overdue';
+  if (clean === today) return 'today';
+  return 'upcoming';
+}
+
+function formatFollowUpDate(nextFollowUp) {
+  if (!nextFollowUp) return '';
+  const clean = String(nextFollowUp).slice(0, 10);
+  const [y, m, d] = clean.split('-').map(Number);
+  if (!y || !m || !d) return '';
+  const date = new Date(y, m - 1, d);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function FollowUpBadge({ nextFollowUp }) {
+  const status = followUpStatus(nextFollowUp);
+  if (!status) return null;
+  const styles = {
+    overdue: 'bg-red-50 text-red-500',
+    today: 'bg-amber-50 text-amber-600',
+    upcoming: 'bg-skyblue-100 text-navy-700'
+  };
+  const labels = {
+    overdue: `Follow up overdue — ${formatFollowUpDate(nextFollowUp)}`,
+    today: 'Follow up today',
+    upcoming: `Follow up ${formatFollowUpDate(nextFollowUp)}`
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${styles[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------
+// Scan note text for a mentioned calendar date (e.g. "9/15", "Sept 15",
+// "September 15, 2026") and surface the soonest one that's today or later.
+// ---------------------------------------------------------------------
+const MONTH_NAMES = {
+  jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3,
+  may: 4, jun: 5, june: 5, jul: 6, july: 6, aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8, oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11
+};
+
+function stripTime(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function parseDatesFromText(text) {
+  const dates = [];
+  if (!text) return dates;
+  const today = stripTime(new Date());
+  const currentYear = today.getFullYear();
+
+  // M/D, M/D/YY, M/D/YYYY
+  const slashRegex = /\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/g;
+  let m;
+  while ((m = slashRegex.exec(text)) !== null) {
+    const month = parseInt(m[1], 10) - 1;
+    const day = parseInt(m[2], 10);
+    if (month < 0 || month > 11 || day < 1 || day > 31) continue;
+    let year = m[3] ? parseInt(m[3], 10) : currentYear;
+    if (year < 100) year += 2000;
+    let date = new Date(year, month, day);
+    if (!m[3] && date < today) date = new Date(year + 1, month, day);
+    dates.push(date);
+  }
+
+  // Month name + day, optional year — "Sept 15", "September 15, 2026", "Sep 15th"
+  const monthRegex = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b/gi;
+  while ((m = monthRegex.exec(text)) !== null) {
+    const month = MONTH_NAMES[m[1].toLowerCase()];
+    if (month === undefined) continue;
+    const day = parseInt(m[2], 10);
+    if (day < 1 || day > 31) continue;
+    let year = m[3] ? parseInt(m[3], 10) : currentYear;
+    let date = new Date(year, month, day);
+    if (!m[3] && date < today) date = new Date(year + 1, month, day);
+    dates.push(date);
+  }
+
+  return dates;
+}
+
+// Given an account's notes, returns the soonest upcoming (today or later)
+// activity as { date, note }, or null if none found.
+function getUpcomingActivity(accountNotes) {
+  const today = stripTime(new Date());
+  let best = null;
+  accountNotes.forEach(n => {
+    parseDatesFromText(n.NoteText).forEach(d => {
+      if (d >= today && (!best || d < best.date)) {
+        best = { date: d, note: n };
+      }
+    });
+  });
+  return best;
+}
+
+function formatShortDate(date) {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function UpcomingActivityBadge({ upcoming }) {
+  if (!upcoming) return null;
+  return (
+    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-600">
+      Upcoming Meeting — {formatShortDate(upcoming.date)}
+    </span>
+  );
 }
 
 // ---------------------------------------------------------------------
@@ -509,18 +637,35 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
   const [addingConnection, setAddingConnection] = useState(false);
   const [editingConnectionId, setEditingConnectionId] = useState(null);
   const [noteText, setNoteText] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [followUpDate, setFollowUpDate] = useState((account.NextFollowUp || '').slice(0, 10));
+
+  // Keep the local date field in sync if the account data refreshes from elsewhere.
+  useEffect(() => {
+    setFollowUpDate((account.NextFollowUp || '').slice(0, 10));
+  }, [account.NextFollowUp]);
 
   const accountContacts = contacts.filter(c => c.AccountId === account.AccountId);
   const accountConnections = connections.filter(c => c.AccountId === account.AccountId);
   const accountNotes = notes
     .filter(n => n.AccountId === account.AccountId)
     .sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+  const upcomingActivity = getUpcomingActivity(accountNotes);
 
   const saveAccount = async (form) => {
     setBusy(true);
     await apiPost('updateAccount', { data: { ...form, AccountId: account.AccountId } });
     setEditingAccount(false);
+    setBusy(false);
+    onRefresh();
+  };
+
+  const saveFollowUp = async (dateStr) => {
+    setFollowUpDate(dateStr);
+    setBusy(true);
+    await apiPost('updateAccount', { data: { AccountId: account.AccountId, NextFollowUp: dateStr } });
     setBusy(false);
     onRefresh();
   };
@@ -592,6 +737,23 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     onRefresh();
   };
 
+  const saveNoteEdit = async (noteId, text) => {
+    if (!text.trim()) return;
+    setBusy(true);
+    await apiPost('updateNote', { data: { NoteId: noteId, NoteText: text.trim() } });
+    setEditingNoteId(null);
+    setBusy(false);
+    onRefresh();
+  };
+
+  const removeNote = async (noteId) => {
+    if (!confirm('Delete this note? This can\'t be undone.')) return;
+    setBusy(true);
+    await apiPost('deleteNote', { noteId });
+    setBusy(false);
+    onRefresh();
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <button onClick={onBack} className="text-teal-600 hover:text-teal-700 text-sm mb-4 flex items-center gap-1">
@@ -607,6 +769,8 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="font-display text-2xl text-navy-900">{account.AccountName}</h1>
                 <StatusPill status={account.Status} />
+                <FollowUpBadge nextFollowUp={account.NextFollowUp} />
+                <UpcomingActivityBadge upcoming={upcomingActivity} />
               </div>
               <div className="mt-2 text-sm text-navy-700/70 space-y-0.5">
                 {account.Address && <p>{account.Address}</p>}
@@ -724,7 +888,23 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
 
       {/* Notes / activity */}
       <div className="bg-white rounded-xl border border-skyblue-100 p-6">
-        <h2 className="font-display text-lg text-navy-900 mb-4">Notes &amp; activity</h2>
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+          <h2 className="font-display text-lg text-navy-900">Notes &amp; activity</h2>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-navy-700/60 flex items-center gap-2">
+              Next follow-up
+              <input
+                type="date"
+                value={followUpDate}
+                onChange={(e) => saveFollowUp(e.target.value)}
+                className="border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm"
+              />
+            </label>
+            {followUpDate && (
+              <button onClick={() => saveFollowUp('')} className="text-xs text-navy-700/40 hover:text-red-500">Clear</button>
+            )}
+          </div>
+        </div>
         <div className="flex gap-2 mb-5">
           <input
             value={noteText}
@@ -742,9 +922,31 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
           {accountNotes.map(n => (
             <div key={n.NoteId} className="flex gap-3 text-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 shrink-0"></div>
-              <div>
+              <div className="flex-1">
                 <p className="text-navy-700/40 text-xs">{new Date(n.Timestamp).toLocaleString()}</p>
-                <p className="text-navy-900">{n.NoteText}</p>
+                {editingNoteId === n.NoteId ? (
+                  <div className="mt-1">
+                    <input
+                      value={editingNoteText}
+                      onChange={(e) => setEditingNoteText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && saveNoteEdit(n.NoteId, editingNoteText)}
+                      className="w-full border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm"
+                      autoFocus
+                    />
+                    <div className="flex gap-3 mt-1.5">
+                      <button onClick={() => saveNoteEdit(n.NoteId, editingNoteText)} className="text-teal-600 hover:text-teal-700 text-xs font-medium">Save</button>
+                      <button onClick={() => setEditingNoteId(null)} className="text-navy-700/60 hover:text-navy-900 text-xs">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-navy-900">{n.NoteText}</p>
+                    <div className="flex gap-2 text-xs shrink-0">
+                      <button onClick={() => { setEditingNoteId(n.NoteId); setEditingNoteText(n.NoteText); }} className="text-teal-600 hover:text-teal-700">Edit</button>
+                      <button onClick={() => removeNote(n.NoteId)} className="text-navy-700/40 hover:text-red-500">Delete</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -757,20 +959,57 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
 // ---------------------------------------------------------------------
 // Account list
 // ---------------------------------------------------------------------
-function AccountList({ accounts, onSelect, onCreate }) {
+function AccountList({ accounts, contacts, connections, notes, onSelect, onCreate }) {
   const [filter, setFilter] = useState('All');
   const [query, setQuery] = useState('');
 
+  const matchesQuery = (a) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    if (a.AccountName.toLowerCase().includes(q)) return true;
+    if ((a.Address || '').toLowerCase().includes(q)) return true;
+    if ((a.ReferralSource || '').toLowerCase().includes(q)) return true;
+    const relatedContacts = contacts.filter(c => c.AccountId === a.AccountId);
+    if (relatedContacts.some(c => `${c.ContactName} ${c.Role}`.toLowerCase().includes(q))) return true;
+    const relatedConnections = connections.filter(c => c.AccountId === a.AccountId);
+    if (relatedConnections.some(c => `${c.ContactName} ${c.Role} ${c.Relationship}`.toLowerCase().includes(q))) return true;
+    const relatedNotes = notes.filter(n => n.AccountId === a.AccountId);
+    if (relatedNotes.some(n => (n.NoteText || '').toLowerCase().includes(q))) return true;
+    return false;
+  };
+
+  // "Follow-up" filter shows any account with a follow-up date scheduled,
+  // not just ones due today/overdue — the badge color still tells you which.
+  const hasFollowUp = (a) => !!(a.NextFollowUp && String(a.NextFollowUp).trim());
+
+  // Soonest upcoming (today or later) activity mentioned in each account's
+  // notes, keyed by AccountId — computed once per notes/accounts change.
+  const upcomingByAccount = useMemo(() => {
+    const map = {};
+    accounts.forEach(a => {
+      const accountNotes = notes.filter(n => n.AccountId === a.AccountId);
+      const upcoming = getUpcomingActivity(accountNotes);
+      if (upcoming) map[a.AccountId] = upcoming;
+    });
+    return map;
+  }, [accounts, notes]);
+
+  const hasUpcomingMeeting = (a) => !!upcomingByAccount[a.AccountId];
+
   const filtered = accounts.filter(a => {
-    const matchesFilter = filter === 'All' || a.Status === filter;
-    const matchesQuery = a.AccountName.toLowerCase().includes(query.toLowerCase());
-    return matchesFilter && matchesQuery;
+    const matchesFilter = filter === 'All' ? true
+      : filter === 'Follow-up' ? hasFollowUp(a)
+      : filter === 'Upcoming Meetings' ? hasUpcomingMeeting(a)
+      : a.Status === filter;
+    return matchesFilter && matchesQuery(a);
   });
 
   const counts = {
     All: accounts.length,
     Prospect: accounts.filter(a => a.Status === 'Prospect').length,
-    Customer: accounts.filter(a => a.Status === 'Customer').length
+    Customer: accounts.filter(a => a.Status === 'Customer').length,
+    'Follow-up': accounts.filter(hasFollowUp).length,
+    'Upcoming Meetings': accounts.filter(hasUpcomingMeeting).length
   };
 
   // Group filtered accounts by base town (e.g. "South Yarmouth" -> "Yarmouth"),
@@ -811,8 +1050,8 @@ function AccountList({ accounts, onSelect, onCreate }) {
       </div>
 
       <div className="flex items-center gap-4 mb-5 flex-wrap">
-        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1">
-          {['All', 'Prospect', 'Customer'].map(s => (
+        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 flex-wrap">
+          {['All', 'Prospect', 'Customer', 'Follow-up', 'Upcoming Meetings'].map(s => (
             <button
               key={s}
               onClick={() => setFilter(s)}
@@ -827,7 +1066,7 @@ function AccountList({ accounts, onSelect, onCreate }) {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search accounts..."
+          placeholder="Search accounts, contacts, notes..."
           className="border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[180px]"
         />
       </div>
@@ -854,8 +1093,17 @@ function AccountList({ accounts, onSelect, onCreate }) {
                   <div>
                     <p className="font-medium text-navy-900">{a.AccountName}</p>
                     <p className="text-sm text-navy-700/50">{a.Address || a.Phone || '—'}</p>
+                    {upcomingByAccount[a.AccountId] && (
+                      <p className="text-xs text-teal-600 mt-0.5">
+                        {formatShortDate(upcomingByAccount[a.AccountId].date)} — {upcomingByAccount[a.AccountId].note.NoteText.slice(0, 60)}{upcomingByAccount[a.AccountId].note.NoteText.length > 60 ? '…' : ''}
+                      </p>
+                    )}
                   </div>
-                  <StatusPill status={a.Status} />
+                  <div className="flex items-center gap-2">
+                    <FollowUpBadge nextFollowUp={a.NextFollowUp} />
+                    <UpcomingActivityBadge upcoming={upcomingByAccount[a.AccountId]} />
+                    <StatusPill status={a.Status} />
+                  </div>
                 </button>
               ))}
             </div>
@@ -959,6 +1207,9 @@ function App() {
   return (
     <AccountList
       accounts={data.accounts}
+      contacts={data.contacts}
+      connections={data.connections}
+      notes={data.notes}
       onSelect={(a) => { setSelectedId(a.AccountId); setView('detail'); }}
       onCreate={() => setView('create')}
     />
