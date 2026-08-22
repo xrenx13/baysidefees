@@ -738,6 +738,9 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
   const [editingNoteText, setEditingNoteText] = useState('');
   const [busy, setBusy] = useState(false);
   const [followUpDate, setFollowUpDate] = useState((account.NextFollowUp || '').slice(0, 10));
+  const [emailThreads, setEmailThreads] = useState(null); // null = not loaded yet
+  const [emailsLoading, setEmailsLoading] = useState(false);
+  const [emailsError, setEmailsError] = useState('');
 
   // Keep the local date field in sync if the account data refreshes from elsewhere.
   useEffect(() => {
@@ -823,6 +826,22 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     await apiPost('deleteConnection', { connectionId });
     setBusy(false);
     onRefresh();
+  };
+
+  const knownEmails = [...accountContacts, ...accountConnections]
+    .map(c => c.Email)
+    .filter(Boolean);
+
+  const loadEmails = async () => {
+    setEmailsLoading(true);
+    setEmailsError('');
+    const response = await apiPost('getAccountEmails', { emails: knownEmails });
+    if (response.success) {
+      setEmailThreads(response.result);
+    } else {
+      setEmailsError(response.error || 'Could not load emails');
+    }
+    setEmailsLoading(false);
   };
 
   const addNote = async () => {
@@ -981,6 +1000,56 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
             </div>
           )
         ))}
+      </div>
+
+      {/* Emails */}
+      <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-display text-lg text-navy-900">Emails</h2>
+          {emailThreads !== null && (
+            <button onClick={loadEmails} disabled={emailsLoading} className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50">
+              {emailsLoading ? 'Refreshing…' : 'Refresh'}
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-navy-700/40 mb-4">Gmail threads to or from any contact/connection email on file for this account.</p>
+
+        {knownEmails.length === 0 && (
+          <p className="text-navy-700/40 text-sm">No contact emails on file to search for yet — add one under Contacts or Connections.</p>
+        )}
+
+        {knownEmails.length > 0 && emailThreads === null && (
+          <button onClick={loadEmails} disabled={emailsLoading} className="bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-60">
+            {emailsLoading ? 'Loading…' : 'Load emails'}
+          </button>
+        )}
+
+        {emailsError && <p className="text-red-500 text-sm mt-2">{emailsError}</p>}
+
+        {emailThreads !== null && emailThreads.length === 0 && !emailsError && (
+          <p className="text-navy-700/40 text-sm">No Gmail threads found for these email addresses.</p>
+        )}
+
+        {emailThreads !== null && emailThreads.length > 0 && (
+          <div className="divide-y divide-skyblue-100">
+            {emailThreads.map(t => (
+              <a
+                key={t.threadId}
+                href={t.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block py-3 hover:bg-skyblue-100/30 transition -mx-2 px-2 rounded-lg"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium text-navy-900 text-sm">{t.subject}</p>
+                  <p className="text-xs text-navy-700/40 shrink-0">{new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                </div>
+                <p className="text-xs text-navy-700/50 mt-0.5">{t.from}{t.messageCount > 1 ? ` · ${t.messageCount} messages` : ''}</p>
+                {t.snippet && <p className="text-sm text-navy-700/60 mt-1">{t.snippet}…</p>}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Notes / activity */}
