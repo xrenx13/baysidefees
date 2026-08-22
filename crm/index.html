@@ -150,23 +150,49 @@ const KNOWN_TOWNS = [
   'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth'
 ];
 
+function escapeRegex_(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function getTown(address) {
   if (!address) return 'Unknown';
   const lower = address.toLowerCase();
 
-  // Check village names, longest first, so "west falmouth" matches
-  // before a bare "falmouth" substring check would.
-  const villageKeys = Object.keys(VILLAGE_TO_TOWN).sort((a, b) => b.length - a.length);
-  for (const village of villageKeys) {
-    if (lower.includes(village)) return VILLAGE_TO_TOWN[village];
-  }
+  const allNames = [
+    ...Object.keys(VILLAGE_TO_TOWN).map(v => ({ name: v, town: VILLAGE_TO_TOWN[v] })),
+    ...KNOWN_TOWNS.map(t => ({ name: t.toLowerCase(), town: t }))
+  ];
 
-  // Check for a known town name appearing directly in the address.
-  for (const town of KNOWN_TOWNS) {
-    if (lower.includes(town.toLowerCase())) return town;
+  // Pass 1: prefer a name that sits directly next to "MA" (e.g. "Mashpee,
+  // MA" or "Mashpee MA") — that's how the actual city component is written
+  // in a real address, so it won't be fooled by a town name that happens to
+  // appear inside the street name (e.g. "Falmouth Road" in a Mashpee
+  // address). If more than one name matches this way, prefer the rightmost
+  // occurrence, since street name usually comes first.
+  let best = null;
+  for (const { name, town } of allNames) {
+    const re = new RegExp(`\\b${escapeRegex_(name)}\\b\\s*,?\\s*ma\\b`, 'gi');
+    let m;
+    while ((m = re.exec(lower)) !== null) {
+      if (!best || m.index > best.index) best = { town, index: m.index };
+    }
   }
+  if (best) return best.town;
 
-  // Fall back to parsing "..., City, MA ..." pattern.
+  // Pass 2: no "MA" found near a known name — fall back to the LAST
+  // occurring known name anywhere in the address, since the town typically
+  // comes after the street name, not before it.
+  for (const { name, town } of allNames) {
+    const re = new RegExp(`\\b${escapeRegex_(name)}\\b`, 'gi');
+    let m;
+    while ((m = re.exec(lower)) !== null) {
+      if (!best || m.index > best.index) best = { town, index: m.index };
+    }
+  }
+  if (best) return best.town;
+
+  // Pass 3: parse "..., City, MA ..." pattern directly, for towns not in
+  // our known list at all.
   const match = address.match(/,\s*([A-Za-z][A-Za-z\s]*?)\s*,?\s*MA\b/i);
   if (match) {
     return match[1].trim().replace(/\b\w/g, c => c.toUpperCase());
