@@ -82,6 +82,34 @@ function loadGoogleMaps(apiKey) {
   return googleMapsLoadPromise;
 }
 
+// Google Sign-In for the login gate. Paste the OAuth Client ID from Google
+// Cloud Console (Credentials -> OAuth client ID -> Web application). Must
+// match the value in Code.gs's GOOGLE_CLIENT_ID. Leave the placeholder in
+// place and the app falls back to the plain password gate.
+const GOOGLE_CLIENT_ID = "611665595000-9c7domumik2gogfrevom2c26nt357upf.apps.googleusercontent.com";
+
+let googleIdentityLoadPromise = null;
+function loadGoogleIdentity() {
+  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf('PASTE_YOUR') === 0) {
+    return Promise.reject(new Error('No Google OAuth Client ID configured'));
+  }
+  if (googleIdentityLoadPromise) return googleIdentityLoadPromise;
+  googleIdentityLoadPromise = new Promise((resolve, reject) => {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      resolve(window.google);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve(window.google);
+    script.onerror = () => reject(new Error('Failed to load Google Sign-In'));
+    document.head.appendChild(script);
+  });
+  return googleIdentityLoadPromise;
+}
+
 // ---------------------------------------------------------------------
 // Shell / scallop motif (inline SVG, matches BDD brand)
 // ---------------------------------------------------------------------
@@ -381,23 +409,60 @@ async function apiPost(action, payload) {
 // ---------------------------------------------------------------------
 function Gate({ onUnlock }) {
   const [pw, setPw] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
+  const [showPasswordFallback, setShowPasswordFallback] = useState(false);
+  const googleButtonRef = useRef(null);
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const unlock = () => {
+    sessionStorage.setItem('bdd_crm_unlocked', 'true');
+    onUnlock();
+  };
+
+  const handleCredentialResponse = useCallback(async (response) => {
     setBusy(true);
-    setError(false);
+    setError('');
     try {
-      const ok = pw === APP_PASSWORD;
-      if (ok) {
-        sessionStorage.setItem('bdd_crm_unlocked', 'true');
-        onUnlock();
+      const result = await apiPost('verifyGoogleLogin', { idToken: response.credential });
+      if (result.success) {
+        sessionStorage.setItem('bdd_crm_user_email', result.result.email);
+        unlock();
       } else {
-        setError(true);
+        setError(result.error || "That Google account isn't authorized for this app.");
       }
     } catch (err) {
-      setError(true);
+      setError('Something went wrong signing in — try again.');
+    }
+    setBusy(false);
+  }, []);
+
+  useEffect(() => {
+    loadGoogleIdentity().then((google) => {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse
+      });
+      if (googleButtonRef.current) {
+        google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: 'outline', size: 'large', width: 280
+        });
+      }
+      setGoogleReady(true);
+    }).catch(() => {
+      // No OAuth Client ID configured yet — fall back to the password gate.
+      setShowPasswordFallback(true);
+    });
+  }, [handleCredentialResponse]);
+
+  const submitPassword = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    if (pw === APP_PASSWORD) {
+      unlock();
+    } else {
+      setError("That password isn't right.");
     }
     setBusy(false);
   };
@@ -410,20 +475,36 @@ function Gate({ onUnlock }) {
         </div>
         <h1 className="font-display text-2xl text-navy-900 mb-1">Bayside Dysphagia Diagnostics</h1>
         <p className="text-sm text-navy-700/60 mb-6">Client &amp; Referral tracker</p>
-        <form onSubmit={submit}>
-          <input
-            type="password"
-            value={pw}
-            onChange={(e) => { setPw(e.target.value); setError(false); }}
-            placeholder="Enter password"
-            className="w-full border border-skyblue-300 rounded-lg px-4 py-2.5 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            autoFocus
-          />
-          {error && <p className="text-red-500 text-sm mb-3">That password isn't right.</p>}
-          <button type="submit" disabled={busy} className="w-full bg-teal-500 hover:bg-teal-600 text-white rounded-lg py-2.5 font-medium transition disabled:opacity-60">
-            {busy ? 'Checking…' : 'Enter'}
+
+        {!showPasswordFallback && (
+          <div className="flex justify-center mb-2">
+            <div ref={googleButtonRef}></div>
+          </div>
+        )}
+
+        {showPasswordFallback && (
+          <form onSubmit={submitPassword}>
+            <input
+              type="password"
+              value={pw}
+              onChange={(e) => { setPw(e.target.value); setError(''); }}
+              placeholder="Enter password"
+              className="w-full border border-skyblue-300 rounded-lg px-4 py-2.5 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              autoFocus
+            />
+            <button type="submit" disabled={busy} className="w-full bg-teal-500 hover:bg-teal-600 text-white rounded-lg py-2.5 font-medium transition disabled:opacity-60">
+              {busy ? 'Checking…' : 'Enter'}
+            </button>
+          </form>
+        )}
+
+        {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
+
+        {!showPasswordFallback && googleReady && (
+          <button onClick={() => setShowPasswordFallback(true)} className="text-xs text-navy-700/40 hover:text-navy-700/70 mt-4">
+            Trouble signing in? Use password instead
           </button>
-        </form>
+        )}
       </div>
     </div>
   );
