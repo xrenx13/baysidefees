@@ -189,6 +189,39 @@ function escapeHtml_(str) {
   return div.innerHTML;
 }
 
+// ---------------------------------------------------------------------
+// Data entry standardization: live phone formatting, email normalization
+// ---------------------------------------------------------------------
+
+// Formats as you type: (508) 555-1234, or +1 (508) 555-1234 for an entered
+// leading "1". Leaves anything with letters (e.g. "ext. 204") or more than
+// 11 digits (likely international) untouched, so it never mangles a valid
+// non-standard entry.
+function formatPhoneInput(raw) {
+  if (!raw) return '';
+  if (/[a-zA-Z]/.test(raw)) return raw;
+  const digits = raw.replace(/[^\d]/g, '');
+  if (digits.length === 0) return '';
+  if (digits.length > 11) return raw; // longer than a US number — leave as-is
+
+  let core = digits;
+  let prefix = '';
+  if (digits.length === 11 && digits[0] === '1') {
+    prefix = '+1 ';
+    core = digits.slice(1);
+  }
+  const len = core.length;
+  if (len < 4) return prefix + core;
+  if (len < 7) return prefix + `(${core.slice(0, 3)}) ${core.slice(3)}`;
+  return prefix + `(${core.slice(0, 3)}) ${core.slice(3, 6)}-${core.slice(6, 10)}`;
+}
+
+// Trims and lowercases — applied on blur (not while typing) so it doesn't
+// fight the user mid-entry.
+function normalizeEmailInput(raw) {
+  return String(raw || '').trim().toLowerCase();
+}
+
 function getTown(address) {
   if (!address) return 'Unknown';
   const lower = address.toLowerCase();
@@ -532,6 +565,7 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
   const [placesReady, setPlacesReady] = useState(false);
   const nameInputRef = useRef(null);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const setPhone = (e) => setForm({ ...form, Phone: formatPhoneInput(e.target.value) });
 
   // Wire up Google Places Autocomplete on the Account Name field, if a real
   // API key has been configured. Silently does nothing otherwise.
@@ -595,7 +629,7 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
         </label>
         <label className="text-sm">
           <span className="text-navy-700/70">Phone</span>
-          <input value={form.Phone} onChange={set('Phone')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2" />
+          <input value={form.Phone} onChange={setPhone} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2" />
         </label>
         <label className="text-sm">
           <span className="text-navy-700/70">Status</span>
@@ -628,7 +662,7 @@ function ContactForm({ initial, onSave, onCancel, roleOptions = [] }) {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const setPhone = (e) => {
-    const val = e.target.value;
+    const val = formatPhoneInput(e.target.value);
     setForm(f => {
       const next = { ...f, Phone: val };
       if (!preferredTouched && val && !f.Email) next.PreferredContact = 'Phone';
@@ -643,6 +677,7 @@ function ContactForm({ initial, onSave, onCancel, roleOptions = [] }) {
       return next;
     });
   };
+  const blurEmail = () => setForm(f => ({ ...f, Email: normalizeEmailInput(f.Email) }));
   const setPreferred = (e) => {
     setPreferredTouched(true);
     setForm({ ...form, PreferredContact: e.target.value });
@@ -657,7 +692,7 @@ function ContactForm({ initial, onSave, onCancel, roleOptions = [] }) {
           <Suggestions id="contact-role-options" options={roleOptions} />
         </div>
         <input value={form.Phone} onChange={setPhone} placeholder="Phone" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-        <input value={form.Email} onChange={setEmail} placeholder="Email" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
+        <input value={form.Email} onChange={setEmail} onBlur={blurEmail} placeholder="Email" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
         <select value={form.PreferredContact} onChange={setPreferred} className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white">
           <option>Email</option>
           <option>Phone</option>
@@ -684,7 +719,7 @@ function ConnectionForm({ initial, onSave, onCancel, roleOptions = [], relations
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const setPhone = (e) => {
-    const val = e.target.value;
+    const val = formatPhoneInput(e.target.value);
     setForm(f => {
       const next = { ...f, Phone: val };
       if (!preferredTouched && val && !f.Email) next.PreferredContact = 'Phone';
@@ -699,6 +734,7 @@ function ConnectionForm({ initial, onSave, onCancel, roleOptions = [], relations
       return next;
     });
   };
+  const blurEmail = () => setForm(f => ({ ...f, Email: normalizeEmailInput(f.Email) }));
   const setPreferred = (e) => {
     setPreferredTouched(true);
     setForm({ ...form, PreferredContact: e.target.value });
@@ -713,7 +749,7 @@ function ConnectionForm({ initial, onSave, onCancel, roleOptions = [], relations
           <Suggestions id="connection-role-options" options={roleOptions} />
         </div>
         <input value={form.Phone} onChange={setPhone} placeholder="Phone" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-        <input value={form.Email} onChange={setEmail} placeholder="Email" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
+        <input value={form.Email} onChange={setEmail} onBlur={blurEmail} placeholder="Email" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
         <select value={form.PreferredContact} onChange={setPreferred} className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white">
           <option>Email</option>
           <option>Phone</option>
