@@ -858,8 +858,15 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
   };
 
   const convert = async () => {
+    const simplePracticeUrl = window.prompt(
+      "SimplePractice client URL (optional — leave blank and click OK to skip):",
+      ''
+    );
     setBusy(true);
-    await apiPost('convertAccount', { accountId: account.AccountId });
+    await apiPost('convertAccount', {
+      accountId: account.AccountId,
+      simplePracticeUrl: simplePracticeUrl || ''
+    });
     setBusy(false);
     onRefresh();
   };
