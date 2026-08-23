@@ -775,6 +775,10 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
   const [editingAccount, setEditingAccount] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
   const [editingContactId, setEditingContactId] = useState(null);
+  const [suggestedContacts, setSuggestedContacts] = useState(null); // null = not searched yet
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState('');
+  const [addingSuggestionEmail, setAddingSuggestionEmail] = useState(null); // which suggestion is mid-save
   const [addingConnection, setAddingConnection] = useState(false);
   const [editingConnectionId, setEditingConnectionId] = useState(null);
   const [noteText, setNoteText] = useState('');
@@ -843,6 +847,36 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     setAddingContact(false);
     setEditingContactId(null);
     setBusy(false);
+    onRefresh();
+  };
+
+  const loadSuggestedContacts = async () => {
+    setSuggestionsLoading(true);
+    setSuggestionsError('');
+    const response = await apiPost('getSuggestedContacts', {
+      domains: knownDomains,
+      existingEmails: knownEmails
+    });
+    if (response.success) {
+      setSuggestedContacts(response.result);
+    } else {
+      setSuggestionsError(response.error || 'Could not search for suggested contacts');
+    }
+    setSuggestionsLoading(false);
+  };
+
+  const addSuggestedContact = async (suggestion) => {
+    setAddingSuggestionEmail(suggestion.email);
+    await apiPost('createContact', {
+      data: {
+        AccountId: account.AccountId,
+        ContactName: suggestion.name || suggestion.email,
+        Email: suggestion.email,
+        PreferredContact: 'Email'
+      }
+    });
+    setSuggestedContacts(prev => (prev || []).filter(s => s.email !== suggestion.email));
+    setAddingSuggestionEmail(null);
     onRefresh();
   };
 
@@ -1038,7 +1072,47 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
             </div>
           )
         ))}
+
+        {/* Suggested contacts — scanned from Gmail against this account's known domain(s) */}
+        <div className="mt-4 pt-4 border-t border-skyblue-100">
+          {knownDomains.length === 0 ? (
+            <p className="text-xs text-navy-700/40">Add a contact with an email first — suggestions search Gmail for others at that same email domain.</p>
+          ) : suggestedContacts === null ? (
+            <button onClick={loadSuggestedContacts} disabled={suggestionsLoading} className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50">
+              {suggestionsLoading ? 'Searching Gmail…' : `Find more contacts at ${knownDomains.join(', ')}`}
+            </button>
+          ) : (
+            <React.Fragment>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-navy-700/40">Found in Gmail, not yet saved as a Contact or Connection:</p>
+                <button onClick={loadSuggestedContacts} disabled={suggestionsLoading} className="text-teal-600 hover:text-teal-700 text-xs font-medium disabled:opacity-50">
+                  {suggestionsLoading ? 'Refreshing…' : 'Refresh'}
+                </button>
+              </div>
+              {suggestedContacts.length === 0 && (
+                <p className="text-navy-700/40 text-sm">No new contacts found at this domain.</p>
+              )}
+              {suggestedContacts.map(s => (
+                <div key={s.email} className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-sm font-medium text-navy-900">{s.name || s.email}</p>
+                    {s.name && <p className="text-xs text-navy-700/50">{s.email}</p>}
+                  </div>
+                  <button
+                    onClick={() => addSuggestedContact(s)}
+                    disabled={addingSuggestionEmail === s.email}
+                    className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
+                  >
+                    {addingSuggestionEmail === s.email ? 'Adding…' : '+ Add'}
+                  </button>
+                </div>
+              ))}
+            </React.Fragment>
+          )}
+          {suggestionsError && <p className="text-red-500 text-sm mt-2">{suggestionsError}</p>}
+        </div>
       </div>
+
 
       {/* Connections */}
       <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
