@@ -1451,7 +1451,7 @@ function MapView({ accounts, onSelect }) {
 function AccountList({ accounts, contacts, connections, notes, onSelect, onCreate, onSignOut }) {
   const [filter, setFilter] = useState('All');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
-  const [region, setRegion] = useState('Cape Cod'); // 'Cape Cod' | 'South Shore'
+  const [region, setRegion] = useState('Cape Cod'); // 'All Regions' | 'Cape Cod' | 'South Shore'
   const [query, setQuery] = useState('');
 
   const matchesQuery = (a) => {
@@ -1516,7 +1516,9 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
       .slice(0, 3);
   }, [calendarMeetings]);
 
-  const regionAccounts = accounts.filter(a => (a.Region || 'Cape Cod') === region);
+  const regionAccounts = region === 'All Regions'
+    ? accounts
+    : accounts.filter(a => (a.Region || 'Cape Cod') === region);
 
   const filtered = regionAccounts.filter(a => {
     const matchesFilter = filter === 'All' ? true
@@ -1617,7 +1619,7 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
 
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit">
-          {['Cape Cod', 'South Shore'].map(r => (
+          {['All Regions', 'Cape Cod', 'South Shore'].map(r => (
             <button
               key={r}
               onClick={() => setRegion(r)}
