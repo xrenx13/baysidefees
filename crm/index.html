@@ -862,7 +862,7 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
   const loadMeetings = async () => {
     setMeetingsLoading(true);
     setMeetingsError('');
-    const response = await apiPost('getAccountMeetings', { domains: knownDomains });
+    const response = await apiPost('getAccountMeetings', { accountId: account.AccountId });
     if (response.success) {
       setMeetings(response.result);
     } else {
@@ -870,6 +870,13 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     }
     setMeetingsLoading(false);
   };
+
+  // Meetings are backed by a server-side cache (refreshed every few minutes),
+  // so auto-loading here doesn't trigger a fresh calendar scan per visit.
+  useEffect(() => {
+    loadMeetings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account.AccountId]);
 
   const addNote = async () => {
     if (!noteText.trim()) return;
@@ -1083,11 +1090,9 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
       <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-display text-lg text-navy-900">Meetings</h2>
-          {meetings !== null && (
-            <button onClick={loadMeetings} disabled={meetingsLoading} className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50">
-              {meetingsLoading ? 'Refreshing…' : 'Refresh'}
-            </button>
-          )}
+          <button onClick={loadMeetings} disabled={meetingsLoading} className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50">
+            {meetingsLoading ? 'Refreshing…' : 'Refresh'}
+          </button>
         </div>
         <p className="text-xs text-navy-700/40 mb-4">
           Upcoming calendar events (next 60 days) with anyone at {knownDomains.length > 0 ? knownDomains.join(', ') : 'this account\'s email domain'}.
@@ -1097,10 +1102,8 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
           <p className="text-navy-700/40 text-sm">No contact emails on file to match a domain against yet — add one under Contacts or Connections.</p>
         )}
 
-        {knownDomains.length > 0 && meetings === null && (
-          <button onClick={loadMeetings} disabled={meetingsLoading} className="bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-60">
-            {meetingsLoading ? 'Loading…' : 'Load meetings'}
-          </button>
+        {knownDomains.length > 0 && meetings === null && meetingsLoading && (
+          <p className="text-navy-700/40 text-sm">Loading…</p>
         )}
 
         {meetingsError && <p className="text-red-500 text-sm mt-2">{meetingsError}</p>}
