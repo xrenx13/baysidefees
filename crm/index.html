@@ -560,7 +560,7 @@ function StatusPill({ status }) {
 // ---------------------------------------------------------------------
 function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) {
   const [form, setForm] = useState(initial || {
-    AccountName: '', Address: '', Website: '', Phone: '', ReferralSource: '', Status: 'Prospect'
+    AccountName: '', Address: '', Website: '', Phone: '', ReferralSource: '', Status: 'Prospect', Region: 'Cape Cod'
   });
   const [placesReady, setPlacesReady] = useState(false);
   const nameInputRef = useRef(null);
@@ -636,6 +636,13 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
           <select value={form.Status} onChange={set('Status')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white">
             <option>Prospect</option>
             <option>Customer</option>
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Region</span>
+          <select value={form.Region || 'Cape Cod'} onChange={set('Region')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white">
+            <option>Cape Cod</option>
+            <option>South Shore</option>
           </select>
         </label>
       </div>
@@ -1317,6 +1324,10 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
           ))}
         </div>
       </div>
+
+      <button onClick={onBack} className="text-teal-600 hover:text-teal-700 text-sm mt-6 mb-2 flex items-center gap-1">
+        ← Back to accounts
+      </button>
     </div>
   );
 }
@@ -1440,6 +1451,7 @@ function MapView({ accounts, onSelect }) {
 function AccountList({ accounts, contacts, connections, notes, onSelect, onCreate, onSignOut }) {
   const [filter, setFilter] = useState('All');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
+  const [region, setRegion] = useState('Cape Cod'); // 'Cape Cod' | 'South Shore'
   const [query, setQuery] = useState('');
 
   const matchesQuery = (a) => {
@@ -1504,7 +1516,9 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
       .slice(0, 3);
   }, [calendarMeetings]);
 
-  const filtered = accounts.filter(a => {
+  const regionAccounts = accounts.filter(a => (a.Region || 'Cape Cod') === region);
+
+  const filtered = regionAccounts.filter(a => {
     const matchesFilter = filter === 'All' ? true
       : filter === 'Follow-up' ? hasFollowUp(a)
       : filter === 'Upcoming Meetings' ? hasUpcomingMeeting(a)
@@ -1513,11 +1527,11 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
   });
 
   const counts = {
-    All: accounts.length,
-    Prospect: accounts.filter(a => a.Status === 'Prospect').length,
-    Customer: accounts.filter(a => a.Status === 'Customer').length,
-    'Follow-up': accounts.filter(hasFollowUp).length,
-    'Upcoming Meetings': accounts.filter(hasUpcomingMeeting).length
+    All: regionAccounts.length,
+    Prospect: regionAccounts.filter(a => a.Status === 'Prospect').length,
+    Customer: regionAccounts.filter(a => a.Status === 'Customer').length,
+    'Follow-up': regionAccounts.filter(hasFollowUp).length,
+    'Upcoming Meetings': regionAccounts.filter(hasUpcomingMeeting).length
   };
 
   // Group filtered accounts by base town (e.g. "South Yarmouth" -> "Yarmouth"),
@@ -1600,6 +1614,20 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
           </div>
         </div>
       )}
+
+      <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 mb-6 w-fit">
+        {['Cape Cod', 'South Shore'].map(r => (
+          <button
+            key={r}
+            onClick={() => setRegion(r)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
+              region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
+            }`}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
 
       <div className="flex items-center gap-4 mb-5 flex-wrap">
         <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 flex-wrap">
