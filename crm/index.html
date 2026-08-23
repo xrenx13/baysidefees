@@ -1615,18 +1615,33 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
         </div>
       )}
 
-      <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 mb-6 w-fit">
-        {['Cape Cod', 'South Shore'].map(r => (
-          <button
-            key={r}
-            onClick={() => setRegion(r)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
-              region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
-            }`}
-          >
-            {r}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit">
+          {['Cape Cod', 'South Shore'].map(r => (
+            <button
+              key={r}
+              onClick={() => setRegion(r)}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
+                region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1">
+          {['list', 'map'].map(mode => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${
+                viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
+              }`}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex items-center gap-4 mb-5 flex-wrap">
@@ -1649,19 +1664,6 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
           placeholder="Search accounts, contacts, notes..."
           className="border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[180px]"
         />
-        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1">
-          {['list', 'map'].map(mode => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${
-                viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
-              }`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
       </div>
 
       {viewMode === 'map' ? (
