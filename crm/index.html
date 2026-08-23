@@ -853,9 +853,13 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
   const loadSuggestedContacts = async () => {
     setSuggestionsLoading(true);
     setSuggestionsError('');
+    const knownNames = [...accountContacts, ...accountConnections]
+      .map(c => c.ContactName)
+      .filter(Boolean);
     const response = await apiPost('getSuggestedContacts', {
       domains: knownDomains,
-      existingEmails: knownEmails
+      existingEmails: knownEmails,
+      existingNames: knownNames
     });
     if (response.success) {
       setSuggestedContacts(response.result);
