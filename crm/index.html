@@ -835,6 +835,13 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     onRefresh();
   };
 
+  const revertToProspect = async () => {
+    setBusy(true);
+    await apiPost('updateAccount', { data: { AccountId: account.AccountId, Status: 'Prospect' } });
+    setBusy(false);
+    onRefresh();
+  };
+
   const removeAccount = async () => {
     if (!confirm(`Delete "${account.AccountName}"? This also removes its contacts and notes from view (rows stay in the Sheet's Contacts/Notes tabs but won't be linked to anything). This can't be undone from the app.`)) return;
     setBusy(true);
@@ -1014,6 +1021,11 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
               {account.Status === 'Prospect' && (
                 <button onClick={convert} disabled={busy} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition">
                   Convert to customer
+                </button>
+              )}
+              {account.Status === 'Customer' && (
+                <button onClick={revertToProspect} disabled={busy} className="border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition">
+                  Revert to prospect
                 </button>
               )}
               <button onClick={() => setEditingAccount(true)} className="border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition">
