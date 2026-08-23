@@ -662,6 +662,18 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
             <option>South Shore</option>
           </select>
         </label>
+        {form.Status === 'Customer' && (
+          <label className="text-sm sm:col-span-2">
+            <span className="text-navy-700/70">SimplePractice client URL</span>
+            <input
+              type="url"
+              value={form.SimplePracticeUrl || ''}
+              onChange={set('SimplePracticeUrl')}
+              placeholder="https://secure.simplepractice.com/..."
+              className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+            />
+          </label>
+        )}
       </div>
       <div className="flex gap-3 mt-5">
         <button onClick={() => onSave(form)} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition">
@@ -1033,6 +1045,13 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
                 {account.Address && <p>{account.Address}</p>}
                 {account.Phone && <p>{account.Phone}</p>}
                 {account.Website && <p><a href={account.Website} target="_blank" className="text-teal-600 hover:underline">{account.Website}</a></p>}
+                {account.SimplePracticeUrl && (
+                  <p>
+                    <a href={account.SimplePracticeUrl} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">
+                      View in SimplePractice
+                    </a>
+                  </p>
+                )}
                 {account.ReferralSource && <p className="text-navy-700/50">Referred via {account.ReferralSource}</p>}
               </div>
             </div>
