@@ -1377,29 +1377,18 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
   // into one list, soonest first, capped at 3, for the summary at the top
   // of the page.
   const topUpcomingMeetings = useMemo(() => {
-    const noteItems = accounts
-      .filter(a => upcomingByAccount[a.AccountId])
-      .map(a => ({
-        source: 'note',
-        accountId: a.AccountId,
-        accountName: a.AccountName,
-        date: upcomingByAccount[a.AccountId].date,
-        title: upcomingByAccount[a.AccountId].note.NoteText
-      }));
-
-    const calendarItems = (calendarMeetings || []).map(m => ({
-      source: 'calendar',
-      accountId: m.accountId,
-      accountName: m.accountName,
-      date: new Date(m.date),
-      title: m.title,
-      url: m.url
-    }));
-
-    return [...noteItems, ...calendarItems]
+    return (calendarMeetings || [])
+      .map(m => ({
+        source: 'calendar',
+        accountId: m.accountId,
+        accountName: m.accountName,
+        date: new Date(m.date),
+        title: m.title,
+        url: m.url
+      }))
       .sort((a, b) => a.date - b.date)
       .slice(0, 3);
-  }, [accounts, upcomingByAccount, calendarMeetings]);
+  }, [calendarMeetings]);
 
   const filtered = accounts.filter(a => {
     const matchesFilter = filter === 'All' ? true
