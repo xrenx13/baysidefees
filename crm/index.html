@@ -1018,7 +1018,9 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
       {editingAccount ? (
         <AccountForm initial={account} onSave={saveAccount} onCancel={() => setEditingAccount(false)} referralSourceOptions={referralSourceOptions} />
       ) : (
-        <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
+        <div className={`bg-white rounded-xl border border-skyblue-100 p-6 mb-6 border-l-[3px] ${
+          account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'
+        }`}>
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div>
               <div className="flex items-center gap-3 flex-wrap">
@@ -1473,6 +1475,16 @@ function MapView({ accounts, onSelect }) {
         <p className="text-center text-navy-700/40 text-sm py-3">Plotting accounts…</p>
       )}
       <div ref={mapRef} className="w-full h-[500px]"></div>
+      <div className="flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-teal-500 border border-navy-900/20"></span>
+          Customer
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-skyblue-500 border border-navy-900/20"></span>
+          Prospect
+        </span>
+      </div>
     </div>
   );
 }
@@ -1712,12 +1724,12 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1">
                   {town} <span className="opacity-60">({townAccounts.length})</span>
                 </h3>
-                <div className="bg-white rounded-xl border border-skyblue-100 divide-y divide-skyblue-100">
+                <div className="bg-white rounded-xl border border-skyblue-100">
                   {townAccounts.map(a => (
                     <button
                       key={a.AccountId}
                       onClick={() => onSelect(a)}
-                      className={`w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] ${
+                      className={`w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${
                         a.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'
                       }`}
                     >
