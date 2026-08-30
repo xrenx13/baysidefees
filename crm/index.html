@@ -662,6 +662,15 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
             <option>South Shore</option>
           </select>
         </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Google rating</span>
+          <input
+            value={form.Rating || ''}
+            onChange={set('Rating')}
+            placeholder="e.g. 4.3 (102 reviews)"
+            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+          />
+        </label>
         {form.Status === 'Customer' && (
           <label className="text-sm sm:col-span-2">
             <span className="text-navy-700/70">SimplePractice client URL</span>
@@ -1051,6 +1060,7 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
               <div className="mt-2 text-sm text-navy-700/70 space-y-0.5">
                 {account.Address && <p>{account.Address}</p>}
                 {account.Phone && <p>{account.Phone}</p>}
+                {account.Rating && <p className="text-amber-600">★ {account.Rating}</p>}
                 {account.Website && <p><a href={account.Website} target="_blank" className="text-teal-600 hover:underline">{account.Website}</a></p>}
                 {account.SimplePracticeUrl && (
                   <p>
@@ -1762,6 +1772,7 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
                       <div>
                         <p className="font-medium text-navy-900">{a.AccountName}</p>
                         <p className="text-sm text-navy-700/50">{a.Address || a.Phone || '—'}</p>
+                        {a.Rating && <p className="text-xs text-amber-600 mt-0.5">★ {a.Rating}</p>}
                         {upcomingByAccount[a.AccountId] && (
                           <p className="text-xs text-teal-600 mt-0.5">
                             {formatShortDate(upcomingByAccount[a.AccountId].date)} — {upcomingByAccount[a.AccountId].note.NoteText.slice(0, 60)}{upcomingByAccount[a.AccountId].note.NoteText.length > 60 ? '…' : ''}
