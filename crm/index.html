@@ -1531,6 +1531,16 @@ function AccountDetail({
     loadMeetings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account.AccountId]);
+
+  // Emails auto-load too, same reasoning — but only when there's at least
+  // one contact/connection email on file to search against, and only the
+  // 3 most recent threads, to keep this lightweight. Also cached server-side
+  // for a few minutes, so bouncing back to an account you just viewed won't
+  // re-trigger a fresh Gmail search.
+  useEffect(() => {
+    if (knownEmails.length > 0) loadEmails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account.AccountId, knownEmails.join(',')]);
   const addNote = async () => {
     if (!noteText.trim()) return;
     setBusy(true);
@@ -1793,7 +1803,7 @@ function AccountDetail({
     className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
   }, emailsLoading ? 'Refreshing…' : 'Refresh')), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40 mb-4"
-  }, "Gmail threads to or from any contact/connection email on file for this account."), knownEmails.length === 0 && /*#__PURE__*/React.createElement("p", {
+  }, "Gmail threads to or from any contact/connection email on file for this account (3 most recent, loaded automatically)."), knownEmails.length === 0 && /*#__PURE__*/React.createElement("p", {
     className: "text-navy-700/40 text-sm"
   }, "No contact emails on file to search for yet — add one under Contacts or Connections."), knownEmails.length > 0 && emailThreads === null && /*#__PURE__*/React.createElement("button", {
     onClick: loadEmails,
