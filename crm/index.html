@@ -558,6 +558,15 @@ function EmptyState({ message, hint }) {
   );
 }
 
+// Extracts the leading numeric CMS Overall rating out of the stored text
+// (e.g. "Overall: 3/5 (Health: 2, ...)" -> 3, or the older plain "5" format
+// -> 5). Returns null if nothing numeric is found.
+function getCmsOverallNumber(cmsRatingText) {
+  if (!cmsRatingText) return null;
+  const match = String(cmsRatingText).match(/(\d+(\.\d+)?)/);
+  return match ? parseFloat(match[1]) : null;
+}
+
 // ---------------------------------------------------------------------
 // FEES propensity score — computed live from data already on the account,
 // never stored, so it's always current as fields get updated. Weighted
@@ -620,6 +629,26 @@ function StatusPill({ status }) {
 // ---------------------------------------------------------------------
 // Account form (create / edit)
 // ---------------------------------------------------------------------
+// Collapsible section for the account form — keeps a long form scannable.
+// Starts open if it already has data (so nothing existing is hidden by
+// default), collapsed otherwise.
+function FormSection({ title, defaultOpen, children }) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return (
+    <div className="border-t border-skyblue-100 pt-4 mt-4">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full text-left mb-3"
+      >
+        <span className="text-sm font-semibold text-navy-900">{title}</span>
+        <span className="text-navy-700/40 text-xs">{open ? '▲ Hide' : '▼ Show'}</span>
+      </button>
+      {open && <div className="grid sm:grid-cols-2 gap-4">{children}</div>}
+    </div>
+  );
+}
+
 function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) {
   const [form, setForm] = useState(initial || {
     AccountName: '', Address: '', Website: '', Phone: '', ReferralSource: '', Status: 'Prospect', Region: 'Cape Cod'
@@ -628,6 +657,11 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
   const nameInputRef = useRef(null);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const setPhone = (e) => setForm({ ...form, Phone: formatPhoneInput(e.target.value) });
+
+  // Sections default open if they already have data, so editing an
+  // existing account never hides what's already filled in.
+  const hasFacilityData = !!(initial && (initial.CMSRating || initial.BedCount || initial.ChainAffiliation || initial.HighRiskPrograms || initial.RehabProvider || initial.Rating));
+  const hasSalesIntel = !!(initial && (initial.RecentOwnershipChange === 'Yes' || initial.SpecialFocusStatus || initial.AbuseFlag === 'Yes' || initial.StaffingHoursPerResidentDay || initial.FinesHistory || initial.CaseMixIndex));
 
   // Wire up Google Places Autocomplete on the Account Name field, if a real
   // API key has been configured. Silently does nothing otherwise.
@@ -662,7 +696,8 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
       <h3 className="font-display text-lg mb-4 text-navy-900">
         {initial ? 'Edit account' : 'Add a new account'}
       </h3>
-      <div className="grid sm:grid-cols-2 gap-4">
+
+      <FormSection title="Basic Info" defaultOpen={true}>
         <label className="text-sm">
           <span className="text-navy-700/70">Account name</span>
           <input
@@ -707,6 +742,21 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
             <option>South Shore</option>
           </select>
         </label>
+        {form.Status === 'Customer' && (
+          <label className="text-sm sm:col-span-2">
+            <span className="text-navy-700/70">SimplePractice client URL</span>
+            <input
+              type="url"
+              value={form.SimplePracticeUrl || ''}
+              onChange={set('SimplePracticeUrl')}
+              placeholder="https://secure.simplepractice.com/..."
+              className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+            />
+          </label>
+        )}
+      </FormSection>
+
+      <FormSection title="Facility Data" defaultOpen={hasFacilityData}>
         <label className="text-sm">
           <span className="text-navy-700/70">Google rating</span>
           <input
@@ -761,6 +811,9 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
             className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
           />
         </label>
+      </FormSection>
+
+      <FormSection title="Sales Intelligence" defaultOpen={hasSalesIntel}>
         <label className="text-sm">
           <span className="text-navy-700/70">Recent ownership change?</span>
           <select value={form.RecentOwnershipChange || 'No'} onChange={set('RecentOwnershipChange')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white">
@@ -811,19 +864,8 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
             className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
           />
         </label>
-        {form.Status === 'Customer' && (
-          <label className="text-sm sm:col-span-2">
-            <span className="text-navy-700/70">SimplePractice client URL</span>
-            <input
-              type="url"
-              value={form.SimplePracticeUrl || ''}
-              onChange={set('SimplePracticeUrl')}
-              placeholder="https://secure.simplepractice.com/..."
-              className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
-            />
-          </label>
-        )}
-      </div>
+      </FormSection>
+
       <div className="flex gap-3 mt-5">
         <button onClick={() => onSave(form)} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition">
           Save account
@@ -1694,10 +1736,44 @@ function MapView({ accounts, onSelect }) {
   );
 }
 
+// ---------------------------------------------------------------------
+// Single account row — shared between the town-grouped view (sort: Name)
+// and the flat sorted view (sort: Propensity / CMS Rating).
+// ---------------------------------------------------------------------
+function AccountRow({ account, onSelect, upcoming }) {
+  return (
+    <button
+      onClick={() => onSelect(account)}
+      className={`w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${
+        account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'
+      }`}
+    >
+      <div>
+        <p className="font-medium text-navy-900">{account.AccountName}</p>
+        <p className="text-sm text-navy-700/50">{account.Address || account.Phone || '—'}</p>
+        {account.Rating && <p className="text-xs text-amber-600 mt-0.5">★ {account.Rating}</p>}
+        {upcoming && (
+          <p className="text-xs text-teal-600 mt-0.5">
+            {formatShortDate(upcoming.date)} — {upcoming.note.NoteText.slice(0, 60)}{upcoming.note.NoteText.length > 60 ? '…' : ''}
+          </p>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <PropensityBadge account={account} />
+        <FollowUpBadge nextFollowUp={account.NextFollowUp} />
+        <UpcomingActivityBadge upcoming={upcoming} />
+        <StatusPill status={account.Status} />
+      </div>
+    </button>
+  );
+}
+
 function AccountList({ accounts, contacts, connections, notes, onSelect, onCreate, onSignOut, region, setRegion }) {
   const [filter, setFilter] = useState('All');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
   const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating'
+  const [chainFilter, setChainFilter] = useState('All Chains');
 
   const matchesQuery = (a) => {
     if (!query.trim()) return true;
@@ -1705,6 +1781,9 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
     if (a.AccountName.toLowerCase().includes(q)) return true;
     if ((a.Address || '').toLowerCase().includes(q)) return true;
     if ((a.ReferralSource || '').toLowerCase().includes(q)) return true;
+    if ((a.ChainAffiliation || '').toLowerCase().includes(q)) return true;
+    if ((a.HighRiskPrograms || '').toLowerCase().includes(q)) return true;
+    if ((a.RehabProvider || '').toLowerCase().includes(q)) return true;
     const relatedContacts = contacts.filter(c => c.AccountId === a.AccountId);
     if (relatedContacts.some(c => `${c.ContactName} ${c.Role}`.toLowerCase().includes(q))) return true;
     const relatedConnections = connections.filter(c => c.AccountId === a.AccountId);
@@ -1765,12 +1844,18 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
     ? accounts
     : accounts.filter(a => (a.Region || 'Cape Cod') === region);
 
+  const distinctChains = useMemo(() => {
+    const set = new Set(regionAccounts.map(a => (a.ChainAffiliation || '').trim()).filter(Boolean));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [regionAccounts]);
+
   const filtered = regionAccounts.filter(a => {
     const matchesFilter = filter === 'All' ? true
       : filter === 'Follow-up' ? hasFollowUp(a)
       : filter === 'Upcoming Meetings' ? hasUpcomingMeeting(a)
       : a.Status === filter;
-    return matchesFilter && matchesQuery(a);
+    const matchesChain = chainFilter === 'All Chains' || (a.ChainAffiliation || '').trim() === chainFilter;
+    return matchesFilter && matchesChain && matchesQuery(a);
   });
 
   const counts = {
@@ -1781,10 +1866,9 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
     'Upcoming Meetings': regionAccounts.filter(hasUpcomingMeeting).length
   };
 
-  // Group filtered accounts by base town (e.g. "South Yarmouth" -> "Yarmouth"),
-  // sorted alphabetically with "Unknown" pushed to the end, and accounts
-  // within each town sorted by name.
+  // Town-grouped view, used when sorting by Name (the default).
   const groups = useMemo(() => {
+    if (sortBy !== 'Name') return null;
     const map = {};
     filtered.forEach(a => {
       const town = getTown(a.Address);
@@ -1799,7 +1883,31 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
         return a.localeCompare(b);
       })
       .map(town => ({ town, accounts: map[town] }));
-  }, [filtered]);
+  }, [filtered, sortBy]);
+
+  // Flat, ungrouped, sorted view — used for Propensity / CMS Rating sort
+  // modes, where town grouping would work against the point of the sort.
+  const sortedFlat = useMemo(() => {
+    if (sortBy === 'Name') return null;
+    const list = [...filtered];
+    if (sortBy === 'Propensity') {
+      list.sort((a, b) => {
+        const scoreA = computePropensityScore(a);
+        const scoreB = computePropensityScore(b);
+        return (scoreB ? scoreB.score : -1) - (scoreA ? scoreA.score : -1);
+      });
+    } else if (sortBy === 'CMS Rating') {
+      list.sort((a, b) => {
+        const valA = getCmsOverallNumber(a.CMSRating);
+        const valB = getCmsOverallNumber(b.CMSRating);
+        if (valA === null && valB === null) return 0;
+        if (valA === null) return 1;
+        if (valB === null) return -1;
+        return valB - valA;
+      });
+    }
+    return list;
+  }, [filtered, sortBy]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -1913,6 +2021,34 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
         />
       </div>
 
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
+        <label className="text-xs text-navy-700/50 flex items-center gap-1.5">
+          Sort by
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
+          >
+            <option>Name</option>
+            <option>Propensity</option>
+            <option>CMS Rating</option>
+          </select>
+        </label>
+        {distinctChains.length > 0 && (
+          <label className="text-xs text-navy-700/50 flex items-center gap-1.5">
+            Chain
+            <select
+              value={chainFilter}
+              onChange={(e) => setChainFilter(e.target.value)}
+              className="border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
+            >
+              <option>All Chains</option>
+              {distinctChains.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+
       {viewMode === 'map' ? (
         <MapView accounts={filtered} onSelect={onSelect} />
       ) : (
@@ -1923,43 +2059,30 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
             </div>
           )}
 
-          <div className="space-y-6">
-            {groups.map(({ town, accounts: townAccounts }) => (
-              <div key={town}>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1">
-                  {town} <span className="opacity-60">({townAccounts.length})</span>
-                </h3>
-                <div className="bg-white rounded-xl border border-skyblue-100">
-                  {townAccounts.map(a => (
-                    <button
-                      key={a.AccountId}
-                      onClick={() => onSelect(a)}
-                      className={`w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${
-                        a.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'
-                      }`}
-                    >
-                      <div>
-                        <p className="font-medium text-navy-900">{a.AccountName}</p>
-                        <p className="text-sm text-navy-700/50">{a.Address || a.Phone || '—'}</p>
-                        {a.Rating && <p className="text-xs text-amber-600 mt-0.5">★ {a.Rating}</p>}
-                        {upcomingByAccount[a.AccountId] && (
-                          <p className="text-xs text-teal-600 mt-0.5">
-                            {formatShortDate(upcomingByAccount[a.AccountId].date)} — {upcomingByAccount[a.AccountId].note.NoteText.slice(0, 60)}{upcomingByAccount[a.AccountId].note.NoteText.length > 60 ? '…' : ''}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <PropensityBadge account={a} />
-                        <FollowUpBadge nextFollowUp={a.NextFollowUp} />
-                        <UpcomingActivityBadge upcoming={upcomingByAccount[a.AccountId]} />
-                        <StatusPill status={a.Status} />
-                      </div>
-                    </button>
-                  ))}
+          {sortBy === 'Name' ? (
+            <div className="space-y-6">
+              {groups.map(({ town, accounts: townAccounts }) => (
+                <div key={town}>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1">
+                    {town} <span className="opacity-60">({townAccounts.length})</span>
+                  </h3>
+                  <div className="bg-white rounded-xl border border-skyblue-100">
+                    {townAccounts.map(a => (
+                      <AccountRow key={a.AccountId} account={a} onSelect={onSelect} upcoming={upcomingByAccount[a.AccountId]} />
+                    ))}
+                  </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            sortedFlat.length > 0 && (
+              <div className="bg-white rounded-xl border border-skyblue-100">
+                {sortedFlat.map(a => (
+                  <AccountRow key={a.AccountId} account={a} onSelect={onSelect} upcoming={upcomingByAccount[a.AccountId]} />
+                ))}
               </div>
-            ))}
-          </div>
+            )
+          )}
         </React.Fragment>
       )}
     </div>
