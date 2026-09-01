@@ -1757,6 +1757,7 @@ function AccountRow({ account, onSelect, upcoming }) {
         <p className="font-medium text-navy-900">{account.AccountName}</p>
         <p className="text-sm text-navy-700/50">{account.Address || account.Phone || '—'}</p>
         {account.Rating && <p className="text-xs text-amber-600 mt-0.5">★ {account.Rating}</p>}
+        {account.BedCount && <p className="text-xs text-navy-700/40 mt-0.5">{account.BedCount} beds</p>}
         {upcoming && (
           <p className="text-xs text-teal-600 mt-0.5">
             {formatShortDate(upcoming.date)} — {upcoming.note.NoteText.slice(0, 60)}{upcoming.note.NoteText.length > 60 ? '…' : ''}
