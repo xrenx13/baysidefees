@@ -689,6 +689,33 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
             className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
           />
         </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Chain / ownership</span>
+          <input
+            value={form.ChainAffiliation || ''}
+            onChange={set('ChainAffiliation')}
+            placeholder="e.g. Royal Health Group"
+            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+          />
+        </label>
+        <label className="text-sm sm:col-span-2">
+          <span className="text-navy-700/70">High-risk clinical programs</span>
+          <input
+            value={form.HighRiskPrograms || ''}
+            onChange={set('HighRiskPrograms')}
+            placeholder="e.g. Memory care, cardiac, stroke recovery"
+            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+          />
+        </label>
+        <label className="text-sm sm:col-span-2">
+          <span className="text-navy-700/70">Current SLP / rehab provider</span>
+          <input
+            value={form.RehabProvider || ''}
+            onChange={set('RehabProvider')}
+            placeholder="e.g. in-house, or contracted vendor name"
+            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+          />
+        </label>
         {form.Status === 'Customer' && (
           <label className="text-sm sm:col-span-2">
             <span className="text-navy-700/70">SimplePractice client URL</span>
@@ -1086,6 +1113,9 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
                     {account.BedCount && `${account.BedCount} beds`}
                   </p>
                 )}
+                {account.ChainAffiliation && <p className="text-navy-700/50">{account.ChainAffiliation}</p>}
+                {account.HighRiskPrograms && <p className="text-navy-700/50">Programs: {account.HighRiskPrograms}</p>}
+                {account.RehabProvider && <p className="text-navy-700/50">Rehab: {account.RehabProvider}</p>}
                 {account.Website && <p><a href={account.Website} target="_blank" className="text-teal-600 hover:underline">{account.Website}</a></p>}
                 {account.SimplePracticeUrl && (
                   <p>
