@@ -389,6 +389,19 @@ function formatShortDate(date) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+// Two-letter initials from a full name (e.g. "Melanie Reynolds" -> "MR"),
+// falling back to the first two characters of an email if no name is on
+// file (older sessions signed in before this was tracked).
+function getInitials(name, fallbackEmail) {
+  const trimmed = (name || '').trim();
+  if (trimmed) {
+    const parts = trimmed.split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return (fallbackEmail || '').slice(0, 2).toUpperCase();
+}
+
 function UpcomingActivityBadge({ upcoming }) {
   if (!upcoming) return null;
   return (
@@ -444,6 +457,7 @@ function handleUnauthorized() {
   sessionStorage.removeItem('bdd_crm_unlocked');
   sessionStorage.removeItem('bdd_crm_session_token');
   sessionStorage.removeItem('bdd_crm_user_email');
+  sessionStorage.removeItem('bdd_crm_user_name');
   window.location.reload();
 }
 
@@ -489,6 +503,7 @@ function Gate({ onUnlock }) {
       const result = await apiPost('verifyGoogleLogin', { idToken: response.credential });
       if (result.success) {
         sessionStorage.setItem('bdd_crm_user_email', result.result.email);
+        sessionStorage.setItem('bdd_crm_user_name', result.result.name || '');
         sessionStorage.setItem('bdd_crm_session_token', result.result.sessionToken);
         unlock();
       } else {
@@ -1931,6 +1946,12 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
           <button onClick={onCreate} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition">
             + New account
           </button>
+          <div
+            className="w-8 h-8 rounded-full bg-navy-900 text-white text-xs font-semibold flex items-center justify-center shrink-0"
+            title={sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || ''}
+          >
+            {getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))}
+          </div>
           <button onClick={onSignOut} className="text-navy-700/40 hover:text-navy-700/70 text-sm px-2 py-2 transition">
             Sign out
           </button>
@@ -2136,6 +2157,7 @@ function App() {
     sessionStorage.removeItem('bdd_crm_unlocked');
     sessionStorage.removeItem('bdd_crm_session_token');
     sessionStorage.removeItem('bdd_crm_user_email');
+    sessionStorage.removeItem('bdd_crm_user_name');
     setUnlocked(false);
   }, []);
 
