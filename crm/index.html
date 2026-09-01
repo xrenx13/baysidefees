@@ -1810,9 +1810,106 @@ function AccountRow({ account, onSelect, upcoming }) {
   );
 }
 
+// ---------------------------------------------------------------------
+// Dense, sortable table view — click any column header to sort by it,
+// click again to reverse direction. Meant for scanning/comparing many
+// facilities at once without opening the underlying Sheet.
+// ---------------------------------------------------------------------
+function TableView({ accounts, onSelect }) {
+  const [sortCol, setSortCol] = useState('AccountName');
+  const [sortDir, setSortDir] = useState('asc');
+
+  const toggleSort = (col) => {
+    if (sortCol === col) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortCol(col);
+      setSortDir('asc');
+    }
+  };
+
+  const getValue = (a, col) => {
+    switch (col) {
+      case 'AccountName': return a.AccountName || '';
+      case 'Status': return a.Status || '';
+      case 'Town': return getTown(a.Address);
+      case 'Propensity': { const p = computePropensityScore(a); return p ? p.score : -1; }
+      case 'CMSRating': { const n = getCmsOverallNumber(a.CMSRating); return n === null ? -1 : n; }
+      case 'BedCount': return parseFloat(a.BedCount) || -1;
+      case 'ChainAffiliation': return a.ChainAffiliation || '';
+      case 'NextFollowUp': return a.NextFollowUp || '';
+      default: return '';
+    }
+  };
+
+  const sorted = [...accounts].sort((a, b) => {
+    const va = getValue(a, sortCol);
+    const vb = getValue(b, sortCol);
+    let cmp;
+    if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
+    else cmp = String(va).localeCompare(String(vb));
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  const columns = [
+    { key: 'AccountName', label: 'Account' },
+    { key: 'Status', label: 'Status' },
+    { key: 'Town', label: 'Town' },
+    { key: 'Propensity', label: 'FEES Fit' },
+    { key: 'CMSRating', label: 'CMS' },
+    { key: 'BedCount', label: 'Beds' },
+    { key: 'ChainAffiliation', label: 'Chain' },
+    { key: 'NextFollowUp', label: 'Follow-up' }
+  ];
+
+  return (
+    <div className="bg-white rounded-xl border border-skyblue-100 overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-skyblue-100">
+            {columns.map(col => (
+              <th
+                key={col.key}
+                onClick={() => toggleSort(col.key)}
+                className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-navy-700/50 cursor-pointer hover:text-navy-900 whitespace-nowrap select-none"
+              >
+                {col.label} {sortCol === col.key ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map(a => {
+            const propensity = computePropensityScore(a);
+            const cmsNum = getCmsOverallNumber(a.CMSRating);
+            return (
+              <tr
+                key={a.AccountId}
+                onClick={() => onSelect(a)}
+                className="border-b border-skyblue-100 last:border-0 hover:bg-skyblue-100/30 cursor-pointer"
+              >
+                <td className="px-3 py-2.5 font-medium text-navy-900 whitespace-nowrap">{a.AccountName}</td>
+                <td className="px-3 py-2.5"><StatusPill status={a.Status} /></td>
+                <td className="px-3 py-2.5 text-navy-700/60 whitespace-nowrap">{getTown(a.Address)}</td>
+                <td className="px-3 py-2.5 whitespace-nowrap">{propensity ? propensity.label : '—'}</td>
+                <td className="px-3 py-2.5 whitespace-nowrap">{cmsNum !== null ? cmsNum + '/5' : '—'}</td>
+                <td className="px-3 py-2.5">{a.BedCount || '—'}</td>
+                <td className="px-3 py-2.5 text-navy-700/60 whitespace-nowrap">{a.ChainAffiliation || '—'}</td>
+                <td className="px-3 py-2.5 text-navy-700/60 whitespace-nowrap">
+                  {a.NextFollowUp ? formatShortDate(new Date(a.NextFollowUp)) : '—'}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function AccountList({ accounts, contacts, connections, notes, onSelect, onCreate, onSignOut, region, setRegion }) {
   const [filter, setFilter] = useState('All');
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'table' | 'map'
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating'
   const [chainFilter, setChainFilter] = useState('All Chains');
@@ -2033,7 +2130,7 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
           ))}
         </div>
         <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1">
-          {['list', 'map'].map(mode => (
+          {['list', 'table', 'map'].map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
@@ -2099,6 +2196,14 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
 
       {viewMode === 'map' ? (
         <MapView accounts={filtered} onSelect={onSelect} />
+      ) : viewMode === 'table' ? (
+        filtered.length === 0 ? (
+          <div className="bg-white rounded-xl border border-skyblue-100">
+            <EmptyState message="No accounts match yet" hint="Add one to get started." />
+          </div>
+        ) : (
+          <TableView accounts={filtered} onSelect={onSelect} />
+        )
       ) : (
         <React.Fragment>
           {filtered.length === 0 && (
