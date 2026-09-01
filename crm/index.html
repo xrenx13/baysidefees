@@ -726,7 +726,8 @@ function computePropensityScore(account) {
   };
 }
 function PropensityBadge({
-  account
+  account,
+  compact
 }) {
   const result = computePropensityScore(account);
   if (!result) return null;
@@ -737,7 +738,7 @@ function PropensityBadge({
   };
   return /*#__PURE__*/React.createElement("span", {
     className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${styles[result.label]}`
-  }, "FEES fit: ", result.label);
+  }, compact ? result.label : "FEES fit: ", compact ? null : result.label);
 }
 
 // ---------------------------------------------------------------------
@@ -2171,7 +2172,8 @@ function TableView({
     }, getTown(a.Address)), /*#__PURE__*/React.createElement("td", {
       className: "px-3 py-2.5 whitespace-nowrap"
     }, propensity ? /*#__PURE__*/React.createElement(PropensityBadge, {
-      account: a
+      account: a,
+      compact: true
     }) : '—'), /*#__PURE__*/React.createElement("td", {
       className: "px-3 py-2.5 whitespace-nowrap"
     }, cmsNum !== null ? cmsNum + '/5' : '—'), /*#__PURE__*/React.createElement("td", {
