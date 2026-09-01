@@ -1685,10 +1685,15 @@ function MapView({ accounts, onSelect }) {
             strokeWeight: 1.5
           }
         });
+        const propensity = computePropensityScore(a);
         const infoWindow = new google.maps.InfoWindow({
-          content: `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:160px;">
+          content: `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:170px;">
             <strong style="color:#081e3d;">${escapeHtml_(a.AccountName)}</strong><br/>
-            <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${escapeHtml_(a.Status)}</span><br/>
+            <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${escapeHtml_(a.Status)}</span>
+            ${propensity ? `<span style="font-size:11px;color:#b45309;margin-left:6px;">· FEES fit: ${escapeHtml_(propensity.label)}</span>` : ''}
+            <br/>
+            ${a.Rating ? `<span style="font-size:12px;color:#b45309;">★ ${escapeHtml_(a.Rating)}</span><br/>` : ''}
+            ${a.BedCount ? `<span style="font-size:12px;color:#556;">${escapeHtml_(a.BedCount)} beds</span><br/>` : ''}
             <button onclick="window.__crmSelectAccount('${escapeHtml_(a.AccountId)}')" style="margin-top:6px;background:#0f766e;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">View account</button>
           </div>`
         });
