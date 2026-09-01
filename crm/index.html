@@ -716,6 +716,56 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
             className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
           />
         </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Recent ownership change?</span>
+          <select value={form.RecentOwnershipChange || 'No'} onChange={set('RecentOwnershipChange')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Special Focus status</span>
+          <input
+            value={form.SpecialFocusStatus || ''}
+            onChange={set('SpecialFocusStatus')}
+            placeholder="e.g. SFF, SFF Candidate"
+            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Abuse history flag?</span>
+          <select value={form.AbuseFlag || 'No'} onChange={set('AbuseFlag')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Staffing (hrs/resident/day)</span>
+          <input
+            value={form.StaffingHoursPerResidentDay || ''}
+            onChange={set('StaffingHoursPerResidentDay')}
+            placeholder="e.g. 3.68 hrs/resident/day"
+            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Fines history</span>
+          <input
+            value={form.FinesHistory || ''}
+            onChange={set('FinesHistory')}
+            placeholder="e.g. 1 fine(s), $7,901 total"
+            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          <span className="text-navy-700/70">Case-mix index</span>
+          <input
+            value={form.CaseMixIndex || ''}
+            onChange={set('CaseMixIndex')}
+            placeholder="e.g. 1.45"
+            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+          />
+        </label>
         {form.Status === 'Customer' && (
           <label className="text-sm sm:col-span-2">
             <span className="text-navy-700/70">SimplePractice client URL</span>
@@ -1116,6 +1166,24 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
                 {account.ChainAffiliation && <p className="text-navy-700/50">{account.ChainAffiliation}</p>}
                 {account.HighRiskPrograms && <p className="text-navy-700/50">Programs: {account.HighRiskPrograms}</p>}
                 {account.RehabProvider && <p className="text-navy-700/50">Rehab: {account.RehabProvider}</p>}
+                {account.RecentOwnershipChange === 'Yes' && (
+                  <p className="text-amber-600 font-medium">⚡ Recent ownership change</p>
+                )}
+                {account.SpecialFocusStatus && (
+                  <p className="text-red-500 font-medium">⚠ {account.SpecialFocusStatus}</p>
+                )}
+                {account.AbuseFlag === 'Yes' && (
+                  <p className="text-red-500 font-medium">⚠ Abuse history flag</p>
+                )}
+                {(account.StaffingHoursPerResidentDay || account.FinesHistory || account.CaseMixIndex) && (
+                  <p className="text-navy-700/40 text-xs mt-0.5">
+                    {account.StaffingHoursPerResidentDay && `Staffing: ${account.StaffingHoursPerResidentDay}`}
+                    {account.StaffingHoursPerResidentDay && account.FinesHistory && ' · '}
+                    {account.FinesHistory && `Fines: ${account.FinesHistory}`}
+                    {(account.StaffingHoursPerResidentDay || account.FinesHistory) && account.CaseMixIndex && ' · '}
+                    {account.CaseMixIndex && `Case-mix: ${account.CaseMixIndex}`}
+                  </p>
+                )}
                 {account.Website && <p><a href={account.Website} target="_blank" className="text-teal-600 hover:underline">{account.Website}</a></p>}
                 {account.SimplePracticeUrl && (
                   <p>
