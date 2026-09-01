@@ -559,6 +559,51 @@ function EmptyState({ message, hint }) {
 }
 
 // ---------------------------------------------------------------------
+// FEES propensity score — computed live from data already on the account,
+// never stored, so it's always current as fields get updated. Weighted
+// toward clinical need (case-mix acuity, high-risk programs, size) over
+// sales-timing signals (recent ownership change, no rehab provider on
+// file), per your call that clinical need should dominate.
+// ---------------------------------------------------------------------
+function computePropensityScore(account) {
+  const cmi = parseFloat(account.CaseMixIndex);
+  if (isNaN(cmi)) return null; // not enough data to score meaningfully
+
+  const beds = parseFloat(account.BedCount);
+  const programCount = (account.HighRiskPrograms || '').split(',').map(s => s.trim()).filter(Boolean).length;
+  const ownerChange = account.RecentOwnershipChange === 'Yes';
+  const hasRehabProvider = !!(account.RehabProvider && account.RehabProvider.trim());
+
+  const cmiScore = Math.max(0, Math.min(1, (cmi - 1.0) / 0.8)) * 50;
+  const programScore = Math.min(programCount * 7, 20);
+  const bedScore = (!isNaN(beds) ? Math.min(beds / 250, 1) : 0) * 10;
+  const clinical = cmiScore + programScore + bedScore; // out of 80
+
+  const ownerScore = ownerChange ? 12 : 0;
+  const rehabScore = hasRehabProvider ? 0 : 8;
+  const timing = ownerScore + rehabScore; // out of 20
+
+  const total = clinical + timing;
+  const label = total >= 50 ? 'High' : total >= 30 ? 'Medium' : 'Low';
+  return { score: total, label };
+}
+
+function PropensityBadge({ account }) {
+  const result = computePropensityScore(account);
+  if (!result) return null;
+  const styles = {
+    High: 'bg-teal-50 text-teal-600',
+    Medium: 'bg-amber-50 text-amber-600',
+    Low: 'bg-skyblue-100 text-navy-700/60'
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${styles[result.label]}`}>
+      FEES fit: {result.label}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------
 // Status pill
 // ---------------------------------------------------------------------
 function StatusPill({ status }) {
@@ -1149,6 +1194,7 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="font-display text-2xl text-navy-900">{account.AccountName}</h1>
                 <StatusPill status={account.Status} />
+                <PropensityBadge account={account} />
                 <FollowUpBadge nextFollowUp={account.NextFollowUp} />
                 <UpcomingActivityBadge upcoming={upcomingActivity} />
               </div>
@@ -1903,6 +1949,7 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
                         )}
                       </div>
                       <div className="flex items-center gap-2">
+                        <PropensityBadge account={a} />
                         <FollowUpBadge nextFollowUp={a.NextFollowUp} />
                         <UpcomingActivityBadge upcoming={upcomingByAccount[a.AccountId]} />
                         <StatusPill status={a.Status} />
