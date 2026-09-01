@@ -175,7 +175,8 @@ const KNOWN_TOWNS = [
   'Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth',
   'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth',
   'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate',
-  'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth'
+  'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth',
+  'New Bedford', 'Fall River', 'Dartmouth', 'Fairhaven', 'Somerset', 'Swansea', 'Westport', 'Acushnet'
 ];
 
 function escapeRegex_(str) {
@@ -755,6 +756,7 @@ function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) 
           <select value={form.Region || 'Cape Cod'} onChange={set('Region')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white">
             <option>Cape Cod</option>
             <option>South Shore</option>
+            <option>South Coast</option>
           </select>
         </label>
         {form.Status === 'Customer' && (
@@ -1999,7 +2001,7 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
 
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit">
-          {['All Regions', 'Cape Cod', 'South Shore'].map(r => (
+          {['All Regions', 'Cape Cod', 'South Shore', 'South Coast'].map(r => (
             <button
               key={r}
               onClick={() => setRegion(r)}
@@ -2127,7 +2129,13 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list' | 'detail' | 'create'
   const [selectedId, setSelectedId] = useState(null);
-  const [region, setRegion] = useState('Cape Cod'); // 'All Regions' | 'Cape Cod' | 'South Shore' — lives here (not in AccountList) so it survives navigating to an account and back
+  // Remembers the last region selected across sessions (localStorage
+  // persists even after closing the browser, unlike sessionStorage).
+  const [region, setRegion] = useState(() => localStorage.getItem('bdd_crm_region') || 'Cape Cod'); // 'All Regions' | 'Cape Cod' | 'South Shore' | 'South Coast' — lives here (not in AccountList) so it survives navigating to an account and back
+
+  useEffect(() => {
+    localStorage.setItem('bdd_crm_region', region);
+  }, [region]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
