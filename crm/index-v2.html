@@ -253,6 +253,50 @@ function daysSince(dateStr) {
   return Math.floor((Date.now() - then.getTime()) / 86400000);
 }
 
+// --- Distance from key locations ---
+// Straight-line ("as the crow flies") distance, not driving distance --
+// kept this way to avoid extra Google Maps API calls per account view.
+// Worth knowing: for South Shore <-> Cape Cod comparisons specifically,
+// straight-line distance can understate real driving distance, since the
+// Cape Cod Canal means the actual drive has to go around via the bridges.
+// Clicking the link opens real Google Maps directions with the actual
+// driving route and distance.
+const DISTANCE_ORIGINS = [
+  { label: 'Norwell', address: '35 Riverside Drive, Norwell, MA 02061', lat: 42.1344973, lng: -70.7936009 },
+  { label: 'Cape House', address: '31 Bramble Lane, Dennis, MA 02638', lat: 41.7350211, lng: -70.2026817 },
+  { label: 'Cape Cod Hospital', address: '27 Park Street, Hyannis, MA 02601', lat: 41.6527374, lng: -70.2731793 }
+];
+
+function haversineMiles(lat1, lng1, lat2, lng2) {
+  const toRad = deg => deg * Math.PI / 180;
+  const R = 3958.8; // Earth's radius in miles
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function DistanceLinks({
+  account
+}) {
+  const lat = parseFloat(account.Latitude);
+  const lng = parseFloat(account.Longitude);
+  if (!lat || !lng) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 text-xs text-skyblue-100 mb-3 flex-wrap"
+  }, DISTANCE_ORIGINS.map(origin => {
+    const miles = haversineMiles(lat, lng, origin.lat, origin.lng);
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin.address)}&destination=${encodeURIComponent(account.Address)}`;
+    return /*#__PURE__*/React.createElement("a", {
+      key: origin.label,
+      href: url,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      className: "hover:underline hover:text-white"
+    }, miles.toFixed(1), " mi from ", origin.label);
+  }));
+}
+
 function stageColor(stage) {
   const map = {
     'TARGET': 'bg-skyblue-100 text-navy-700/60',
@@ -1480,7 +1524,9 @@ function AccountSnapshot({
     }, cadence.overdue ? `CADENCE OVERDUE (${Math.abs(cadence.dueInDays)}d)` : `NEXT VISIT DUE IN ${cadence.dueInDays}D`);
   })()), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-skyblue-100 mb-3"
-  }, [account.BedCount && `${account.BedCount} beds`, account.CMSRating && `CMS: ${getCmsOverallNumber(account.CMSRating) !== null ? getCmsOverallNumber(account.CMSRating) + '/5' : account.CMSRating}`, town, account.ChainAffiliation].filter(Boolean).join(' | ')), (account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' || account.VolumeOpportunity || account.RehabActivity && account.RehabActivity !== 'Unknown') && /*#__PURE__*/React.createElement("div", {
+  }, [account.BedCount && `${account.BedCount} beds`, account.CMSRating && `CMS: ${getCmsOverallNumber(account.CMSRating) !== null ? getCmsOverallNumber(account.CMSRating) + '/5' : account.CMSRating}`, town, account.ChainAffiliation].filter(Boolean).join(' | ')), /*#__PURE__*/React.createElement(DistanceLinks, {
+    account: account
+  }), (account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' || account.VolumeOpportunity || account.RehabActivity && account.RehabActivity !== 'Unknown') && /*#__PURE__*/React.createElement("div", {
     className: "flex gap-4 text-xs text-skyblue-100 mb-3 flex-wrap"
   }, account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' && /*#__PURE__*/React.createElement("span", null, "CLINICAL NEED: ", /*#__PURE__*/React.createElement("span", {
     className: "font-semibold text-white"
@@ -2214,31 +2260,6 @@ function AccountDetail({
 // fly via Google's client-side Geocoder and cached back to the Sheet
 // (Latitude/Longitude) so repeat visits don't re-geocode every address.
 // ---------------------------------------------------------------------
-function getMarkerColor(a, colorBy) {
-  if (colorBy === 'opportunity') {
-    const o = computeOverallFeesOpportunity(a);
-    if (!o) return '#94a3b8';
-    return o.label === 'Very High' || o.label === 'High' ? '#0f766e' : o.label === 'Medium' ? '#f59e0b' : '#94a3b8';
-  }
-  if (colorBy === 'stage') {
-    const stageHex = {
-      'TARGET': '#a9c6dc', 'RESEARCHED': '#a9c6dc',
-      'CONTACTED': '#f59e0b', 'CONNECTED': '#f59e0b',
-      'CLINICAL CHAMPION': '#2dd4bf', 'REFERRAL DISCUSSION': '#2dd4bf',
-      'FIRST FEES': '#14b8a6', 'ACTIVE REFERRER': '#0f766e',
-      'DORMANT': '#94a3b8', 'NOT A FIT': '#cbd5e1'
-    };
-    return stageHex[a.RelationshipStage] || '#a9c6dc';
-  }
-  return a.Status === 'Customer' ? '#0f766e' : '#a9c6dc'; // default: status
-}
-
-const MAP_LEGENDS = {
-  status: [{ color: '#0f766e', label: 'Customer' }, { color: '#a9c6dc', label: 'Prospect' }],
-  opportunity: [{ color: '#0f766e', label: 'High / Very High' }, { color: '#f59e0b', label: 'Medium' }, { color: '#94a3b8', label: 'Low / not assessed' }],
-  stage: [{ color: '#0f766e', label: 'Active Referrer' }, { color: '#14b8a6', label: 'First FEES' }, { color: '#2dd4bf', label: 'Clinical Champion / Referral Discussion' }, { color: '#f59e0b', label: 'Contacted / Connected' }, { color: '#a9c6dc', label: 'Target / Researched' }, { color: '#94a3b8', label: 'Dormant / Not a Fit' }]
-};
-
 function MapView({
   accounts,
   contacts,
@@ -2248,7 +2269,6 @@ function MapView({
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'no-key'
-  const [colorBy, setColorBy] = useState('status'); // 'status' | 'opportunity' | 'stage'
 
   useEffect(() => {
     let cancelled = false;
@@ -2318,32 +2338,24 @@ function MapView({
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 8,
-            fillColor: getMarkerColor(a, colorBy),
+            fillColor: a.Status === 'Customer' ? '#0f766e' : '#a9c6dc',
             fillOpacity: 1,
             strokeColor: '#081e3d',
             strokeWeight: 1.5
           }
         });
-        const opportunity = computeOverallFeesOpportunity(a);
+        const propensity = computeOverallFeesOpportunity(a);
         const town = getTown(a.Address);
-        const people = [...contacts.filter(c => c.AccountId === a.AccountId), ...connections.filter(c => c.AccountId === a.AccountId)];
-        const bestPhone = (people.find(p => p.Phone) || {}).Phone || a.Phone;
-        const bestEmail = (people.find(p => p.Email) || {}).Email;
-        const nextActionOverdue = a.NextFollowUp && new Date(a.NextFollowUp) < new Date(new Date().toDateString());
-        const content = `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:190px;">
+        const content = `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:170px;">
             <div style="color:#081e3d;font-weight:700 !important;font-size:15px;line-height:1.3;">${escapeHtml_(a.AccountName)}</div>
             ${town && town !== 'Unknown' ? `<div style="font-size:12px;color:#5a6b80;margin-top:1px;">${escapeHtml_(town)}</div>` : ''}
             <div style="margin-top:4px;">
-              ${opportunity ? `<span style="font-size:11px;color:#b45309;">FEES: ${escapeHtml_(opportunity.label)}</span>` : ''}
-              <span style="font-size:11px;color:#334;margin-left:6px;">${escapeHtml_(a.RelationshipStage || 'TARGET')}</span>
+              <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${escapeHtml_(a.Status)}</span>
+              ${propensity ? `<span style="font-size:11px;color:#b45309;margin-left:6px;">· FEES fit: ${escapeHtml_(propensity.label)}</span>` : ''}
             </div>
-            ${a.NextAction ? `<div style="font-size:12px;color:${nextActionOverdue ? '#b45309' : '#0f766e'};margin-top:4px;">${escapeHtml_(a.NextAction)}${a.NextFollowUp ? ` — due ${escapeHtml_(formatShortDate(new Date(a.NextFollowUp)))}` : ''}${nextActionOverdue ? ' (OVERDUE)' : ''}</div>` : ''}
-            <div style="margin-top:6px;display:flex;gap:10px;font-size:12px;">
-              ${bestPhone ? `<a href="tel:${escapeHtml_(bestPhone.replace(/[^\\d+]/g, ''))}" style="color:#0f766e;">Call</a>` : ''}
-              ${bestEmail ? `<a href="mailto:${escapeHtml_(bestEmail)}" style="color:#0f766e;">Email</a>` : ''}
-              <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.Address)}" target="_blank" rel="noopener noreferrer" style="color:#0f766e;">Directions</a>
-            </div>
-            <button onclick="window.__crmSelectAccount('${escapeHtml_(a.AccountId)}')" style="margin-top:8px;background:#0f766e;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">View account</button>
+            ${a.Rating ? `<div style="font-size:12px;color:#b45309;margin-top:2px;">★ ${escapeHtml_(a.Rating)}</div>` : ''}
+            ${a.BedCount ? `<div style="font-size:12px;color:#556;">${escapeHtml_(a.BedCount)} beds</div>` : ''}
+            <button onclick="window.__crmSelectAccount('${escapeHtml_(a.AccountId)}')" style="margin-top:6px;background:#0f766e;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">View account</button>
           </div>`;
         marker.addListener('click', () => {
           sharedInfoWindow.setContent(content);
@@ -2360,37 +2372,30 @@ function MapView({
       markersRef.current.forEach(m => m.setMap(null));
       markersRef.current = [];
     };
-  }, [accounts, colorBy]);
+  }, [accounts]);
   if (status === 'no-key') {
     return /*#__PURE__*/React.createElement("div", {
       className: "bg-white rounded-xl border border-skyblue-100 p-10 text-center text-navy-700/50 text-sm"
     }, "Map view needs a Google Maps API key configured in GOOGLE_MAPS_API_KEY — see the README.");
   }
-  const legend = MAP_LEGENDS[colorBy];
   return /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-2 px-4 py-2 border-b border-skyblue-100"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-xs text-navy-700/50"
-  }, "Color by:"), ['status', 'opportunity', 'stage'].map(mode => /*#__PURE__*/React.createElement("button", {
-    key: mode,
-    onClick: () => setColorBy(mode),
-    className: `px-2.5 py-1 rounded-md text-xs font-medium capitalize transition ${colorBy === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, mode === 'opportunity' ? 'FEES Opportunity' : mode))), status === 'loading' && /*#__PURE__*/React.createElement("p", {
+  }, status === 'loading' && /*#__PURE__*/React.createElement("p", {
     className: "text-center text-navy-700/40 text-sm py-3"
   }, "Plotting accounts…"), /*#__PURE__*/React.createElement("div", {
     ref: mapRef,
     className: "w-full h-[500px]"
   }), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60 flex-wrap"
-  }, legend.map(item => /*#__PURE__*/React.createElement("span", {
-    key: item.label,
+    className: "flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60"
+  }, /*#__PURE__*/React.createElement("span", {
     className: "flex items-center gap-1.5"
   }, /*#__PURE__*/React.createElement("span", {
-    className: "w-2.5 h-2.5 rounded-full border border-navy-900/20",
-    style: { backgroundColor: item.color }
-  }), item.label))));
+    className: "w-2.5 h-2.5 rounded-full bg-teal-500 border border-navy-900/20"
+  }), "Customer"), /*#__PURE__*/React.createElement("span", {
+    className: "flex items-center gap-1.5"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2.5 h-2.5 rounded-full bg-skyblue-500 border border-navy-900/20"
+  }), "Prospect")));
 }
 
 // ---------------------------------------------------------------------
