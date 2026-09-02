@@ -1863,7 +1863,7 @@ function AccountDetail({
   const logActivity = async () => {
     if (!activityType) return;
     setBusy(true);
-    await apiPost('createActivity', {
+    const response = await apiPost('createActivity', {
       data: {
         AccountId: account.AccountId,
         ActivityType: activityType,
@@ -1873,13 +1873,17 @@ function AccountDetail({
         NextActionDue: activityNextActionDue
       }
     });
+    setBusy(false);
+    if (!response.success) {
+      window.__crmShowToast && window.__crmShowToast('Failed to save: ' + (response.error || 'unknown error'));
+      return;
+    }
     setLoggingActivity(false);
     setActivityType('Call');
     setActivityResult('');
     setActivityDetails('');
     setActivityNextAction('');
     setActivityNextActionDue('');
-    setBusy(false);
     onRefresh();
     loadActivities();
     window.__crmShowToast && window.__crmShowToast('Activity logged');
