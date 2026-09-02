@@ -254,46 +254,32 @@ function daysSince(dateStr) {
 }
 
 // --- Distance from key locations ---
-// Straight-line ("as the crow flies") distance, not driving distance --
-// kept this way to avoid extra Google Maps API calls per account view.
-// Worth knowing: for South Shore <-> Cape Cod comparisons specifically,
-// straight-line distance can understate real driving distance, since the
-// Cape Cod Canal means the actual drive has to go around via the bridges.
-// Clicking the link opens real Google Maps directions with the actual
-// driving route and distance.
-const DISTANCE_ORIGINS = [
-  { label: 'Norwell', address: '35 Riverside Drive, Norwell, MA 02061', lat: 42.1344973, lng: -70.7936009 },
-  { label: 'Cape House', address: '31 Bramble Lane, Dennis, MA 02638', lat: 41.7350211, lng: -70.2026817 },
-  { label: 'Cape Cod Hospital', address: '27 Park Street, Hyannis, MA 02601', lat: 41.6527374, lng: -70.2731793 }
+// Real driving distances, fetched once server-side via Google's Distance
+// Matrix API when an account's address is set/changed, and stored on the
+// account — not recomputed here. Each link opens live Google Maps
+// directions for the actual current route.
+const DISTANCE_FIELDS = [
+  { field: 'DistanceFromNorwell', label: 'Norwell', address: '35 Riverside Drive, Norwell, MA 02061' },
+  { field: 'DistanceFromCapeHouse', label: 'Cape House', address: '31 Bramble Lane, Dennis, MA 02638' },
+  { field: 'DistanceFromCapeCodHospital', label: 'Cape Cod Hospital', address: '27 Park Street, Hyannis, MA 02601' }
 ];
-
-function haversineMiles(lat1, lng1, lat2, lng2) {
-  const toRad = deg => deg * Math.PI / 180;
-  const R = 3958.8; // Earth's radius in miles
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 function DistanceLinks({
   account
 }) {
-  const lat = parseFloat(account.Latitude);
-  const lng = parseFloat(account.Longitude);
-  if (!lat || !lng) return null;
+  const withDistance = DISTANCE_FIELDS.filter(d => account[d.field]);
+  if (withDistance.length === 0) return null;
   return /*#__PURE__*/React.createElement("div", {
     className: "flex gap-4 text-xs text-skyblue-100 mb-3 flex-wrap"
-  }, DISTANCE_ORIGINS.map(origin => {
-    const miles = haversineMiles(lat, lng, origin.lat, origin.lng);
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin.address)}&destination=${encodeURIComponent(account.Address)}`;
+  }, withDistance.map(d => {
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(d.address)}&destination=${encodeURIComponent(account.Address)}`;
     return /*#__PURE__*/React.createElement("a", {
-      key: origin.label,
+      key: d.field,
       href: url,
       target: "_blank",
       rel: "noopener noreferrer",
       className: "hover:underline hover:text-white"
-    }, miles.toFixed(1), " mi from ", origin.label);
+    }, account[d.field], " mi from ", d.label);
   }));
 }
 
