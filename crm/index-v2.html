@@ -269,6 +269,50 @@ function stageColor(stage) {
   return map[stage] || 'bg-skyblue-100 text-navy-700/60';
 }
 
+// --- Phase 2: FEES Business Development ---
+const NEED_LEVELS = ['Unknown', 'Low', 'Medium', 'High', 'Very High'];
+const VOLUME_LEVELS = ['Low', 'Medium', 'High', 'Very High'];
+const ACCESS_LEVELS = ['None', 'Cold', 'Contacted', 'Connected', 'Champion'];
+const INSTRUMENTAL_ASSESSMENT_OPTIONS = ['No instrumental assessment', 'MBS', 'FEES in-house', 'External FEES provider', 'Hospital referral', 'Unknown', 'Other'];
+const DYSPHAGIA_PAIN_POINTS = ['Transport burden', 'Scheduling delay', 'Hospital dependence', 'Limited SLP resources', 'No local FEES provider', 'Medically fragile to transport', 'Cost', 'Current process works well', 'Unknown', 'Other'];
+const ESTIMATED_VOLUME_OPTIONS = ['0-1 FEES/month', '1-2 FEES/month', '3-5 FEES/month', '5+/month', 'Unknown'];
+
+// Blends Clinical Need + Volume Opportunity + Rehab Activity (+ Access as a
+// smaller modifier) into a transparent Overall FEES Opportunity label. This
+// is a BUSINESS DEVELOPMENT priority score, not a clinical risk score —
+// it reflects your own judgment on these fields, not an algorithm reading
+// clinical facts. Falls back to the CMS-data-driven propensity score
+// (computePropensityScore) when none of these have been assessed yet, so
+// a freshly-researched prospect still shows a sensible starting point.
+function computeOverallFeesOpportunity(account) {
+  const scale = { 'Unknown': null, 'Low': 1, 'Medium': 2, 'High': 3, 'Very High': 4 };
+  const accessScale = { 'None': 0, 'Cold': 1, 'Contacted': 2, 'Connected': 3, 'Champion': 4 };
+  const cn = scale[account.ClinicalNeed];
+  const vo = scale[account.VolumeOpportunity];
+  const ra = scale[account.RehabActivity];
+  const parts = [cn, vo, ra].filter(v => v !== null && v !== undefined);
+  if (parts.length === 0) {
+    // Nothing manually assessed yet — fall back to the CMS-data score.
+    const fallback = computePropensityScore(account);
+    return fallback ? { label: fallback.label, source: 'auto' } : null;
+  }
+  let avg = parts.reduce((a, b) => a + b, 0) / parts.length;
+  const access = accessScale[account.AccessRelationship];
+  if (access !== undefined && access >= 3) avg += 0.5; // Connected/Champion nudges opportunity up
+  const label = avg >= 3.25 ? 'Very High' : avg >= 2.25 ? 'High' : avg >= 1.25 ? 'Medium' : 'Low';
+  return { label: label, source: 'manual' };
+}
+
+function overallOpportunityColor(label) {
+  const map = {
+    'Very High': 'bg-teal-500',
+    'High': 'bg-teal-500',
+    'Medium': 'bg-amber-500',
+    'Low': 'bg-skyblue-700'
+  };
+  return map[label] || 'bg-skyblue-700';
+}
+
 function escapeRegex_(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -806,9 +850,10 @@ function PropensityBadge({
   account,
   compact
 }) {
-  const result = computePropensityScore(account);
+  const result = computeOverallFeesOpportunity(account);
   if (!result) return null;
   const styles = {
+    'Very High': 'bg-teal-500 text-white',
     High: 'bg-teal-50 text-teal-600',
     Medium: 'bg-amber-50 text-amber-600',
     Low: 'bg-skyblue-100 text-navy-700/60'
@@ -886,6 +931,7 @@ function AccountForm({
   // Sections default open if they already have data, so editing an
   // existing account never hides what's already filled in.
   const hasFacilityData = !!(initial && (initial.CMSRating || initial.BedCount || initial.ChainAffiliation || initial.HighRiskPrograms || initial.RehabProvider || initial.Rating));
+  const hasFeesBizDev = !!(initial && (initial.ClinicalNeed && initial.ClinicalNeed !== 'Unknown' || initial.VolumeOpportunity || initial.RehabActivity && initial.RehabActivity !== 'Unknown' || initial.AccessRelationship && initial.AccessRelationship !== 'None' || initial.FeesTrigger || initial.ReferralPotential));
   const hasSalesIntel = !!(initial && (initial.RecentOwnershipChange === 'Yes' || initial.SpecialFocusStatus || initial.AbuseFlag === 'Yes' || initial.StaffingHoursPerResidentDay || initial.FinesHistory || initial.CaseMixIndex));
 
   // Wire up Google Places Autocomplete on the Account Name field, if a real
@@ -1073,6 +1119,110 @@ function AccountForm({
     placeholder: "e.g. in-house, or contracted vendor name",
     className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
   }))), /*#__PURE__*/React.createElement(FormSection, {
+    title: "FEES Business Development",
+    defaultOpen: hasFeesBizDev
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Clinical need"), /*#__PURE__*/React.createElement("select", {
+    value: form.ClinicalNeed || 'Unknown',
+    onChange: set('ClinicalNeed'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, NEED_LEVELS.map(l => /*#__PURE__*/React.createElement("option", {
+    key: l,
+    value: l
+  }, l)))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Volume opportunity"), /*#__PURE__*/React.createElement("select", {
+    value: form.VolumeOpportunity || '',
+    onChange: set('VolumeOpportunity'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Not assessed"), VOLUME_LEVELS.map(l => /*#__PURE__*/React.createElement("option", {
+    key: l,
+    value: l
+  }, l)))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Rehab activity"), /*#__PURE__*/React.createElement("select", {
+    value: form.RehabActivity || 'Unknown',
+    onChange: set('RehabActivity'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, NEED_LEVELS.map(l => /*#__PURE__*/React.createElement("option", {
+    key: l,
+    value: l
+  }, l)))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Access / relationship"), /*#__PURE__*/React.createElement("select", {
+    value: form.AccessRelationship || 'None',
+    onChange: set('AccessRelationship'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, ACCESS_LEVELS.map(l => /*#__PURE__*/React.createElement("option", {
+    key: l,
+    value: l
+  }, l)))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm sm:col-span-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "FEES trigger — why this account?"), /*#__PURE__*/React.createElement("input", {
+    value: form.FeesTrigger || '',
+    onChange: set('FeesTrigger'),
+    placeholder: "e.g. High rehab volume + no confirmed in-house FEES provider",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Current instrumental assessment"), /*#__PURE__*/React.createElement("select", {
+    value: form.CurrentInstrumentalAssessment || 'Unknown',
+    onChange: set('CurrentInstrumentalAssessment'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, INSTRUMENTAL_ASSESSMENT_OPTIONS.map(o => /*#__PURE__*/React.createElement("option", {
+    key: o,
+    value: o
+  }, o)))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Dysphagia / FEES pain point"), /*#__PURE__*/React.createElement("select", {
+    value: form.DysphagiaPainPoint || 'Unknown',
+    onChange: set('DysphagiaPainPoint'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, DYSPHAGIA_PAIN_POINTS.map(o => /*#__PURE__*/React.createElement("option", {
+    key: o,
+    value: o
+  }, o)))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Referral potential"), /*#__PURE__*/React.createElement("select", {
+    value: form.ReferralPotential || '',
+    onChange: set('ReferralPotential'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Not assessed"), VOLUME_LEVELS.map(l => /*#__PURE__*/React.createElement("option", {
+    key: l,
+    value: l
+  }, l)))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Estimated FEES volume (estimate only — not a patient count)"), /*#__PURE__*/React.createElement("select", {
+    value: form.EstimatedFeesVolume || 'Unknown',
+    onChange: set('EstimatedFeesVolume'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, ESTIMATED_VOLUME_OPTIONS.map(o => /*#__PURE__*/React.createElement("option", {
+    key: o,
+    value: o
+  }, o))))), /*#__PURE__*/React.createElement(FormSection, {
     title: "Sales Intelligence",
     defaultOpen: hasSalesIntel
   }, /*#__PURE__*/React.createElement("label", {
@@ -1371,19 +1521,30 @@ function AccountSnapshot({
   daysSinceLastContact,
   nextActionOverdue
 }) {
-  const propensity = computePropensityScore(account);
+  const opportunity = computeOverallFeesOpportunity(account);
   const town = getTown(account.Address);
   return /*#__PURE__*/React.createElement("div", {
     className: "bg-navy-900 text-white rounded-xl p-5 mb-4"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-2 flex-wrap mb-3"
-  }, propensity && /*#__PURE__*/React.createElement("span", {
-    className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${propensity.label === 'High' ? 'bg-teal-500' : propensity.label === 'Medium' ? 'bg-amber-500' : 'bg-skyblue-700'} text-white`
-  }, "FEES OPPORTUNITY: ", propensity.label.toUpperCase()), /*#__PURE__*/React.createElement("span", {
+  }, opportunity && /*#__PURE__*/React.createElement("span", {
+    className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${overallOpportunityColor(opportunity.label)} text-white`,
+    title: opportunity.source === 'auto' ? 'Based on facility data — assess Clinical Need / Volume / Rehab Activity below to refine' : 'Based on your Clinical Need / Volume / Rehab Activity / Access assessment'
+  }, "FEES OPPORTUNITY: ", opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)'), /*#__PURE__*/React.createElement("span", {
     className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
   }, account.RelationshipStage || 'TARGET')), /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-skyblue-100 mb-4"
-  }, [account.BedCount && `${account.BedCount} beds`, town, account.ChainAffiliation].filter(Boolean).join(' | ')), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-skyblue-100 mb-3"
+  }, [account.BedCount && `${account.BedCount} beds`, town, account.ChainAffiliation].filter(Boolean).join(' | ')), (account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' || account.VolumeOpportunity || account.RehabActivity && account.RehabActivity !== 'Unknown') && /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 text-xs text-skyblue-100 mb-3 flex-wrap"
+  }, account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' && /*#__PURE__*/React.createElement("span", null, "CLINICAL NEED: ", /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold text-white"
+  }, account.ClinicalNeed.toUpperCase())), account.VolumeOpportunity && /*#__PURE__*/React.createElement("span", null, "VOLUME: ", /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold text-white"
+  }, account.VolumeOpportunity.toUpperCase())), account.RehabActivity && account.RehabActivity !== 'Unknown' && /*#__PURE__*/React.createElement("span", null, "REHAB ACTIVITY: ", /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold text-white"
+  }, account.RehabActivity.toUpperCase()))), account.FeesTrigger && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-skyblue-100 mb-4 italic"
+  }, "\u201C", account.FeesTrigger, "\u201D"), /*#__PURE__*/React.createElement("div", {
     className: "grid sm:grid-cols-2 gap-3 text-sm"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-skyblue-200 uppercase tracking-wide"
@@ -1395,9 +1556,15 @@ function AccountSnapshot({
     className: "font-medium"
   }, decisionMakerContact ? `${decisionMakerContact.RoleCategory} — ${decisionMakerContact.ContactName}` : 'Unknown')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-skyblue-200 uppercase tracking-wide"
+  }, "Current Instrumental"), /*#__PURE__*/React.createElement("p", {
+    className: "font-medium"
+  }, account.CurrentInstrumentalAssessment || 'Unknown')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-skyblue-200 uppercase tracking-wide"
   }, "Last Contact"), /*#__PURE__*/React.createElement("p", {
     className: "font-medium"
-  }, account.LastContactDate ? `${daysSinceLastContact} day${daysSinceLastContact === 1 ? '' : 's'} ago (${account.LastContactType || 'contact'})` : 'Never contacted')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+  }, account.LastContactDate ? `${daysSinceLastContact} day${daysSinceLastContact === 1 ? '' : 's'} ago (${account.LastContactType || 'contact'})` : 'Never contacted')), /*#__PURE__*/React.createElement("div", {
+    className: "sm:col-span-2"
+  }, /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-skyblue-200 uppercase tracking-wide"
   }, "Next Action"), /*#__PURE__*/React.createElement("p", {
     className: `font-medium ${nextActionOverdue ? 'text-amber-300' : ''}`
@@ -2309,7 +2476,7 @@ function MapView({
             strokeWeight: 1.5
           }
         });
-        const propensity = computePropensityScore(a);
+        const propensity = computeOverallFeesOpportunity(a);
         const town = getTown(a.Address);
         const content = `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:170px;">
             <div style="color:#081e3d;font-weight:700 !important;font-size:15px;line-height:1.3;">${escapeHtml_(a.AccountName)}</div>
@@ -2427,7 +2594,7 @@ function TableView({
         return getTown(a.Address);
       case 'Propensity':
         {
-          const p = computePropensityScore(a);
+          const p = computeOverallFeesOpportunity(a);
           return p ? p.score : -1;
         }
       case 'CMSRating':
@@ -2480,7 +2647,7 @@ function TableView({
   const exportCsv = () => {
     const csvHeaders = ['Account Name', 'Status', 'Region', 'Town', 'Address', 'Phone', 'Website', 'FEES Fit', 'CMS Rating', 'Beds', 'Chain', 'Next Follow-up'];
     const csvRows = sorted.map(a => {
-      const p = computePropensityScore(a);
+      const p = computeOverallFeesOpportunity(a);
       const cms = getCmsOverallNumber(a.CMSRating);
       return [a.AccountName, a.Status, a.Region || '', getTown(a.Address), a.Address || '', a.Phone || '', a.Website || '', p ? p.label : '', cms !== null ? cms + '/5' : '', a.BedCount || '', a.ChainAffiliation || '', a.NextFollowUp || ''];
     });
@@ -2515,7 +2682,7 @@ function TableView({
     onClick: () => toggleSort(col.key),
     className: "text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-navy-700/50 cursor-pointer hover:text-navy-900 whitespace-nowrap select-none"
   }, col.label, " ", sortCol === col.key ? sortDir === 'asc' ? '▲' : '▼' : '')))), /*#__PURE__*/React.createElement("tbody", null, sorted.map(a => {
-    const propensity = computePropensityScore(a);
+    const propensity = computeOverallFeesOpportunity(a);
     const cmsNum = getCmsOverallNumber(a.CMSRating);
     return /*#__PURE__*/React.createElement("tr", {
       key: a.AccountId,
@@ -2683,8 +2850,8 @@ function AccountList({
     const list = [...filtered];
     if (sortBy === 'Propensity') {
       list.sort((a, b) => {
-        const scoreA = computePropensityScore(a);
-        const scoreB = computePropensityScore(b);
+        const scoreA = computeOverallFeesOpportunity(a);
+        const scoreB = computeOverallFeesOpportunity(b);
         return (scoreB ? scoreB.score : -1) - (scoreA ? scoreA.score : -1);
       });
     } else if (sortBy === 'CMS Rating') {
@@ -2874,7 +3041,7 @@ function DashboardAccountCard({
   why,
   onSelect
 }) {
-  const propensity = computePropensityScore(account);
+  const propensity = computeOverallFeesOpportunity(account);
   const town = getTown(account.Address);
   const people = [...contacts.filter(c => c.AccountId === account.AccountId), ...connections.filter(c => c.AccountId === account.AccountId)];
   const bestPhone = (people.find(p => p.Phone) || {}).Phone || account.Phone;
@@ -2959,7 +3126,7 @@ function TodayDashboard({
   const callsToday = accounts.filter(a => isDueToday(a) && (a.NextAction || '').toLowerCase().includes('call'));
   const visitsToday = accounts.filter(a => isDueToday(a) && (a.NextAction || '').toLowerCase().includes('visit'));
   const tier1 = accounts.filter(a => {
-    const p = computePropensityScore(a);
+    const p = computeOverallFeesOpportunity(a);
     if (!p || p.label !== 'High') return false;
     const days = daysSince(a.LastContactDate);
     return days === null || days > 14;
