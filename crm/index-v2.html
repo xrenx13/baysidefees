@@ -887,7 +887,7 @@ function AccountForm({
   // Sections default open if they already have data, so editing an
   // existing account never hides what's already filled in.
   const hasFacilityData = !!(initial && (initial.CMSRating || initial.BedCount || initial.ChainAffiliation || initial.HighRiskPrograms || initial.RehabProvider || initial.Rating));
-  const hasFeesBizDev = !!(initial && (initial.ClinicalNeed && initial.ClinicalNeed !== 'Unknown' || initial.VolumeOpportunity || initial.RehabActivity && initial.RehabActivity !== 'Unknown' || initial.AccessRelationship && initial.AccessRelationship !== 'None' || initial.FeesTrigger || initial.ReferralPotential));
+  const hasFeesBizDev = !!(initial && (initial.ClinicalNeed && initial.ClinicalNeed !== 'Unknown' || initial.VolumeOpportunity || initial.RehabActivity && initial.RehabActivity !== 'Unknown' || initial.AccessRelationship && initial.AccessRelationship !== 'None' || initial.ReferralPotential));
   const hasSalesIntel = !!(initial && (initial.RecentOwnershipChange === 'Yes' || initial.SpecialFocusStatus || initial.AbuseFlag === 'Yes' || initial.StaffingHoursPerResidentDay || initial.FinesHistory || initial.CaseMixIndex));
 
   // Wire up Google Places Autocomplete on the Account Name field, if a real
@@ -1124,15 +1124,6 @@ function AccountForm({
     key: l,
     value: l
   }, l)))), /*#__PURE__*/React.createElement("label", {
-    className: "text-sm sm:col-span-2"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-navy-700/70"
-  }, "FEES trigger — why this account?"), /*#__PURE__*/React.createElement("input", {
-    value: form.FeesTrigger || '',
-    onChange: set('FeesTrigger'),
-    placeholder: "e.g. High rehab volume + no confirmed in-house FEES provider",
-    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
-  })), /*#__PURE__*/React.createElement("label", {
     className: "text-sm"
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-navy-700/70"
@@ -1520,9 +1511,7 @@ function AccountSnapshot({
     className: "font-semibold text-white"
   }, account.VolumeOpportunity.toUpperCase())), account.RehabActivity && account.RehabActivity !== 'Unknown' && /*#__PURE__*/React.createElement("span", null, "REHAB ACTIVITY: ", /*#__PURE__*/React.createElement("span", {
     className: "font-semibold text-white"
-  }, account.RehabActivity.toUpperCase()))), account.FeesTrigger && /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-skyblue-100 mb-4 italic"
-  }, "\u201C", account.FeesTrigger, "\u201D"), /*#__PURE__*/React.createElement("div", {
+  }, account.RehabActivity.toUpperCase()))), /*#__PURE__*/React.createElement("div", {
     className: "grid sm:grid-cols-2 gap-3 text-sm"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-skyblue-200 uppercase tracking-wide"
