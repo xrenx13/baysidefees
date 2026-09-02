@@ -277,6 +277,25 @@ const INSTRUMENTAL_ASSESSMENT_OPTIONS = ['No instrumental assessment', 'MBS', 'F
 const DYSPHAGIA_PAIN_POINTS = ['Transport burden', 'Scheduling delay', 'Hospital dependence', 'Limited SLP resources', 'No local FEES provider', 'Medically fragile to transport', 'Cost', 'Current process works well', 'Unknown', 'Other'];
 const ESTIMATED_VOLUME_OPTIONS = ['0-1 FEES/month', '1-2 FEES/month', '3-5 FEES/month', '5+/month', 'Unknown'];
 
+// --- Phase 3: Field Operations ---
+const VISIT_CADENCE_OPTIONS = ['No cadence', 'Weekly', 'Every 2 weeks', 'Every 4 weeks', 'Every 6 weeks', 'Every 8 weeks', 'Quarterly', 'As needed'];
+const CADENCE_DAYS = {
+  'Weekly': 7, 'Every 2 weeks': 14, 'Every 4 weeks': 28, 'Every 6 weeks': 42,
+  'Every 8 weeks': 56, 'Quarterly': 90
+};
+
+// Returns { dueInDays, overdue } based on VisitCadence + LastContactDate, or
+// null if there's no fixed-interval cadence set or no contact has been
+// logged yet (nothing to measure from).
+function computeCadenceStatus(account) {
+  const intervalDays = CADENCE_DAYS[account.VisitCadence];
+  if (!intervalDays || !account.LastContactDate) return null;
+  const since = daysSince(account.LastContactDate);
+  if (since === null) return null;
+  const dueInDays = intervalDays - since;
+  return { dueInDays: dueInDays, overdue: dueInDays < 0 };
+}
+
 // Blends Clinical Need + Volume Opportunity + Rehab Activity (+ Access as a
 // smaller modifier) into a transparent Overall FEES Opportunity label. This
 // is a BUSINESS DEVELOPMENT priority score, not a clinical risk score —
@@ -1130,6 +1149,20 @@ function AccountForm({
     key: o,
     value: o
   }, o))))), /*#__PURE__*/React.createElement(FormSection, {
+    title: "Visit Cadence",
+    defaultOpen: !!(initial && initial.VisitCadence && initial.VisitCadence !== 'No cadence')
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "How often should you check in here?"), /*#__PURE__*/React.createElement("select", {
+    value: form.VisitCadence || 'No cadence',
+    onChange: set('VisitCadence'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, VISIT_CADENCE_OPTIONS.map(c => /*#__PURE__*/React.createElement("option", {
+    key: c,
+    value: c
+  }, c))))), /*#__PURE__*/React.createElement(FormSection, {
     title: "Sales Intelligence",
     defaultOpen: hasSalesIntel
   }, /*#__PURE__*/React.createElement("label", {
@@ -1439,7 +1472,13 @@ function AccountSnapshot({
     title: opportunity.source === 'auto' ? 'Based on facility data — assess Clinical Need / Volume / Rehab Activity below to refine' : 'Based on your Clinical Need / Volume / Rehab Activity / Access assessment'
   }, "FEES OPPORTUNITY: ", opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)'), /*#__PURE__*/React.createElement("span", {
     className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
-  }, account.RelationshipStage || 'TARGET')), /*#__PURE__*/React.createElement("p", {
+  }, account.RelationshipStage || 'TARGET'), (() => {
+    const cadence = computeCadenceStatus(account);
+    if (!cadence) return null;
+    return /*#__PURE__*/React.createElement("span", {
+      className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${cadence.overdue ? 'bg-amber-500 text-white' : 'bg-skyblue-700 text-white'}`
+    }, cadence.overdue ? `CADENCE OVERDUE (${Math.abs(cadence.dueInDays)}d)` : `NEXT VISIT DUE IN ${cadence.dueInDays}D`);
+  })()), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-skyblue-100 mb-3"
   }, [account.BedCount && `${account.BedCount} beds`, account.CMSRating && `CMS: ${getCmsOverallNumber(account.CMSRating) !== null ? getCmsOverallNumber(account.CMSRating) + '/5' : account.CMSRating}`, town, account.ChainAffiliation].filter(Boolean).join(' | ')), (account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' || account.VolumeOpportunity || account.RehabActivity && account.RehabActivity !== 'Unknown') && /*#__PURE__*/React.createElement("div", {
     className: "flex gap-4 text-xs text-skyblue-100 mb-3 flex-wrap"
@@ -1491,6 +1530,8 @@ function ActivityLogCard({
   setActivityType,
   activityResult,
   setActivityResult,
+  activityDetails,
+  setActivityDetails,
   activityNextAction,
   setActivityNextAction,
   activityNextActionDue,
@@ -1527,7 +1568,13 @@ function ActivityLogCard({
   }, "Result..."), ACTIVITY_RESULTS.map(r => /*#__PURE__*/React.createElement("option", {
     key: r,
     value: r
-  }, r))), /*#__PURE__*/React.createElement("input", {
+  }, r))), /*#__PURE__*/React.createElement("textarea", {
+    value: activityDetails,
+    onChange: e => setActivityDetails(e.target.value),
+    placeholder: "Details (optional) — what happened, key info, context...",
+    rows: 2,
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm sm:col-span-2"
+  }), /*#__PURE__*/React.createElement("input", {
     value: activityNextAction,
     onChange: e => setActivityNextAction(e.target.value),
     placeholder: "Next action (e.g. Call Director of Rehab)",
@@ -1565,7 +1612,9 @@ function ActivityLogCard({
     className: "font-medium text-navy-900 text-sm"
   }, a.ActivityType, a.ActivityResult && ` — ${a.ActivityResult}`), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40"
-  }, formatShortDate(new Date(a.Timestamp)))), a.NextAction && /*#__PURE__*/React.createElement("p", {
+  }, formatShortDate(new Date(a.Timestamp)))), a.Details && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/70 mt-1 whitespace-pre-wrap"
+  }, a.Details), a.NextAction && /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-teal-600 mt-1"
   }, "Next: ", a.NextAction, a.NextActionDue && ` (due ${formatShortDate(new Date(a.NextActionDue))})`)))));
 }
@@ -1574,7 +1623,6 @@ function AccountDetail({
   account,
   contacts,
   connections,
-  notes,
   onBack,
   onRefresh,
   roleOptions,
@@ -1590,9 +1638,6 @@ function AccountDetail({
   const [addingSuggestionEmail, setAddingSuggestionEmail] = useState(null); // which suggestion is mid-save
   const [addingConnection, setAddingConnection] = useState(false);
   const [editingConnectionId, setEditingConnectionId] = useState(null);
-  const [noteText, setNoteText] = useState('');
-  const [editingNoteId, setEditingNoteId] = useState(null);
-  const [editingNoteText, setEditingNoteText] = useState('');
   const [busy, setBusy] = useState(false);
   const [emailThreads, setEmailThreads] = useState(null); // null = not loaded yet
   const [emailsLoading, setEmailsLoading] = useState(false);
@@ -1604,12 +1649,12 @@ function AccountDetail({
   const [loggingActivity, setLoggingActivity] = useState(false);
   const [activityType, setActivityType] = useState('Call');
   const [activityResult, setActivityResult] = useState('');
+  const [activityDetails, setActivityDetails] = useState('');
   const [activityNextAction, setActivityNextAction] = useState('');
   const [activityNextActionDue, setActivityNextActionDue] = useState('');
 
   const accountContacts = contacts.filter(c => c.AccountId === account.AccountId);
   const accountConnections = connections.filter(c => c.AccountId === account.AccountId);
-  const accountNotes = notes.filter(n => n.AccountId === account.AccountId).sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
 
   // Derived for the header: which contact is the primary clinical contact
   // vs. the decision maker, based on RoleCategory (falls back to nothing
@@ -1659,7 +1704,7 @@ function AccountDetail({
     window.__crmShowToast && window.__crmShowToast('Reverted to prospect');
   };
   const removeAccount = async () => {
-    if (!confirm(`Delete "${account.AccountName}"? This also removes its contacts and notes from view (rows stay in the Sheet's Contacts/Notes tabs but won't be linked to anything). This can't be undone from the app.`)) return;
+    if (!confirm(`Delete "${account.AccountName}"? This also removes its contacts and activity history from view (rows stay in the Sheet's Contacts/Activities tabs but won't be linked to anything). This can't be undone from the app.`)) return;
     setBusy(true);
     await apiPost('deleteAccount', {
       accountId: account.AccountId
@@ -1823,6 +1868,7 @@ function AccountDetail({
         AccountId: account.AccountId,
         ActivityType: activityType,
         ActivityResult: activityResult,
+        Details: activityDetails,
         NextAction: activityNextAction,
         NextActionDue: activityNextActionDue
       }
@@ -1830,6 +1876,7 @@ function AccountDetail({
     setLoggingActivity(false);
     setActivityType('Call');
     setActivityResult('');
+    setActivityDetails('');
     setActivityNextAction('');
     setActivityNextActionDue('');
     setBusy(false);
@@ -1838,42 +1885,6 @@ function AccountDetail({
     window.__crmShowToast && window.__crmShowToast('Activity logged');
   };
 
-  const addNote = async () => {
-    if (!noteText.trim()) return;
-    setBusy(true);
-    await apiPost('addNote', {
-      accountId: account.AccountId,
-      noteText: noteText.trim()
-    });
-    setNoteText('');
-    setBusy(false);
-    onRefresh();
-    window.__crmShowToast && window.__crmShowToast('Note added');
-  };
-  const saveNoteEdit = async (noteId, text) => {
-    if (!text.trim()) return;
-    setBusy(true);
-    await apiPost('updateNote', {
-      data: {
-        NoteId: noteId,
-        NoteText: text.trim()
-      }
-    });
-    setEditingNoteId(null);
-    setBusy(false);
-    onRefresh();
-    window.__crmShowToast && window.__crmShowToast('Note saved');
-  };
-  const removeNote = async noteId => {
-    if (!confirm('Delete this note? This can\'t be undone.')) return;
-    setBusy(true);
-    await apiPost('deleteNote', {
-      noteId
-    });
-    setBusy(false);
-    onRefresh();
-    window.__crmShowToast && window.__crmShowToast('Note deleted');
-  };
   return /*#__PURE__*/React.createElement("div", {
     className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
   }, /*#__PURE__*/React.createElement("button", {
@@ -1904,6 +1915,8 @@ function AccountDetail({
     setActivityType: setActivityType,
     activityResult: activityResult,
     setActivityResult: setActivityResult,
+    activityDetails: activityDetails,
+    setActivityDetails: setActivityDetails,
     activityNextAction: activityNextAction,
     setActivityNextAction: setActivityNextAction,
     activityNextActionDue: activityNextActionDue,
@@ -2183,67 +2196,7 @@ function AccountDetail({
     minute: '2-digit'
   }))), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/50 mt-0.5"
-  }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))), /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 p-6"
-  }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900 mb-4"
-  }, "Notes & activity"), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-2 mb-5"
-  }, /*#__PURE__*/React.createElement("input", {
-    value: noteText,
-    onChange: e => setNoteText(e.target.value),
-    onKeyDown: e => e.key === 'Enter' && !e.nativeEvent.isComposing && addNote(),
-    placeholder: "Log a call, visit, or update...",
-    className: "flex-1 border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: addNote,
-    disabled: busy,
-    className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
-  }, "Log note")), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-4"
-  }, accountNotes.length === 0 && /*#__PURE__*/React.createElement("p", {
-    className: "text-navy-700/40 text-sm"
-  }, "No notes yet — log the first update below."), accountNotes.map(n => /*#__PURE__*/React.createElement("div", {
-    key: n.NoteId,
-    className: "flex gap-3 text-sm"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 shrink-0"
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "flex-1"
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "text-navy-700/40 text-xs"
-  }, new Date(n.Timestamp).toLocaleString()), editingNoteId === n.NoteId ? /*#__PURE__*/React.createElement("div", {
-    className: "mt-1"
-  }, /*#__PURE__*/React.createElement("input", {
-    value: editingNoteText,
-    onChange: e => setEditingNoteText(e.target.value),
-    onKeyDown: e => e.key === 'Enter' && !e.nativeEvent.isComposing && saveNoteEdit(n.NoteId, editingNoteText),
-    className: "w-full border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm",
-    autoFocus: true
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-3 mt-1.5"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => saveNoteEdit(n.NoteId, editingNoteText),
-    className: "text-teal-600 hover:text-teal-700 text-xs font-medium"
-  }, "Save"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setEditingNoteId(null),
-    className: "text-navy-700/60 hover:text-navy-900 text-xs"
-  }, "Cancel"))) : /*#__PURE__*/React.createElement("div", {
-    className: "flex items-start justify-between gap-3"
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "text-navy-900"
-  }, n.NoteText), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-2 text-xs shrink-0"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setEditingNoteId(n.NoteId);
-      setEditingNoteText(n.NoteText);
-    },
-    className: "text-teal-600 hover:text-teal-700"
-  }, "Edit"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => removeNote(n.NoteId),
-    className: "text-navy-700/40 hover:text-red-500"
-  }, "Delete")))))))), /*#__PURE__*/React.createElement("button", {
+  }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))), /*#__PURE__*/React.createElement("button", {
     onClick: onBack,
     className: "text-teal-600 hover:text-teal-700 text-sm mt-6 mb-2 flex items-center gap-1"
   }, "← Back to accounts"));
@@ -2257,13 +2210,41 @@ function AccountDetail({
 // fly via Google's client-side Geocoder and cached back to the Sheet
 // (Latitude/Longitude) so repeat visits don't re-geocode every address.
 // ---------------------------------------------------------------------
+function getMarkerColor(a, colorBy) {
+  if (colorBy === 'opportunity') {
+    const o = computeOverallFeesOpportunity(a);
+    if (!o) return '#94a3b8';
+    return o.label === 'Very High' || o.label === 'High' ? '#0f766e' : o.label === 'Medium' ? '#f59e0b' : '#94a3b8';
+  }
+  if (colorBy === 'stage') {
+    const stageHex = {
+      'TARGET': '#a9c6dc', 'RESEARCHED': '#a9c6dc',
+      'CONTACTED': '#f59e0b', 'CONNECTED': '#f59e0b',
+      'CLINICAL CHAMPION': '#2dd4bf', 'REFERRAL DISCUSSION': '#2dd4bf',
+      'FIRST FEES': '#14b8a6', 'ACTIVE REFERRER': '#0f766e',
+      'DORMANT': '#94a3b8', 'NOT A FIT': '#cbd5e1'
+    };
+    return stageHex[a.RelationshipStage] || '#a9c6dc';
+  }
+  return a.Status === 'Customer' ? '#0f766e' : '#a9c6dc'; // default: status
+}
+
+const MAP_LEGENDS = {
+  status: [{ color: '#0f766e', label: 'Customer' }, { color: '#a9c6dc', label: 'Prospect' }],
+  opportunity: [{ color: '#0f766e', label: 'High / Very High' }, { color: '#f59e0b', label: 'Medium' }, { color: '#94a3b8', label: 'Low / not assessed' }],
+  stage: [{ color: '#0f766e', label: 'Active Referrer' }, { color: '#14b8a6', label: 'First FEES' }, { color: '#2dd4bf', label: 'Clinical Champion / Referral Discussion' }, { color: '#f59e0b', label: 'Contacted / Connected' }, { color: '#a9c6dc', label: 'Target / Researched' }, { color: '#94a3b8', label: 'Dormant / Not a Fit' }]
+};
+
 function MapView({
   accounts,
+  contacts,
+  connections,
   onSelect
 }) {
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'no-key'
+  const [colorBy, setColorBy] = useState('status'); // 'status' | 'opportunity' | 'stage'
 
   useEffect(() => {
     let cancelled = false;
@@ -2333,24 +2314,32 @@ function MapView({
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 8,
-            fillColor: a.Status === 'Customer' ? '#0f766e' : '#a9c6dc',
+            fillColor: getMarkerColor(a, colorBy),
             fillOpacity: 1,
             strokeColor: '#081e3d',
             strokeWeight: 1.5
           }
         });
-        const propensity = computeOverallFeesOpportunity(a);
+        const opportunity = computeOverallFeesOpportunity(a);
         const town = getTown(a.Address);
-        const content = `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:170px;">
+        const people = [...contacts.filter(c => c.AccountId === a.AccountId), ...connections.filter(c => c.AccountId === a.AccountId)];
+        const bestPhone = (people.find(p => p.Phone) || {}).Phone || a.Phone;
+        const bestEmail = (people.find(p => p.Email) || {}).Email;
+        const nextActionOverdue = a.NextFollowUp && new Date(a.NextFollowUp) < new Date(new Date().toDateString());
+        const content = `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:190px;">
             <div style="color:#081e3d;font-weight:700 !important;font-size:15px;line-height:1.3;">${escapeHtml_(a.AccountName)}</div>
             ${town && town !== 'Unknown' ? `<div style="font-size:12px;color:#5a6b80;margin-top:1px;">${escapeHtml_(town)}</div>` : ''}
             <div style="margin-top:4px;">
-              <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${escapeHtml_(a.Status)}</span>
-              ${propensity ? `<span style="font-size:11px;color:#b45309;margin-left:6px;">· FEES fit: ${escapeHtml_(propensity.label)}</span>` : ''}
+              ${opportunity ? `<span style="font-size:11px;color:#b45309;">FEES: ${escapeHtml_(opportunity.label)}</span>` : ''}
+              <span style="font-size:11px;color:#334;margin-left:6px;">${escapeHtml_(a.RelationshipStage || 'TARGET')}</span>
             </div>
-            ${a.Rating ? `<div style="font-size:12px;color:#b45309;margin-top:2px;">★ ${escapeHtml_(a.Rating)}</div>` : ''}
-            ${a.BedCount ? `<div style="font-size:12px;color:#556;">${escapeHtml_(a.BedCount)} beds</div>` : ''}
-            <button onclick="window.__crmSelectAccount('${escapeHtml_(a.AccountId)}')" style="margin-top:6px;background:#0f766e;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">View account</button>
+            ${a.NextAction ? `<div style="font-size:12px;color:${nextActionOverdue ? '#b45309' : '#0f766e'};margin-top:4px;">${escapeHtml_(a.NextAction)}${a.NextFollowUp ? ` — due ${escapeHtml_(formatShortDate(new Date(a.NextFollowUp)))}` : ''}${nextActionOverdue ? ' (OVERDUE)' : ''}</div>` : ''}
+            <div style="margin-top:6px;display:flex;gap:10px;font-size:12px;">
+              ${bestPhone ? `<a href="tel:${escapeHtml_(bestPhone.replace(/[^\\d+]/g, ''))}" style="color:#0f766e;">Call</a>` : ''}
+              ${bestEmail ? `<a href="mailto:${escapeHtml_(bestEmail)}" style="color:#0f766e;">Email</a>` : ''}
+              <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.Address)}" target="_blank" rel="noopener noreferrer" style="color:#0f766e;">Directions</a>
+            </div>
+            <button onclick="window.__crmSelectAccount('${escapeHtml_(a.AccountId)}')" style="margin-top:8px;background:#0f766e;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">View account</button>
           </div>`;
         marker.addListener('click', () => {
           sharedInfoWindow.setContent(content);
@@ -2367,30 +2356,37 @@ function MapView({
       markersRef.current.forEach(m => m.setMap(null));
       markersRef.current = [];
     };
-  }, [accounts]);
+  }, [accounts, colorBy]);
   if (status === 'no-key') {
     return /*#__PURE__*/React.createElement("div", {
       className: "bg-white rounded-xl border border-skyblue-100 p-10 text-center text-navy-700/50 text-sm"
     }, "Map view needs a Google Maps API key configured in GOOGLE_MAPS_API_KEY — see the README.");
   }
+  const legend = MAP_LEGENDS[colorBy];
   return /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden"
-  }, status === 'loading' && /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 px-4 py-2 border-b border-skyblue-100"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-navy-700/50"
+  }, "Color by:"), ['status', 'opportunity', 'stage'].map(mode => /*#__PURE__*/React.createElement("button", {
+    key: mode,
+    onClick: () => setColorBy(mode),
+    className: `px-2.5 py-1 rounded-md text-xs font-medium capitalize transition ${colorBy === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
+  }, mode === 'opportunity' ? 'FEES Opportunity' : mode))), status === 'loading' && /*#__PURE__*/React.createElement("p", {
     className: "text-center text-navy-700/40 text-sm py-3"
   }, "Plotting accounts…"), /*#__PURE__*/React.createElement("div", {
     ref: mapRef,
     className: "w-full h-[500px]"
   }), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60"
-  }, /*#__PURE__*/React.createElement("span", {
+    className: "flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60 flex-wrap"
+  }, legend.map(item => /*#__PURE__*/React.createElement("span", {
+    key: item.label,
     className: "flex items-center gap-1.5"
   }, /*#__PURE__*/React.createElement("span", {
-    className: "w-2.5 h-2.5 rounded-full bg-teal-500 border border-navy-900/20"
-  }), "Customer"), /*#__PURE__*/React.createElement("span", {
-    className: "flex items-center gap-1.5"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "w-2.5 h-2.5 rounded-full bg-skyblue-500 border border-navy-900/20"
-  }), "Prospect")));
+    className: "w-2.5 h-2.5 rounded-full border border-navy-900/20",
+    style: { backgroundColor: item.color }
+  }), item.label))));
 }
 
 // ---------------------------------------------------------------------
@@ -2574,7 +2570,7 @@ function AccountList({
   accounts,
   contacts,
   connections,
-  notes,
+  activities,
   onSelect,
   onCreate,
   onSignOut,
@@ -2600,8 +2596,8 @@ function AccountList({
     if (relatedContacts.some(c => `${c.ContactName} ${c.Role}`.toLowerCase().includes(q))) return true;
     const relatedConnections = connections.filter(c => c.AccountId === a.AccountId);
     if (relatedConnections.some(c => `${c.ContactName} ${c.Role} ${c.Relationship}`.toLowerCase().includes(q))) return true;
-    const relatedNotes = notes.filter(n => n.AccountId === a.AccountId);
-    if (relatedNotes.some(n => (n.NoteText || '').toLowerCase().includes(q))) return true;
+    const relatedActivities = activities.filter(act => act.AccountId === a.AccountId);
+    if (relatedActivities.some(act => `${act.ActivityType} ${act.ActivityResult} ${act.Details} ${act.NextAction}`.toLowerCase().includes(q))) return true;
     return false;
   };
 
@@ -2798,7 +2794,7 @@ function AccountList({
   }, /*#__PURE__*/React.createElement("input", {
     value: query,
     onChange: e => setQuery(e.target.value),
-    placeholder: "Search accounts, contacts, notes...",
+    placeholder: "Search accounts, contacts, activities...",
     className: "border border-skyblue-300 rounded-lg pl-3 pr-8 py-1.5 text-sm w-full"
   }), query && /*#__PURE__*/React.createElement("button", {
     onClick: () => setQuery(''),
@@ -2822,6 +2818,8 @@ function AccountList({
     key: c
   }, c))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(MapView, {
     accounts: filtered,
+    contacts: contacts,
+    connections: connections,
     onSelect: onSelect
   }) : viewMode === 'table' ? filtered.length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100"
@@ -2976,6 +2974,10 @@ function TodayDashboard({
   const clinicalChampions = accounts.filter(a => a.RelationshipStage === 'CLINICAL CHAMPION');
   const firstFees = accounts.filter(a => a.RelationshipStage === 'FIRST FEES');
   const activeReferrers = accounts.filter(a => a.RelationshipStage === 'ACTIVE REFERRER');
+  const cadenceDue = accounts.filter(a => {
+    const c = computeCadenceStatus(a);
+    return c && c.overdue;
+  });
   return /*#__PURE__*/React.createElement("div", {
     className: "max-w-2xl mx-auto px-4 sm:px-6 py-8"
   }, /*#__PURE__*/React.createElement("button", {
@@ -3037,7 +3039,17 @@ function TodayDashboard({
     connections: connections,
     onSelect: onSelect,
     whyFn: a => 'Already sending FEES referrals'
-  }), overdue.length === 0 && callsToday.length === 0 && visitsToday.length === 0 && tier1.length === 0 && clinicalChampions.length === 0 && firstFees.length === 0 && activeReferrers.length === 0 && /*#__PURE__*/React.createElement("p", {
+  }), /*#__PURE__*/React.createElement(DashboardSection, {
+    title: "Cadence Due",
+    accounts: cadenceDue,
+    contacts: contacts,
+    connections: connections,
+    onSelect: onSelect,
+    whyFn: a => {
+      const c = computeCadenceStatus(a);
+      return `${a.VisitCadence} check-in is ${Math.abs(c.dueInDays)} day${Math.abs(c.dueInDays) === 1 ? '' : 's'} overdue`;
+    }
+  }), overdue.length === 0 && callsToday.length === 0 && visitsToday.length === 0 && tier1.length === 0 && clinicalChampions.length === 0 && firstFees.length === 0 && activeReferrers.length === 0 && cadenceDue.length === 0 && /*#__PURE__*/React.createElement("p", {
     className: "text-navy-700/40 text-sm text-center py-8"
   }, "Nothing needs attention today."));
 }
@@ -3048,7 +3060,8 @@ function App() {
     accounts: [],
     contacts: [],
     connections: [],
-    notes: []
+    notes: [],
+    activities: []
   });
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list' | 'detail' | 'create'
@@ -3068,7 +3081,8 @@ function App() {
         accounts: result.accounts || [],
         contacts: result.contacts || [],
         connections: result.connections || [],
-        notes: result.notes || []
+        notes: result.notes || [],
+        activities: result.activities || []
       });
     } catch (err) {
       console.error(err);
@@ -3129,7 +3143,6 @@ function App() {
       account: selectedAccount,
       contacts: data.contacts,
       connections: data.connections,
-      notes: data.notes,
       onBack: () => setView('list'),
       onRefresh: refresh,
       roleOptions: roleOptions,
@@ -3153,7 +3166,7 @@ function App() {
     accounts: data.accounts,
     contacts: data.contacts,
     connections: data.connections,
-    notes: data.notes,
+    activities: data.activities,
     onSelect: a => {
       setSelectedId(a.AccountId);
       setView('detail');
