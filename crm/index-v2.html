@@ -237,7 +237,7 @@ const VILLAGE_TO_TOWN = {
 
 // Full Cape Cod / South Shore towns, for direct matches and the "already
 // a town name" case.
-const KNOWN_TOWNS = ['Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth', 'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth', 'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate', 'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth', 'New Bedford', 'Fall River', 'Dartmouth', 'Fairhaven', 'Somerset', 'Swansea', 'Westport', 'Acushnet'];
+const KNOWN_TOWNS = ['Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth', 'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth', 'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate', 'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth', 'New Bedford', 'Fall River', 'Dartmouth', 'Fairhaven', 'Somerset', 'Swansea', 'Westport', 'Acushnet', 'Taunton', 'Raynham', 'Middleborough', 'Middleboro', 'Easton', 'North Easton', 'Norton', 'Dighton', 'North Dighton', 'Bridgewater', 'East Bridgewater', 'West Bridgewater', 'Carver', 'Lakeville', 'Halifax', 'Rehoboth', 'Berkley'];
 
 // --- v2 additions: Relationship Stage / Contact Role / Activity logging ---
 const RELATIONSHIP_STAGES = ['TARGET', 'RESEARCHED', 'CONTACTED', 'CONNECTED', 'CLINICAL CHAMPION', 'REFERRAL DISCUSSION', 'FIRST FEES', 'ACTIVE REFERRER', 'DORMANT', 'NOT A FIT'];
@@ -996,7 +996,7 @@ function AccountForm({
     value: form.Region || 'Cape Cod',
     onChange: set('Region'),
     className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Cape Cod"), /*#__PURE__*/React.createElement("option", null, "South Shore"), /*#__PURE__*/React.createElement("option", null, "South Coast"))), /*#__PURE__*/React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("option", null, "Cape Cod"), /*#__PURE__*/React.createElement("option", null, "South Shore"), /*#__PURE__*/React.createElement("option", null, "South Coast"), /*#__PURE__*/React.createElement("option", null, "Southeast"))), /*#__PURE__*/React.createElement("label", {
     className: "text-sm"
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-navy-700/70"
@@ -2769,7 +2769,7 @@ function AccountList({
     className: "flex items-center justify-between gap-4 mb-6 flex-wrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit"
-  }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast'].map(r => /*#__PURE__*/React.createElement("button", {
+  }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast'].map(r => /*#__PURE__*/React.createElement("button", {
     key: r,
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
