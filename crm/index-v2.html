@@ -469,91 +469,6 @@ function FollowUpBadge({
   }, labels[status]);
 }
 
-// ---------------------------------------------------------------------
-// Scan note text for a mentioned calendar date (e.g. "9/15", "Sept 15",
-// "September 15, 2026") and surface the soonest one that's today or later.
-// ---------------------------------------------------------------------
-const MONTH_NAMES = {
-  jan: 0,
-  january: 0,
-  feb: 1,
-  february: 1,
-  mar: 2,
-  march: 2,
-  apr: 3,
-  april: 3,
-  may: 4,
-  jun: 5,
-  june: 5,
-  jul: 6,
-  july: 6,
-  aug: 7,
-  august: 7,
-  sep: 8,
-  sept: 8,
-  september: 8,
-  oct: 9,
-  october: 9,
-  nov: 10,
-  november: 10,
-  dec: 11,
-  december: 11
-};
-function stripTime(d) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function parseDatesFromText(text) {
-  const dates = [];
-  if (!text) return dates;
-  const today = stripTime(new Date());
-  const currentYear = today.getFullYear();
-
-  // M/D, M/D/YY, M/D/YYYY
-  const slashRegex = /\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/g;
-  let m;
-  while ((m = slashRegex.exec(text)) !== null) {
-    const month = parseInt(m[1], 10) - 1;
-    const day = parseInt(m[2], 10);
-    if (month < 0 || month > 11 || day < 1 || day > 31) continue;
-    let year = m[3] ? parseInt(m[3], 10) : currentYear;
-    if (year < 100) year += 2000;
-    let date = new Date(year, month, day);
-    if (!m[3] && date < today) date = new Date(year + 1, month, day);
-    dates.push(date);
-  }
-
-  // Month name + day, optional year — "Sept 15", "September 15, 2026", "Sep 15th"
-  const monthRegex = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b/gi;
-  while ((m = monthRegex.exec(text)) !== null) {
-    const month = MONTH_NAMES[m[1].toLowerCase()];
-    if (month === undefined) continue;
-    const day = parseInt(m[2], 10);
-    if (day < 1 || day > 31) continue;
-    let year = m[3] ? parseInt(m[3], 10) : currentYear;
-    let date = new Date(year, month, day);
-    if (!m[3] && date < today) date = new Date(year + 1, month, day);
-    dates.push(date);
-  }
-  return dates;
-}
-
-// Given an account's notes, returns the soonest upcoming (today or later)
-// activity as { date, note }, or null if none found.
-function getUpcomingActivity(accountNotes) {
-  const today = stripTime(new Date());
-  let best = null;
-  accountNotes.forEach(n => {
-    parseDatesFromText(n.NoteText).forEach(d => {
-      if (d >= today && (!best || d < best.date)) {
-        best = {
-          date: d,
-          note: n
-        };
-      }
-    });
-  });
-  return best;
-}
 function formatShortDate(date) {
   return date.toLocaleDateString('en-US', {
     month: 'short',
@@ -572,14 +487,6 @@ function getInitials(name, fallbackEmail) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
   return (fallbackEmail || '').slice(0, 2).toUpperCase();
-}
-function UpcomingActivityBadge({
-  upcoming
-}) {
-  if (!upcoming) return null;
-  return /*#__PURE__*/React.createElement("span", {
-    className: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-600"
-  }, "Upcoming Meeting — ", formatShortDate(upcoming.date));
 }
 
 // ---------------------------------------------------------------------
@@ -1534,7 +1441,7 @@ function AccountSnapshot({
     className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
   }, account.RelationshipStage || 'TARGET')), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-skyblue-100 mb-3"
-  }, [account.BedCount && `${account.BedCount} beds`, town, account.ChainAffiliation].filter(Boolean).join(' | ')), (account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' || account.VolumeOpportunity || account.RehabActivity && account.RehabActivity !== 'Unknown') && /*#__PURE__*/React.createElement("div", {
+  }, [account.BedCount && `${account.BedCount} beds`, account.CMSRating && `CMS: ${getCmsOverallNumber(account.CMSRating) !== null ? getCmsOverallNumber(account.CMSRating) + '/5' : account.CMSRating}`, town, account.ChainAffiliation].filter(Boolean).join(' | ')), (account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' || account.VolumeOpportunity || account.RehabActivity && account.RehabActivity !== 'Unknown') && /*#__PURE__*/React.createElement("div", {
     className: "flex gap-4 text-xs text-skyblue-100 mb-3 flex-wrap"
   }, account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' && /*#__PURE__*/React.createElement("span", null, "CLINICAL NEED: ", /*#__PURE__*/React.createElement("span", {
     className: "font-semibold text-white"
@@ -1687,7 +1594,6 @@ function AccountDetail({
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [editingNoteText, setEditingNoteText] = useState('');
   const [busy, setBusy] = useState(false);
-  const [followUpDate, setFollowUpDate] = useState((account.NextFollowUp || '').slice(0, 10));
   const [emailThreads, setEmailThreads] = useState(null); // null = not loaded yet
   const [emailsLoading, setEmailsLoading] = useState(false);
   const [emailsError, setEmailsError] = useState('');
@@ -1701,14 +1607,9 @@ function AccountDetail({
   const [activityNextAction, setActivityNextAction] = useState('');
   const [activityNextActionDue, setActivityNextActionDue] = useState('');
 
-  // Keep the local date field in sync if the account data refreshes from elsewhere.
-  useEffect(() => {
-    setFollowUpDate((account.NextFollowUp || '').slice(0, 10));
-  }, [account.NextFollowUp]);
   const accountContacts = contacts.filter(c => c.AccountId === account.AccountId);
   const accountConnections = connections.filter(c => c.AccountId === account.AccountId);
   const accountNotes = notes.filter(n => n.AccountId === account.AccountId).sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
-  const upcomingActivity = getUpcomingActivity(accountNotes);
 
   // Derived for the header: which contact is the primary clinical contact
   // vs. the decision maker, based on RoleCategory (falls back to nothing
@@ -1733,18 +1634,6 @@ function AccountDetail({
     setBusy(false);
     onRefresh();
     window.__crmShowToast && window.__crmShowToast('Account saved');
-  };
-  const saveFollowUp = async dateStr => {
-    setFollowUpDate(dateStr);
-    setBusy(true);
-    await apiPost('updateAccount', {
-      data: {
-        AccountId: account.AccountId,
-        NextFollowUp: dateStr
-      }
-    });
-    setBusy(false);
-    onRefresh();
   };
   const convert = async () => {
     const simplePracticeUrl = window.prompt("SimplePractice client URL (optional — leave blank and click OK to skip):", '');
@@ -2031,23 +1920,11 @@ function AccountDetail({
     className: "flex items-center gap-3 flex-wrap"
   }, /*#__PURE__*/React.createElement("h1", {
     className: "font-display text-2xl text-navy-900"
-  }, account.AccountName), /*#__PURE__*/React.createElement(StatusPill, {
-    status: account.Status
-  }), /*#__PURE__*/React.createElement(PropensityBadge, {
-    account: account
-  }), /*#__PURE__*/React.createElement(FollowUpBadge, {
-    nextFollowUp: account.NextFollowUp
-  }), /*#__PURE__*/React.createElement(UpcomingActivityBadge, {
-    upcoming: upcomingActivity
-  })), /*#__PURE__*/React.createElement("div", {
+  }, account.AccountName)), /*#__PURE__*/React.createElement("div", {
     className: "mt-2 text-sm text-navy-700/70 space-y-0.5"
   }, account.Address && /*#__PURE__*/React.createElement("p", null, account.Address), account.Phone && /*#__PURE__*/React.createElement("p", null, account.Phone), account.Rating && /*#__PURE__*/React.createElement("p", {
     className: "text-amber-600"
-  }, "★ ", account.Rating), (account.CMSRating || account.BedCount) && /*#__PURE__*/React.createElement("p", {
-    className: "text-navy-700/50"
-  }, account.CMSRating && `CMS: ${account.CMSRating}`, account.CMSRating && account.BedCount && ' · ', account.BedCount && `${account.BedCount} beds`), account.ChainAffiliation && /*#__PURE__*/React.createElement("p", {
-    className: "text-navy-700/50"
-  }, account.ChainAffiliation), account.HighRiskPrograms && /*#__PURE__*/React.createElement("p", {
+  }, "★ ", account.Rating), account.HighRiskPrograms && /*#__PURE__*/React.createElement("p", {
     className: "text-navy-700/50"
   }, "Programs: ", account.HighRiskPrograms), account.RehabProvider && /*#__PURE__*/React.createElement("p", {
     className: "text-navy-700/50"
@@ -2308,23 +2185,9 @@ function AccountDetail({
     className: "text-xs text-navy-700/50 mt-0.5"
   }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))), /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100 p-6"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between flex-wrap gap-3 mb-4"
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
+    className: "font-display text-lg text-navy-900 mb-4"
   }, "Notes & activity"), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-2"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "text-sm text-navy-700/60 flex items-center gap-2"
-  }, "Next follow-up", /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    value: followUpDate,
-    onChange: e => saveFollowUp(e.target.value),
-    className: "border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm"
-  })), followUpDate && /*#__PURE__*/React.createElement("button", {
-    onClick: () => saveFollowUp(''),
-    className: "text-xs text-navy-700/40 hover:text-red-500"
-  }, "Clear"))), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-2 mb-5"
   }, /*#__PURE__*/React.createElement("input", {
     value: noteText,
@@ -2536,8 +2399,7 @@ function MapView({
 // ---------------------------------------------------------------------
 function AccountRow({
   account,
-  onSelect,
-  upcoming
+  onSelect
 }) {
   return /*#__PURE__*/React.createElement("button", {
     onClick: () => onSelect(account),
@@ -2550,16 +2412,12 @@ function AccountRow({
     className: "text-xs text-amber-600 mt-0.5"
   }, "★ ", account.Rating), account.BedCount && /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40 mt-0.5"
-  }, account.BedCount, " beds"), upcoming && /*#__PURE__*/React.createElement("p", {
-    className: "text-xs text-teal-600 mt-0.5"
-  }, formatShortDate(upcoming.date), " — ", upcoming.note.NoteText.slice(0, 60), upcoming.note.NoteText.length > 60 ? '…' : '')), /*#__PURE__*/React.createElement("div", {
+  }, account.BedCount, " beds")), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-2"
   }, /*#__PURE__*/React.createElement(PropensityBadge, {
     account: account
   }), /*#__PURE__*/React.createElement(FollowUpBadge, {
     nextFollowUp: account.NextFollowUp
-  }), /*#__PURE__*/React.createElement(UpcomingActivityBadge, {
-    upcoming: upcoming
   }), /*#__PURE__*/React.createElement(StatusPill, {
     status: account.Status
   })));
@@ -2751,19 +2609,6 @@ function AccountList({
   // not just ones due today/overdue — the badge color still tells you which.
   const hasFollowUp = a => !!(a.NextFollowUp && String(a.NextFollowUp).trim());
 
-  // Soonest upcoming (today or later) activity mentioned in each account's
-  // notes, keyed by AccountId — computed once per notes/accounts change.
-  const upcomingByAccount = useMemo(() => {
-    const map = {};
-    accounts.forEach(a => {
-      const accountNotes = notes.filter(n => n.AccountId === a.AccountId);
-      const upcoming = getUpcomingActivity(accountNotes);
-      if (upcoming) map[a.AccountId] = upcoming;
-    });
-    return map;
-  }, [accounts, notes]);
-  const hasUpcomingMeeting = a => !!upcomingByAccount[a.AccountId];
-
   // Calendar-sourced meetings for the top-of-page summary — fetched once on
   // mount. null = still loading.
   const [calendarMeetings, setCalendarMeetings] = useState(null);
@@ -2797,7 +2642,7 @@ function AccountList({
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [regionAccounts]);
   const filtered = regionAccounts.filter(a => {
-    const matchesFilter = filter === 'All' ? true : filter === 'Follow-up' ? hasFollowUp(a) : filter === 'Upcoming Meetings' ? hasUpcomingMeeting(a) : a.Status === filter;
+    const matchesFilter = filter === 'All' ? true : filter === 'Follow-up' ? hasFollowUp(a) : a.Status === filter;
     const matchesChain = chainFilter === 'All Chains' || (a.ChainAffiliation || '').trim() === chainFilter;
     return matchesFilter && matchesChain && matchesQuery(a);
   });
@@ -2819,8 +2664,7 @@ function AccountList({
     All: regionAccounts.length,
     Prospect: regionAccounts.filter(a => a.Status === 'Prospect').length,
     Customer: regionAccounts.filter(a => a.Status === 'Customer').length,
-    'Follow-up': regionAccounts.filter(hasFollowUp).length,
-    'Upcoming Meetings': regionAccounts.filter(hasUpcomingMeeting).length
+    'Follow-up': regionAccounts.filter(hasFollowUp).length
   };
 
   // Town-grouped view, used when sorting by Name (the default).
@@ -2943,7 +2787,7 @@ function AccountList({
     className: "flex items-center gap-4 mb-5 flex-wrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 flex-wrap"
-  }, ['All', 'Prospect', 'Customer', 'Follow-up', 'Upcoming Meetings'].map(s => /*#__PURE__*/React.createElement("button", {
+  }, ['All', 'Prospect', 'Customer', 'Follow-up'].map(s => /*#__PURE__*/React.createElement("button", {
     key: s,
     onClick: () => setFilter(s),
     className: `px-3 py-1.5 rounded-md text-sm font-medium transition ${filter === s ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
@@ -3014,15 +2858,13 @@ function AccountList({
   }, townAccounts.map(a => /*#__PURE__*/React.createElement(AccountRow, {
     key: a.AccountId,
     account: a,
-    onSelect: onSelect,
-    upcoming: upcomingByAccount[a.AccountId]
+    onSelect: onSelect
   })))))) : sortedFlat.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100"
   }, sortedFlat.map(a => /*#__PURE__*/React.createElement(AccountRow, {
     key: a.AccountId,
     account: a,
-    onSelect: onSelect,
-    upcoming: upcomingByAccount[a.AccountId]
+    onSelect: onSelect
   })))));
 }
 
