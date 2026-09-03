@@ -1867,6 +1867,7 @@ function AccountDetail({
   account,
   contacts,
   connections,
+  activities,
   onBack,
   onRefresh,
   onRefreshAccount,
@@ -1890,7 +1891,6 @@ function AccountDetail({
   const [meetings, setMeetings] = useState(null); // null = not loaded yet
   const [meetingsLoading, setMeetingsLoading] = useState(false);
   const [meetingsError, setMeetingsError] = useState('');
-  const [activities, setActivities] = useState(null); // null = not loaded yet
   const [loggingActivity, setLoggingActivity] = useState(false);
   const [activityType, setActivityType] = useState('Call');
   const [activityResult, setActivityResult] = useState('');
@@ -1906,6 +1906,14 @@ function AccountDetail({
 
   const accountContacts = contacts.filter(c => c.AccountId === account.AccountId);
   const accountConnections = connections.filter(c => c.AccountId === account.AccountId);
+  // Derived from the app-level activities list (kept fresh by
+  // onRefreshAccount) rather than a separate local fetch -- this used to
+  // be its own loadActivities() call fired alongside onRefreshAccount on
+  // every log/edit/delete, which meant two overlapping requests competing
+  // for the same backend on every single activity action.
+  const accountActivities = activities
+    .filter(a => a.AccountId === account.AccountId)
+    .sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
 
   // Derived for the header: which contact is the primary clinical contact
   // vs. the decision maker, based on RoleCategory (falls back to nothing
@@ -2116,17 +2124,6 @@ function AccountDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account.AccountId, knownEmails.join(',')]);
 
-  const loadActivities = async () => {
-    const response = await apiPost('getActivities', {
-      accountId: account.AccountId
-    });
-    if (response.success) setActivities(response.result);
-  };
-  useEffect(() => {
-    loadActivities();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account.AccountId]);
-
   const logActivity = async () => {
     if (!activityType) return;
     setBusy(true);
@@ -2152,7 +2149,6 @@ function AccountDetail({
     setActivityNextAction('');
     setActivityNextActionDue('');
     onRefreshAccount(account.AccountId);
-    loadActivities();
     window.__crmShowToast && window.__crmShowToast('Activity logged');
   };
 
@@ -2184,7 +2180,7 @@ function AccountDetail({
       return;
     }
     setEditingActivityId(null);
-    loadActivities();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Activity updated');
   };
 
@@ -2199,7 +2195,7 @@ function AccountDetail({
       window.__crmShowToast && window.__crmShowToast('Failed to delete: ' + (response.error || 'unknown error'));
       return;
     }
-    loadActivities();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Activity deleted');
   };
 
@@ -2256,7 +2252,7 @@ function AccountDetail({
     disabled: busy,
     className: "border border-red-200 text-red-500 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition"
   }, "Delete"))))), /*#__PURE__*/React.createElement(ActivityLogCard, {
-    activities: activities,
+    activities: accountActivities,
     loggingActivity: loggingActivity,
     setLoggingActivity: setLoggingActivity,
     activityType: activityType,
@@ -3545,6 +3541,7 @@ function App() {
       account: selectedAccount,
       contacts: data.contacts,
       connections: data.connections,
+      activities: data.activities,
       onBack: () => setView('list'),
       onRefresh: refresh,
       onRefreshAccount: refreshAccount,
