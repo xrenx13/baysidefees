@@ -612,22 +612,12 @@ async function apiGet(extraParams) {
     token: getSessionToken(),
     ...(extraParams || {})
   });
-  // fetch() has no default timeout and will hang indefinitely against a
-  // slow/cold-starting Apps Script backend — give it a generous but finite
-  // window so a stuck request fails clearly instead of spinning forever.
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-  let res;
-  try {
-    res = await fetch(`${API_URL}?${params.toString()}`, { signal: controller.signal });
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      throw new Error('Request timed out — the Google Sheet may be slow to respond right now.');
-    }
-    throw err;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  // No artificial timeout here — Apps Script's own execution ceiling is
+  // several minutes, and a client-side abort doesn't actually stop the
+  // server-side execution, so cutting the connection early just risks a
+  // second overlapping request piling onto an already-slow backend
+  // instead of actually helping. Better to let one request run its course.
+  const res = await fetch(`${API_URL}?${params.toString()}`);
   if (!res.ok) {
     throw new Error(`Server returned an error (status ${res.status}).`);
   }
@@ -3401,31 +3391,23 @@ function App() {
   const refresh = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
-    // One quiet automatic retry before bothering the user — Apps Script
-    // cold-starts (waking up after a period of inactivity) can cause a
-    // single request to fail or time out even though the backend is
-    // perfectly healthy a few seconds later.
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const result = await apiGet();
-        setData({
-          accounts: result.accounts || [],
-          contacts: result.contacts || [],
-          connections: result.connections || [],
-          notes: result.notes || [],
-          activities: result.activities || []
-        });
-        setLoadError(null);
-        setLoading(false);
-        return;
-      } catch (err) {
-        console.error(err);
-        if (attempt === 2) {
-          setLoadError(err.message || 'Failed to load your accounts.');
-        } else {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-        }
-      }
+    // Single attempt, no automatic retry — a retry fired while the first
+    // request is still slow risks a second overlapping execution competing
+    // for the same Sheet, which can make things worse, not better. A
+    // genuine failure surfaces a manual "Try again" button instead.
+    try {
+      const result = await apiGet();
+      setData({
+        accounts: result.accounts || [],
+        contacts: result.contacts || [],
+        connections: result.connections || [],
+        notes: result.notes || [],
+        activities: result.activities || []
+      });
+      setLoadError(null);
+    } catch (err) {
+      console.error(err);
+      setLoadError(err.message || 'Failed to load your accounts.');
     }
     setLoading(false);
   }, []);
