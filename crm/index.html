@@ -240,7 +240,7 @@ const VILLAGE_TO_TOWN = {
 const KNOWN_TOWNS = ['Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth', 'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth', 'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate', 'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth', 'New Bedford', 'Fall River', 'Dartmouth', 'Fairhaven', 'Somerset', 'Swansea', 'Westport', 'Acushnet', 'Taunton', 'Raynham', 'Middleborough', 'Middleboro', 'Easton', 'North Easton', 'Norton', 'Dighton', 'North Dighton', 'Bridgewater', 'East Bridgewater', 'West Bridgewater', 'Carver', 'Lakeville', 'Halifax', 'Rehoboth', 'Berkley', 'Dedham', 'Westwood', 'Norwood', 'Walpole', 'Foxborough', 'Mansfield', 'Needham', 'Canton', 'Stoughton', 'Wrentham', 'Sharon', 'Medfield', 'Norfolk', 'Franklin', 'Millis', 'Plainville'];
 
 // --- v2 additions: Relationship Stage / Contact Role / Activity logging ---
-const RELATIONSHIP_STAGES = ['Target', 'Researched', 'Contacted', 'Connected', 'Clinical Champion', 'Referral Discussion', 'First FEES', 'Active Referrer', 'Dormant', 'Not a Fit'];
+const RELATIONSHIP_STAGES = ['Target', 'Contacted', 'Connected', 'Referral Discussion', 'Active Referrer', 'Not a fit'];
 const CONTACT_ROLE_CATEGORIES = ['Clinical Champion', 'SLP', 'Director of Rehab', 'Rehab Director', 'Administrator', 'DON', 'Medical Director', 'Admissions', 'Case Management', 'Regional/Central Decision Maker', 'Referral Coordinator', 'Other'];
 const DECISION_MAKER_ROLE_CATEGORIES = ['Administrator', 'DON', 'Regional/Central Decision Maker'];
 const ACTIVITY_TYPES = ['Call', 'Voicemail', 'Visit', 'Email', 'Text', 'Meeting', 'Referral', 'Other'];
@@ -286,15 +286,11 @@ function DistanceLinks({
 function stageColor(stage) {
   const map = {
     'Target': 'bg-skyblue-100 text-navy-700/60',
-    'Researched': 'bg-skyblue-100 text-navy-700/70',
     'Contacted': 'bg-amber-50 text-amber-700',
     'Connected': 'bg-amber-50 text-amber-700',
-    'Clinical Champion': 'bg-teal-50 text-teal-700',
     'Referral Discussion': 'bg-teal-50 text-teal-700',
-    'First FEES': 'bg-teal-100 text-teal-800',
     'Active Referrer': 'bg-teal-500 text-white',
-    'Dormant': 'bg-navy-100 text-navy-700/50',
-    'Not a Fit': 'bg-navy-100 text-navy-700/40'
+    'Not a fit': 'bg-navy-100 text-navy-700/40'
   };
   return map[stage] || 'bg-skyblue-100 text-navy-700/60';
 }
@@ -2651,11 +2647,11 @@ function getMarkerColor(a, colorBy) {
   }
   if (colorBy === 'stage') {
     const stageHex = {
-      'Target': '#a9c6dc', 'Researched': '#a9c6dc',
+      'Target': '#a9c6dc',
       'Contacted': '#f59e0b', 'Connected': '#f59e0b',
-      'Clinical Champion': '#2dd4bf', 'Referral Discussion': '#2dd4bf',
-      'First FEES': '#14b8a6', 'Active Referrer': '#0f766e',
-      'Dormant': '#94a3b8', 'Not a Fit': '#cbd5e1'
+      'Referral Discussion': '#2dd4bf',
+      'Active Referrer': '#0f766e',
+      'Not a fit': '#cbd5e1'
     };
     return stageHex[a.RelationshipStage] || '#a9c6dc';
   }
@@ -2665,7 +2661,7 @@ function getMarkerColor(a, colorBy) {
 const MAP_LEGENDS = {
   status: [{ color: '#0f766e', label: 'Customer' }, { color: '#a9c6dc', label: 'Prospect' }],
   opportunity: [{ color: '#0f766e', label: 'High / Very High' }, { color: '#f59e0b', label: 'Medium' }, { color: '#94a3b8', label: 'Low / not assessed' }],
-  stage: [{ color: '#0f766e', label: 'Active Referrer' }, { color: '#14b8a6', label: 'First FEES' }, { color: '#2dd4bf', label: 'Clinical Champion / Referral Discussion' }, { color: '#f59e0b', label: 'Contacted / Connected' }, { color: '#a9c6dc', label: 'Target / Researched' }, { color: '#94a3b8', label: 'Dormant / Not a Fit' }]
+  stage: [{ color: '#0f766e', label: 'Active Referrer' }, { color: '#2dd4bf', label: 'Referral Discussion' }, { color: '#f59e0b', label: 'Contacted / Connected' }, { color: '#a9c6dc', label: 'Target' }, { color: '#cbd5e1', label: 'Not a fit' }]
 };
 
 function MapView({
@@ -3445,7 +3441,7 @@ function TodayDashboard({
   onBack
 }) {
   const todayStr = new Date().toDateString();
-  const { overdue, callsToday, visitsToday, tier1, clinicalChampions, firstFees, activeReferrers, cadenceDue } = useMemo(() => {
+  const { overdue, callsToday, visitsToday, tier1, activeReferrers, cadenceDue } = useMemo(() => {
     const isOverdue = a => a.NextFollowUp && new Date(a.NextFollowUp) < new Date(todayStr);
     const isDueToday = a => a.NextFollowUp && new Date(a.NextFollowUp).toDateString() === todayStr;
     return {
@@ -3458,8 +3454,6 @@ function TodayDashboard({
         const days = daysSince(a.LastContactDate);
         return days === null || days > 14;
       }),
-      clinicalChampions: accounts.filter(a => a.RelationshipStage === 'Clinical Champion'),
-      firstFees: accounts.filter(a => a.RelationshipStage === 'First FEES'),
       activeReferrers: accounts.filter(a => a.RelationshipStage === 'Active Referrer'),
       cadenceDue: accounts.filter(a => {
         const c = computeCadenceStatus(a);
@@ -3509,20 +3503,6 @@ function TodayDashboard({
       return days === null ? 'High opportunity, never contacted' : `High opportunity, not contacted in ${days} days`;
     }
   }), /*#__PURE__*/React.createElement(DashboardSection, {
-    title: "Clinical Champions",
-    accounts: clinicalChampions,
-    contacts: contacts,
-    connections: connections,
-    onSelect: onSelect,
-    whyFn: a => 'Established clinical relationship'
-  }), /*#__PURE__*/React.createElement(DashboardSection, {
-    title: "First FEES Opportunities",
-    accounts: firstFees,
-    contacts: contacts,
-    connections: connections,
-    onSelect: onSelect,
-    whyFn: a => 'Signs of an imminent first referral'
-  }), /*#__PURE__*/React.createElement(DashboardSection, {
     title: "Active Referrers",
     accounts: activeReferrers,
     contacts: contacts,
@@ -3539,7 +3519,7 @@ function TodayDashboard({
       const c = computeCadenceStatus(a);
       return `${a.VisitCadence} check-in is ${Math.abs(c.dueInDays)} day${Math.abs(c.dueInDays) === 1 ? '' : 's'} overdue`;
     }
-  }), overdue.length === 0 && callsToday.length === 0 && visitsToday.length === 0 && tier1.length === 0 && clinicalChampions.length === 0 && firstFees.length === 0 && activeReferrers.length === 0 && cadenceDue.length === 0 && /*#__PURE__*/React.createElement("p", {
+  }), overdue.length === 0 && callsToday.length === 0 && visitsToday.length === 0 && tier1.length === 0 && activeReferrers.length === 0 && cadenceDue.length === 0 && /*#__PURE__*/React.createElement("p", {
     className: "text-navy-700/40 text-sm text-center py-8"
   }, "Nothing needs attention today."));
 }
