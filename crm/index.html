@@ -3881,13 +3881,67 @@ function App() {
       onClick: () => setView('list'),
       className: "text-teal-600 hover:text-teal-700 text-sm mb-4"
     }, "← Back to accounts"), /*#__PURE__*/React.createElement(AccountForm, {
-      onSave: async form => {
-        await apiPost('createAccount', {
-          data: form
-        });
-        await refresh();
+      onSave: form => {
+        // New accounts use the same optimistic-save pattern as activities
+        // and account edits. Add a temporary local record and return to the
+        // list immediately instead of waiting for Apps Script + a full CRM
+        // refresh (which can be slow, especially when distance calculations
+        // run for a new address).
+        const tempAccountId = `temp-account-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const optimisticAccount = {
+          ...form,
+          AccountId: tempAccountId,
+          DateAdded: new Date().toISOString(),
+          Status: form.Status || 'Prospect',
+          Region: form.Region || 'Cape Cod',
+          RelationshipStage: form.RelationshipStage || 'Target',
+          LastContactDate: '',
+          LastContactType: '',
+          LastContactResult: ''
+        };
+
+        updateDataLocal(d => ({
+          ...d,
+          accounts: [optimisticAccount, ...d.accounts]
+        }));
         setView('list');
-        window.__crmShowToast && window.__crmShowToast('Account created');
+
+        // The Toast component remounts when the view changes, so wait until
+        // the next paint before showing the initial status message.
+        setTimeout(() => {
+          window.__crmShowToast && window.__crmShowToast('Saving…');
+        }, 75);
+
+        apiPost('createAccount', { data: form }).then(response => {
+          if (!response || response.success === false) {
+            throw new Error(response?.error || 'Account creation failed');
+          }
+
+          const realAccountId = response?.result?.AccountId;
+          if (realAccountId) {
+            updateDataLocal(d => ({
+              ...d,
+              accounts: d.accounts.map(a =>
+                a.AccountId === tempAccountId
+                  ? { ...a, AccountId: realAccountId }
+                  : a
+              )
+            }));
+          }
+
+          window.__crmShowToast && window.__crmShowToast('Account created');
+        }).catch(err => {
+          console.error('Create account failed:', err);
+
+          // Remove the optimistic placeholder if Google ultimately rejects
+          // the save, then quietly reconcile with the server.
+          updateDataLocal(d => ({
+            ...d,
+            accounts: d.accounts.filter(a => a.AccountId !== tempAccountId)
+          }));
+          window.__crmShowToast && window.__crmShowToast('Save failed — account not created');
+          refresh();
+        });
       },
       onCancel: () => setView('list'),
       referralSourceOptions: referralSourceOptions
