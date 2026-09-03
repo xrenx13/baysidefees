@@ -2602,8 +2602,12 @@ function MapView({
             });
             lat = result.geometry.location.lat();
             lng = result.geometry.location.lng();
-            // Cache so this address never needs re-geocoding.
-            apiPost('updateAccount', {
+            // Cache so this address never needs re-geocoding. Awaited
+            // deliberately -- if several accounts need geocoding at once
+            // (e.g. right after importing a new region), firing these
+            // without waiting would send multiple overlapping writes to
+            // the backend in quick succession.
+            await apiPost('updateAccount', {
               data: {
                 AccountId: a.AccountId,
                 Latitude: lat,
