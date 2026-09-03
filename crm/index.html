@@ -497,7 +497,8 @@ function todayDateString() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// Returns 'overdue' | 'today' | 'upcoming' | null (no date set, or unparseable)
+// Returns 'overdue' | 'today' | 'soon' | 'upcoming' | null.
+// "soon" means due tomorrow through five days from today.
 function followUpStatus(nextFollowUp) {
   if (!nextFollowUp) return null;
   const clean = String(nextFollowUp).slice(0, 10); // tolerate a stray timestamp suffix
@@ -505,6 +506,13 @@ function followUpStatus(nextFollowUp) {
   const today = todayDateString();
   if (clean < today) return 'overdue';
   if (clean === today) return 'today';
+
+  const [y, m, d] = clean.split('-').map(Number);
+  const [ty, tm, td] = today.split('-').map(Number);
+  const followUpDay = Date.UTC(y, m - 1, d) / 86400000;
+  const todayDay = Date.UTC(ty, tm - 1, td) / 86400000;
+  const daysAway = followUpDay - todayDay;
+  if (daysAway >= 1 && daysAway <= 5) return 'soon';
   return 'upcoming';
 }
 function formatFollowUpDate(nextFollowUp) {
@@ -526,13 +534,15 @@ function FollowUpBadge({
   const status = followUpStatus(nextFollowUp);
   if (!status) return null;
   const styles = {
-    overdue: 'bg-red-50 text-red-500',
-    today: 'bg-amber-50 text-amber-600',
+    overdue: 'bg-red-50 text-red-600',
+    today: 'bg-red-50 text-red-600',
+    soon: 'bg-amber-50 text-amber-700',
     upcoming: 'bg-skyblue-100 text-navy-700'
   };
   const labels = {
-    overdue: `Follow up overdue — ${formatFollowUpDate(nextFollowUp)}`,
-    today: 'Follow up today',
+    overdue: `Past due — ${formatFollowUpDate(nextFollowUp)}`,
+    today: 'Due today',
+    soon: `Follow up ${formatFollowUpDate(nextFollowUp)}`,
     upcoming: `Follow up ${formatFollowUpDate(nextFollowUp)}`
   };
   return /*#__PURE__*/React.createElement("span", {
@@ -3402,7 +3412,9 @@ function DashboardAccountCard({
     compact: true
   }), /*#__PURE__*/React.createElement("span", {
     className: `inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
-  }, account.RelationshipStage || 'Target'))), /*#__PURE__*/React.createElement("p", {
+  }, account.RelationshipStage || 'Target'), (followUpStatus(account.NextFollowUp) === 'today' || followUpStatus(account.NextFollowUp) === 'overdue') && /*#__PURE__*/React.createElement(FollowUpBadge, {
+    nextFollowUp: account.NextFollowUp
+  }))), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/50 mt-0.5"
   }, town), why && /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/70 mt-1.5"
