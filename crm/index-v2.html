@@ -2630,7 +2630,8 @@ function TableView({
       case 'Propensity':
         {
           const p = computeOverallFeesOpportunity(a);
-          return p ? p.score : -1;
+          const opportunityRank = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+          return p ? (opportunityRank[p.label] || 0) : 0;
         }
       case 'CMSRating':
         {
@@ -2870,10 +2871,13 @@ function AccountList({
     if (sortBy === 'Name') return null;
     const list = [...filtered];
     if (sortBy === 'Propensity') {
+      const opportunityRank = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
       list.sort((a, b) => {
         const scoreA = computeOverallFeesOpportunity(a);
         const scoreB = computeOverallFeesOpportunity(b);
-        return (scoreB ? scoreB.score : -1) - (scoreA ? scoreA.score : -1);
+        const rankA = scoreA ? (opportunityRank[scoreA.label] || 0) : 0;
+        const rankB = scoreB ? (opportunityRank[scoreB.label] || 0) : 0;
+        return rankB - rankA;
       });
     } else if (sortBy === 'CMS Rating') {
       list.sort((a, b) => {
