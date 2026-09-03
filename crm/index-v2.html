@@ -1485,6 +1485,7 @@ function AccountSnapshot({
   daysSinceLastContact,
   nextActionOverdue
 }) {
+  const [showMore, setShowMore] = useState(false);
   const opportunity = computeOverallFeesOpportunity(account);
   const cmsNum = getCmsOverallNumber(account.CMSRating);
   // Uniform text size throughout (except the facility name, rendered
@@ -1493,6 +1494,30 @@ function AccountSnapshot({
   const label = "text-sm text-gray-500";
   const data = "text-sm text-black";
   const row = "flex flex-wrap gap-x-2 gap-y-1 items-baseline";
+  // Everything from the edit form that isn't already shown above — only
+  // rendered when "View more" is expanded, and only fields that actually
+  // have a value.
+  const moreFields = [
+    ['Region', account.Region],
+    ['Referral Source', account.ReferralSource],
+    ['Programs', account.HighRiskPrograms],
+    ['Rehab Provider', account.RehabProvider],
+    ['Recent Ownership Change', account.RecentOwnershipChange],
+    ['Special Focus Status', account.SpecialFocusStatus],
+    ['Abuse Flag', account.AbuseFlag],
+    ['Staffing Hours/Resident/Day', account.StaffingHoursPerResidentDay],
+    ['Fines History', account.FinesHistory],
+    ['Case-Mix Index', account.CaseMixIndex],
+    ['Clinical Need', account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' ? account.ClinicalNeed : ''],
+    ['Volume Opportunity', account.VolumeOpportunity],
+    ['Rehab Activity', account.RehabActivity && account.RehabActivity !== 'Unknown' ? account.RehabActivity : ''],
+    ['Access/Relationship', account.AccessRelationship && account.AccessRelationship !== 'None' ? account.AccessRelationship : ''],
+    ['Dysphagia Pain Point', account.DysphagiaPainPoint && account.DysphagiaPainPoint !== 'Unknown' ? account.DysphagiaPainPoint : ''],
+    ['Referral Potential', account.ReferralPotential],
+    ['Estimated FEES Volume', account.EstimatedFeesVolume && account.EstimatedFeesVolume !== 'Unknown' ? account.EstimatedFeesVolume : ''],
+    ['Visit Cadence', account.VisitCadence && account.VisitCadence !== 'No cadence' ? account.VisitCadence : ''],
+    ['SimplePractice', account.SimplePracticeUrl]
+  ].filter(([, v]) => v);
   return /*#__PURE__*/React.createElement(React.Fragment, null,
     /*#__PURE__*/React.createElement("div", { className: "flex items-center gap-2 flex-wrap mt-2 mb-2" },
       opportunity && /*#__PURE__*/React.createElement("span", {
@@ -1540,6 +1565,21 @@ function AccountSnapshot({
           account.NextAction || 'Not set', account.NextFollowUp && ` — due ${formatShortDate(new Date(account.NextFollowUp))}`, nextActionOverdue && ' (OVERDUE)'
         )
       )
+    ),
+    /*#__PURE__*/React.createElement("button", {
+      onClick: () => setShowMore(!showMore),
+      className: "text-sm text-teal-600 hover:underline mt-3"
+    }, showMore ? "View less ▲" : "View more ▼"),
+    showMore && /*#__PURE__*/React.createElement("div", {
+      className: "grid sm:grid-cols-2 gap-3 pt-3 mt-3 border-t border-skyblue-100"
+    }, moreFields.length === 0 ? /*#__PURE__*/React.createElement("p", { className: `${data} sm:col-span-2` }, "Nothing else on file.") :
+      moreFields.map(([fieldLabel, value]) => /*#__PURE__*/React.createElement("div", { key: fieldLabel },
+        /*#__PURE__*/React.createElement("p", { className: label }, fieldLabel),
+        fieldLabel === 'SimplePractice' ? /*#__PURE__*/React.createElement("a", {
+          href: value, target: "_blank", rel: "noopener noreferrer",
+          className: `${data} text-teal-600 hover:underline`
+        }, "View in SimplePractice") : /*#__PURE__*/React.createElement("p", { className: data }, value)
+      ))
     )
   );
 }
