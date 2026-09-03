@@ -2854,7 +2854,7 @@ function AccountList({
   const [filter, setFilter] = useState('All');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'table' | 'map'
   const [query, setQuery] = useState('');
-  const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage'
+  const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
   const [chainFilter, setChainFilter] = useState('All Chains');
   const matchesQuery = a => {
     if (!query.trim()) return true;
@@ -2991,6 +2991,14 @@ function AccountList({
         const rankB = RELATIONSHIP_STAGES.indexOf(b.RelationshipStage);
         return (rankA === -1 ? 999 : rankA) - (rankB === -1 ? 999 : rankB);
       });
+    } else if (sortBy === 'Activity') {
+      list.sort((a, b) => {
+        // Most recent activity first; accounts never contacted sort last.
+        if (!a.LastContactDate && !b.LastContactDate) return 0;
+        if (!a.LastContactDate) return 1;
+        if (!b.LastContactDate) return -1;
+        return new Date(b.LastContactDate) - new Date(a.LastContactDate);
+      });
     }
     return list;
   }, [filtered, sortBy]);
@@ -3096,7 +3104,7 @@ function AccountList({
     value: sortBy,
     onChange: e => setSortBy(e.target.value),
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"))), distinctChains.length > 0 && /*#__PURE__*/React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))), distinctChains.length > 0 && /*#__PURE__*/React.createElement("label", {
     className: "text-xs text-navy-700/50 flex items-center gap-1.5"
   }, "Chain", /*#__PURE__*/React.createElement("select", {
     value: chainFilter,
