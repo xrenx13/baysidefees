@@ -661,11 +661,85 @@ function clearCrmCache_() {
 }
 
 // ---------------------------------------------------------------------
-// API helpers
+// API helpers + lightweight performance diagnostics
 // ---------------------------------------------------------------------
 function getSessionToken() {
   return sessionStorage.getItem('bdd_crm_session_token') || '';
 }
+
+// Keep a small rolling performance history in this browser. Nothing is
+// displayed in the CRM; it is available in the browser console only when
+// troubleshooting is needed. This lets us distinguish UI/cache time from
+// Google Apps Script delivery time without adding any visible overhead.
+const CRM_PERF_KEY = 'bdd_crm_perf_v1';
+const CRM_PERF_MAX_ENTRIES = 120;
+
+function recordCrmPerf_(label, startedAt, details = {}) {
+  try {
+    const durationMs = startedAt == null ? null : Math.round(performance.now() - startedAt);
+    const entry = {
+      at: new Date().toISOString(),
+      label,
+      durationMs,
+      ...details
+    };
+    const previous = JSON.parse(localStorage.getItem(CRM_PERF_KEY) || '[]');
+    const entries = Array.isArray(previous) ? previous : [];
+    entries.push(entry);
+    if (entries.length > CRM_PERF_MAX_ENTRIES) entries.splice(0, entries.length - CRM_PERF_MAX_ENTRIES);
+    localStorage.setItem(CRM_PERF_KEY, JSON.stringify(entries));
+    return entry;
+  } catch (err) {
+    return null;
+  }
+}
+
+// For future troubleshooting, open the browser console and run:
+//   __crmPerf.print()   -> table of recent timings
+//   __crmPerf.get()     -> raw entries
+//   __crmPerf.clear()   -> clear the history
+window.__crmPerf = {
+  get() {
+    try {
+      const value = JSON.parse(localStorage.getItem(CRM_PERF_KEY) || '[]');
+      return Array.isArray(value) ? value : [];
+    } catch (err) {
+      return [];
+    }
+  },
+  print() {
+    const entries = this.get();
+    console.table(entries);
+    return entries;
+  },
+  clear() {
+    localStorage.removeItem(CRM_PERF_KEY);
+  }
+};
+
+function stableRequestValue_(value) {
+  if (Array.isArray(value)) return value.map(stableRequestValue_);
+  if (value && typeof value === 'object') {
+    return Object.keys(value).sort().reduce((out, key) => {
+      out[key] = stableRequestValue_(value[key]);
+      return out;
+    }, {});
+  }
+  return value;
+}
+
+// Identical reads that are already in progress share the same Promise.
+// This prevents quick navigation/re-renders from launching redundant Apps
+// Script reads. Writes are deliberately excluded so a legitimate save is
+// never swallowed by the de-duplication layer.
+const inFlightGetRequests_ = new Map();
+const inFlightReadPostRequests_ = new Map();
+const READ_ONLY_POST_ACTIONS_ = new Set([
+  'getSuggestedContacts',
+  'getAccountEmails',
+  'getAccountMeetings',
+  'getTopUpcomingMeetings'
+]);
 
 // If the backend ever says a request is unauthorized (session expired,
 // revoked, etc.), clear local session state and reload back to the sign-in
@@ -677,60 +751,118 @@ function handleUnauthorized() {
   sessionStorage.removeItem('bdd_crm_user_name');
   window.location.reload();
 }
-async function apiGet(extraParams) {
-  const params = new URLSearchParams({
-    action: 'all',
-    token: getSessionToken(),
-    ...(extraParams || {})
-  });
-  // No artificial timeout here — Apps Script's own execution ceiling is
-  // several minutes, and a client-side abort doesn't actually stop the
-  // server-side execution, so cutting the connection early just risks a
-  // second overlapping request piling onto an already-slow backend
-  // instead of actually helping. Better to let one request run its course.
-  const res = await fetch(`${API_URL}?${params.toString()}`);
-  if (!res.ok) {
-    throw new Error(`Server returned an error (status ${res.status}).`);
-  }
-  let result;
-  try {
-    result = await res.json();
-  } catch (err) {
-    throw new Error('Server returned an unexpected response — please try again.');
-  }
-  if (result.error === 'Unauthorized - please sign in again') {
-    handleUnauthorized();
-    return {
-      accounts: [],
-      contacts: [],
-      connections: [],
-      notes: []
-    };
-  }
-  return result;
+
+function getRequestKey_(extraParams) {
+  const safe = { action: 'all', ...(extraParams || {}) };
+  return JSON.stringify(stableRequestValue_(safe));
 }
-async function apiPost(action, payload) {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify({
-      action,
+
+async function apiGet(extraParams) {
+  const requestKey = getRequestKey_(extraParams);
+  const existing = inFlightGetRequests_.get(requestKey);
+  if (existing) {
+    recordCrmPerf_('GET shared in-flight', null, { request: requestKey });
+    return existing;
+  }
+
+  const startedAt = performance.now();
+  const request = (async () => {
+    const params = new URLSearchParams({
+      action: 'all',
       token: getSessionToken(),
-      ...payload
-    })
-  });
-  if (!res.ok) {
-    throw new Error(`Server returned an error (status ${res.status}).`);
-  }
-  let result;
+      ...(extraParams || {})
+    });
+    // No artificial timeout here — Apps Script's own execution ceiling is
+    // several minutes, and a client-side abort doesn't actually stop the
+    // server-side execution. Let one request run and let duplicate callers
+    // share it instead of piling more work onto the backend.
+    const res = await fetch(`${API_URL}?${params.toString()}`);
+    if (!res.ok) {
+      throw new Error(`Server returned an error (status ${res.status}).`);
+    }
+    let result;
+    try {
+      result = await res.json();
+    } catch (err) {
+      throw new Error('Server returned an unexpected response — please try again.');
+    }
+    if (result.error === 'Unauthorized - please sign in again') {
+      handleUnauthorized();
+      return {
+        accounts: [],
+        contacts: [],
+        connections: [],
+        notes: []
+      };
+    }
+    return result;
+  })();
+
+  inFlightGetRequests_.set(requestKey, request);
   try {
-    result = await res.json();
+    const result = await request;
+    recordCrmPerf_('GET completed', startedAt, { request: requestKey, ok: true });
+    return result;
   } catch (err) {
-    throw new Error('Server returned an unexpected response — please try again.');
+    recordCrmPerf_('GET failed', startedAt, { request: requestKey, ok: false, error: err.message || String(err) });
+    throw err;
+  } finally {
+    if (inFlightGetRequests_.get(requestKey) === request) inFlightGetRequests_.delete(requestKey);
   }
-  if (result.error === 'Unauthorized - please sign in again') {
-    handleUnauthorized();
+}
+
+async function performApiPost_(action, payload) {
+  const startedAt = performance.now();
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action,
+        token: getSessionToken(),
+        ...payload
+      })
+    });
+    if (!res.ok) {
+      throw new Error(`Server returned an error (status ${res.status}).`);
+    }
+    let result;
+    try {
+      result = await res.json();
+    } catch (err) {
+      throw new Error('Server returned an unexpected response — please try again.');
+    }
+    if (result.error === 'Unauthorized - please sign in again') {
+      handleUnauthorized();
+    }
+    recordCrmPerf_('POST completed', startedAt, { action, ok: true });
+    return result;
+  } catch (err) {
+    recordCrmPerf_('POST failed', startedAt, { action, ok: false, error: err.message || String(err) });
+    throw err;
   }
-  return result;
+}
+
+async function apiPost(action, payload) {
+  // Only known read-only POST actions are safe to share. All create/update/
+  // delete/login/logout requests always go through independently.
+  if (!READ_ONLY_POST_ACTIONS_.has(action)) {
+    return performApiPost_(action, payload);
+  }
+
+  const requestKey = `${action}:${JSON.stringify(stableRequestValue_(payload || {}))}`;
+  const existing = inFlightReadPostRequests_.get(requestKey);
+  if (existing) {
+    recordCrmPerf_('POST read shared in-flight', null, { action });
+    return existing;
+  }
+
+  const request = performApiPost_(action, payload);
+  inFlightReadPostRequests_.set(requestKey, request);
+  try {
+    return await request;
+  } finally {
+    if (inFlightReadPostRequests_.get(requestKey) === request) inFlightReadPostRequests_.delete(requestKey);
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -3621,6 +3753,7 @@ function App() {
     });
   }, []);
   const refresh = useCallback(async (options = {}) => {
+    const refreshStartedAt = performance.now();
     const showFullLoader = options && options.showFullLoader === true;
     // With cached data on screen, never blank the CRM while waiting on the
     // occasionally-slow Apps Script delivery path. A foreground loader is
@@ -3648,6 +3781,7 @@ function App() {
       setLoadError(err.message || 'Failed to load your accounts.');
     } finally {
       setLoading(false);
+      recordCrmPerf_('CRM full refresh', refreshStartedAt);
     }
   }, []);
   // Lightweight refresh for just one account — used after saves so the app
@@ -3655,6 +3789,7 @@ function App() {
   // CRM to reflect a change to a single one. No full-page loading state,
   // since this should feel instant rather than showing "Loading accounts."
   const refreshAccount = useCallback(async accountId => {
+    const refreshStartedAt = performance.now();
     try {
       const result = await apiGet({ action: 'accountBundle', accountId });
       setData(d => {
@@ -3672,6 +3807,8 @@ function App() {
       });
     } catch (err) {
       console.error(err);
+    } finally {
+      recordCrmPerf_('Account bundle refresh', refreshStartedAt, { accountId });
     }
   }, []);
   useEffect(() => {
