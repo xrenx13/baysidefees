@@ -343,13 +343,33 @@ function computeOverallFeesOpportunity(account) {
   if (parts.length === 0) {
     // Nothing manually assessed yet — fall back to the CMS-data score.
     const fallback = computePropensityScore(account);
-    return fallback ? { label: fallback.label, source: 'auto' } : null;
+    return fallback ? { label: fallback.label, source: 'auto', factors: fallback.factors } : null;
   }
   let avg = parts.reduce((a, b) => a + b, 0) / parts.length;
   const access = accessScale[account.AccessRelationship];
-  if (access !== undefined && access >= 3) avg += 0.5; // Connected/Champion nudges opportunity up
+  const accessBoost = access !== undefined && access >= 3;
+  if (accessBoost) avg += 0.5; // Connected/Champion nudges opportunity up
   const label = avg >= 3.25 ? 'Very High' : avg >= 2.25 ? 'High' : avg >= 1.25 ? 'Medium' : 'Low';
-  return { label: label, source: 'manual' };
+  const factors = [
+    account.ClinicalNeed && account.ClinicalNeed !== 'Unknown' ? `Clinical Need: ${account.ClinicalNeed}` : null,
+    account.VolumeOpportunity ? `Volume Opportunity: ${account.VolumeOpportunity}` : null,
+    account.RehabActivity && account.RehabActivity !== 'Unknown' ? `Rehab Activity: ${account.RehabActivity}` : null,
+    account.AccessRelationship && account.AccessRelationship !== 'None' ? `Access/Relationship: ${account.AccessRelationship}${accessBoost ? ' (boosts score)' : ''}` : null
+  ].filter(Boolean);
+  return { label: label, source: 'manual', factors: factors };
+}
+
+// Builds a multi-line plain-text tooltip explaining why an account landed
+// on its current FEES Opportunity label — used as the pill's title
+// attribute everywhere the badge appears (account page, list, table, map,
+// dashboard).
+function buildOpportunityTooltip(opportunity) {
+  if (!opportunity) return '';
+  const heading = opportunity.source === 'auto'
+    ? `${opportunity.label} — based on facility data (CMS case-mix, programs, beds, ownership). Assess Clinical Need / Volume / Rehab Activity to use your own judgment instead.`
+    : `${opportunity.label} — based on your Clinical Need / Volume / Rehab Activity / Access assessment.`;
+  if (!opportunity.factors || opportunity.factors.length === 0) return heading;
+  return heading + '\n\n' + opportunity.factors.map(f => '• ' + f).join('\n');
 }
 
 function overallOpportunityColor(label) {
@@ -588,7 +608,7 @@ async function apiGet(extraParams) {
   });
   const res = await fetch(`${API_URL}?${params.toString()}`);
   const result = await res.json();
-  if (result.error === 'Unauthorized — please sign in again') {
+  if (result.error === 'Unauthorized - please sign in again') {
     handleUnauthorized();
     return {
       accounts: [],
@@ -609,7 +629,7 @@ async function apiPost(action, payload) {
     })
   });
   const result = await res.json();
-  if (result.error === 'Unauthorized — please sign in again') {
+  if (result.error === 'Unauthorized - please sign in again') {
     handleUnauthorized();
   }
   return result;
@@ -802,9 +822,18 @@ function computePropensityScore(account) {
 
   const total = clinical + timing;
   const label = total >= 50 ? 'High' : total >= 30 ? 'Medium' : 'Low';
+  const factors = [
+    `Case-Mix Index: ${cmi.toFixed(2)} → ${cmiScore.toFixed(0)} pts (of 50)`,
+    `High-risk programs: ${programCount} → ${programScore.toFixed(0)} pts (of 20)`,
+    `Bed count: ${!isNaN(beds) ? beds : 'unknown'} → ${bedScore.toFixed(0)} pts (of 10)`,
+    `Recent ownership change: ${ownerChange ? 'Yes' : 'No'} → ${ownerScore} pts (of 12)`,
+    `In-house rehab provider: ${hasRehabProvider ? 'Yes' : 'No'} → ${rehabScore} pts (of 8)`,
+    `Total: ${total.toFixed(0)}/100`
+  ];
   return {
     score: total,
-    label
+    label,
+    factors
   };
 }
 function PropensityBadge({
@@ -820,7 +849,8 @@ function PropensityBadge({
     Low: 'bg-skyblue-100 text-navy-700/60'
   };
   return /*#__PURE__*/React.createElement("span", {
-    className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${styles[result.label]}`
+    className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${styles[result.label]}`,
+    title: buildOpportunityTooltip(result)
   }, compact ? result.label : "FEES fit: ", compact ? null : result.label);
 }
 
@@ -1546,7 +1576,7 @@ function AccountSnapshot({
     /*#__PURE__*/React.createElement("div", { className: "flex items-center gap-2 flex-wrap mt-2 mb-2" },
       opportunity && /*#__PURE__*/React.createElement("span", {
         className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${overallOpportunityColor(opportunity.label)} text-white`,
-        title: opportunity.source === 'auto' ? 'Based on facility data — assess Clinical Need / Volume / Rehab Activity below to refine' : 'Based on your Clinical Need / Volume / Rehab Activity / Access assessment'
+        title: buildOpportunityTooltip(opportunity)
       }, "FEES OPPORTUNITY: ", opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)'),
       /*#__PURE__*/React.createElement("span", {
         className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
@@ -2549,7 +2579,7 @@ function MapView({
             ${town && town !== 'Unknown' ? `<div style="font-size:12px;color:#5a6b80;margin-top:1px;">${escapeHtml_(town)}</div>` : ''}
             <div style="margin-top:4px;">
               <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${escapeHtml_(a.Status)}</span>
-              ${propensity ? `<span style="font-size:11px;color:#b45309;margin-left:6px;">· FEES fit: ${escapeHtml_(propensity.label)}</span>` : ''}
+              ${propensity ? `<span style="font-size:11px;color:#b45309;margin-left:6px;" title="${escapeHtml_(buildOpportunityTooltip(propensity))}">· FEES fit: ${escapeHtml_(propensity.label)}</span>` : ''}
             </div>
             ${a.Rating ? `<div style="font-size:12px;color:#b45309;margin-top:2px;">★ ${escapeHtml_(a.Rating)}</div>` : ''}
             ${a.BedCount ? `<div style="font-size:12px;color:#556;">${escapeHtml_(a.BedCount)} beds</div>` : ''}
@@ -2734,7 +2764,11 @@ function TableView({
       return [a.AccountName, a.Status, a.Region || '', getTown(a.Address), a.Address || '', a.Phone || '', a.Website || '', p ? p.label : '', cms !== null ? cms + '/5' : '', a.BedCount || '', a.ChainAffiliation || '', a.NextFollowUp || ''];
     });
     const escapeCell = val => {
-      const s = String(val == null ? '' : val);
+      let s = String(val == null ? '' : val);
+      // Formula-injection guard: a leading =, +, -, @, tab, or CR makes
+      // Excel/Sheets treat the cell as a formula when the file is later
+      // opened. Prefixing with an apostrophe forces it to stay literal text.
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
       return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     };
     const csvContent = [csvHeaders, ...csvRows].map(row => row.map(escapeCell).join(',')).join('\n');
@@ -2813,7 +2847,7 @@ function AccountList({
   const [filter, setFilter] = useState('All');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'table' | 'map'
   const [query, setQuery] = useState('');
-  const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating'
+  const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage'
   const [chainFilter, setChainFilter] = useState('All Chains');
   const matchesQuery = a => {
     if (!query.trim()) return true;
@@ -2942,6 +2976,14 @@ function AccountList({
         if (valB === null) return -1;
         return valB - valA;
       });
+    } else if (sortBy === 'Status') {
+      list.sort((a, b) => (a.Status || '').localeCompare(b.Status || ''));
+    } else if (sortBy === 'Stage') {
+      list.sort((a, b) => {
+        const rankA = RELATIONSHIP_STAGES.indexOf(a.RelationshipStage);
+        const rankB = RELATIONSHIP_STAGES.indexOf(b.RelationshipStage);
+        return (rankA === -1 ? 999 : rankA) - (rankB === -1 ? 999 : rankB);
+      });
     }
     return list;
   }, [filtered, sortBy]);
@@ -3047,7 +3089,7 @@ function AccountList({
     value: sortBy,
     onChange: e => setSortBy(e.target.value),
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"))), distinctChains.length > 0 && /*#__PURE__*/React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"))), distinctChains.length > 0 && /*#__PURE__*/React.createElement("label", {
     className: "text-xs text-navy-700/50 flex items-center gap-1.5"
   }, "Chain", /*#__PURE__*/React.createElement("select", {
     value: chainFilter,
@@ -3199,24 +3241,29 @@ function TodayDashboard({
   onBack
 }) {
   const todayStr = new Date().toDateString();
-  const isOverdue = a => a.NextFollowUp && new Date(a.NextFollowUp) < new Date(todayStr);
-  const isDueToday = a => a.NextFollowUp && new Date(a.NextFollowUp).toDateString() === todayStr;
-  const overdue = accounts.filter(isOverdue);
-  const callsToday = accounts.filter(a => isDueToday(a) && (a.NextAction || '').toLowerCase().includes('call'));
-  const visitsToday = accounts.filter(a => isDueToday(a) && (a.NextAction || '').toLowerCase().includes('visit'));
-  const tier1 = accounts.filter(a => {
-    const p = computeOverallFeesOpportunity(a);
-    if (!p || p.label !== 'High') return false;
-    const days = daysSince(a.LastContactDate);
-    return days === null || days > 14;
-  });
-  const clinicalChampions = accounts.filter(a => a.RelationshipStage === 'Clinical Champion');
-  const firstFees = accounts.filter(a => a.RelationshipStage === 'First FEES');
-  const activeReferrers = accounts.filter(a => a.RelationshipStage === 'Active Referrer');
-  const cadenceDue = accounts.filter(a => {
-    const c = computeCadenceStatus(a);
-    return c && c.overdue;
-  });
+  const { overdue, callsToday, visitsToday, tier1, clinicalChampions, firstFees, activeReferrers, cadenceDue } = useMemo(() => {
+    const isOverdue = a => a.NextFollowUp && new Date(a.NextFollowUp) < new Date(todayStr);
+    const isDueToday = a => a.NextFollowUp && new Date(a.NextFollowUp).toDateString() === todayStr;
+    return {
+      overdue: accounts.filter(isOverdue),
+      callsToday: accounts.filter(a => isDueToday(a) && (a.NextAction || '').toLowerCase().includes('call')),
+      visitsToday: accounts.filter(a => isDueToday(a) && (a.NextAction || '').toLowerCase().includes('visit')),
+      tier1: accounts.filter(a => {
+        const p = computeOverallFeesOpportunity(a);
+        if (!p || p.label !== 'High') return false;
+        const days = daysSince(a.LastContactDate);
+        return days === null || days > 14;
+      }),
+      clinicalChampions: accounts.filter(a => a.RelationshipStage === 'Clinical Champion'),
+      firstFees: accounts.filter(a => a.RelationshipStage === 'First FEES'),
+      activeReferrers: accounts.filter(a => a.RelationshipStage === 'Active Referrer'),
+      cadenceDue: accounts.filter(a => {
+        const c = computeCadenceStatus(a);
+        return c && c.overdue;
+      })
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts, todayStr]);
   return /*#__PURE__*/React.createElement("div", {
     className: "max-w-2xl mx-auto px-4 sm:px-6 py-8"
   }, /*#__PURE__*/React.createElement("button", {
