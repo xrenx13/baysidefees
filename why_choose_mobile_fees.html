@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why Choose Mobile FEES | Bayside Dysphagia Diagnostics</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Source Sans 3',sans-serif; background:#fff; color:#222; line-height:1.55; max-width:750px; margin:0 auto; }
+
+@media print {
+  body { -webkit-print-color-adjust:exact; print-color-adjust:exact; max-width:100%; }
+  @page { margin:0; size:letter portrait; }
+}
+
+/* HEADER */
+.header {
+  background:linear-gradient(135deg, #081e3d 0%, #1a3d6e 100%);
+  padding:1rem 1.8rem 1.1rem;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  border-bottom:4px solid #2a9d8f;
+}
+.header img { width:60px; height:60px; object-fit:contain; flex-shrink:0; }
+.header-name {
+  font-family:'Playfair Display',serif;
+  font-size:1.9rem;
+  font-weight:700;
+  color:#fff;
+  line-height:1.1;
+}
+.header-tagline {
+  font-size:0.78rem;
+  color:#85bbdf;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  margin-top:0.2rem;
+}
+
+/* BODY */
+.body { padding:0.7rem 1.6rem; }
+
+/* SECTION HEADING */
+.section-head {
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+  margin-bottom:0.45rem;
+  margin-top:0.7rem;
+}
+.sh-icon {
+  width:13px; height:13px;
+  border:2px solid #2a9d8f;
+  border-radius:50%;
+  flex-shrink:0;
+  background:#e8f7f5;
+}
+.section-head h2 {
+  font-size:0.92rem;
+  font-weight:700;
+  color:#081e3d;
+}
+.sh-line {
+  flex:1;
+  height:1.5px;
+  background:linear-gradient(90deg, #2a9d8f, #85bbdf);
+}
+
+/* TWO COL */
+.two-col {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1rem;
+  margin-bottom:0.35rem;
+  align-items:start;
+}
+
+/* BODY TEXT */
+.body-text { font-size:0.79rem; color:#333; line-height:1.7; margin-bottom:0.55rem; }
+
+/* LISTS */
+ul.dot { list-style:none; padding:0; }
+ul.dot li {
+  font-size:0.78rem; color:#333; line-height:1.6;
+  padding-left:1rem; position:relative; margin-bottom:0.25rem;
+}
+ul.dot li::before {
+  content:''; position:absolute; left:0; top:0.55em;
+  width:6px; height:6px; border-radius:50%; background:#2a9d8f;
+}
+
+ul.sq { list-style:none; padding:0; }
+ul.sq li {
+  font-size:0.78rem; color:#333; line-height:1.6;
+  padding-left:1rem; position:relative; margin-bottom:0.3rem;
+}
+ul.sq li::before {
+  content:''; position:absolute; left:0; top:0.52em;
+  width:7px; height:7px; background:#1a3d6e;
+}
+ul.sq li strong { color:#081e3d; }
+
+/* STAT GRID */
+.stat-grid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:0.5rem;
+  margin-bottom:0.55rem;
+}
+.stat-box {
+  border-radius:8px;
+  padding:0.7rem;
+  text-align:center;
+}
+.stat-box:nth-child(1) { background:#081e3d; color:#fff; }
+.stat-box:nth-child(2) { background:#1a3d6e; color:#fff; }
+.stat-box:nth-child(3) { background:#2a7f7f; color:#fff; }
+.stat-box:nth-child(4) { background:#2a9d8f; color:#fff; }
+.stat-num {
+  font-family:'Source Sans 3',sans-serif;
+  font-size:1.6rem; font-weight:700; color:#fff; margin-bottom:0.25rem; letter-spacing:-0.01em;
+}
+.stat-num sup { font-size:0.65rem; vertical-align:super; }
+.stat-desc { font-size:0.7rem; color:rgba(255,255,255,0.88); line-height:1.55; }
+
+/* STEP GRID */
+.step-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0.5rem;
+  margin-bottom:0.55rem;
+}
+.step-box {
+  border-radius:8px;
+  padding:0.75rem 0.85rem;
+  position:relative;
+  color:#fff;
+}
+.step-box:nth-child(1) { background:linear-gradient(135deg,#1a3d6e,#2a5298); }
+.step-box:nth-child(2) { background:linear-gradient(135deg,#2a7f7f,#3aa8a8); }
+.step-box:nth-child(3) { background:linear-gradient(135deg,#2a9d8f,#3dbfb0); }
+.step-num { font-size:0.72rem; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:0.15rem; }
+.step-title { font-size:0.8rem; font-weight:700; color:#fff; margin-bottom:0.3rem; }
+.step-text { font-size:0.72rem; color:rgba(255,255,255,0.88); line-height:1.6; }
+.step-arrow {
+  position:absolute; right:-0.38rem; top:50%; transform:translateY(-50%);
+  width:0; height:0;
+  border-top:7px solid transparent;
+  border-bottom:7px solid transparent;
+  z-index:2;
+}
+.step-box:nth-child(1) .step-arrow { border-left:7px solid #2a5298; }
+.step-box:nth-child(2) .step-arrow { border-left:7px solid #3aa8a8; }
+
+/* ABOUT */
+.about-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0.6rem;
+  margin-bottom:0.35rem;
+}
+.clinician-card {
+  background:linear-gradient(135deg,#f0f7ff,#e8f4fd);
+  border:1px solid #b8d4ee;
+  border-radius:8px;
+  padding:0.6rem;
+  display:flex;
+  gap:0.6rem;
+  align-items:flex-start;
+}
+.clinician-card img {
+  width:44px; height:44px;
+  border-radius:50%;
+  object-fit:cover; object-position:center top;
+  border:2px solid #2a7f7f;
+  flex-shrink:0;
+}
+.c-name { font-size:0.82rem; font-weight:700; color:#081e3d; margin-bottom:0.1rem; }
+.c-title { font-size:0.65rem; font-weight:700; color:#2a7f7f; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem; }
+.c-bio { font-size:0.7rem; color:#444; line-height:1.55; }
+.contact-card {
+  background:linear-gradient(135deg,#081e3d,#1a3d6e);
+  border-radius:8px;
+  padding:0.6rem 0.9rem;
+  display:flex; flex-direction:column; justify-content:center; gap:0.3rem;
+  border-left:4px solid #2a9d8f;
+}
+.contact-url { font-size:0.95rem; font-weight:700; color:#5bbde4; }
+.contact-phone { font-size:1rem; font-weight:700; color:#fff; }
+.contact-email { font-size:0.82rem; color:#fff; }
+.contact-sub { font-size:0.7rem; color:rgba(255,255,255,0.55); margin-top:0.1rem; }
+
+/* SOURCES */
+.sources {
+  font-size:0.63rem; color:#aaa;
+  border-top:1px solid #eee;
+  padding-top:0.4rem;
+  margin-top:0.2rem;
+}
+
+/* LEFT COL CARD */
+.left-card {
+  background:linear-gradient(135deg,#f0f7ff,#e8f4fd);
+  border:1px solid #b8d4ee;
+  border-radius:8px;
+  padding:0.7rem 0.8rem;
+}
+.right-card {
+  background:linear-gradient(135deg,#e8f7f5,#d4f0eb);
+  border:1px solid #9fd4cc;
+  border-radius:8px;
+  padding:0.7rem 0.8rem;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <img src="data:image/png;base64,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" alt="BDD Logo" />
+  <div>
+    <div class="header-name">Bayside Dysphagia Diagnostics</div>
+    <div class="header-tagline">Mobile FEES · Cape Cod &amp; South Shore, Massachusetts</div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- HEADINGS ROW -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.7rem;margin-bottom:0.45rem;">
+    <div class="section-head" style="margin:0;">
+      <div class="sh-icon"></div><h2>What Is FEES?</h2><div class="sh-line"></div>
+    </div>
+    <div class="section-head" style="margin:0;">
+      <div class="sh-icon"></div><h2>Why Bayside Dysphagia Diagnostics?</h2><div class="sh-line"></div>
+    </div>
+  </div>
+
+  <!-- TWO COL CONTENT -->
+  <div class="two-col" style="margin-bottom:0.6rem;">
+    <div class="left-card">
+      <p class="body-text" style="margin-bottom:0.5rem;">FEES (Fiberoptic Endoscopic Evaluation of Swallowing) is a cost-effective and convenient tool for assessing swallowing disorders that provides direct visualization of the swallow in the patient's natural eating environment. A thin, flexible endoscope is passed through the nose for a real-time view of the pharynx and larynx while the resident eats and drinks actual food and liquid textures — not a barium-coated substitute. Results are available immediately, and the procedure is generally well-tolerated.</p>
+      <ul class="dot">
+        <li><strong>No transport</strong> — done in the resident's room, usually within 1–3 days of referral</li>
+        <li><strong>No radiation</strong> — safe to repeat as often as clinically needed</li>
+        <li><strong>Real diet</strong> — evaluates the food and liquids the resident actually eats</li>
+      </ul>
+    </div>
+    <div class="right-card">
+      <ul class="sq">
+        <li><strong>Founder-led care</strong> — every study performed by a 25+ year dysphagia specialist, not a rotating contractor pool</li>
+        <li><strong>FEES-specific expertise</strong> — an instructor of FEES training courses with 20+ years of performing FEES in various medical settings</li>
+        <li><strong>True partnership</strong> — providing patient, family and staff education as well as direct collaboration with your facility SLP on care planning</li>
+        <li><strong>Local &amp; responsive</strong> — dedicated coverage across Cape Cod and the South Shore, with fast scheduling</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- FINANCIAL & PATIENT OUTCOMES -->
+  <div class="section-head">
+    <div class="sh-icon"></div><h2>The Financial &amp; Patient Outcomes Case</h2><div class="sh-line"></div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="stat-num">~75%<sup>1</sup></div>
+      <div class="stat-desc">Lower average cost than an off-site Modified Barium Swallow, once transport, radiology, and staff time are included.</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">$14K–$30K</div>
+      <div class="stat-desc">Transfer cost avoidance for hospital readmissions related to aspiration pneumonia.</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">50–70%<sup>2</sup></div>
+      <div class="stat-desc">Of elderly patients with dysphagia silently aspirate — missed on a standard bedside swallow evaluation.</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">10–30%<sup>2</sup></div>
+      <div class="stat-desc">30-day mortality rate for nursing home residents who develop pneumonia, the leading cause of death in this population.</div>
+    </div>
+  </div>
+
+  <!-- HOW TO ORDER -->
+  <div class="section-head">
+    <div class="sh-icon"></div><h2>How to Order a Study</h2><div class="sh-line"></div>
+  </div>
+  <div class="step-grid">
+    <div class="step-box">
+      <div class="step-num">01</div>
+      <div class="step-title"><a href="https://www.baysidefees.com/index.html#contact-form" style="color:#fff;text-decoration:underline;text-underline-offset:2px;">📋 Submit the Order</a></div>
+      <div class="step-text">Submit a consultation or physician order form via secure portal.</div>
+      <div class="step-arrow"></div>
+    </div>
+    <div class="step-box">
+      <div class="step-num">02</div>
+      <div class="step-title">Schedule Evaluation</div>
+      <div class="step-text">Clinician coordinates with facility staff to confirm patient readiness, consent and schedules evaluation.</div>
+      <div class="step-arrow"></div>
+    </div>
+    <div class="step-box">
+      <div class="step-num">03</div>
+      <div class="step-title">Results Debrief</div>
+      <div class="step-text">Clinician collaborates with facility SLP on recommendations and treatment planning.</div>
+    </div>
+  </div>
+
+  <!-- ABOUT US -->
+  <div class="section-head">
+    <div class="sh-icon"></div><h2>About Us</h2><div class="sh-line"></div>
+  </div>
+  <div class="about-grid">
+    <div class="clinician-card">
+      <img src="data:image/jpeg;base64,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" alt="Melanie Reynolds" />
+      <div>
+        <div class="c-name">Melanie Reynolds, MS, CCC-SLP</div>
+        <div class="c-title">Founder · Speech-Language Pathologist</div>
+        <div class="c-bio">ASHA-certified with 25+ years across inpatient, outpatient, and acute hospital settings including Cape Cod Hospital, South Shore Hospital, Boston Medical Center, and Spaulding Rehabilitation Hospital. FEES instructor, BU Sargent College guest lecturer, and published researcher.</div>
+      </div>
+    </div>
+    <div class="contact-card">
+      <div class="contact-url">🌐 <a href="https://www.baysidefees.com" style="color:#5bbde4;text-decoration:none;">baysidefees.com</a></div>
+      <div class="contact-phone">📞 (508) 534-8646</div>
+      <div class="contact-email">✉️ <a href="mailto:info@baysidefees.com" style="color:#fff;text-decoration:none;">info@baysidefees.com</a></div>
+      <div class="contact-sub">Mobile FEES Swallowing Evaluations</div>
+    </div>
+  </div>
+
+  <!-- SOURCES -->
+  <div class="sources">
+    Sources: [1] ndoscopy.com/benefits-of-fees &nbsp;·&nbsp; [2] Bayside Dysphagia Diagnostics, The Research (baysidefees.com/references)
+  </div>
+
+</div>
+</body>
+</html>

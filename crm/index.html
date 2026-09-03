@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script>
   // Babel's "react" preset defaults to the automatic JSX runtime, which emits
   // `import` statements that can't execute in a classic <script>. Register a
@@ -47,8 +46,14 @@
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
 
-<script type="text/babel" data-presets="react-classic">
-const { useState, useEffect, useMemo, useCallback, useRef } = React;
+<script>
+const {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef
+} = React;
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -60,7 +65,6 @@ const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAY
 // Leave the placeholder in place and this simply does nothing (Account Name
 // stays a plain text field). See README for how to get a key.
 const GOOGLE_MAPS_API_KEY = "AIzaSyCwnUXXywRbu2kVsNMtYdvyMfDYuPaJm94";
-
 let googleMapsLoadPromise = null;
 function loadGoogleMaps(apiKey) {
   if (!apiKey || apiKey.indexOf('PASTE_YOUR') === 0) {
@@ -87,7 +91,6 @@ function loadGoogleMaps(apiKey) {
 // match the value in Code.gs's GOOGLE_CLIENT_ID. Leave the placeholder in
 // place and the app falls back to the plain password gate.
 const GOOGLE_CLIENT_ID = "611665595000-9c7domumik2gogfrevom2c26nt357upf.apps.googleusercontent.com";
-
 let googleIdentityLoadPromise = null;
 function loadGoogleIdentity() {
   if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf('PASTE_YOUR') === 0) {
@@ -113,13 +116,25 @@ function loadGoogleIdentity() {
 // ---------------------------------------------------------------------
 // Shell / scallop motif (inline SVG, matches BDD brand)
 // ---------------------------------------------------------------------
-function ScallopMark({ className }) {
-  return (
-    <svg viewBox="0 0 64 40" className={className} fill="none">
-      <path d="M2 34c4-16 10-26 30-26s26 10 30 26" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-      <path d="M10 34c2-10 7-17 22-17s20 7 22 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
-    </svg>
-  );
+function ScallopMark({
+  className
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 64 40",
+    className: className,
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M2 34c4-16 10-26 30-26s26 10 30 26",
+    stroke: "currentColor",
+    strokeWidth: "2.5",
+    strokeLinecap: "round"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M10 34c2-10 7-17 22-17s20 7 22 17",
+    stroke: "currentColor",
+    strokeWidth: "1.5",
+    strokeLinecap: "round",
+    opacity: "0.5"
+  }));
 }
 
 // ---------------------------------------------------------------------
@@ -130,54 +145,99 @@ function ScallopMark({ className }) {
 // ---------------------------------------------------------------------
 const VILLAGE_TO_TOWN = {
   // Barnstable
-  'hyannis port': 'Barnstable', 'hyannis': 'Barnstable', 'centerville': 'Barnstable',
-  'osterville': 'Barnstable', 'marstons mills': 'Barnstable', 'cotuit': 'Barnstable',
-  'west barnstable': 'Barnstable', 'cummaquid': 'Barnstable', 'barnstable village': 'Barnstable',
+  'hyannis port': 'Barnstable',
+  'hyannis': 'Barnstable',
+  'centerville': 'Barnstable',
+  'osterville': 'Barnstable',
+  'marstons mills': 'Barnstable',
+  'cotuit': 'Barnstable',
+  'west barnstable': 'Barnstable',
+  'cummaquid': 'Barnstable',
+  'barnstable village': 'Barnstable',
   // Bourne
-  'buzzards bay': 'Bourne', 'cataumet': 'Bourne', 'monument beach': 'Bourne',
-  'pocasset': 'Bourne', 'sagamore beach': 'Bourne', 'sagamore': 'Bourne',
-  'gray gables': 'Bourne', 'bournedale': 'Bourne', 'bourne village': 'Bourne',
+  'buzzards bay': 'Bourne',
+  'cataumet': 'Bourne',
+  'monument beach': 'Bourne',
+  'pocasset': 'Bourne',
+  'sagamore beach': 'Bourne',
+  'sagamore': 'Bourne',
+  'gray gables': 'Bourne',
+  'bournedale': 'Bourne',
+  'bourne village': 'Bourne',
   // Chatham
-  'north chatham': 'Chatham', 'south chatham': 'Chatham', 'west chatham': 'Chatham', 'chathamport': 'Chatham',
+  'north chatham': 'Chatham',
+  'south chatham': 'Chatham',
+  'west chatham': 'Chatham',
+  'chathamport': 'Chatham',
   // Dennis
-  'dennis port': 'Dennis', 'east dennis': 'Dennis', 'south dennis': 'Dennis',
-  'west dennis': 'Dennis', 'dennis village': 'Dennis',
+  'dennis port': 'Dennis',
+  'east dennis': 'Dennis',
+  'south dennis': 'Dennis',
+  'west dennis': 'Dennis',
+  'dennis village': 'Dennis',
   // Eastham
   'north eastham': 'Eastham',
   // Falmouth
-  'east falmouth': 'Falmouth', 'north falmouth': 'Falmouth', 'west falmouth': 'Falmouth',
-  'teaticket': 'Falmouth', 'woods hole': 'Falmouth', 'falmouth village': 'Falmouth', 'falmouth center': 'Falmouth',
+  'east falmouth': 'Falmouth',
+  'north falmouth': 'Falmouth',
+  'west falmouth': 'Falmouth',
+  'teaticket': 'Falmouth',
+  'woods hole': 'Falmouth',
+  'falmouth village': 'Falmouth',
+  'falmouth center': 'Falmouth',
   // Harwich
-  'east harwich': 'Harwich', 'harwich port': 'Harwich', 'north harwich': 'Harwich',
-  'pleasant lake': 'Harwich', 'south harwich': 'Harwich', 'west harwich': 'Harwich', 'harwich center': 'Harwich',
+  'east harwich': 'Harwich',
+  'harwich port': 'Harwich',
+  'north harwich': 'Harwich',
+  'pleasant lake': 'Harwich',
+  'south harwich': 'Harwich',
+  'west harwich': 'Harwich',
+  'harwich center': 'Harwich',
   // Mashpee
-  'new seabury': 'Mashpee', 'popponesset': 'Mashpee', 'south mashpee': 'Mashpee',
+  'new seabury': 'Mashpee',
+  'popponesset': 'Mashpee',
+  'south mashpee': 'Mashpee',
   // Orleans
-  'east orleans': 'Orleans', 'south orleans': 'Orleans', 'orleans center': 'Orleans',
+  'east orleans': 'Orleans',
+  'south orleans': 'Orleans',
+  'orleans center': 'Orleans',
   // Sandwich
-  'east sandwich': 'Sandwich', 'forestdale': 'Sandwich', 'sandwich village': 'Sandwich', 'sandwich center': 'Sandwich',
+  'east sandwich': 'Sandwich',
+  'forestdale': 'Sandwich',
+  'sandwich village': 'Sandwich',
+  'sandwich center': 'Sandwich',
   // Truro
-  'north truro': 'Truro', 'south truro': 'Truro', 'truro center': 'Truro',
+  'north truro': 'Truro',
+  'south truro': 'Truro',
+  'truro center': 'Truro',
   // Wellfleet
-  'south wellfleet': 'Wellfleet', 'wellfleet village': 'Wellfleet',
+  'south wellfleet': 'Wellfleet',
+  'wellfleet village': 'Wellfleet',
   // Yarmouth
-  'west yarmouth': 'Yarmouth', 'south yarmouth': 'Yarmouth', 'yarmouth port': 'Yarmouth', 'bass river': 'Yarmouth',
+  'west yarmouth': 'Yarmouth',
+  'south yarmouth': 'Yarmouth',
+  'yarmouth port': 'Yarmouth',
+  'bass river': 'Yarmouth',
   // South Shore villages
-  'brant rock': 'Marshfield', 'green harbor': 'Marshfield', 'ocean bluff': 'Marshfield',
-  'humarock': 'Scituate', 'egypt': 'Scituate', 'greenbush': 'Scituate', 'minot': 'Scituate',
-  'manomet': 'Plymouth', 'cedarville': 'Plymouth', 'north plymouth': 'Plymouth', 'south plymouth': 'Plymouth',
-  'north weymouth': 'Weymouth', 'south weymouth': 'Weymouth', 'east weymouth': 'Weymouth',
+  'brant rock': 'Marshfield',
+  'green harbor': 'Marshfield',
+  'ocean bluff': 'Marshfield',
+  'humarock': 'Scituate',
+  'egypt': 'Scituate',
+  'greenbush': 'Scituate',
+  'minot': 'Scituate',
+  'manomet': 'Plymouth',
+  'cedarville': 'Plymouth',
+  'north plymouth': 'Plymouth',
+  'south plymouth': 'Plymouth',
+  'north weymouth': 'Weymouth',
+  'south weymouth': 'Weymouth',
+  'east weymouth': 'Weymouth'
 };
 
 // Full Cape Cod / South Shore towns, for direct matches and the "already
 // a town name" case.
-const KNOWN_TOWNS = [
-  'Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth',
-  'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth',
-  'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate',
-  'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth'
-];
-
+const KNOWN_TOWNS = ['Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth', 'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth', 'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate', 'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth', 'New Bedford', 'Fall River', 'Dartmouth', 'Fairhaven', 'Somerset', 'Swansea', 'Westport', 'Acushnet'];
 function escapeRegex_(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -222,15 +282,16 @@ function formatPhoneInput(raw) {
 function normalizeEmailInput(raw) {
   return String(raw || '').trim().toLowerCase();
 }
-
 function getTown(address) {
   if (!address) return 'Unknown';
   const lower = address.toLowerCase();
-
-  const allNames = [
-    ...Object.keys(VILLAGE_TO_TOWN).map(v => ({ name: v, town: VILLAGE_TO_TOWN[v] })),
-    ...KNOWN_TOWNS.map(t => ({ name: t.toLowerCase(), town: t }))
-  ];
+  const allNames = [...Object.keys(VILLAGE_TO_TOWN).map(v => ({
+    name: v,
+    town: VILLAGE_TO_TOWN[v]
+  })), ...KNOWN_TOWNS.map(t => ({
+    name: t.toLowerCase(),
+    town: t
+  }))];
 
   // Pass 1: prefer a name that sits directly next to "MA" (e.g. "Mashpee,
   // MA" or "Mashpee MA") — that's how the actual city component is written
@@ -239,11 +300,17 @@ function getTown(address) {
   // address). If more than one name matches this way, prefer the rightmost
   // occurrence, since street name usually comes first.
   let best = null;
-  for (const { name, town } of allNames) {
+  for (const {
+    name,
+    town
+  } of allNames) {
     const re = new RegExp(`\\b${escapeRegex_(name)}\\b\\s*,?\\s*ma\\b`, 'gi');
     let m;
     while ((m = re.exec(lower)) !== null) {
-      if (!best || m.index > best.index) best = { town, index: m.index };
+      if (!best || m.index > best.index) best = {
+        town,
+        index: m.index
+      };
     }
   }
   if (best) return best.town;
@@ -251,11 +318,17 @@ function getTown(address) {
   // Pass 2: no "MA" found near a known name — fall back to the LAST
   // occurring known name anywhere in the address, since the town typically
   // comes after the street name, not before it.
-  for (const { name, town } of allNames) {
+  for (const {
+    name,
+    town
+  } of allNames) {
     const re = new RegExp(`\\b${escapeRegex_(name)}\\b`, 'gi');
     let m;
     while ((m = re.exec(lower)) !== null) {
-      if (!best || m.index > best.index) best = { town, index: m.index };
+      if (!best || m.index > best.index) best = {
+        town,
+        index: m.index
+      };
     }
   }
   if (best) return best.town;
@@ -266,7 +339,6 @@ function getTown(address) {
   if (match) {
     return match[1].trim().replace(/\b\w/g, c => c.toUpperCase());
   }
-
   return 'Unknown';
 }
 
@@ -289,7 +361,6 @@ function followUpStatus(nextFollowUp) {
   if (clean === today) return 'today';
   return 'upcoming';
 }
-
 function formatFollowUpDate(nextFollowUp) {
   if (!nextFollowUp) return '';
   const clean = String(nextFollowUp).slice(0, 10);
@@ -297,10 +368,15 @@ function formatFollowUpDate(nextFollowUp) {
   if (!y || !m || !d) return '';
   const date = new Date(y, m - 1, d);
   if (isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
 }
-
-function FollowUpBadge({ nextFollowUp }) {
+function FollowUpBadge({
+  nextFollowUp
+}) {
   const status = followUpStatus(nextFollowUp);
   if (!status) return null;
   const styles = {
@@ -313,11 +389,9 @@ function FollowUpBadge({ nextFollowUp }) {
     today: 'Follow up today',
     upcoming: `Follow up ${formatFollowUpDate(nextFollowUp)}`
   };
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${styles[status]}`}>
-      {labels[status]}
-    </span>
-  );
+  return /*#__PURE__*/React.createElement("span", {
+    className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${styles[status]}`
+  }, labels[status]);
 }
 
 // ---------------------------------------------------------------------
@@ -325,15 +399,34 @@ function FollowUpBadge({ nextFollowUp }) {
 // "September 15, 2026") and surface the soonest one that's today or later.
 // ---------------------------------------------------------------------
 const MONTH_NAMES = {
-  jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3,
-  may: 4, jun: 5, june: 5, jul: 6, july: 6, aug: 7, august: 7,
-  sep: 8, sept: 8, september: 8, oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11
+  jan: 0,
+  january: 0,
+  feb: 1,
+  february: 1,
+  mar: 2,
+  march: 2,
+  apr: 3,
+  april: 3,
+  may: 4,
+  jun: 5,
+  june: 5,
+  jul: 6,
+  july: 6,
+  aug: 7,
+  august: 7,
+  sep: 8,
+  sept: 8,
+  september: 8,
+  oct: 9,
+  october: 9,
+  nov: 10,
+  november: 10,
+  dec: 11,
+  december: 11
 };
-
 function stripTime(d) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
-
 function parseDatesFromText(text) {
   const dates = [];
   if (!text) return dates;
@@ -366,7 +459,6 @@ function parseDatesFromText(text) {
     if (!m[3] && date < today) date = new Date(year + 1, month, day);
     dates.push(date);
   }
-
   return dates;
 }
 
@@ -378,56 +470,66 @@ function getUpcomingActivity(accountNotes) {
   accountNotes.forEach(n => {
     parseDatesFromText(n.NoteText).forEach(d => {
       if (d >= today && (!best || d < best.date)) {
-        best = { date: d, note: n };
+        best = {
+          date: d,
+          note: n
+        };
       }
     });
   });
   return best;
 }
-
 function formatShortDate(date) {
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  });
 }
 
-function UpcomingActivityBadge({ upcoming }) {
+// Two-letter initials from a full name (e.g. "Melanie Reynolds" -> "MR"),
+// falling back to the first two characters of an email if no name is on
+// file (older sessions signed in before this was tracked).
+function getInitials(name, fallbackEmail) {
+  const trimmed = (name || '').trim();
+  if (trimmed) {
+    const parts = trimmed.split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return (fallbackEmail || '').slice(0, 2).toUpperCase();
+}
+function UpcomingActivityBadge({
+  upcoming
+}) {
   if (!upcoming) return null;
-  return (
-    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-600">
-      Upcoming Meeting — {formatShortDate(upcoming.date)}
-    </span>
-  );
+  return /*#__PURE__*/React.createElement("span", {
+    className: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-600"
+  }, "Upcoming Meeting — ", formatShortDate(upcoming.date));
 }
 
 // ---------------------------------------------------------------------
 // Autocomplete defaults — seeded with common SNF/ALF-referral values,
 // and grown at runtime with whatever's actually been typed into the Sheet.
 // ---------------------------------------------------------------------
-const ROLE_DEFAULTS = [
-  'Director of Nursing', 'Administrator', 'Business Office Manager',
-  'Director of Rehab', 'Facility SLP', 'Admissions Coordinator',
-  'MDS Coordinator', 'Unit Manager', 'Charge Nurse', 'Case Manager'
-];
-const RELATIONSHIP_DEFAULTS = [
-  'Covering Physician', 'Hospital SLP', 'Case Manager', 'Referral Partner',
-  'Home Health Liaison', 'Former Colleague', 'Vendor Rep'
-];
-const REFERRAL_SOURCE_DEFAULTS = [
-  'LinkedIn Outreach', 'Cold Call', 'Facility Website', 'Existing Client Referral',
-  'Conference / Networking Event', 'Direct Mail', 'Word of Mouth'
-];
-
+const ROLE_DEFAULTS = ['Director of Nursing', 'Administrator', 'Business Office Manager', 'Director of Rehab', 'Facility SLP', 'Admissions Coordinator', 'MDS Coordinator', 'Unit Manager', 'Charge Nurse', 'Case Manager'];
+const RELATIONSHIP_DEFAULTS = ['Covering Physician', 'Hospital SLP', 'Case Manager', 'Referral Partner', 'Home Health Liaison', 'Former Colleague', 'Vendor Rep'];
+const REFERRAL_SOURCE_DEFAULTS = ['LinkedIn Outreach', 'Cold Call', 'Facility Website', 'Existing Client Referral', 'Conference / Networking Event', 'Direct Mail', 'Word of Mouth'];
 function uniqueSorted(values) {
   const set = new Set(values.map(v => (v || '').trim()).filter(Boolean));
   return Array.from(set).sort((a, b) => a.localeCompare(b));
 }
 
 // Renders a <datalist> that an <input list="..."> can point to.
-function Suggestions({ id, options }) {
-  return (
-    <datalist id={id}>
-      {options.map(opt => <option key={opt} value={opt} />)}
-    </datalist>
-  );
+function Suggestions({
+  id,
+  options
+}) {
+  return /*#__PURE__*/React.createElement("datalist", {
+    id: id
+  }, options.map(opt => /*#__PURE__*/React.createElement("option", {
+    key: opt,
+    value: opt
+  })));
 }
 
 // ---------------------------------------------------------------------
@@ -444,22 +546,31 @@ function handleUnauthorized() {
   sessionStorage.removeItem('bdd_crm_unlocked');
   sessionStorage.removeItem('bdd_crm_session_token');
   sessionStorage.removeItem('bdd_crm_user_email');
+  sessionStorage.removeItem('bdd_crm_user_name');
   window.location.reload();
 }
-
 async function apiGet() {
   const res = await fetch(`${API_URL}?action=all&token=${encodeURIComponent(getSessionToken())}`);
   const result = await res.json();
   if (result.error === 'Unauthorized — please sign in again') {
     handleUnauthorized();
-    return { accounts: [], contacts: [], connections: [], notes: [] };
+    return {
+      accounts: [],
+      contacts: [],
+      connections: [],
+      notes: []
+    };
   }
   return result;
 }
 async function apiPost(action, payload) {
   const res = await fetch(API_URL, {
     method: 'POST',
-    body: JSON.stringify({ action, token: getSessionToken(), ...payload })
+    body: JSON.stringify({
+      action,
+      token: getSessionToken(),
+      ...payload
+    })
   });
   const result = await res.json();
   if (result.error === 'Unauthorized — please sign in again') {
@@ -471,24 +582,27 @@ async function apiPost(action, payload) {
 // ---------------------------------------------------------------------
 // Login gate — Google Sign-In only
 // ---------------------------------------------------------------------
-function Gate({ onUnlock }) {
+function Gate({
+  onUnlock
+}) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [googleFailedToLoad, setGoogleFailedToLoad] = useState(false);
   const googleButtonRef = useRef(null);
-
   const unlock = () => {
     sessionStorage.setItem('bdd_crm_unlocked', 'true');
     onUnlock();
   };
-
-  const handleCredentialResponse = useCallback(async (response) => {
+  const handleCredentialResponse = useCallback(async response => {
     setBusy(true);
     setError('');
     try {
-      const result = await apiPost('verifyGoogleLogin', { idToken: response.credential });
+      const result = await apiPost('verifyGoogleLogin', {
+        idToken: response.credential
+      });
       if (result.success) {
         sessionStorage.setItem('bdd_crm_user_email', result.result.email);
+        sessionStorage.setItem('bdd_crm_user_name', result.result.name || '');
         sessionStorage.setItem('bdd_crm_session_token', result.result.sessionToken);
         unlock();
       } else {
@@ -499,315 +613,712 @@ function Gate({ onUnlock }) {
     }
     setBusy(false);
   }, []);
-
   useEffect(() => {
-    loadGoogleIdentity().then((google) => {
+    loadGoogleIdentity().then(google => {
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse
       });
       if (googleButtonRef.current) {
         google.accounts.id.renderButton(googleButtonRef.current, {
-          theme: 'outline', size: 'large', width: 280
+          theme: 'outline',
+          size: 'large',
+          width: 280
         });
       }
     }).catch(() => {
       setGoogleFailedToLoad(true);
     });
   }, [handleCredentialResponse]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-navy-900 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-sm w-full text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-navy-900 flex items-center justify-center p-2.5">
-          <img src={LOGO_DATA_URI} alt="Bayside Dysphagia Diagnostics" className="w-full h-full object-contain" />
-        </div>
-        <h1 className="font-display text-2xl text-navy-900 mb-1">Bayside Dysphagia Diagnostics</h1>
-        <p className="text-sm text-navy-700/60 mb-6">Client &amp; Referral tracker</p>
-
-        {googleFailedToLoad ? (
-          <p className="text-navy-700/50 text-sm">
-            Sign-in is currently unavailable. Please check back shortly.
-          </p>
-        ) : (
-          <div className="flex justify-center mb-2">
-            <div ref={googleButtonRef}></div>
-          </div>
-        )}
-
-        {busy && <p className="text-navy-700/40 text-sm mt-3">Signing in…</p>}
-        {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex items-center justify-center bg-navy-900 px-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-2xl shadow-2xl p-10 max-w-sm w-full text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-16 h-16 mx-auto mb-4 rounded-full bg-navy-900 flex items-center justify-center p-2.5"
+  }, /*#__PURE__*/React.createElement("img", {
+    src: LOGO_DATA_URI,
+    alt: "Bayside Dysphagia Diagnostics",
+    className: "w-full h-full object-contain"
+  })), /*#__PURE__*/React.createElement("h1", {
+    className: "font-display text-2xl text-navy-900 mb-1"
+  }, "Bayside Dysphagia Diagnostics"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/60 mb-6"
+  }, "Client & Referral tracker"), googleFailedToLoad ? /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/50 text-sm"
+  }, "Sign-in is currently unavailable. Please check back shortly.") : /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center mb-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    ref: googleButtonRef
+  })), busy && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm mt-3"
+  }, "Signing in…"), error && /*#__PURE__*/React.createElement("p", {
+    className: "text-red-500 text-sm mt-3"
+  }, error)));
 }
 
 // ---------------------------------------------------------------------
 // Empty state with a faded shell watermark — used for the main account
 // list's empty state.
 // ---------------------------------------------------------------------
-function EmptyState({ message, hint }) {
-  return (
-    <div className="text-center py-8">
-      <svg width="30" height="30" viewBox="0 0 64 40" fill="none" className="mx-auto mb-2 opacity-20">
-        <path d="M2 34c4-16 10-26 30-26s26 10 30 26" stroke="#081e3d" strokeWidth="2.5" strokeLinecap="round" />
-      </svg>
-      <p className="text-sm text-navy-700/60 font-medium">{message}</p>
-      {hint && <p className="text-xs text-navy-700/40 mt-0.5">{hint}</p>}
-    </div>
-  );
+function EmptyState({
+  message,
+  hint
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-8"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "30",
+    height: "30",
+    viewBox: "0 0 64 40",
+    fill: "none",
+    className: "mx-auto mb-2 opacity-20"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M2 34c4-16 10-26 30-26s26 10 30 26",
+    stroke: "#081e3d",
+    strokeWidth: "2.5",
+    strokeLinecap: "round"
+  })), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/60 font-medium"
+  }, message), hint && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 mt-0.5"
+  }, hint));
+}
+
+// Shown under the empty state when a search finds nothing in the current
+// region but would match in another one — lets the user jump there with
+// one click instead of manually switching regions to go looking.
+function CrossRegionHint({
+  matches,
+  setRegion
+}) {
+  if (!matches || matches.length === 0) return null;
+  return /*#__PURE__*/React.createElement("p", {
+    className: "text-center text-sm text-navy-700/60 pb-6 -mt-4"
+  }, "Found in: ", matches.map((m, i) => /*#__PURE__*/React.createElement(React.Fragment, {
+    key: m.region
+  }, i > 0 ? ', ' : '', /*#__PURE__*/React.createElement("button", {
+    onClick: () => setRegion(m.region),
+    className: "text-teal-600 hover:underline font-medium"
+  }, `${m.region} (${m.count})`))));
+}
+
+// Brief bottom-of-screen confirmation after a save/delete/convert action.
+// Triggered from anywhere via window.__crmShowToast(message) — avoids
+// threading a callback prop through every nested component that saves
+// something.
+function Toast() {
+  const [message, setMessage] = useState(null);
+  useEffect(() => {
+    let timer;
+    window.__crmShowToast = msg => {
+      clearTimeout(timer);
+      setMessage(msg);
+      timer = setTimeout(() => setMessage(null), 2200);
+    };
+    return () => clearTimeout(timer);
+  }, []);
+  if (!message) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'fixed',
+      bottom: '20px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 9999
+    },
+    className: "bg-navy-900 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg"
+  }, message);
+}
+
+// Extracts the leading numeric CMS Overall rating out of the stored text
+// (e.g. "Overall: 3/5 (Health: 2, ...)" -> 3, or the older plain "5" format
+// -> 5). Returns null if nothing numeric is found.
+function getCmsOverallNumber(cmsRatingText) {
+  if (!cmsRatingText) return null;
+  const match = String(cmsRatingText).match(/(\d+(\.\d+)?)/);
+  return match ? parseFloat(match[1]) : null;
+}
+
+// ---------------------------------------------------------------------
+// FEES propensity score — computed live from data already on the account,
+// never stored, so it's always current as fields get updated. Weighted
+// toward clinical need (case-mix acuity, high-risk programs, size) over
+// sales-timing signals (recent ownership change, no rehab provider on
+// file), per your call that clinical need should dominate.
+// ---------------------------------------------------------------------
+function computePropensityScore(account) {
+  const cmi = parseFloat(account.CaseMixIndex);
+  if (isNaN(cmi)) return null; // not enough data to score meaningfully
+
+  const beds = parseFloat(account.BedCount);
+  const programCount = (account.HighRiskPrograms || '').split(',').map(s => s.trim()).filter(Boolean).length;
+  const ownerChange = account.RecentOwnershipChange === 'Yes';
+  const hasRehabProvider = !!(account.RehabProvider && account.RehabProvider.trim());
+  const cmiScore = Math.max(0, Math.min(1, (cmi - 1.0) / 0.8)) * 50;
+  const programScore = Math.min(programCount * 7, 20);
+  const bedScore = (!isNaN(beds) ? Math.min(beds / 250, 1) : 0) * 10;
+  const clinical = cmiScore + programScore + bedScore; // out of 80
+
+  const ownerScore = ownerChange ? 12 : 0;
+  const rehabScore = hasRehabProvider ? 0 : 8;
+  const timing = ownerScore + rehabScore; // out of 20
+
+  const total = clinical + timing;
+  const label = total >= 50 ? 'High' : total >= 30 ? 'Medium' : 'Low';
+  return {
+    score: total,
+    label
+  };
+}
+function PropensityBadge({
+  account,
+  compact
+}) {
+  const result = computePropensityScore(account);
+  if (!result) return null;
+  const styles = {
+    High: 'bg-teal-50 text-teal-600',
+    Medium: 'bg-amber-50 text-amber-600',
+    Low: 'bg-skyblue-100 text-navy-700/60'
+  };
+  return /*#__PURE__*/React.createElement("span", {
+    className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${styles[result.label]}`
+  }, compact ? result.label : "FEES fit: ", compact ? null : result.label);
 }
 
 // ---------------------------------------------------------------------
 // Status pill
 // ---------------------------------------------------------------------
-function StatusPill({ status }) {
+function StatusPill({
+  status
+}) {
   const isCustomer = status === 'Customer';
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-      isCustomer ? 'bg-teal-50 text-teal-600' : 'bg-skyblue-100 text-navy-700'
-    }`}>
-      {isCustomer ? 'Customer' : 'Prospect'}
-    </span>
-  );
+  return /*#__PURE__*/React.createElement("span", {
+    className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${isCustomer ? 'bg-teal-50 text-teal-600' : 'bg-skyblue-100 text-navy-700'}`
+  }, isCustomer ? 'Customer' : 'Prospect');
 }
 
 // ---------------------------------------------------------------------
 // Account form (create / edit)
 // ---------------------------------------------------------------------
-function AccountForm({ initial, onSave, onCancel, referralSourceOptions = [] }) {
+// Collapsible section for the account form — keeps a long form scannable.
+// Starts open if it already has data (so nothing existing is hidden by
+// default), collapsed otherwise.
+function FormSection({
+  title,
+  defaultOpen,
+  children
+}) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-skyblue-100 pt-4 mt-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setOpen(!open),
+    className: "flex items-center justify-between w-full text-left mb-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-semibold text-navy-900"
+  }, title), /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/40 text-xs"
+  }, open ? '▲ Hide' : '▼ Show')), open && /*#__PURE__*/React.createElement("div", {
+    className: "grid sm:grid-cols-2 gap-4"
+  }, children));
+}
+function AccountForm({
+  initial,
+  onSave,
+  onCancel,
+  referralSourceOptions = []
+}) {
   const [form, setForm] = useState(initial || {
-    AccountName: '', Address: '', Website: '', Phone: '', ReferralSource: '', Status: 'Prospect', Region: 'Cape Cod'
+    AccountName: '',
+    Address: '',
+    Website: '',
+    Phone: '',
+    ReferralSource: '',
+    Status: 'Prospect',
+    Region: 'Cape Cod'
   });
   const [placesReady, setPlacesReady] = useState(false);
   const nameInputRef = useRef(null);
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-  const setPhone = (e) => setForm({ ...form, Phone: formatPhoneInput(e.target.value) });
+  const set = k => e => setForm({
+    ...form,
+    [k]: e.target.value
+  });
+  const setPhone = e => setForm({
+    ...form,
+    Phone: formatPhoneInput(e.target.value)
+  });
+
+  // Sections default open if they already have data, so editing an
+  // existing account never hides what's already filled in.
+  const hasFacilityData = !!(initial && (initial.CMSRating || initial.BedCount || initial.ChainAffiliation || initial.HighRiskPrograms || initial.RehabProvider || initial.Rating));
+  const hasSalesIntel = !!(initial && (initial.RecentOwnershipChange === 'Yes' || initial.SpecialFocusStatus || initial.AbuseFlag === 'Yes' || initial.StaffingHoursPerResidentDay || initial.FinesHistory || initial.CaseMixIndex));
 
   // Wire up Google Places Autocomplete on the Account Name field, if a real
   // API key has been configured. Silently does nothing otherwise.
   useEffect(() => {
     let listener;
     let autocomplete;
-    loadGoogleMaps(GOOGLE_MAPS_API_KEY).then((google) => {
+    loadGoogleMaps(GOOGLE_MAPS_API_KEY).then(google => {
       if (!nameInputRef.current) return;
       autocomplete = new google.maps.places.Autocomplete(nameInputRef.current, {
         types: ['establishment'],
-        componentRestrictions: { country: 'us' },
-        fields: ['name', 'formatted_address', 'formatted_phone_number', 'website']
+        componentRestrictions: {
+          country: 'us'
+        },
+        fields: ['name', 'formatted_address', 'formatted_phone_number', 'website', 'rating', 'user_ratings_total']
       });
       setPlacesReady(true);
       listener = autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
         if (!place) return;
+        const googleRating = place.rating ? `${place.rating} (${place.user_ratings_total || 0} reviews)` : '';
         setForm(f => ({
           ...f,
           AccountName: place.name || f.AccountName,
           Address: f.Address || place.formatted_address || '',
           Phone: f.Phone || place.formatted_phone_number || '',
-          Website: f.Website || place.website || ''
+          Website: f.Website || place.website || '',
+          Rating: f.Rating || googleRating
         }));
       });
-    }).catch(() => { /* no key configured yet — plain text input, no error shown */ });
-    return () => { if (listener) listener.remove(); };
+    }).catch(() => {/* no key configured yet — plain text input, no error shown */});
+    return () => {
+      if (listener) listener.remove();
+    };
   }, []);
-
-  return (
-    <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
-      <h3 className="font-display text-lg mb-4 text-navy-900">
-        {initial ? 'Edit account' : 'Add a new account'}
-      </h3>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <label className="text-sm">
-          <span className="text-navy-700/70">Account name</span>
-          <input
-            ref={nameInputRef}
-            value={form.AccountName}
-            onChange={set('AccountName')}
-            className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
-            placeholder="e.g. Cape Cod Rehab & Nursing"
-          />
-          {placesReady && (
-            <span className="text-xs text-teal-600/70 mt-1 block">Start typing to search — picking a match fills in address, phone & website.</span>
-          )}
-        </label>
-        <label className="text-sm">
-          <span className="text-navy-700/70">Referral source</span>
-          <input value={form.ReferralSource} onChange={set('ReferralSource')} list="referral-source-options" className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2" placeholder="e.g. LinkedIn outreach" />
-          <Suggestions id="referral-source-options" options={referralSourceOptions} />
-        </label>
-        <label className="text-sm">
-          <span className="text-navy-700/70">Address</span>
-          <input value={form.Address} onChange={set('Address')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2" />
-        </label>
-        <label className="text-sm">
-          <span className="text-navy-700/70">Website</span>
-          <input value={form.Website} onChange={set('Website')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2" placeholder="https://" />
-        </label>
-        <label className="text-sm">
-          <span className="text-navy-700/70">Phone</span>
-          <input value={form.Phone} onChange={setPhone} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2" />
-        </label>
-        <label className="text-sm">
-          <span className="text-navy-700/70">Status</span>
-          <select value={form.Status} onChange={set('Status')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white">
-            <option>Prospect</option>
-            <option>Customer</option>
-          </select>
-        </label>
-        <label className="text-sm">
-          <span className="text-navy-700/70">Region</span>
-          <select value={form.Region || 'Cape Cod'} onChange={set('Region')} className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white">
-            <option>Cape Cod</option>
-            <option>South Shore</option>
-          </select>
-        </label>
-        {form.Status === 'Customer' && (
-          <label className="text-sm sm:col-span-2">
-            <span className="text-navy-700/70">SimplePractice client URL</span>
-            <input
-              type="url"
-              value={form.SimplePracticeUrl || ''}
-              onChange={set('SimplePracticeUrl')}
-              placeholder="https://secure.simplepractice.com/..."
-              className="mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
-            />
-          </label>
-        )}
-      </div>
-      <div className="flex gap-3 mt-5">
-        <button onClick={() => onSave(form)} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition">
-          Save account
-        </button>
-        <button onClick={onCancel} className="text-navy-700/60 hover:text-navy-900 text-sm px-3">Cancel</button>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-display text-lg mb-4 text-navy-900"
+  }, initial ? 'Edit account' : 'Add a new account'), /*#__PURE__*/React.createElement(FormSection, {
+    title: "Basic Info",
+    defaultOpen: true
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Account name"), /*#__PURE__*/React.createElement("input", {
+    ref: nameInputRef,
+    value: form.AccountName,
+    onChange: set('AccountName'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2",
+    placeholder: "e.g. Cape Cod Rehab & Nursing"
+  }), placesReady && /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-teal-600/70 mt-1 block"
+  }, "Start typing to search — picking a match fills in address, phone, website & Google rating.")), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Referral source"), /*#__PURE__*/React.createElement("input", {
+    value: form.ReferralSource,
+    onChange: set('ReferralSource'),
+    list: "referral-source-options",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2",
+    placeholder: "e.g. LinkedIn outreach"
+  }), /*#__PURE__*/React.createElement(Suggestions, {
+    id: "referral-source-options",
+    options: referralSourceOptions
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Address"), /*#__PURE__*/React.createElement("input", {
+    value: form.Address,
+    onChange: set('Address'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Website"), /*#__PURE__*/React.createElement("input", {
+    value: form.Website,
+    onChange: set('Website'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2",
+    placeholder: "https://"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Phone"), /*#__PURE__*/React.createElement("input", {
+    value: form.Phone,
+    onChange: setPhone,
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Status"), /*#__PURE__*/React.createElement("select", {
+    value: form.Status,
+    onChange: set('Status'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "Prospect"), /*#__PURE__*/React.createElement("option", null, "Customer"))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Region"), /*#__PURE__*/React.createElement("select", {
+    value: form.Region || 'Cape Cod',
+    onChange: set('Region'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "Cape Cod"), /*#__PURE__*/React.createElement("option", null, "South Shore"), /*#__PURE__*/React.createElement("option", null, "South Coast"))), form.Status === 'Customer' && /*#__PURE__*/React.createElement("label", {
+    className: "text-sm sm:col-span-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "SimplePractice client URL"), /*#__PURE__*/React.createElement("input", {
+    type: "url",
+    value: form.SimplePracticeUrl || '',
+    onChange: set('SimplePracticeUrl'),
+    placeholder: "https://secure.simplepractice.com/...",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  }))), /*#__PURE__*/React.createElement(FormSection, {
+    title: "Facility Data",
+    defaultOpen: hasFacilityData
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Google rating"), /*#__PURE__*/React.createElement("input", {
+    value: form.Rating || '',
+    onChange: set('Rating'),
+    placeholder: "e.g. 4.3 (102 reviews)",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "CMS star rating"), /*#__PURE__*/React.createElement("input", {
+    value: form.CMSRating || '',
+    onChange: set('CMSRating'),
+    placeholder: "e.g. 4",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Bed count"), /*#__PURE__*/React.createElement("input", {
+    value: form.BedCount || '',
+    onChange: set('BedCount'),
+    placeholder: "e.g. 132",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Chain / ownership"), /*#__PURE__*/React.createElement("input", {
+    value: form.ChainAffiliation || '',
+    onChange: set('ChainAffiliation'),
+    placeholder: "e.g. Royal Health Group",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm sm:col-span-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "High-risk clinical programs"), /*#__PURE__*/React.createElement("input", {
+    value: form.HighRiskPrograms || '',
+    onChange: set('HighRiskPrograms'),
+    placeholder: "e.g. Memory care, cardiac, stroke recovery",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm sm:col-span-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Current SLP / rehab provider"), /*#__PURE__*/React.createElement("input", {
+    value: form.RehabProvider || '',
+    onChange: set('RehabProvider'),
+    placeholder: "e.g. in-house, or contracted vendor name",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  }))), /*#__PURE__*/React.createElement(FormSection, {
+    title: "Sales Intelligence",
+    defaultOpen: hasSalesIntel
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Recent ownership change?"), /*#__PURE__*/React.createElement("select", {
+    value: form.RecentOwnershipChange || 'No',
+    onChange: set('RecentOwnershipChange'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "No"), /*#__PURE__*/React.createElement("option", null, "Yes"))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Special Focus status"), /*#__PURE__*/React.createElement("input", {
+    value: form.SpecialFocusStatus || '',
+    onChange: set('SpecialFocusStatus'),
+    placeholder: "e.g. SFF, SFF Candidate",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Abuse history flag?"), /*#__PURE__*/React.createElement("select", {
+    value: form.AbuseFlag || 'No',
+    onChange: set('AbuseFlag'),
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "No"), /*#__PURE__*/React.createElement("option", null, "Yes"))), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Staffing (hrs/resident/day)"), /*#__PURE__*/React.createElement("input", {
+    value: form.StaffingHoursPerResidentDay || '',
+    onChange: set('StaffingHoursPerResidentDay'),
+    placeholder: "e.g. 3.68 hrs/resident/day",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Fines history"), /*#__PURE__*/React.createElement("input", {
+    value: form.FinesHistory || '',
+    onChange: set('FinesHistory'),
+    placeholder: "e.g. 1 fine(s), $7,901 total",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/70"
+  }, "Case-mix index"), /*#__PURE__*/React.createElement("input", {
+    value: form.CaseMixIndex || '',
+    onChange: set('CaseMixIndex'),
+    placeholder: "e.g. 1.45",
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 mt-5"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => onSave(form),
+    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition"
+  }, "Save account"), /*#__PURE__*/React.createElement("button", {
+    onClick: onCancel,
+    className: "text-navy-700/60 hover:text-navy-900 text-sm px-3"
+  }, "Cancel")));
 }
 
 // ---------------------------------------------------------------------
 // Contact row / form
 // ---------------------------------------------------------------------
-function ContactForm({ initial, onSave, onCancel, roleOptions = [] }) {
+function ContactForm({
+  initial,
+  onSave,
+  onCancel,
+  roleOptions = []
+}) {
   const [form, setForm] = useState(initial || {
-    ContactName: '', Role: '', Phone: '', Email: '', PreferredContact: 'Email'
+    ContactName: '',
+    Role: '',
+    Phone: '',
+    Email: '',
+    PreferredContact: 'Email'
   });
   // Once editing an existing contact, or once the user manually picks a
   // Preferred Contact value, stop auto-guessing it.
   const [preferredTouched, setPreferredTouched] = useState(!!initial);
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-
-  const setPhone = (e) => {
+  const set = k => e => setForm({
+    ...form,
+    [k]: e.target.value
+  });
+  const setPhone = e => {
     const val = formatPhoneInput(e.target.value);
     setForm(f => {
-      const next = { ...f, Phone: val };
+      const next = {
+        ...f,
+        Phone: val
+      };
       if (!preferredTouched && val && !f.Email) next.PreferredContact = 'Phone';
       return next;
     });
   };
-  const setEmail = (e) => {
+  const setEmail = e => {
     const val = e.target.value;
     setForm(f => {
-      const next = { ...f, Email: val };
+      const next = {
+        ...f,
+        Email: val
+      };
       if (!preferredTouched && val && !f.Phone) next.PreferredContact = 'Email';
       return next;
     });
   };
-  const blurEmail = () => setForm(f => ({ ...f, Email: normalizeEmailInput(f.Email) }));
-  const setPreferred = (e) => {
+  const blurEmail = () => setForm(f => ({
+    ...f,
+    Email: normalizeEmailInput(f.Email)
+  }));
+  const setPreferred = e => {
     setPreferredTouched(true);
-    setForm({ ...form, PreferredContact: e.target.value });
+    setForm({
+      ...form,
+      PreferredContact: e.target.value
+    });
   };
-
-  return (
-    <div className="bg-skyblue-100/40 rounded-lg p-4 mb-3">
-      <div className="grid sm:grid-cols-2 gap-3">
-        <input value={form.ContactName} onChange={set('ContactName')} placeholder="Name" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-        <div>
-          <input value={form.Role} onChange={set('Role')} list="contact-role-options" placeholder="Role / title" className="w-full border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-          <Suggestions id="contact-role-options" options={roleOptions} />
-        </div>
-        <input value={form.Phone} onChange={setPhone} placeholder="Phone" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-        <input value={form.Email} onChange={setEmail} onBlur={blurEmail} placeholder="Email" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-        <select value={form.PreferredContact} onChange={setPreferred} className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white">
-          <option>Email</option>
-          <option>Phone</option>
-          <option>Text</option>
-        </select>
-      </div>
-      <div className="flex gap-3 mt-3">
-        <button onClick={() => onSave(form)} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition">Save contact</button>
-        <button onClick={onCancel} className="text-navy-700/60 hover:text-navy-900 text-sm">Cancel</button>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "bg-skyblue-100/40 rounded-lg p-4 mb-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid sm:grid-cols-2 gap-3"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: form.ContactName,
+    onChange: set('ContactName'),
+    placeholder: "Name",
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
+    value: form.Role,
+    onChange: set('Role'),
+    list: "contact-role-options",
+    placeholder: "Role / title",
+    className: "w-full border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement(Suggestions, {
+    id: "contact-role-options",
+    options: roleOptions
+  })), /*#__PURE__*/React.createElement("input", {
+    value: form.Phone,
+    onChange: setPhone,
+    placeholder: "Phone",
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement("input", {
+    value: form.Email,
+    onChange: setEmail,
+    onBlur: blurEmail,
+    placeholder: "Email",
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement("select", {
+    value: form.PreferredContact,
+    onChange: setPreferred,
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "Email"), /*#__PURE__*/React.createElement("option", null, "Phone"), /*#__PURE__*/React.createElement("option", null, "Text"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 mt-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => onSave(form),
+    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition"
+  }, "Save contact"), /*#__PURE__*/React.createElement("button", {
+    onClick: onCancel,
+    className: "text-navy-700/60 hover:text-navy-900 text-sm"
+  }, "Cancel")));
 }
 
 // ---------------------------------------------------------------------
 // Connection row / form (like a Contact, but not employed at the account —
 // e.g. a covering physician, referral partner, etc.)
 // ---------------------------------------------------------------------
-function ConnectionForm({ initial, onSave, onCancel, roleOptions = [], relationshipOptions = [] }) {
+function ConnectionForm({
+  initial,
+  onSave,
+  onCancel,
+  roleOptions = [],
+  relationshipOptions = []
+}) {
   const [form, setForm] = useState(initial || {
-    ContactName: '', Role: '', Phone: '', Email: '', PreferredContact: 'Email', Relationship: ''
+    ContactName: '',
+    Role: '',
+    Phone: '',
+    Email: '',
+    PreferredContact: 'Email',
+    Relationship: ''
   });
   const [preferredTouched, setPreferredTouched] = useState(!!initial);
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-
-  const setPhone = (e) => {
+  const set = k => e => setForm({
+    ...form,
+    [k]: e.target.value
+  });
+  const setPhone = e => {
     const val = formatPhoneInput(e.target.value);
     setForm(f => {
-      const next = { ...f, Phone: val };
+      const next = {
+        ...f,
+        Phone: val
+      };
       if (!preferredTouched && val && !f.Email) next.PreferredContact = 'Phone';
       return next;
     });
   };
-  const setEmail = (e) => {
+  const setEmail = e => {
     const val = e.target.value;
     setForm(f => {
-      const next = { ...f, Email: val };
+      const next = {
+        ...f,
+        Email: val
+      };
       if (!preferredTouched && val && !f.Phone) next.PreferredContact = 'Email';
       return next;
     });
   };
-  const blurEmail = () => setForm(f => ({ ...f, Email: normalizeEmailInput(f.Email) }));
-  const setPreferred = (e) => {
+  const blurEmail = () => setForm(f => ({
+    ...f,
+    Email: normalizeEmailInput(f.Email)
+  }));
+  const setPreferred = e => {
     setPreferredTouched(true);
-    setForm({ ...form, PreferredContact: e.target.value });
+    setForm({
+      ...form,
+      PreferredContact: e.target.value
+    });
   };
-
-  return (
-    <div className="bg-skyblue-100/40 rounded-lg p-4 mb-3">
-      <div className="grid sm:grid-cols-2 gap-3">
-        <input value={form.ContactName} onChange={set('ContactName')} placeholder="Name" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-        <div>
-          <input value={form.Role} onChange={set('Role')} list="connection-role-options" placeholder="Role / title" className="w-full border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-          <Suggestions id="connection-role-options" options={roleOptions} />
-        </div>
-        <input value={form.Phone} onChange={setPhone} placeholder="Phone" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-        <input value={form.Email} onChange={setEmail} onBlur={blurEmail} placeholder="Email" className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-        <select value={form.PreferredContact} onChange={setPreferred} className="border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white">
-          <option>Email</option>
-          <option>Phone</option>
-          <option>Text</option>
-        </select>
-        <div>
-          <input value={form.Relationship} onChange={set('Relationship')} list="connection-relationship-options" placeholder="Relationship (e.g. covering physician)" className="w-full border border-skyblue-300 rounded-lg px-3 py-2 text-sm" />
-          <Suggestions id="connection-relationship-options" options={relationshipOptions} />
-        </div>
-      </div>
-      <div className="flex gap-3 mt-3">
-        <button onClick={() => onSave(form)} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition">Save connection</button>
-        <button onClick={onCancel} className="text-navy-700/60 hover:text-navy-900 text-sm">Cancel</button>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "bg-skyblue-100/40 rounded-lg p-4 mb-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid sm:grid-cols-2 gap-3"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: form.ContactName,
+    onChange: set('ContactName'),
+    placeholder: "Name",
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
+    value: form.Role,
+    onChange: set('Role'),
+    list: "connection-role-options",
+    placeholder: "Role / title",
+    className: "w-full border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement(Suggestions, {
+    id: "connection-role-options",
+    options: roleOptions
+  })), /*#__PURE__*/React.createElement("input", {
+    value: form.Phone,
+    onChange: setPhone,
+    placeholder: "Phone",
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement("input", {
+    value: form.Email,
+    onChange: setEmail,
+    onBlur: blurEmail,
+    placeholder: "Email",
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement("select", {
+    value: form.PreferredContact,
+    onChange: setPreferred,
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "Email"), /*#__PURE__*/React.createElement("option", null, "Phone"), /*#__PURE__*/React.createElement("option", null, "Text")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
+    value: form.Relationship,
+    onChange: set('Relationship'),
+    list: "connection-relationship-options",
+    placeholder: "Relationship (e.g. covering physician)",
+    className: "w-full border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement(Suggestions, {
+    id: "connection-relationship-options",
+    options: relationshipOptions
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 mt-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => onSave(form),
+    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition"
+  }, "Save connection"), /*#__PURE__*/React.createElement("button", {
+    onClick: onCancel,
+    className: "text-navy-700/60 hover:text-navy-900 text-sm"
+  }, "Cancel")));
 }
 
 // ---------------------------------------------------------------------
 // Account detail
 // ---------------------------------------------------------------------
-function AccountDetail({ account, contacts, connections, notes, onBack, onRefresh, roleOptions, relationshipOptions, referralSourceOptions }) {
+function AccountDetail({
+  account,
+  contacts,
+  connections,
+  notes,
+  onBack,
+  onRefresh,
+  roleOptions,
+  relationshipOptions,
+  referralSourceOptions
+}) {
   const [editingAccount, setEditingAccount] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
   const [editingContactId, setEditingContactId] = useState(null);
@@ -833,35 +1344,37 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
   useEffect(() => {
     setFollowUpDate((account.NextFollowUp || '').slice(0, 10));
   }, [account.NextFollowUp]);
-
   const accountContacts = contacts.filter(c => c.AccountId === account.AccountId);
   const accountConnections = connections.filter(c => c.AccountId === account.AccountId);
-  const accountNotes = notes
-    .filter(n => n.AccountId === account.AccountId)
-    .sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+  const accountNotes = notes.filter(n => n.AccountId === account.AccountId).sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
   const upcomingActivity = getUpcomingActivity(accountNotes);
-
-  const saveAccount = async (form) => {
+  const saveAccount = async form => {
     setBusy(true);
-    await apiPost('updateAccount', { data: { ...form, AccountId: account.AccountId } });
+    await apiPost('updateAccount', {
+      data: {
+        ...form,
+        AccountId: account.AccountId
+      }
+    });
     setEditingAccount(false);
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Account saved');
   };
-
-  const saveFollowUp = async (dateStr) => {
+  const saveFollowUp = async dateStr => {
     setFollowUpDate(dateStr);
     setBusy(true);
-    await apiPost('updateAccount', { data: { AccountId: account.AccountId, NextFollowUp: dateStr } });
+    await apiPost('updateAccount', {
+      data: {
+        AccountId: account.AccountId,
+        NextFollowUp: dateStr
+      }
+    });
     setBusy(false);
     onRefresh();
   };
-
   const convert = async () => {
-    const simplePracticeUrl = window.prompt(
-      "SimplePractice client URL (optional — leave blank and click OK to skip):",
-      ''
-    );
+    const simplePracticeUrl = window.prompt("SimplePractice client URL (optional — leave blank and click OK to skip):", '');
     setBusy(true);
     await apiPost('convertAccount', {
       accountId: account.AccountId,
@@ -869,43 +1382,54 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     });
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Converted to customer');
   };
-
   const revertToProspect = async () => {
     setBusy(true);
-    await apiPost('updateAccount', { data: { AccountId: account.AccountId, Status: 'Prospect' } });
+    await apiPost('updateAccount', {
+      data: {
+        AccountId: account.AccountId,
+        Status: 'Prospect'
+      }
+    });
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Reverted to prospect');
   };
-
   const removeAccount = async () => {
     if (!confirm(`Delete "${account.AccountName}"? This also removes its contacts and notes from view (rows stay in the Sheet's Contacts/Notes tabs but won't be linked to anything). This can't be undone from the app.`)) return;
     setBusy(true);
-    await apiPost('deleteAccount', { accountId: account.AccountId });
+    await apiPost('deleteAccount', {
+      accountId: account.AccountId
+    });
     setBusy(false);
     onRefresh();
     onBack();
   };
-
-  const saveContact = async (form) => {
+  const saveContact = async form => {
     setBusy(true);
     if (form.ContactId) {
-      await apiPost('updateContact', { data: form });
+      await apiPost('updateContact', {
+        data: form
+      });
     } else {
-      await apiPost('createContact', { data: { ...form, AccountId: account.AccountId } });
+      await apiPost('createContact', {
+        data: {
+          ...form,
+          AccountId: account.AccountId
+        }
+      });
     }
     setAddingContact(false);
     setEditingContactId(null);
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Contact saved');
   };
-
   const loadSuggestedContacts = async () => {
     setSuggestionsLoading(true);
     setSuggestionsError('');
-    const knownNames = [...accountContacts, ...accountConnections]
-      .map(c => c.ContactName)
-      .filter(Boolean);
+    const knownNames = [...accountContacts, ...accountConnections].map(c => c.ContactName).filter(Boolean);
     const response = await apiPost('getSuggestedContacts', {
       domains: knownDomains,
       existingEmails: knownEmails,
@@ -918,8 +1442,7 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     }
     setSuggestionsLoading(false);
   };
-
-  const addSuggestedContact = async (suggestion) => {
+  const addSuggestedContact = async suggestion => {
     setAddingSuggestionEmail(suggestion.email);
     await apiPost('createContact', {
       data: {
@@ -933,48 +1456,54 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     setAddingSuggestionEmail(null);
     onRefresh();
   };
-
-  const removeContact = async (contactId) => {
+  const removeContact = async contactId => {
     if (!confirm('Remove this contact?')) return;
     setBusy(true);
-    await apiPost('deleteContact', { contactId });
+    await apiPost('deleteContact', {
+      contactId
+    });
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Contact removed');
   };
-
-  const saveConnection = async (form) => {
+  const saveConnection = async form => {
     setBusy(true);
     if (form.ConnectionId) {
-      await apiPost('updateConnection', { data: form });
+      await apiPost('updateConnection', {
+        data: form
+      });
     } else {
-      await apiPost('createConnection', { data: { ...form, AccountId: account.AccountId } });
+      await apiPost('createConnection', {
+        data: {
+          ...form,
+          AccountId: account.AccountId
+        }
+      });
     }
     setAddingConnection(false);
     setEditingConnectionId(null);
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Connection saved');
   };
-
-  const removeConnection = async (connectionId) => {
+  const removeConnection = async connectionId => {
     if (!confirm('Remove this connection?')) return;
     setBusy(true);
-    await apiPost('deleteConnection', { connectionId });
+    await apiPost('deleteConnection', {
+      connectionId
+    });
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Connection removed');
   };
-
-  const knownEmails = [...accountContacts, ...accountConnections]
-    .map(c => c.Email)
-    .filter(Boolean);
-
-  const knownDomains = Array.from(new Set(
-    knownEmails.map(e => (e.split('@')[1] || '').toLowerCase()).filter(Boolean)
-  ));
-
+  const knownEmails = [...accountContacts, ...accountConnections].map(c => c.Email).filter(Boolean);
+  const knownDomains = Array.from(new Set(knownEmails.map(e => (e.split('@')[1] || '').toLowerCase()).filter(Boolean)));
   const loadEmails = async () => {
     setEmailsLoading(true);
     setEmailsError('');
-    const response = await apiPost('getAccountEmails', { emails: knownEmails });
+    const response = await apiPost('getAccountEmails', {
+      emails: knownEmails
+    });
     if (response.success) {
       setEmailThreads(response.result);
     } else {
@@ -982,11 +1511,12 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     }
     setEmailsLoading(false);
   };
-
   const loadMeetings = async () => {
     setMeetingsLoading(true);
     setMeetingsError('');
-    const response = await apiPost('getAccountMeetings', { accountId: account.AccountId });
+    const response = await apiPost('getAccountMeetings', {
+      accountId: account.AccountId
+    });
     if (response.success) {
       setMeetings(response.result);
     } else {
@@ -1002,391 +1532,430 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account.AccountId]);
 
+  // Emails auto-load too, same reasoning — but only when there's at least
+  // one contact/connection email on file to search against, and only the
+  // 3 most recent threads, to keep this lightweight. Also cached server-side
+  // for a few minutes, so bouncing back to an account you just viewed won't
+  // re-trigger a fresh Gmail search.
+  useEffect(() => {
+    if (knownEmails.length > 0) loadEmails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account.AccountId, knownEmails.join(',')]);
   const addNote = async () => {
     if (!noteText.trim()) return;
     setBusy(true);
-    await apiPost('addNote', { accountId: account.AccountId, noteText: noteText.trim() });
+    await apiPost('addNote', {
+      accountId: account.AccountId,
+      noteText: noteText.trim()
+    });
     setNoteText('');
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Note added');
   };
-
   const saveNoteEdit = async (noteId, text) => {
     if (!text.trim()) return;
     setBusy(true);
-    await apiPost('updateNote', { data: { NoteId: noteId, NoteText: text.trim() } });
+    await apiPost('updateNote', {
+      data: {
+        NoteId: noteId,
+        NoteText: text.trim()
+      }
+    });
     setEditingNoteId(null);
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Note saved');
   };
-
-  const removeNote = async (noteId) => {
+  const removeNote = async noteId => {
     if (!confirm('Delete this note? This can\'t be undone.')) return;
     setBusy(true);
-    await apiPost('deleteNote', { noteId });
+    await apiPost('deleteNote', {
+      noteId
+    });
     setBusy(false);
     onRefresh();
+    window.__crmShowToast && window.__crmShowToast('Note deleted');
   };
-
-  return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-      <button onClick={onBack} className="text-teal-600 hover:text-teal-700 text-sm mb-4 flex items-center gap-1">
-        ← Back to accounts
-      </button>
-
-      {editingAccount ? (
-        <AccountForm initial={account} onSave={saveAccount} onCancel={() => setEditingAccount(false)} referralSourceOptions={referralSourceOptions} />
-      ) : (
-        <div className={`bg-white rounded-xl border border-skyblue-100 p-6 mb-6 border-l-[3px] ${
-          account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'
-        }`}>
-          <div className="flex items-start justify-between flex-wrap gap-3">
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="font-display text-2xl text-navy-900">{account.AccountName}</h1>
-                <StatusPill status={account.Status} />
-                <FollowUpBadge nextFollowUp={account.NextFollowUp} />
-                <UpcomingActivityBadge upcoming={upcomingActivity} />
-              </div>
-              <div className="mt-2 text-sm text-navy-700/70 space-y-0.5">
-                {account.Address && <p>{account.Address}</p>}
-                {account.Phone && <p>{account.Phone}</p>}
-                {account.Website && <p><a href={account.Website} target="_blank" className="text-teal-600 hover:underline">{account.Website}</a></p>}
-                {account.SimplePracticeUrl && (
-                  <p>
-                    <a href={account.SimplePracticeUrl} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">
-                      View in SimplePractice
-                    </a>
-                  </p>
-                )}
-                {account.ReferralSource && <p className="text-navy-700/50">Referred via {account.ReferralSource}</p>}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {account.Status === 'Prospect' && (
-                <button onClick={convert} disabled={busy} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition">
-                  Convert to customer
-                </button>
-              )}
-              {account.Status === 'Customer' && (
-                <button onClick={revertToProspect} disabled={busy} className="border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition">
-                  Revert to prospect
-                </button>
-              )}
-              <button onClick={() => setEditingAccount(true)} className="border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition">
-                Edit
-              </button>
-              <button onClick={removeAccount} disabled={busy} className="border border-red-200 text-red-500 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition">
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Map */}
-      {account.Address && (
-        <div className="bg-white rounded-xl border border-skyblue-100 overflow-hidden mb-6">
-          <iframe
-            title="Account location map"
-            src={`https://www.google.com/maps?q=${encodeURIComponent(account.Address)}&output=embed`}
-            className="w-full h-56 border-0 block"
-            loading="lazy"
-          ></iframe>
-          <div className="flex divide-x divide-skyblue-100 border-t border-skyblue-100 text-sm">
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(account.Address)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex-1 text-center py-2.5 text-teal-600 hover:bg-skyblue-100/30 transition font-medium"
-            >
-              Open in Google Maps
-            </a>
-            <a
-              href={`https://maps.apple.com/?q=${encodeURIComponent(account.Address)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex-1 text-center py-2.5 text-teal-600 hover:bg-skyblue-100/30 transition font-medium"
-            >
-              Open in Apple Maps
-            </a>
-          </div>
-        </div>
-      )}
-
-      {/* Contacts */}
-      <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg text-navy-900">Contacts</h2>
-          {!addingContact && (
-            <button onClick={() => setAddingContact(true)} className="text-teal-600 hover:text-teal-700 text-sm font-medium">+ Add contact</button>
-          )}
-        </div>
-        {addingContact && <ContactForm onSave={saveContact} onCancel={() => setAddingContact(false)} roleOptions={roleOptions} />}
-        {accountContacts.length === 0 && !addingContact && (
-          <p className="text-navy-700/40 text-sm">No contacts yet — add the first one above.</p>
-        )}
-        {accountContacts.map(c => (
-          editingContactId === c.ContactId ? (
-            <ContactForm key={c.ContactId} initial={c} onSave={saveContact} onCancel={() => setEditingContactId(null)} roleOptions={roleOptions} />
-          ) : (
-            <div key={c.ContactId} className="flex items-center justify-between py-3 border-b border-skyblue-100 last:border-0">
-              <div>
-                <p className="font-medium text-navy-900">{c.ContactName} <span className="text-navy-700/50 font-normal">— {c.Role}</span></p>
-                <p className="text-sm text-navy-700/60">{[c.Phone, c.Email].filter(Boolean).join(' · ')}</p>
-              </div>
-              <div className="flex gap-3 text-sm">
-                <button onClick={() => setEditingContactId(c.ContactId)} className="text-teal-600 hover:text-teal-700">Edit</button>
-                <button onClick={() => removeContact(c.ContactId)} className="text-navy-700/40 hover:text-red-500">Remove</button>
-              </div>
-            </div>
-          )
-        ))}
-
-        {/* Suggested contacts — scanned from Gmail against this account's known domain(s) */}
-        <div className="mt-4 pt-4 border-t border-skyblue-100">
-          {knownDomains.length === 0 ? (
-            <p className="text-xs text-navy-700/40">Add a contact with an email first — suggestions search Gmail for others at that same email domain.</p>
-          ) : suggestedContacts === null ? (
-            <button onClick={loadSuggestedContacts} disabled={suggestionsLoading} className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50">
-              {suggestionsLoading ? 'Searching Gmail…' : `Find more contacts at ${knownDomains.join(', ')}`}
-            </button>
-          ) : (
-            <React.Fragment>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-navy-700/40">Found in Gmail, not yet saved as a Contact or Connection:</p>
-                <button onClick={loadSuggestedContacts} disabled={suggestionsLoading} className="text-teal-600 hover:text-teal-700 text-xs font-medium disabled:opacity-50">
-                  {suggestionsLoading ? 'Refreshing…' : 'Refresh'}
-                </button>
-              </div>
-              {suggestedContacts.length === 0 && (
-                <p className="text-navy-700/40 text-sm">No new contacts found at this domain.</p>
-              )}
-              {suggestedContacts.map(s => (
-                <div key={s.email} className="flex items-center justify-between py-2">
-                  <div>
-                    <p className="text-sm font-medium text-navy-900">{s.name || s.email}</p>
-                    {s.name && <p className="text-xs text-navy-700/50">{s.email}</p>}
-                  </div>
-                  <button
-                    onClick={() => addSuggestedContact(s)}
-                    disabled={addingSuggestionEmail === s.email}
-                    className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
-                  >
-                    {addingSuggestionEmail === s.email ? 'Adding…' : '+ Add'}
-                  </button>
-                </div>
-              ))}
-            </React.Fragment>
-          )}
-          {suggestionsError && <p className="text-red-500 text-sm mt-2">{suggestionsError}</p>}
-        </div>
-      </div>
-
-
-      {/* Connections */}
-      <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display text-lg text-navy-900">Connections</h2>
-          {!addingConnection && (
-            <button onClick={() => setAddingConnection(true)} className="text-teal-600 hover:text-teal-700 text-sm font-medium">+ Add connection</button>
-          )}
-        </div>
-        <p className="text-xs text-navy-700/40 mb-4">People tied to this account who don't work there — e.g. a covering physician or referral partner.</p>
-        {addingConnection && <ConnectionForm onSave={saveConnection} onCancel={() => setAddingConnection(false)} roleOptions={roleOptions} relationshipOptions={relationshipOptions} />}
-        {accountConnections.length === 0 && !addingConnection && (
-          <p className="text-navy-700/40 text-sm">No connections yet — add the first one above.</p>
-        )}
-        {accountConnections.map(c => (
-          editingConnectionId === c.ConnectionId ? (
-            <ConnectionForm key={c.ConnectionId} initial={c} onSave={saveConnection} onCancel={() => setEditingConnectionId(null)} roleOptions={roleOptions} relationshipOptions={relationshipOptions} />
-          ) : (
-            <div key={c.ConnectionId} className="flex items-center justify-between py-3 border-b border-skyblue-100 last:border-0">
-              <div>
-                <p className="font-medium text-navy-900">{c.ContactName} <span className="text-navy-700/50 font-normal">— {c.Role}</span></p>
-                <p className="text-sm text-navy-700/60">{[c.Phone, c.Email].filter(Boolean).join(' · ')}</p>
-                {c.Relationship && <p className="text-sm text-teal-600/80 mt-0.5">{c.Relationship}</p>}
-              </div>
-              <div className="flex gap-3 text-sm">
-                <button onClick={() => setEditingConnectionId(c.ConnectionId)} className="text-teal-600 hover:text-teal-700">Edit</button>
-                <button onClick={() => removeConnection(c.ConnectionId)} className="text-navy-700/40 hover:text-red-500">Remove</button>
-              </div>
-            </div>
-          )
-        ))}
-      </div>
-
-      {/* Emails */}
-      <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display text-lg text-navy-900">Emails</h2>
-          {emailThreads !== null && (
-            <button onClick={loadEmails} disabled={emailsLoading} className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50">
-              {emailsLoading ? 'Refreshing…' : 'Refresh'}
-            </button>
-          )}
-        </div>
-        <p className="text-xs text-navy-700/40 mb-4">Gmail threads to or from any contact/connection email on file for this account.</p>
-
-        {knownEmails.length === 0 && (
-          <p className="text-navy-700/40 text-sm">No contact emails on file to search for yet — add one under Contacts or Connections.</p>
-        )}
-
-        {knownEmails.length > 0 && emailThreads === null && (
-          <button onClick={loadEmails} disabled={emailsLoading} className="bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-60">
-            {emailsLoading ? 'Loading…' : 'Load emails'}
-          </button>
-        )}
-
-        {emailsError && <p className="text-red-500 text-sm mt-2">{emailsError}</p>}
-
-        {emailThreads !== null && emailThreads.length === 0 && !emailsError && (
-          <p className="text-navy-700/40 text-sm">No Gmail threads found for these email addresses.</p>
-        )}
-
-        {emailThreads !== null && emailThreads.length > 0 && (
-          <div className="divide-y divide-skyblue-100">
-            {emailThreads.map(t => (
-              <a
-                key={t.threadId}
-                href={t.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-3 hover:bg-skyblue-100/30 transition -mx-2 px-2 rounded-lg"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="font-medium text-navy-900 text-sm">{t.subject}</p>
-                  <p className="text-xs text-navy-700/40 shrink-0">{new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
-                </div>
-                <p className="text-xs text-navy-700/50 mt-0.5">{t.from}{t.messageCount > 1 ? ` · ${t.messageCount} messages` : ''}</p>
-                {t.snippet && <p className="text-sm text-navy-700/60 mt-1">{t.snippet}…</p>}
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Meetings (calendar) */}
-      <div className="bg-white rounded-xl border border-skyblue-100 p-6 mb-6">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display text-lg text-navy-900">Meetings</h2>
-          <button onClick={loadMeetings} disabled={meetingsLoading} className="text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50">
-            {meetingsLoading ? 'Refreshing…' : 'Refresh'}
-          </button>
-        </div>
-        <p className="text-xs text-navy-700/40 mb-4">
-          Upcoming calendar events (next 60 days) with anyone at {knownDomains.length > 0 ? knownDomains.join(', ') : 'this account\'s email domain'}.
-        </p>
-
-        {knownDomains.length === 0 && (
-          <p className="text-navy-700/40 text-sm">No contact emails on file to match a domain against yet — add one under Contacts or Connections.</p>
-        )}
-
-        {knownDomains.length > 0 && meetings === null && meetingsLoading && (
-          <p className="text-navy-700/40 text-sm">Loading…</p>
-        )}
-
-        {meetingsError && <p className="text-red-500 text-sm mt-2">{meetingsError}</p>}
-
-        {meetings !== null && meetings.length === 0 && !meetingsError && (
-          <p className="text-navy-700/40 text-sm">No upcoming calendar events found for this domain in the next 60 days.</p>
-        )}
-
-        {meetings !== null && meetings.length > 0 && (
-          <div className="divide-y divide-skyblue-100">
-            {meetings.map(m => (
-              <a
-                key={m.eventId}
-                href={m.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-3 hover:bg-skyblue-100/30 transition -mx-2 px-2 rounded-lg"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="font-medium text-navy-900 text-sm">{m.title}</p>
-                  <p className="text-xs text-navy-700/40 shrink-0">
-                    {m.allDay
-                      ? new Date(m.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                      : new Date(m.start).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                  </p>
-                </div>
-                <p className="text-xs text-navy-700/50 mt-0.5">{m.matchedGuest}{m.location ? ` · ${m.location}` : ''}</p>
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Notes / activity */}
-      <div className="bg-white rounded-xl border border-skyblue-100 p-6">
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-          <h2 className="font-display text-lg text-navy-900">Notes &amp; activity</h2>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-navy-700/60 flex items-center gap-2">
-              Next follow-up
-              <input
-                type="date"
-                value={followUpDate}
-                onChange={(e) => saveFollowUp(e.target.value)}
-                className="border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm"
-              />
-            </label>
-            {followUpDate && (
-              <button onClick={() => saveFollowUp('')} className="text-xs text-navy-700/40 hover:text-red-500">Clear</button>
-            )}
-          </div>
-        </div>
-        <div className="flex gap-2 mb-5">
-          <input
-            value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && addNote()}
-            placeholder="Log a call, visit, or update..."
-            className="flex-1 border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
-          />
-          <button onClick={addNote} disabled={busy} className="bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition">
-            Log note
-          </button>
-        </div>
-        <div className="space-y-4">
-          {accountNotes.length === 0 && <p className="text-navy-700/40 text-sm">No notes yet — log the first update below.</p>}
-          {accountNotes.map(n => (
-            <div key={n.NoteId} className="flex gap-3 text-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 shrink-0"></div>
-              <div className="flex-1">
-                <p className="text-navy-700/40 text-xs">{new Date(n.Timestamp).toLocaleString()}</p>
-                {editingNoteId === n.NoteId ? (
-                  <div className="mt-1">
-                    <input
-                      value={editingNoteText}
-                      onChange={(e) => setEditingNoteText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && saveNoteEdit(n.NoteId, editingNoteText)}
-                      className="w-full border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm"
-                      autoFocus
-                    />
-                    <div className="flex gap-3 mt-1.5">
-                      <button onClick={() => saveNoteEdit(n.NoteId, editingNoteText)} className="text-teal-600 hover:text-teal-700 text-xs font-medium">Save</button>
-                      <button onClick={() => setEditingNoteId(null)} className="text-navy-700/60 hover:text-navy-900 text-xs">Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-navy-900">{n.NoteText}</p>
-                    <div className="flex gap-2 text-xs shrink-0">
-                      <button onClick={() => { setEditingNoteId(n.NoteId); setEditingNoteText(n.NoteText); }} className="text-teal-600 hover:text-teal-700">Edit</button>
-                      <button onClick={() => removeNote(n.NoteId)} className="text-navy-700/40 hover:text-red-500">Delete</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <button onClick={onBack} className="text-teal-600 hover:text-teal-700 text-sm mt-6 mb-2 flex items-center gap-1">
-        ← Back to accounts
-      </button>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onBack,
+    className: "text-teal-600 hover:text-teal-700 text-sm mb-4 flex items-center gap-1"
+  }, "← Back to accounts"), /*#__PURE__*/React.createElement("div", {
+    className: "sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 mb-4 bg-white/95 backdrop-blur border-b border-skyblue-100 shadow-sm flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-display text-base text-navy-900 truncate"
+  }, account.AccountName), /*#__PURE__*/React.createElement(StatusPill, {
+    status: account.Status
+  })), editingAccount ? /*#__PURE__*/React.createElement(AccountForm, {
+    initial: account,
+    onSave: saveAccount,
+    onCancel: () => setEditingAccount(false),
+    referralSourceOptions: referralSourceOptions
+  }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: `rounded-t-xl px-6 py-2 text-xs font-semibold uppercase tracking-wide text-white ${account.Status === 'Customer' ? 'bg-teal-500' : 'bg-skyblue-500'}`
+  }, account.Status), /*#__PURE__*/React.createElement("div", {
+    className: `bg-white rounded-b-xl border border-skyblue-100 p-6 mb-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between flex-wrap gap-3"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 flex-wrap"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "font-display text-2xl text-navy-900"
+  }, account.AccountName), /*#__PURE__*/React.createElement(StatusPill, {
+    status: account.Status
+  }), /*#__PURE__*/React.createElement(PropensityBadge, {
+    account: account
+  }), /*#__PURE__*/React.createElement(FollowUpBadge, {
+    nextFollowUp: account.NextFollowUp
+  }), /*#__PURE__*/React.createElement(UpcomingActivityBadge, {
+    upcoming: upcomingActivity
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mt-2 text-sm text-navy-700/70 space-y-0.5"
+  }, account.Address && /*#__PURE__*/React.createElement("p", null, account.Address), account.Phone && /*#__PURE__*/React.createElement("p", null, account.Phone), account.Rating && /*#__PURE__*/React.createElement("p", {
+    className: "text-amber-600"
+  }, "★ ", account.Rating), (account.CMSRating || account.BedCount) && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/50"
+  }, account.CMSRating && `CMS: ${account.CMSRating}`, account.CMSRating && account.BedCount && ' · ', account.BedCount && `${account.BedCount} beds`), account.ChainAffiliation && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/50"
+  }, account.ChainAffiliation), account.HighRiskPrograms && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/50"
+  }, "Programs: ", account.HighRiskPrograms), account.RehabProvider && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/50"
+  }, "Rehab: ", account.RehabProvider), account.RecentOwnershipChange === 'Yes' && /*#__PURE__*/React.createElement("p", {
+    className: "text-amber-600 font-medium"
+  }, "⚡ Recent ownership change"), account.SpecialFocusStatus && /*#__PURE__*/React.createElement("p", {
+    className: "text-red-500 font-medium"
+  }, "⚠ ", account.SpecialFocusStatus), account.AbuseFlag === 'Yes' && /*#__PURE__*/React.createElement("p", {
+    className: "text-red-500 font-medium"
+  }, "⚠ Abuse history flag"), (account.StaffingHoursPerResidentDay || account.FinesHistory || account.CaseMixIndex) && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-xs mt-0.5"
+  }, account.StaffingHoursPerResidentDay && `Staffing: ${account.StaffingHoursPerResidentDay}`, account.StaffingHoursPerResidentDay && account.FinesHistory && ' · ', account.FinesHistory && `Fines: ${account.FinesHistory}`, (account.StaffingHoursPerResidentDay || account.FinesHistory) && account.CaseMixIndex && ' · ', account.CaseMixIndex && `Case-mix: ${account.CaseMixIndex}`), account.Website && /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("a", {
+    href: account.Website,
+    target: "_blank",
+    className: "text-teal-600 hover:underline"
+  }, account.Website)), account.SimplePracticeUrl && /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("a", {
+    href: account.SimplePracticeUrl,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "text-teal-600 hover:underline"
+  }, "View in SimplePractice")), account.ReferralSource && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/50"
+  }, "Referred via ", account.ReferralSource))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, account.Status === 'Prospect' && /*#__PURE__*/React.createElement("button", {
+    onClick: convert,
+    disabled: busy,
+    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
+  }, "Convert to customer"), account.Status === 'Customer' && /*#__PURE__*/React.createElement("button", {
+    onClick: revertToProspect,
+    disabled: busy,
+    className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
+  }, "Revert to prospect"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEditingAccount(true),
+    className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
+  }, "Edit"), /*#__PURE__*/React.createElement("button", {
+    onClick: removeAccount,
+    disabled: busy,
+    className: "border border-red-200 text-red-500 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition"
+  }, "Delete"))))), account.Address && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden mb-6"
+  }, /*#__PURE__*/React.createElement("iframe", {
+    title: "Account location map",
+    src: `https://www.google.com/maps?q=${encodeURIComponent(account.Address)}&output=embed`,
+    className: "w-full h-56 border-0 block",
+    loading: "lazy"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex divide-x divide-skyblue-100 border-t border-skyblue-100 text-sm"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(account.Address)}`,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "flex-1 text-center py-2.5 text-teal-600 hover:bg-skyblue-100/30 transition font-medium"
+  }, "Open in Google Maps"), /*#__PURE__*/React.createElement("a", {
+    href: `https://maps.apple.com/?q=${encodeURIComponent(account.Address)}`,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "flex-1 text-center py-2.5 text-teal-600 hover:bg-skyblue-100/30 transition font-medium"
+  }, "Open in Apple Maps"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-4"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900"
+  }, "Contacts"), !addingContact && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setAddingContact(true),
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
+  }, "+ Add contact")), addingContact && /*#__PURE__*/React.createElement(ContactForm, {
+    onSave: saveContact,
+    onCancel: () => setAddingContact(false),
+    roleOptions: roleOptions
+  }), accountContacts.length === 0 && !addingContact && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No contacts yet — add the first one above."), accountContacts.map(c => editingContactId === c.ContactId ? /*#__PURE__*/React.createElement(ContactForm, {
+    key: c.ContactId,
+    initial: c,
+    onSave: saveContact,
+    onCancel: () => setEditingContactId(null),
+    roleOptions: roleOptions
+  }) : /*#__PURE__*/React.createElement("div", {
+    key: c.ContactId,
+    className: "flex items-center justify-between py-3 border-b border-skyblue-100 last:border-0"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium text-navy-900"
+  }, c.ContactName, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/50 font-normal"
+  }, "— ", c.Role)), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/60"
+  }, [c.Phone, c.Email].filter(Boolean).join(' · '))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 text-sm"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEditingContactId(c.ContactId),
+    className: "text-teal-600 hover:text-teal-700"
+  }, "Edit"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeContact(c.ContactId),
+    className: "text-navy-700/40 hover:text-red-500"
+  }, "Remove")))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 pt-4 border-t border-skyblue-100"
+  }, knownDomains.length === 0 ? /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40"
+  }, "Add a contact with an email first — suggestions search Gmail for others at that same email domain.") : suggestedContacts === null ? /*#__PURE__*/React.createElement("button", {
+    onClick: loadSuggestedContacts,
+    disabled: suggestionsLoading,
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
+  }, suggestionsLoading ? 'Searching Gmail…' : `Find more contacts at ${knownDomains.join(', ')}`) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-2"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40"
+  }, "Found in Gmail, not yet saved as a Contact or Connection:"), /*#__PURE__*/React.createElement("button", {
+    onClick: loadSuggestedContacts,
+    disabled: suggestionsLoading,
+    className: "text-teal-600 hover:text-teal-700 text-xs font-medium disabled:opacity-50"
+  }, suggestionsLoading ? 'Refreshing…' : 'Refresh')), suggestedContacts.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No new contacts found at this domain."), suggestedContacts.map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.email,
+    className: "flex items-center justify-between py-2"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-medium text-navy-900"
+  }, s.name || s.email), s.name && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/50"
+  }, s.email)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => addSuggestedContact(s),
+    disabled: addingSuggestionEmail === s.email,
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
+  }, addingSuggestionEmail === s.email ? 'Adding…' : '+ Add')))), suggestionsError && /*#__PURE__*/React.createElement("p", {
+    className: "text-red-500 text-sm mt-2"
+  }, suggestionsError))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-1"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900"
+  }, "Connections"), !addingConnection && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setAddingConnection(true),
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
+  }, "+ Add connection")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 mb-4"
+  }, "People tied to this account who don't work there — e.g. a covering physician or referral partner."), addingConnection && /*#__PURE__*/React.createElement(ConnectionForm, {
+    onSave: saveConnection,
+    onCancel: () => setAddingConnection(false),
+    roleOptions: roleOptions,
+    relationshipOptions: relationshipOptions
+  }), accountConnections.length === 0 && !addingConnection && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No connections yet — add the first one above."), accountConnections.map(c => editingConnectionId === c.ConnectionId ? /*#__PURE__*/React.createElement(ConnectionForm, {
+    key: c.ConnectionId,
+    initial: c,
+    onSave: saveConnection,
+    onCancel: () => setEditingConnectionId(null),
+    roleOptions: roleOptions,
+    relationshipOptions: relationshipOptions
+  }) : /*#__PURE__*/React.createElement("div", {
+    key: c.ConnectionId,
+    className: "flex items-center justify-between py-3 border-b border-skyblue-100 last:border-0"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium text-navy-900"
+  }, c.ContactName, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/50 font-normal"
+  }, "— ", c.Role)), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/60"
+  }, [c.Phone, c.Email].filter(Boolean).join(' · ')), c.Relationship && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-teal-600/80 mt-0.5"
+  }, c.Relationship)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 text-sm"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEditingConnectionId(c.ConnectionId),
+    className: "text-teal-600 hover:text-teal-700"
+  }, "Edit"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeConnection(c.ConnectionId),
+    className: "text-navy-700/40 hover:text-red-500"
+  }, "Remove"))))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-1"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900"
+  }, "Emails"), emailThreads !== null && /*#__PURE__*/React.createElement("button", {
+    onClick: loadEmails,
+    disabled: emailsLoading,
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
+  }, emailsLoading ? 'Refreshing…' : 'Refresh')), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 mb-4"
+  }, "Gmail threads to or from any contact/connection email on file for this account (3 most recent, loaded automatically)."), knownEmails.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No contact emails on file to search for yet — add one under Contacts or Connections."), knownEmails.length > 0 && emailThreads === null && /*#__PURE__*/React.createElement("button", {
+    onClick: loadEmails,
+    disabled: emailsLoading,
+    className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-60"
+  }, emailsLoading ? 'Loading…' : 'Load emails'), emailsError && /*#__PURE__*/React.createElement("p", {
+    className: "text-red-500 text-sm mt-2"
+  }, emailsError), emailThreads !== null && emailThreads.length === 0 && !emailsError && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No Gmail threads found for these email addresses."), emailThreads !== null && emailThreads.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "divide-y divide-skyblue-100"
+  }, emailThreads.map(t => /*#__PURE__*/React.createElement("a", {
+    key: t.threadId,
+    href: t.url,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "block py-3 hover:bg-skyblue-100/30 transition -mx-2 px-2 rounded-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between gap-3"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium text-navy-900 text-sm"
+  }, t.subject), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 shrink-0"
+  }, new Date(t.date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  }))), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/50 mt-0.5"
+  }, t.from, t.messageCount > 1 ? ` · ${t.messageCount} messages` : ''), t.snippet && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/60 mt-1"
+  }, t.snippet, "…"))))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-1"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900"
+  }, "Meetings"), /*#__PURE__*/React.createElement("button", {
+    onClick: loadMeetings,
+    disabled: meetingsLoading,
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
+  }, meetingsLoading ? 'Refreshing…' : 'Refresh')), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 mb-4"
+  }, "Upcoming calendar events (next 60 days) with anyone at ", knownDomains.length > 0 ? knownDomains.join(', ') : 'this account\'s email domain', "."), knownDomains.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No contact emails on file to match a domain against yet — add one under Contacts or Connections."), knownDomains.length > 0 && meetings === null && meetingsLoading && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "Loading…"), meetingsError && /*#__PURE__*/React.createElement("p", {
+    className: "text-red-500 text-sm mt-2"
+  }, meetingsError), meetings !== null && meetings.length === 0 && !meetingsError && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No upcoming calendar events found for this domain in the next 60 days."), meetings !== null && meetings.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "divide-y divide-skyblue-100"
+  }, meetings.map(m => /*#__PURE__*/React.createElement("a", {
+    key: m.eventId,
+    href: m.url,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "block py-3 hover:bg-skyblue-100/30 transition -mx-2 px-2 rounded-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between gap-3"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium text-navy-900 text-sm"
+  }, m.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 shrink-0"
+  }, m.allDay ? new Date(m.start).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  }) : new Date(m.start).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }))), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/50 mt-0.5"
+  }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between flex-wrap gap-3 mb-4"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900"
+  }, "Notes & activity"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm text-navy-700/60 flex items-center gap-2"
+  }, "Next follow-up", /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: followUpDate,
+    onChange: e => saveFollowUp(e.target.value),
+    className: "border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm"
+  })), followUpDate && /*#__PURE__*/React.createElement("button", {
+    onClick: () => saveFollowUp(''),
+    className: "text-xs text-navy-700/40 hover:text-red-500"
+  }, "Clear"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mb-5"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: noteText,
+    onChange: e => setNoteText(e.target.value),
+    onKeyDown: e => e.key === 'Enter' && !e.nativeEvent.isComposing && addNote(),
+    placeholder: "Log a call, visit, or update...",
+    className: "flex-1 border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: addNote,
+    disabled: busy,
+    className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
+  }, "Log note")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, accountNotes.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No notes yet — log the first update below."), accountNotes.map(n => /*#__PURE__*/React.createElement("div", {
+    key: n.NoteId,
+    className: "flex gap-3 text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 shrink-0"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-xs"
+  }, new Date(n.Timestamp).toLocaleString()), editingNoteId === n.NoteId ? /*#__PURE__*/React.createElement("div", {
+    className: "mt-1"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: editingNoteText,
+    onChange: e => setEditingNoteText(e.target.value),
+    onKeyDown: e => e.key === 'Enter' && !e.nativeEvent.isComposing && saveNoteEdit(n.NoteId, editingNoteText),
+    className: "w-full border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm",
+    autoFocus: true
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 mt-1.5"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => saveNoteEdit(n.NoteId, editingNoteText),
+    className: "text-teal-600 hover:text-teal-700 text-xs font-medium"
+  }, "Save"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEditingNoteId(null),
+    className: "text-navy-700/60 hover:text-navy-900 text-xs"
+  }, "Cancel"))) : /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between gap-3"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-900"
+  }, n.NoteText), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 text-xs shrink-0"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setEditingNoteId(n.NoteId);
+      setEditingNoteText(n.NoteText);
+    },
+    className: "text-teal-600 hover:text-teal-700"
+  }, "Edit"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeNote(n.NoteId),
+    className: "text-navy-700/40 hover:text-red-500"
+  }, "Delete")))))))), /*#__PURE__*/React.createElement("button", {
+    onClick: onBack,
+    className: "text-teal-600 hover:text-teal-700 text-sm mt-6 mb-2 flex items-center gap-1"
+  }, "← Back to accounts"));
 }
 
 // ---------------------------------------------------------------------
@@ -1397,19 +1966,24 @@ function AccountDetail({ account, contacts, connections, notes, onBack, onRefres
 // fly via Google's client-side Geocoder and cached back to the Sheet
 // (Latitude/Longitude) so repeat visits don't re-geocode every address.
 // ---------------------------------------------------------------------
-function MapView({ accounts, onSelect }) {
+function MapView({
+  accounts,
+  onSelect
+}) {
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'no-key'
 
   useEffect(() => {
     let cancelled = false;
-
-    loadGoogleMaps(GOOGLE_MAPS_API_KEY).then(async (google) => {
+    loadGoogleMaps(GOOGLE_MAPS_API_KEY).then(async google => {
       if (cancelled || !mapRef.current) return;
-
       const map = new google.maps.Map(mapRef.current, {
-        center: { lat: 41.7, lng: -70.3 }, // roughly Cape Cod
+        center: {
+          lat: 41.7,
+          lng: -70.3
+        },
+        // roughly Cape Cod
         zoom: 10,
         mapTypeControl: false,
         streetViewControl: false,
@@ -1418,39 +1992,49 @@ function MapView({ accounts, onSelect }) {
 
       // Let info-window "View account" buttons (raw HTML, outside React)
       // call back into the app.
-      window.__crmSelectAccount = (accountId) => {
+      window.__crmSelectAccount = accountId => {
         const account = accounts.find(a => a.AccountId === accountId);
         if (account) onSelect(account);
       };
 
+      // One shared InfoWindow reused for every marker — opening it on a new
+      // marker automatically closes whatever was previously showing.
+      const sharedInfoWindow = new google.maps.InfoWindow();
       const geocoder = new google.maps.Geocoder();
       const bounds = new google.maps.LatLngBounds();
       const accountsWithAddress = accounts.filter(a => a.Address);
-
       for (const a of accountsWithAddress) {
         if (cancelled) return;
         let lat = parseFloat(a.Latitude);
         let lng = parseFloat(a.Longitude);
-
         if (!lat || !lng) {
           try {
             const result = await new Promise((resolve, reject) => {
-              geocoder.geocode({ address: a.Address }, (results, geoStatus) => {
-                if (geoStatus === 'OK' && results && results[0]) resolve(results[0]);
-                else reject(geoStatus);
+              geocoder.geocode({
+                address: a.Address
+              }, (results, geoStatus) => {
+                if (geoStatus === 'OK' && results && results[0]) resolve(results[0]);else reject(geoStatus);
               });
             });
             lat = result.geometry.location.lat();
             lng = result.geometry.location.lng();
             // Cache so this address never needs re-geocoding.
-            apiPost('updateAccount', { data: { AccountId: a.AccountId, Latitude: lat, Longitude: lng } });
+            apiPost('updateAccount', {
+              data: {
+                AccountId: a.AccountId,
+                Latitude: lat,
+                Longitude: lng
+              }
+            });
           } catch (err) {
             continue; // couldn't geocode this address — skip its pin
           }
         }
-
         if (cancelled) return;
-        const position = { lat, lng };
+        const position = {
+          lat,
+          lng
+        };
         const marker = new google.maps.Marker({
           position,
           map,
@@ -1464,68 +2048,267 @@ function MapView({ accounts, onSelect }) {
             strokeWeight: 1.5
           }
         });
-        const infoWindow = new google.maps.InfoWindow({
-          content: `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:160px;">
-            <strong style="color:#081e3d;">${escapeHtml_(a.AccountName)}</strong><br/>
-            <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${escapeHtml_(a.Status)}</span><br/>
+        const propensity = computePropensityScore(a);
+        const town = getTown(a.Address);
+        const content = `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:170px;">
+            <div style="color:#081e3d;font-weight:700 !important;font-size:15px;line-height:1.3;">${escapeHtml_(a.AccountName)}</div>
+            ${town && town !== 'Unknown' ? `<div style="font-size:12px;color:#5a6b80;margin-top:1px;">${escapeHtml_(town)}</div>` : ''}
+            <div style="margin-top:4px;">
+              <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${escapeHtml_(a.Status)}</span>
+              ${propensity ? `<span style="font-size:11px;color:#b45309;margin-left:6px;">· FEES fit: ${escapeHtml_(propensity.label)}</span>` : ''}
+            </div>
+            ${a.Rating ? `<div style="font-size:12px;color:#b45309;margin-top:2px;">★ ${escapeHtml_(a.Rating)}</div>` : ''}
+            ${a.BedCount ? `<div style="font-size:12px;color:#556;">${escapeHtml_(a.BedCount)} beds</div>` : ''}
             <button onclick="window.__crmSelectAccount('${escapeHtml_(a.AccountId)}')" style="margin-top:6px;background:#0f766e;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">View account</button>
-          </div>`
+          </div>`;
+        marker.addListener('click', () => {
+          sharedInfoWindow.setContent(content);
+          sharedInfoWindow.open(map, marker);
         });
-        marker.addListener('click', () => infoWindow.open(map, marker));
         markersRef.current.push(marker);
         bounds.extend(position);
       }
-
       if (!bounds.isEmpty()) map.fitBounds(bounds);
       if (!cancelled) setStatus('ready');
     }).catch(() => setStatus('no-key'));
-
     return () => {
       cancelled = true;
       markersRef.current.forEach(m => m.setMap(null));
       markersRef.current = [];
     };
   }, [accounts]);
-
   if (status === 'no-key') {
-    return (
-      <div className="bg-white rounded-xl border border-skyblue-100 p-10 text-center text-navy-700/50 text-sm">
-        Map view needs a Google Maps API key configured in GOOGLE_MAPS_API_KEY — see the README.
-      </div>
-    );
+    return /*#__PURE__*/React.createElement("div", {
+      className: "bg-white rounded-xl border border-skyblue-100 p-10 text-center text-navy-700/50 text-sm"
+    }, "Map view needs a Google Maps API key configured in GOOGLE_MAPS_API_KEY — see the README.");
   }
-
-  return (
-    <div className="bg-white rounded-xl border border-skyblue-100 overflow-hidden">
-      {status === 'loading' && (
-        <p className="text-center text-navy-700/40 text-sm py-3">Plotting accounts…</p>
-      )}
-      <div ref={mapRef} className="w-full h-[500px]"></div>
-      <div className="flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-teal-500 border border-navy-900/20"></span>
-          Customer
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-skyblue-500 border border-navy-900/20"></span>
-          Prospect
-        </span>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden"
+  }, status === 'loading' && /*#__PURE__*/React.createElement("p", {
+    className: "text-center text-navy-700/40 text-sm py-3"
+  }, "Plotting accounts…"), /*#__PURE__*/React.createElement("div", {
+    ref: mapRef,
+    className: "w-full h-[500px]"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "flex items-center gap-1.5"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2.5 h-2.5 rounded-full bg-teal-500 border border-navy-900/20"
+  }), "Customer"), /*#__PURE__*/React.createElement("span", {
+    className: "flex items-center gap-1.5"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2.5 h-2.5 rounded-full bg-skyblue-500 border border-navy-900/20"
+  }), "Prospect")));
 }
 
-function AccountList({ accounts, contacts, connections, notes, onSelect, onCreate, onSignOut, region, setRegion }) {
-  const [filter, setFilter] = useState('All');
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
-  const [query, setQuery] = useState('');
+// ---------------------------------------------------------------------
+// Single account row — shared between the town-grouped view (sort: Name)
+// and the flat sorted view (sort: Propensity / CMS Rating).
+// ---------------------------------------------------------------------
+function AccountRow({
+  account,
+  onSelect,
+  upcoming
+}) {
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: () => onSelect(account),
+    className: `w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium text-navy-900"
+  }, account.AccountName), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/50"
+  }, account.Address || account.Phone || '—'), account.Rating && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-amber-600 mt-0.5"
+  }, "★ ", account.Rating), account.BedCount && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 mt-0.5"
+  }, account.BedCount, " beds"), upcoming && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-teal-600 mt-0.5"
+  }, formatShortDate(upcoming.date), " — ", upcoming.note.NoteText.slice(0, 60), upcoming.note.NoteText.length > 60 ? '…' : '')), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement(PropensityBadge, {
+    account: account
+  }), /*#__PURE__*/React.createElement(FollowUpBadge, {
+    nextFollowUp: account.NextFollowUp
+  }), /*#__PURE__*/React.createElement(UpcomingActivityBadge, {
+    upcoming: upcoming
+  }), /*#__PURE__*/React.createElement(StatusPill, {
+    status: account.Status
+  })));
+}
 
-  const matchesQuery = (a) => {
+// ---------------------------------------------------------------------
+// Dense, sortable table view — click any column header to sort by it,
+// click again to reverse direction. Meant for scanning/comparing many
+// facilities at once without opening the underlying Sheet.
+// ---------------------------------------------------------------------
+function TableView({
+  accounts,
+  onSelect
+}) {
+  const [sortCol, setSortCol] = useState('AccountName');
+  const [sortDir, setSortDir] = useState('asc');
+  const toggleSort = col => {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortCol(col);
+      setSortDir('asc');
+    }
+  };
+  const getValue = (a, col) => {
+    switch (col) {
+      case 'AccountName':
+        return a.AccountName || '';
+      case 'Status':
+        return a.Status || '';
+      case 'Town':
+        return getTown(a.Address);
+      case 'Propensity':
+        {
+          const p = computePropensityScore(a);
+          return p ? p.score : -1;
+        }
+      case 'CMSRating':
+        {
+          const n = getCmsOverallNumber(a.CMSRating);
+          return n === null ? -1 : n;
+        }
+      case 'BedCount':
+        return parseFloat(a.BedCount) || -1;
+      case 'ChainAffiliation':
+        return a.ChainAffiliation || '';
+      case 'NextFollowUp':
+        return a.NextFollowUp || '';
+      default:
+        return '';
+    }
+  };
+  const sorted = [...accounts].sort((a, b) => {
+    const va = getValue(a, sortCol);
+    const vb = getValue(b, sortCol);
+    let cmp;
+    if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;else cmp = String(va).localeCompare(String(vb));
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+  const columns = [{
+    key: 'AccountName',
+    label: 'Account'
+  }, {
+    key: 'Status',
+    label: 'Status'
+  }, {
+    key: 'Town',
+    label: 'Town'
+  }, {
+    key: 'Propensity',
+    label: 'FEES Fit'
+  }, {
+    key: 'CMSRating',
+    label: 'CMS'
+  }, {
+    key: 'BedCount',
+    label: 'Beds'
+  }, {
+    key: 'ChainAffiliation',
+    label: 'Chain'
+  }, {
+    key: 'NextFollowUp',
+    label: 'Follow-up'
+  }];
+  const exportCsv = () => {
+    const csvHeaders = ['Account Name', 'Status', 'Region', 'Town', 'Address', 'Phone', 'Website', 'FEES Fit', 'CMS Rating', 'Beds', 'Chain', 'Next Follow-up'];
+    const csvRows = sorted.map(a => {
+      const p = computePropensityScore(a);
+      const cms = getCmsOverallNumber(a.CMSRating);
+      return [a.AccountName, a.Status, a.Region || '', getTown(a.Address), a.Address || '', a.Phone || '', a.Website || '', p ? p.label : '', cms !== null ? cms + '/5' : '', a.BedCount || '', a.ChainAffiliation || '', a.NextFollowUp || ''];
+    });
+    const escapeCell = val => {
+      const s = String(val == null ? '' : val);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const csvContent = [csvHeaders, ...csvRows].map(row => row.map(escapeCell).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'bdd-accounts-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-end mb-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: exportCsv,
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
+  }, "Export CSV")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 overflow-x-auto"
+  }, /*#__PURE__*/React.createElement("table", {
+    className: "w-full text-sm"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    className: "border-b border-skyblue-100"
+  }, columns.map(col => /*#__PURE__*/React.createElement("th", {
+    key: col.key,
+    onClick: () => toggleSort(col.key),
+    className: "text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-navy-700/50 cursor-pointer hover:text-navy-900 whitespace-nowrap select-none"
+  }, col.label, " ", sortCol === col.key ? sortDir === 'asc' ? '▲' : '▼' : '')))), /*#__PURE__*/React.createElement("tbody", null, sorted.map(a => {
+    const propensity = computePropensityScore(a);
+    const cmsNum = getCmsOverallNumber(a.CMSRating);
+    return /*#__PURE__*/React.createElement("tr", {
+      key: a.AccountId,
+      onClick: () => onSelect(a),
+      className: "border-b border-skyblue-100 last:border-0 hover:bg-skyblue-100/30 cursor-pointer"
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 font-medium text-navy-900 whitespace-nowrap"
+    }, a.AccountName), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5"
+    }, /*#__PURE__*/React.createElement(StatusPill, {
+      status: a.Status
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 text-navy-700/60 whitespace-nowrap"
+    }, getTown(a.Address)), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 whitespace-nowrap"
+    }, propensity ? /*#__PURE__*/React.createElement(PropensityBadge, {
+      account: a,
+      compact: true
+    }) : '—'), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 whitespace-nowrap"
+    }, cmsNum !== null ? cmsNum + '/5' : '—'), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5"
+    }, a.BedCount || '—'), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 text-navy-700/60 whitespace-nowrap"
+    }, a.ChainAffiliation || '—'), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 text-navy-700/60 whitespace-nowrap"
+    }, a.NextFollowUp ? formatShortDate(new Date(a.NextFollowUp)) : '—'));
+  })))));
+}
+function AccountList({
+  accounts,
+  contacts,
+  connections,
+  notes,
+  onSelect,
+  onCreate,
+  onSignOut,
+  region,
+  setRegion
+}) {
+  const [filter, setFilter] = useState('All');
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'table' | 'map'
+  const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating'
+  const [chainFilter, setChainFilter] = useState('All Chains');
+  const matchesQuery = a => {
     if (!query.trim()) return true;
     const q = query.toLowerCase();
     if (a.AccountName.toLowerCase().includes(q)) return true;
     if ((a.Address || '').toLowerCase().includes(q)) return true;
     if ((a.ReferralSource || '').toLowerCase().includes(q)) return true;
+    if ((a.ChainAffiliation || '').toLowerCase().includes(q)) return true;
+    if ((a.HighRiskPrograms || '').toLowerCase().includes(q)) return true;
+    if ((a.RehabProvider || '').toLowerCase().includes(q)) return true;
     const relatedContacts = contacts.filter(c => c.AccountId === a.AccountId);
     if (relatedContacts.some(c => `${c.ContactName} ${c.Role}`.toLowerCase().includes(q))) return true;
     const relatedConnections = connections.filter(c => c.AccountId === a.AccountId);
@@ -1537,7 +2320,7 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
 
   // "Follow-up" filter shows any account with a follow-up date scheduled,
   // not just ones due today/overdue — the badge color still tells you which.
-  const hasFollowUp = (a) => !!(a.NextFollowUp && String(a.NextFollowUp).trim());
+  const hasFollowUp = a => !!(a.NextFollowUp && String(a.NextFollowUp).trim());
 
   // Soonest upcoming (today or later) activity mentioned in each account's
   // notes, keyed by AccountId — computed once per notes/accounts change.
@@ -1550,8 +2333,7 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
     });
     return map;
   }, [accounts, notes]);
-
-  const hasUpcomingMeeting = (a) => !!upcomingByAccount[a.AccountId];
+  const hasUpcomingMeeting = a => !!upcomingByAccount[a.AccountId];
 
   // Calendar-sourced meetings for the top-of-page summary — fetched once on
   // mount. null = still loading.
@@ -1562,38 +2344,48 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
       if (cancelled) return;
       setCalendarMeetings(response.success ? response.result : []);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Combines note-detected upcoming activity with calendar-matched meetings
   // into one list, soonest first, capped at 3, for the summary at the top
   // of the page.
   const topUpcomingMeetings = useMemo(() => {
-    return (calendarMeetings || [])
-      .map(m => ({
-        source: 'calendar',
-        accountId: m.accountId,
-        accountName: m.accountName,
-        date: new Date(m.date),
-        title: m.title,
-        url: m.url
-      }))
-      .sort((a, b) => a.date - b.date)
-      .slice(0, 3);
+    return (calendarMeetings || []).map(m => ({
+      source: 'calendar',
+      accountId: m.accountId,
+      accountName: m.accountName,
+      date: new Date(m.date),
+      title: m.title,
+      url: m.url
+    })).sort((a, b) => a.date - b.date).slice(0, 3);
   }, [calendarMeetings]);
-
-  const regionAccounts = region === 'All Regions'
-    ? accounts
-    : accounts.filter(a => (a.Region || 'Cape Cod') === region);
-
+  const regionAccounts = region === 'All Regions' ? accounts : accounts.filter(a => (a.Region || 'Cape Cod') === region);
+  const distinctChains = useMemo(() => {
+    const set = new Set(regionAccounts.map(a => (a.ChainAffiliation || '').trim()).filter(Boolean));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [regionAccounts]);
   const filtered = regionAccounts.filter(a => {
-    const matchesFilter = filter === 'All' ? true
-      : filter === 'Follow-up' ? hasFollowUp(a)
-      : filter === 'Upcoming Meetings' ? hasUpcomingMeeting(a)
-      : a.Status === filter;
-    return matchesFilter && matchesQuery(a);
+    const matchesFilter = filter === 'All' ? true : filter === 'Follow-up' ? hasFollowUp(a) : filter === 'Upcoming Meetings' ? hasUpcomingMeeting(a) : a.Status === filter;
+    const matchesChain = chainFilter === 'All Chains' || (a.ChainAffiliation || '').trim() === chainFilter;
+    return matchesFilter && matchesChain && matchesQuery(a);
   });
 
+  // When a search turns up nothing in the current region, check whether it
+  // would match elsewhere — surfaced as a hint rather than silently
+  // switching regions out from under the user.
+  const crossRegionMatches = useMemo(() => {
+    if (filtered.length > 0 || !query.trim()) return [];
+    const others = accounts.filter(a => (a.Region || 'Cape Cod') !== region && matchesQuery(a));
+    const byRegion = {};
+    others.forEach(a => {
+      const r = a.Region || 'Cape Cod';
+      byRegion[r] = (byRegion[r] || 0) + 1;
+    });
+    return Object.keys(byRegion).map(r => ({ region: r, count: byRegion[r] }));
+  }, [accounts, region, query, filter, chainFilter, filtered.length]);
   const counts = {
     All: regionAccounts.length,
     Prospect: regionAccounts.filter(a => a.Status === 'Prospect').length,
@@ -1602,10 +2394,9 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
     'Upcoming Meetings': regionAccounts.filter(hasUpcomingMeeting).length
   };
 
-  // Group filtered accounts by base town (e.g. "South Yarmouth" -> "Yarmouth"),
-  // sorted alphabetically with "Unknown" pushed to the end, and accounts
-  // within each town sorted by name.
+  // Town-grouped view, used when sorting by Name (the default).
   const groups = useMemo(() => {
+    if (sortBy !== 'Name') return null;
     const map = {};
     filtered.forEach(a => {
       const town = getTown(a.Address);
@@ -1613,191 +2404,217 @@ function AccountList({ accounts, contacts, connections, notes, onSelect, onCreat
       map[town].push(a);
     });
     Object.values(map).forEach(list => list.sort((a, b) => a.AccountName.localeCompare(b.AccountName)));
-    return Object.keys(map)
-      .sort((a, b) => {
-        if (a === 'Unknown') return 1;
-        if (b === 'Unknown') return -1;
-        return a.localeCompare(b);
-      })
-      .map(town => ({ town, accounts: map[town] }));
-  }, [filtered]);
+    return Object.keys(map).sort((a, b) => {
+      if (a === 'Unknown') return 1;
+      if (b === 'Unknown') return -1;
+      return a.localeCompare(b);
+    }).map(town => ({
+      town,
+      accounts: map[town]
+    }));
+  }, [filtered, sortBy]);
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-navy-900 flex items-center justify-center p-1.5 shrink-0">
-            <img src={LOGO_DATA_URI} alt="Bayside Dysphagia Diagnostics" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <h1 className="font-display text-2xl text-navy-900">Bayside Dysphagia Diagnostics</h1>
-            <p className="text-sm text-navy-700/50">Client &amp; Referral tracker</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={onCreate} className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition">
-            + New account
-          </button>
-          <button onClick={onSignOut} className="text-navy-700/40 hover:text-navy-700/70 text-sm px-2 py-2 transition">
-            Sign out
-          </button>
-        </div>
-      </div>
-
-      {topUpcomingMeetings.length > 0 && (
-        <div className="bg-white rounded-xl border border-skyblue-100 p-5 mb-6">
-          <h2 className="font-display text-base text-navy-900 mb-3">Upcoming Meetings</h2>
-          <div className="space-y-1">
-            {topUpcomingMeetings.map((item, i) => {
-              const inner = (
-                <React.Fragment>
-                  <div>
-                    <p className="text-sm font-medium text-navy-900">{item.accountName}</p>
-                    <p className="text-xs text-navy-700/60">
-                      {item.source === 'calendar' ? '📅 ' : '📝 '}
-                      {item.title.length > 60 ? item.title.slice(0, 60) + '…' : item.title}
-                    </p>
-                  </div>
-                  <p className="text-xs text-teal-600 shrink-0">{formatShortDate(item.date)}</p>
-                </React.Fragment>
-              );
-              const rowClass = "w-full text-left flex items-start justify-between gap-3 hover:bg-skyblue-100/30 -mx-2 px-2 py-1.5 rounded-lg transition";
-              return item.source === 'calendar' ? (
-                <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" className={rowClass}>
-                  {inner}
-                </a>
-              ) : (
-                <button
-                  key={i}
-                  onClick={() => {
-                    const account = accounts.find(a => a.AccountId === item.accountId);
-                    if (account) onSelect(account);
-                  }}
-                  className={rowClass}
-                >
-                  {inner}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit">
-          {['All Regions', 'Cape Cod', 'South Shore'].map(r => (
-            <button
-              key={r}
-              onClick={() => setRegion(r)}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
-                region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1">
-          {['list', 'map'].map(mode => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${
-                viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
-              }`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4 mb-5 flex-wrap">
-        <div className="flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 flex-wrap">
-          {['All', 'Prospect', 'Customer', 'Follow-up', 'Upcoming Meetings'].map(s => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                filter === s ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'
-              }`}
-            >
-              {s} <span className="opacity-60">({counts[s]})</span>
-            </button>
-          ))}
-        </div>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search accounts, contacts, notes..."
-          className="border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[180px]"
-        />
-      </div>
-
-      {viewMode === 'map' ? (
-        <MapView accounts={filtered} onSelect={onSelect} />
-      ) : (
-        <React.Fragment>
-          {filtered.length === 0 && (
-            <div className="bg-white rounded-xl border border-skyblue-100">
-              <EmptyState message="No accounts match yet" hint="Add one to get started." />
-            </div>
-          )}
-
-          <div className="space-y-6">
-            {groups.map(({ town, accounts: townAccounts }) => (
-              <div key={town}>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1">
-                  {town} <span className="opacity-60">({townAccounts.length})</span>
-                </h3>
-                <div className="bg-white rounded-xl border border-skyblue-100">
-                  {townAccounts.map(a => (
-                    <button
-                      key={a.AccountId}
-                      onClick={() => onSelect(a)}
-                      className={`w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${
-                        a.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'
-                      }`}
-                    >
-                      <div>
-                        <p className="font-medium text-navy-900">{a.AccountName}</p>
-                        <p className="text-sm text-navy-700/50">{a.Address || a.Phone || '—'}</p>
-                        {upcomingByAccount[a.AccountId] && (
-                          <p className="text-xs text-teal-600 mt-0.5">
-                            {formatShortDate(upcomingByAccount[a.AccountId].date)} — {upcomingByAccount[a.AccountId].note.NoteText.slice(0, 60)}{upcomingByAccount[a.AccountId].note.NoteText.length > 60 ? '…' : ''}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FollowUpBadge nextFollowUp={a.NextFollowUp} />
-                        <UpcomingActivityBadge upcoming={upcomingByAccount[a.AccountId]} />
-                        <StatusPill status={a.Status} />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </React.Fragment>
-      )}
-    </div>
-  );
+  // Flat, ungrouped, sorted view — used for Propensity / CMS Rating sort
+  // modes, where town grouping would work against the point of the sort.
+  const sortedFlat = useMemo(() => {
+    if (sortBy === 'Name') return null;
+    const list = [...filtered];
+    if (sortBy === 'Propensity') {
+      list.sort((a, b) => {
+        const scoreA = computePropensityScore(a);
+        const scoreB = computePropensityScore(b);
+        return (scoreB ? scoreB.score : -1) - (scoreA ? scoreA.score : -1);
+      });
+    } else if (sortBy === 'CMS Rating') {
+      list.sort((a, b) => {
+        const valA = getCmsOverallNumber(a.CMSRating);
+        const valB = getCmsOverallNumber(b.CMSRating);
+        if (valA === null && valB === null) return 0;
+        if (valA === null) return 1;
+        if (valB === null) return -1;
+        return valB - valA;
+      });
+    }
+    return list;
+  }, [filtered, sortBy]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-6 flex-wrap gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-10 h-10 rounded-full bg-navy-900 flex items-center justify-center p-1.5 shrink-0"
+  }, /*#__PURE__*/React.createElement("img", {
+    src: LOGO_DATA_URI,
+    alt: "Bayside Dysphagia Diagnostics",
+    className: "w-full h-full object-contain"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    className: "font-display text-2xl text-navy-900"
+  }, "Bayside Dysphagia Diagnostics"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/50"
+  }, "Client & Referral tracker"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onCreate,
+    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
+  }, "+ New account"), /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-8 rounded-full bg-navy-900 text-white text-xs font-semibold flex items-center justify-center shrink-0",
+    title: sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || ''
+  }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))), /*#__PURE__*/React.createElement("button", {
+    onClick: onSignOut,
+    className: "text-navy-700/40 hover:text-navy-700/70 text-sm px-2 py-2 transition"
+  }, "Sign out"))), topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-5 mb-6"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-base text-navy-900 mb-3"
+  }, "Upcoming Meetings"), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-1"
+  }, topUpcomingMeetings.map((item, i) => {
+    const inner = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+      className: "text-sm font-medium text-navy-900"
+    }, item.accountName), /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-navy-700/60"
+    }, item.source === 'calendar' ? '📅 ' : '📝 ', item.title.length > 60 ? item.title.slice(0, 60) + '…' : item.title)), /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-teal-600 shrink-0"
+    }, formatShortDate(item.date)));
+    const rowClass = "w-full text-left flex items-start justify-between gap-3 hover:bg-skyblue-100/30 -mx-2 px-2 py-1.5 rounded-lg transition";
+    return item.source === 'calendar' ? /*#__PURE__*/React.createElement("a", {
+      key: i,
+      href: item.url,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      className: rowClass
+    }, inner) : /*#__PURE__*/React.createElement("button", {
+      key: i,
+      onClick: () => {
+        const account = accounts.find(a => a.AccountId === item.accountId);
+        if (account) onSelect(account);
+      },
+      className: rowClass
+    }, inner);
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between gap-4 mb-6 flex-wrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit"
+  }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast'].map(r => /*#__PURE__*/React.createElement("button", {
+    key: r,
+    onClick: () => setRegion(r),
+    className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
+  }, r))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1"
+  }, ['list', 'table', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
+    key: mode,
+    onClick: () => setViewMode(mode),
+    className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
+  }, mode)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 mb-5 flex-wrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 flex-wrap"
+  }, ['All', 'Prospect', 'Customer', 'Follow-up', 'Upcoming Meetings'].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    onClick: () => setFilter(s),
+    className: `px-3 py-1.5 rounded-md text-sm font-medium transition ${filter === s ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
+  }, s, " ", /*#__PURE__*/React.createElement("span", {
+    className: "opacity-60"
+  }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
+    className: "relative flex-1 min-w-[180px]"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: query,
+    onChange: e => setQuery(e.target.value),
+    placeholder: "Search accounts, contacts, notes...",
+    className: "border border-skyblue-300 rounded-lg pl-3 pr-8 py-1.5 text-sm w-full"
+  }), query && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setQuery(''),
+    "aria-label": "Clear search",
+    className: "absolute right-2 top-1/2 -translate-y-1/2 text-navy-700/40 hover:text-navy-700/70 text-lg leading-none px-1"
+  }, "\u00D7"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 mb-5 flex-wrap"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs text-navy-700/50 flex items-center gap-1.5"
+  }, "Sort by", /*#__PURE__*/React.createElement("select", {
+    value: sortBy,
+    onChange: e => setSortBy(e.target.value),
+    className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"))), distinctChains.length > 0 && /*#__PURE__*/React.createElement("label", {
+    className: "text-xs text-navy-700/50 flex items-center gap-1.5"
+  }, "Chain", /*#__PURE__*/React.createElement("select", {
+    value: chainFilter,
+    onChange: e => setChainFilter(e.target.value),
+    className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
+    key: c
+  }, c))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(MapView, {
+    accounts: filtered,
+    onSelect: onSelect
+  }) : viewMode === 'table' ? filtered.length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100"
+  }, /*#__PURE__*/React.createElement(EmptyState, {
+    message: "No accounts match yet",
+    hint: "Add one to get started."
+  })), /*#__PURE__*/React.createElement(CrossRegionHint, {
+    matches: crossRegionMatches,
+    setRegion: setRegion
+  })) : /*#__PURE__*/React.createElement(TableView, {
+    accounts: filtered,
+    onSelect: onSelect
+  }) : /*#__PURE__*/React.createElement(React.Fragment, null, filtered.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100"
+  }, /*#__PURE__*/React.createElement(EmptyState, {
+    message: "No accounts match yet",
+    hint: "Add one to get started."
+  })), filtered.length === 0 && /*#__PURE__*/React.createElement(CrossRegionHint, {
+    matches: crossRegionMatches,
+    setRegion: setRegion
+  }), sortBy === 'Name' ? /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, groups.map(({
+    town,
+    accounts: townAccounts
+  }) => /*#__PURE__*/React.createElement("div", {
+    key: town
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1"
+  }, town, " ", /*#__PURE__*/React.createElement("span", {
+    className: "opacity-60"
+  }, "(", townAccounts.length, ")")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100"
+  }, townAccounts.map(a => /*#__PURE__*/React.createElement(AccountRow, {
+    key: a.AccountId,
+    account: a,
+    onSelect: onSelect,
+    upcoming: upcomingByAccount[a.AccountId]
+  })))))) : sortedFlat.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100"
+  }, sortedFlat.map(a => /*#__PURE__*/React.createElement(AccountRow, {
+    key: a.AccountId,
+    account: a,
+    onSelect: onSelect,
+    upcoming: upcomingByAccount[a.AccountId]
+  })))));
 }
 
 // ---------------------------------------------------------------------
 // Root app
 // ---------------------------------------------------------------------
 function App() {
-  const [unlocked, setUnlocked] = useState(() =>
-    sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token')
-  );
-  const [data, setData] = useState({ accounts: [], contacts: [], connections: [], notes: [] });
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token'));
+  const [data, setData] = useState({
+    accounts: [],
+    contacts: [],
+    connections: [],
+    notes: []
+  });
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list' | 'detail' | 'create'
   const [selectedId, setSelectedId] = useState(null);
-  const [region, setRegion] = useState('Cape Cod'); // 'All Regions' | 'Cape Cod' | 'South Shore' — lives here (not in AccountList) so it survives navigating to an account and back
+  // Remembers the last region selected across sessions (localStorage
+  // persists even after closing the browser, unlike sessionStorage).
+  const [region, setRegion] = useState(() => localStorage.getItem('bdd_crm_region') || 'Cape Cod'); // 'All Regions' | 'Cape Cod' | 'South Shore' | 'South Coast' — lives here (not in AccountList) so it survives navigating to an account and back
 
+  useEffect(() => {
+    localStorage.setItem('bdd_crm_region', region);
+  }, [region]);
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
@@ -1813,9 +2630,9 @@ function App() {
     }
     setLoading(false);
   }, []);
-
-  useEffect(() => { if (unlocked) refresh(); }, [unlocked]);
-
+  useEffect(() => {
+    if (unlocked) refresh();
+  }, [unlocked]);
   const signOut = useCallback(async () => {
     try {
       await apiPost('logout', {});
@@ -1826,87 +2643,71 @@ function App() {
     sessionStorage.removeItem('bdd_crm_unlocked');
     sessionStorage.removeItem('bdd_crm_session_token');
     sessionStorage.removeItem('bdd_crm_user_email');
+    sessionStorage.removeItem('bdd_crm_user_name');
     setUnlocked(false);
   }, []);
 
   // Autocomplete pools: curated defaults + whatever's already in the Sheet.
-  const roleOptions = useMemo(() => uniqueSorted([
-    ...ROLE_DEFAULTS,
-    ...data.contacts.map(c => c.Role),
-    ...data.connections.map(c => c.Role)
-  ]), [data.contacts, data.connections]);
-
-  const relationshipOptions = useMemo(() => uniqueSorted([
-    ...RELATIONSHIP_DEFAULTS,
-    ...data.connections.map(c => c.Relationship)
-  ]), [data.connections]);
-
-  const referralSourceOptions = useMemo(() => uniqueSorted([
-    ...REFERRAL_SOURCE_DEFAULTS,
-    ...data.accounts.map(a => a.ReferralSource)
-  ]), [data.accounts]);
-
-  if (!unlocked) return <Gate onUnlock={() => setUnlocked(true)} />;
-
+  const roleOptions = useMemo(() => uniqueSorted([...ROLE_DEFAULTS, ...data.contacts.map(c => c.Role), ...data.connections.map(c => c.Role)]), [data.contacts, data.connections]);
+  const relationshipOptions = useMemo(() => uniqueSorted([...RELATIONSHIP_DEFAULTS, ...data.connections.map(c => c.Relationship)]), [data.connections]);
+  const referralSourceOptions = useMemo(() => uniqueSorted([...REFERRAL_SOURCE_DEFAULTS, ...data.accounts.map(a => a.ReferralSource)]), [data.accounts]);
+  if (!unlocked) return /*#__PURE__*/React.createElement(Gate, {
+    onUnlock: () => setUnlocked(true)
+  });
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-navy-700/50">
-        Loading accounts…
-      </div>
-    );
+    return /*#__PURE__*/React.createElement("div", {
+      className: "min-h-screen flex items-center justify-center text-navy-700/50"
+    }, "Loading accounts…");
   }
-
   const selectedAccount = data.accounts.find(a => a.AccountId === selectedId);
-
   if (view === 'create') {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <button onClick={() => setView('list')} className="text-teal-600 hover:text-teal-700 text-sm mb-4">← Back to accounts</button>
-        <AccountForm
-          onSave={async (form) => {
-            await apiPost('createAccount', { data: form });
-            await refresh();
-            setView('list');
-          }}
-          onCancel={() => setView('list')}
-          referralSourceOptions={referralSourceOptions}
-        />
-      </div>
-    );
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView('list'),
+      className: "text-teal-600 hover:text-teal-700 text-sm mb-4"
+    }, "← Back to accounts"), /*#__PURE__*/React.createElement(AccountForm, {
+      onSave: async form => {
+        await apiPost('createAccount', {
+          data: form
+        });
+        await refresh();
+        setView('list');
+        window.__crmShowToast && window.__crmShowToast('Account created');
+      },
+      onCancel: () => setView('list'),
+      referralSourceOptions: referralSourceOptions
+    })), /*#__PURE__*/React.createElement(Toast, null));
   }
-
   if (view === 'detail' && selectedAccount) {
-    return (
-      <AccountDetail
-        account={selectedAccount}
-        contacts={data.contacts}
-        connections={data.connections}
-        notes={data.notes}
-        onBack={() => setView('list')}
-        onRefresh={refresh}
-        roleOptions={roleOptions}
-        relationshipOptions={relationshipOptions}
-        referralSourceOptions={referralSourceOptions}
-      />
-    );
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(AccountDetail, {
+      account: selectedAccount,
+      contacts: data.contacts,
+      connections: data.connections,
+      notes: data.notes,
+      onBack: () => setView('list'),
+      onRefresh: refresh,
+      roleOptions: roleOptions,
+      relationshipOptions: relationshipOptions,
+      referralSourceOptions: referralSourceOptions
+    }), /*#__PURE__*/React.createElement(Toast, null));
   }
-
-  return (
-    <AccountList
-      accounts={data.accounts}
-      contacts={data.contacts}
-      connections={data.connections}
-      notes={data.notes}
-      onSelect={(a) => { setSelectedId(a.AccountId); setView('detail'); }}
-      onCreate={() => setView('create')}
-      onSignOut={signOut}
-      region={region}
-      setRegion={setRegion}
-    />
-  );
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(AccountList, {
+    accounts: data.accounts,
+    contacts: data.contacts,
+    connections: data.connections,
+    notes: data.notes,
+    onSelect: a => {
+      setSelectedId(a.AccountId);
+      setView('detail');
+    },
+    onCreate: () => setView('create'),
+    onSignOut: signOut,
+    region: region,
+    setRegion: setRegion
+  }), /*#__PURE__*/React.createElement(Toast, null));
 }
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
 </script>
 </body>
 </html>
