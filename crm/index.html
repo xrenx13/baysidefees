@@ -1558,7 +1558,7 @@ function AccountSnapshot({
   // rendered when "View more" is expanded, and only fields that actually
   // have a value.
   const moreFields = [
-    ['Propensity', opportunity ? opportunity.label + (opportunity.source === 'auto' ? ' (AUTO)' : '') : ''],
+    ['Fees Propensity', account.FeesTrigger],
     ['Region', account.Region],
     ['Referral Source', account.ReferralSource],
     ['Programs', account.HighRiskPrograms],
