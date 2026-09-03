@@ -590,6 +590,71 @@ function Suggestions({
 }
 
 // ---------------------------------------------------------------------
+// Fast-start cache
+// ---------------------------------------------------------------------
+// Apps Script web-app delivery can occasionally stall even when doGet()
+// itself finishes quickly. Keep the last successful CRM payload in the
+// browser so reloads can render immediately, then refresh silently in the
+// background. The cache is only used when this tab already has an unlocked
+// session and it belongs to the same signed-in email address.
+const CRM_CACHE_KEY = 'bdd_crm_cache_v1';
+const CRM_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function emptyCrmData_() {
+  return {
+    accounts: [],
+    contacts: [],
+    connections: [],
+    notes: [],
+    activities: []
+  };
+}
+
+function readCrmCache_() {
+  try {
+    const unlocked = sessionStorage.getItem('bdd_crm_unlocked') === 'true';
+    const token = sessionStorage.getItem('bdd_crm_session_token');
+    const email = sessionStorage.getItem('bdd_crm_user_email') || '';
+    if (!unlocked || !token || !email) return null;
+
+    const raw = localStorage.getItem(CRM_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (!cached || cached.email !== email || !cached.savedAt || !cached.data) return null;
+    if (Date.now() - cached.savedAt > CRM_CACHE_MAX_AGE_MS) {
+      localStorage.removeItem(CRM_CACHE_KEY);
+      return null;
+    }
+    if (!Array.isArray(cached.data.accounts)) return null;
+    return cached.data;
+  } catch (err) {
+    console.warn('Ignoring unreadable CRM cache', err);
+    return null;
+  }
+}
+
+function writeCrmCache_(data) {
+  try {
+    const email = sessionStorage.getItem('bdd_crm_user_email') || '';
+    if (!email || !data || !Array.isArray(data.accounts)) return;
+    localStorage.setItem(CRM_CACHE_KEY, JSON.stringify({
+      email,
+      savedAt: Date.now(),
+      data
+    }));
+  } catch (err) {
+    // Cache failure should never prevent the live CRM from working.
+    console.warn('Could not save CRM cache', err);
+  }
+}
+
+function clearCrmCache_() {
+  try {
+    localStorage.removeItem(CRM_CACHE_KEY);
+  } catch (err) {}
+}
+
+// ---------------------------------------------------------------------
 // API helpers
 // ---------------------------------------------------------------------
 function getSessionToken() {
@@ -3418,14 +3483,11 @@ function TodayDashboard({
 
 function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token'));
-  const [data, setData] = useState({
-    accounts: [],
-    contacts: [],
-    connections: [],
-    notes: [],
-    activities: []
-  });
-  const [loading, setLoading] = useState(true);
+  // Read once at startup. If present, this lets the account list render on
+  // the very first React paint while a live refresh runs in the background.
+  const [startupCache] = useState(() => readCrmCache_());
+  const [data, setData] = useState(() => startupCache || emptyCrmData_());
+  const [loading, setLoading] = useState(() => !startupCache);
   const [loadError, setLoadError] = useState(null);
   const [view, setView] = useState('list'); // 'list' | 'detail' | 'create'
   const [selectedId, setSelectedId] = useState(null);
@@ -3436,8 +3498,12 @@ function App() {
   useEffect(() => {
     localStorage.setItem('bdd_crm_region', region);
   }, [region]);
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (options = {}) => {
+    const showFullLoader = options && options.showFullLoader === true;
+    // With cached data on screen, never blank the CRM while waiting on the
+    // occasionally-slow Apps Script delivery path. A foreground loader is
+    // only used when we truly have nothing useful to show yet.
+    if (showFullLoader) setLoading(true);
     setLoadError(null);
     // Single attempt, no automatic retry — a retry fired while the first
     // request is still slow risks a second overlapping execution competing
@@ -3445,19 +3511,22 @@ function App() {
     // genuine failure surfaces a manual "Try again" button instead.
     try {
       const result = await apiGet();
-      setData({
+      const nextData = {
         accounts: result.accounts || [],
         contacts: result.contacts || [],
         connections: result.connections || [],
         notes: result.notes || [],
         activities: result.activities || []
-      });
+      };
+      setData(nextData);
+      writeCrmCache_(nextData);
       setLoadError(null);
     } catch (err) {
       console.error(err);
       setLoadError(err.message || 'Failed to load your accounts.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
   // Lightweight refresh for just one account — used after saves so the app
   // doesn't re-download every account, contact, and activity in the whole
@@ -3466,21 +3535,37 @@ function App() {
   const refreshAccount = useCallback(async accountId => {
     try {
       const result = await apiGet({ action: 'accountBundle', accountId });
-      setData(d => ({
-        ...d,
-        accounts: result.account
-          ? d.accounts.map(a => a.AccountId === accountId ? result.account : a)
-          : d.accounts,
-        contacts: [...d.contacts.filter(c => c.AccountId !== accountId), ...(result.contacts || [])],
-        connections: [...d.connections.filter(c => c.AccountId !== accountId), ...(result.connections || [])],
-        activities: [...d.activities.filter(a => a.AccountId !== accountId), ...(result.activities || [])]
-      }));
+      setData(d => {
+        const nextData = {
+          ...d,
+          accounts: result.account
+            ? d.accounts.map(a => a.AccountId === accountId ? result.account : a)
+            : d.accounts,
+          contacts: [...d.contacts.filter(c => c.AccountId !== accountId), ...(result.contacts || [])],
+          connections: [...d.connections.filter(c => c.AccountId !== accountId), ...(result.connections || [])],
+          activities: [...d.activities.filter(a => a.AccountId !== accountId), ...(result.activities || [])]
+        };
+        writeCrmCache_(nextData);
+        return nextData;
+      });
     } catch (err) {
       console.error(err);
     }
   }, []);
   useEffect(() => {
-    if (unlocked) refresh();
+    if (!unlocked) return;
+
+    // If the app became unlocked after a fresh sign-in (rather than a page
+    // reload), pick up any same-user cache now. Then refresh live data in
+    // the background either way.
+    if (!startupCache) {
+      const cached = readCrmCache_();
+      if (cached) {
+        setData(cached);
+        setLoading(false);
+      }
+    }
+    refresh({ showFullLoader: !startupCache && !readCrmCache_() });
   }, [unlocked]);
   const signOut = useCallback(async () => {
     try {
@@ -3493,6 +3578,8 @@ function App() {
     sessionStorage.removeItem('bdd_crm_session_token');
     sessionStorage.removeItem('bdd_crm_user_email');
     sessionStorage.removeItem('bdd_crm_user_name');
+    clearCrmCache_();
+    setData(emptyCrmData_());
     setUnlocked(false);
   }, []);
 
@@ -3516,7 +3603,7 @@ function App() {
     }, "Couldn't load your accounts"), /*#__PURE__*/React.createElement("p", {
       className: "text-navy-700/50 text-sm max-w-sm"
     }, loadError), /*#__PURE__*/React.createElement("button", {
-      onClick: refresh,
+      onClick: () => refresh({ showFullLoader: true }),
       className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
     }, "Try again"));
   }
