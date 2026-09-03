@@ -1576,7 +1576,8 @@ function AccountSnapshot({
   primaryClinicalContact,
   decisionMakerContact,
   daysSinceLastContact,
-  nextActionOverdue
+  nextActionOverdue,
+  onStageChange
 }) {
   const [showMore, setShowMore] = useState(false);
   const opportunity = computeOverallFeesOpportunity(account);
@@ -1618,9 +1619,19 @@ function AccountSnapshot({
         className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${overallOpportunityColor(opportunity.label)} text-white`,
         title: buildOpportunityTooltip(opportunity)
       }, "FEES OPPORTUNITY: ", opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)'),
-      /*#__PURE__*/React.createElement("span", {
-        className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
-      }, account.RelationshipStage || 'Target')
+      /*#__PURE__*/React.createElement("select", {
+        value: account.RelationshipStage || 'Target',
+        onChange: e => onStageChange(e.target.value),
+        title: "Change relationship stage",
+        className: `appearance-none cursor-pointer border-none inline-flex items-center px-2.5 py-1 pr-6 rounded-full text-xs font-semibold bg-[right_0.4rem_center] bg-no-repeat ${stageColor(account.RelationshipStage)}`,
+        style: {
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+          backgroundSize: "10px"
+        }
+      }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
+        key: s,
+        value: s
+      }, s)))
     ),
     /*#__PURE__*/React.createElement("div", { className: `${row} mb-1` },
       /*#__PURE__*/React.createElement(DistanceLinks, { account: account })
@@ -1920,6 +1931,22 @@ function AccountDetail({
     onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Account saved');
   };
+  const updateStage = async newStage => {
+    setBusy(true);
+    const response = await apiPost('updateAccount', {
+      data: {
+        AccountId: account.AccountId,
+        RelationshipStage: newStage
+      }
+    });
+    setBusy(false);
+    if (!response.success) {
+      window.__crmShowToast && window.__crmShowToast('Failed to update stage: ' + (response.error || 'unknown error'));
+      return;
+    }
+    onRefreshAccount(account.AccountId);
+    window.__crmShowToast && window.__crmShowToast('Stage updated');
+  };
   const convert = async () => {
     const simplePracticeUrl = window.prompt("SimplePractice client URL (optional — leave blank and click OK to skip):", '');
     setBusy(true);
@@ -2209,7 +2236,8 @@ function AccountDetail({
     primaryClinicalContact: primaryClinicalContact,
     decisionMakerContact: decisionMakerContact,
     daysSinceLastContact: daysSinceLastContact,
-    nextActionOverdue: nextActionOverdue
+    nextActionOverdue: nextActionOverdue,
+    onStageChange: updateStage
   })), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-2"
   }, account.Status === 'Prospect' && /*#__PURE__*/React.createElement("button", {
