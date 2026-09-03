@@ -496,6 +496,49 @@ function getTown(address) {
 }
 
 // ---------------------------------------------------------------------
+// Region inference for new accounts.
+// Uses the CRM's established region scheme. Cape Cod / South Shore /
+// South Coast align with Massachusetts regional definitions; Southeast and
+// South Central preserve the custom groupings already used by this CRM.
+// ---------------------------------------------------------------------
+const TOWNS_BY_CRM_REGION = {
+  'Cape Cod': new Set([
+    'Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham',
+    'Falmouth', 'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich',
+    'Truro', 'Wellfleet', 'Yarmouth'
+  ]),
+  'South Shore': new Set([
+    'Braintree', 'Cohasset', 'Duxbury', 'Hanover', 'Hingham', 'Hull',
+    'Kingston', 'Marshfield', 'Milton', 'Norwell', 'Pembroke', 'Plymouth',
+    'Quincy', 'Rockland', 'Scituate', 'Weymouth'
+  ]),
+  'South Coast': new Set([
+    'Acushnet', 'Dartmouth', 'Fairhaven', 'Fall River', 'New Bedford',
+    'Somerset', 'Swansea', 'Westport'
+  ]),
+  'Southeast': new Set([
+    'Berkley', 'Bridgewater', 'Carver', 'Dighton', 'East Bridgewater',
+    'Easton', 'Halifax', 'Lakeville', 'Middleboro', 'Middleborough',
+    'North Dighton', 'North Easton', 'Norton', 'Raynham', 'Rehoboth',
+    'Taunton', 'West Bridgewater'
+  ]),
+  'South Central': new Set([
+    'Canton', 'Dedham', 'Foxborough', 'Franklin', 'Mansfield', 'Medfield',
+    'Millis', 'Needham', 'Norfolk', 'Norwood', 'Plainville', 'Sharon',
+    'Stoughton', 'Walpole', 'Westwood', 'Wrentham'
+  ])
+};
+
+function inferCrmRegionFromAddress(address) {
+  const town = getTown(address);
+  if (!town || town === 'Unknown') return '';
+  for (const [region, towns] of Object.entries(TOWNS_BY_CRM_REGION)) {
+    if (towns.has(town)) return region;
+  }
+  return '';
+}
+
+// ---------------------------------------------------------------------
 // Follow-up date helpers
 // ---------------------------------------------------------------------
 function todayDateString() {
@@ -1196,14 +1239,19 @@ function AccountForm({
         const place = autocomplete.getPlace();
         if (!place) return;
         const googleRating = place.rating ? `${place.rating} (${place.user_ratings_total || 0} reviews)` : '';
-        setForm(f => ({
-          ...f,
-          AccountName: place.name || f.AccountName,
-          Address: f.Address || place.formatted_address || '',
-          Phone: f.Phone || place.formatted_phone_number || '',
-          Website: f.Website || place.website || '',
-          Rating: f.Rating || googleRating
-        }));
+        setForm(f => {
+          const nextAddress = f.Address || place.formatted_address || '';
+          const inferredRegion = !initial ? inferCrmRegionFromAddress(nextAddress) : '';
+          return {
+            ...f,
+            AccountName: place.name || f.AccountName,
+            Address: nextAddress,
+            Phone: f.Phone || place.formatted_phone_number || '',
+            Website: f.Website || place.website || '',
+            Rating: f.Rating || googleRating,
+            Region: inferredRegion || f.Region
+          };
+        });
       });
     }).catch(() => {/* no key configured yet — plain text input, no error shown */});
     return () => {
@@ -1265,6 +1313,11 @@ function AccountForm({
   }, "Address"), /*#__PURE__*/React.createElement("input", {
     value: form.Address,
     onChange: set('Address'),
+    onBlur: e => {
+      if (initial) return;
+      const inferredRegion = inferCrmRegionFromAddress(e.target.value);
+      if (inferredRegion) setForm(f => ({ ...f, Region: inferredRegion }));
+    },
     className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2"
   })), /*#__PURE__*/React.createElement("label", {
     className: "text-sm"
