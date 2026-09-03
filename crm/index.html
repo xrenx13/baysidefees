@@ -647,7 +647,15 @@ async function apiPost(action, payload) {
       ...payload
     })
   });
-  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(`Server returned an error (status ${res.status}).`);
+  }
+  let result;
+  try {
+    result = await res.json();
+  } catch (err) {
+    throw new Error('Server returned an unexpected response — please try again.');
+  }
   if (result.error === 'Unauthorized - please sign in again') {
     handleUnauthorized();
   }
@@ -695,7 +703,7 @@ function Gate({
         loginInFlightRef.current = false;
       }
     } catch (err) {
-      setError('Something went wrong signing in — try again.');
+      setError((err.message || 'Something went wrong signing in') + ' — try again.');
       loginInFlightRef.current = false;
     }
     setBusy(false);
