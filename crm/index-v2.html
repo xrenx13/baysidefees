@@ -2690,13 +2690,14 @@ function TableView({
         return '';
     }
   };
-  const sorted = [...accounts].sort((a, b) => {
+  const sorted = useMemo(() => [...accounts].sort((a, b) => {
     const va = getValue(a, sortCol);
     const vb = getValue(b, sortCol);
     let cmp;
     if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;else cmp = String(va).localeCompare(String(vb));
     return sortDir === 'asc' ? cmp : -cmp;
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [accounts, sortCol, sortDir]);
   const columns = [{
     key: 'AccountName',
     label: 'Account'
@@ -2863,16 +2864,20 @@ function AccountList({
       url: m.url
     })).sort((a, b) => a.date - b.date).slice(0, 3);
   }, [calendarMeetings]);
-  const regionAccounts = region === 'All Regions' ? accounts : accounts.filter(a => (a.Region || 'Cape Cod') === region);
+  const regionAccounts = useMemo(() =>
+    region === 'All Regions' ? accounts : accounts.filter(a => (a.Region || 'Cape Cod') === region),
+    [accounts, region]
+  );
   const distinctChains = useMemo(() => {
     const set = new Set(regionAccounts.map(a => (a.ChainAffiliation || '').trim()).filter(Boolean));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [regionAccounts]);
-  const filtered = regionAccounts.filter(a => {
+  const filtered = useMemo(() => regionAccounts.filter(a => {
     const matchesFilter = filter === 'All' ? true : filter === 'Follow-up' ? hasFollowUp(a) : a.Status === filter;
     const matchesChain = chainFilter === 'All Chains' || (a.ChainAffiliation || '').trim() === chainFilter;
     return matchesFilter && matchesChain && matchesQuery(a);
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [regionAccounts, filter, chainFilter, query, contacts, connections, activities]);
 
   // When a search turns up nothing in the current region, check whether it
   // would match elsewhere — surfaced as a hint rather than silently
@@ -2887,12 +2892,12 @@ function AccountList({
     });
     return Object.keys(byRegion).map(r => ({ region: r, count: byRegion[r] }));
   }, [accounts, region, query, filter, chainFilter, filtered.length]);
-  const counts = {
+  const counts = useMemo(() => ({
     All: regionAccounts.length,
     Prospect: regionAccounts.filter(a => a.Status === 'Prospect').length,
     Customer: regionAccounts.filter(a => a.Status === 'Customer').length,
     'Follow-up': regionAccounts.filter(hasFollowUp).length
-  };
+  }), [regionAccounts]);
 
   // Town-grouped view, used when sorting by Name (the default).
   const groups = useMemo(() => {
