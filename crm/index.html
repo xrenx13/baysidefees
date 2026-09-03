@@ -3126,6 +3126,19 @@ function AccountList({
   }), [regionAccounts]);
 
   // Town-grouped view, used when sorting by Name (the default).
+  // When the Follow-up filter is active in list view, show the earliest
+  // follow-up date first (for example 9/2/26 before 9/3/26), independent of
+  // the normal Sort by selection.
+  const followUpSorted = useMemo(() => {
+    if (filter !== 'Follow-up') return null;
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.NextFollowUp).getTime();
+      const dateB = new Date(b.NextFollowUp).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      return (a.AccountName || '').localeCompare(b.AccountName || '');
+    });
+  }, [filtered, filter]);
+
   const groups = useMemo(() => {
     if (sortBy !== 'Name') return null;
     const map = {};
@@ -3321,7 +3334,13 @@ function AccountList({
   })), filtered.length === 0 && /*#__PURE__*/React.createElement(CrossRegionHint, {
     matches: crossRegionMatches,
     setRegion: setRegion
-  }), sortBy === 'Name' ? /*#__PURE__*/React.createElement("div", {
+  }), filter === 'Follow-up' ? followUpSorted.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100"
+  }, followUpSorted.map(a => /*#__PURE__*/React.createElement(AccountRow, {
+    key: a.AccountId,
+    account: a,
+    onSelect: onSelect
+  }))) : sortBy === 'Name' ? /*#__PURE__*/React.createElement("div", {
     className: "space-y-6"
   }, groups.map(({
     town,
