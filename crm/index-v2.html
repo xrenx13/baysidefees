@@ -580,8 +580,13 @@ function handleUnauthorized() {
   sessionStorage.removeItem('bdd_crm_user_name');
   window.location.reload();
 }
-async function apiGet() {
-  const res = await fetch(`${API_URL}?action=all&token=${encodeURIComponent(getSessionToken())}`);
+async function apiGet(extraParams) {
+  const params = new URLSearchParams({
+    action: 'all',
+    token: getSessionToken(),
+    ...(extraParams || {})
+  });
+  const res = await fetch(`${API_URL}?${params.toString()}`);
   const result = await res.json();
   if (result.error === 'Unauthorized — please sign in again') {
     handleUnauthorized();
@@ -1764,6 +1769,7 @@ function AccountDetail({
   connections,
   onBack,
   onRefresh,
+  onRefreshAccount,
   roleOptions,
   relationshipOptions,
   referralSourceOptions
@@ -1822,7 +1828,7 @@ function AccountDetail({
     });
     setEditingAccount(false);
     setBusy(false);
-    onRefresh();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Account saved');
   };
   const convert = async () => {
@@ -1833,7 +1839,7 @@ function AccountDetail({
       simplePracticeUrl: simplePracticeUrl || ''
     });
     setBusy(false);
-    onRefresh();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Converted to customer');
   };
   const revertToProspect = async () => {
@@ -1845,7 +1851,7 @@ function AccountDetail({
       }
     });
     setBusy(false);
-    onRefresh();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Reverted to prospect');
   };
   const removeAccount = async () => {
@@ -1875,7 +1881,7 @@ function AccountDetail({
     setAddingContact(false);
     setEditingContactId(null);
     setBusy(false);
-    onRefresh();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Contact saved');
   };
   const loadSuggestedContacts = async () => {
@@ -1906,7 +1912,7 @@ function AccountDetail({
     });
     setSuggestedContacts(prev => (prev || []).filter(s => s.email !== suggestion.email));
     setAddingSuggestionEmail(null);
-    onRefresh();
+    onRefreshAccount(account.AccountId);
   };
   const removeContact = async contactId => {
     if (!confirm('Remove this contact?')) return;
@@ -1915,7 +1921,7 @@ function AccountDetail({
       contactId
     });
     setBusy(false);
-    onRefresh();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Contact removed');
   };
   const saveConnection = async form => {
@@ -1935,7 +1941,7 @@ function AccountDetail({
     setAddingConnection(false);
     setEditingConnectionId(null);
     setBusy(false);
-    onRefresh();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Connection saved');
   };
   const removeConnection = async connectionId => {
@@ -1945,7 +1951,7 @@ function AccountDetail({
       connectionId
     });
     setBusy(false);
-    onRefresh();
+    onRefreshAccount(account.AccountId);
     window.__crmShowToast && window.__crmShowToast('Connection removed');
   };
   const knownEmails = [...accountContacts, ...accountConnections].map(c => c.Email).filter(Boolean);
@@ -2029,7 +2035,7 @@ function AccountDetail({
     setActivityDetails('');
     setActivityNextAction('');
     setActivityNextActionDue('');
-    onRefresh();
+    onRefreshAccount(account.AccountId);
     loadActivities();
     window.__crmShowToast && window.__crmShowToast('Activity logged');
   };
@@ -3287,6 +3293,26 @@ function App() {
     }
     setLoading(false);
   }, []);
+  // Lightweight refresh for just one account — used after saves so the app
+  // doesn't re-download every account, contact, and activity in the whole
+  // CRM to reflect a change to a single one. No full-page loading state,
+  // since this should feel instant rather than showing "Loading accounts."
+  const refreshAccount = useCallback(async accountId => {
+    try {
+      const result = await apiGet({ action: 'accountBundle', accountId });
+      setData(d => ({
+        ...d,
+        accounts: result.account
+          ? d.accounts.map(a => a.AccountId === accountId ? result.account : a)
+          : d.accounts,
+        contacts: [...d.contacts.filter(c => c.AccountId !== accountId), ...(result.contacts || [])],
+        connections: [...d.connections.filter(c => c.AccountId !== accountId), ...(result.connections || [])],
+        activities: [...d.activities.filter(a => a.AccountId !== accountId), ...(result.activities || [])]
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
   useEffect(() => {
     if (unlocked) refresh();
   }, [unlocked]);
@@ -3343,6 +3369,7 @@ function App() {
       connections: data.connections,
       onBack: () => setView('list'),
       onRefresh: refresh,
+      onRefreshAccount: refreshAccount,
       roleOptions: roleOptions,
       relationshipOptions: relationshipOptions,
       referralSourceOptions: referralSourceOptions
