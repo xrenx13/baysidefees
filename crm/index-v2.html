@@ -880,6 +880,9 @@ function AccountForm({
   });
   const [placesReady, setPlacesReady] = useState(false);
   const nameInputRef = useRef(null);
+  const [showCustomReferral, setShowCustomReferral] = useState(() =>
+    !!(initial && initial.ReferralSource && !referralSourceOptions.includes(initial.ReferralSource))
+  );
   const set = k => e => setForm({
     ...form,
     [k]: e.target.value
@@ -951,15 +954,31 @@ function AccountForm({
     className: "text-sm"
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-navy-700/70"
-  }, "Referral source"), /*#__PURE__*/React.createElement("input", {
+  }, "Referral source"), /*#__PURE__*/React.createElement("select", {
+    value: showCustomReferral ? '__other__' : (form.ReferralSource || ''),
+    onChange: e => {
+      if (e.target.value === '__other__') {
+        setShowCustomReferral(true);
+        setForm({ ...form, ReferralSource: '' });
+      } else {
+        setShowCustomReferral(false);
+        setForm({ ...form, ReferralSource: e.target.value });
+      }
+    },
+    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Select..."), referralSourceOptions.map(opt => /*#__PURE__*/React.createElement("option", {
+    key: opt,
+    value: opt
+  }, opt)), /*#__PURE__*/React.createElement("option", {
+    value: "__other__"
+  }, "Other (type your own)...")), showCustomReferral && /*#__PURE__*/React.createElement("input", {
     value: form.ReferralSource,
     onChange: set('ReferralSource'),
-    list: "referral-source-options",
-    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2",
-    placeholder: "e.g. LinkedIn outreach"
-  }), /*#__PURE__*/React.createElement(Suggestions, {
-    id: "referral-source-options",
-    options: referralSourceOptions
+    placeholder: "e.g. LinkedIn outreach",
+    className: "mt-2 w-full border border-skyblue-300 rounded-lg px-3 py-2",
+    autoFocus: true
   })), /*#__PURE__*/React.createElement("label", {
     className: "text-sm"
   }, /*#__PURE__*/React.createElement("span", {
@@ -2095,7 +2114,7 @@ function AccountDetail({
   }, "← Back to accounts"), /*#__PURE__*/React.createElement("div", {
     className: "sticky top-0 z-20 py-2.5 mb-4 bg-white border-b border-skyblue-100 shadow-sm flex items-center gap-3"
   }, /*#__PURE__*/React.createElement("span", {
-    className: "font-display text-base text-navy-900 truncate"
+    className: "font-display text-base text-navy-900 truncate pl-2"
   }, account.AccountName), /*#__PURE__*/React.createElement(StatusPill, {
     status: account.Status
   }), /*#__PURE__*/React.createElement("span", {
@@ -2636,7 +2655,10 @@ function TableView({
       case 'Status':
         return a.Status || '';
       case 'RelationshipStage':
-        return a.RelationshipStage || '';
+        {
+          const idx = RELATIONSHIP_STAGES.indexOf(a.RelationshipStage);
+          return idx === -1 ? -1 : idx;
+        }
       case 'Town':
         return getTown(a.Address);
       case 'Propensity':
