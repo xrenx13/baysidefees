@@ -2168,7 +2168,7 @@ function AccountDetail({
       ...d,
       accounts: d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, RelationshipStage: newStage } : a)
     }));
-    window.__crmShowToast && window.__crmShowToast('Saving…');
+    window.__crmShowToast && window.__crmShowToast('Updating…');
     persistInBackground(apiPost('updateAccount', {
       data: { AccountId: account.AccountId, RelationshipStage: newStage }
     }), 'Stage updated');
@@ -2185,7 +2185,7 @@ function AccountDetail({
         ...(simplePracticeUrl ? { SimplePracticeUrl: simplePracticeUrl } : {})
       } : a)
     }));
-    window.__crmShowToast && window.__crmShowToast('Saving…');
+    window.__crmShowToast && window.__crmShowToast('Converting…');
     persistInBackground(apiPost('convertAccount', {
       accountId: account.AccountId,
       simplePracticeUrl: simplePracticeUrl || ''
@@ -2196,7 +2196,7 @@ function AccountDetail({
       ...d,
       accounts: d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, Status: 'Prospect' } : a)
     }));
-    window.__crmShowToast && window.__crmShowToast('Saving…');
+    window.__crmShowToast && window.__crmShowToast('Updating…');
     persistInBackground(apiPost('updateAccount', {
       data: { AccountId: account.AccountId, Status: 'Prospect' }
     }), 'Reverted to prospect');
@@ -2205,7 +2205,9 @@ function AccountDetail({
     if (!confirm(`Delete "${account.AccountName}"? This also removes its contacts and activity history from view (rows stay in the Sheet's Contacts/Activities tabs but won't be linked to anything). This can't be undone from the app.`)) return;
     onLocalData(d => ({ ...d, accounts: d.accounts.filter(a => a.AccountId !== account.AccountId) }));
     onBack();
-    window.__crmShowToast && window.__crmShowToast('Deleting…');
+    setTimeout(() => {
+      window.__crmShowToast && window.__crmShowToast('Deleting…');
+    }, 75);
     apiPost('deleteAccount', { accountId: account.AccountId }).then(response => {
       if (response && response.success === false) throw new Error(response.error || 'Delete failed');
       window.__crmShowToast && window.__crmShowToast('Account deleted');
@@ -2228,7 +2230,7 @@ function AccountDetail({
         ? [...d.contacts, localContact]
         : d.contacts.map(c => c.ContactId === form.ContactId ? { ...c, ...localContact } : c)
     }));
-    window.__crmShowToast && window.__crmShowToast('Saving…');
+    window.__crmShowToast && window.__crmShowToast(isNew ? 'Creating…' : 'Saving…');
     const request = isNew
       ? apiPost('createContact', { data: { ...form, AccountId: account.AccountId } })
       : apiPost('updateContact', { data: form });
@@ -2240,10 +2242,10 @@ function AccountDetail({
           contacts: d.contacts.map(c => c.ContactId === tempId ? { ...c, ContactId: response.result.ContactId } : c)
         }));
       }
-      window.__crmShowToast && window.__crmShowToast('Contact saved');
+      window.__crmShowToast && window.__crmShowToast(isNew ? 'Contact created' : 'Contact saved');
     }).catch(err => {
       console.error(err);
-      window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
+      window.__crmShowToast && window.__crmShowToast(isNew ? 'Create failed — restoring server data' : 'Save failed — restoring server data');
       onRefreshAccount(account.AccountId);
     });
   };
@@ -2274,13 +2276,16 @@ function AccountDetail({
     };
     setSuggestedContacts(prev => (prev || []).filter(s => s.email !== suggestion.email));
     onLocalData(d => ({ ...d, contacts: [...d.contacts, localContact] }));
+    window.__crmShowToast && window.__crmShowToast('Creating…');
     apiPost('createContact', { data: { ...localContact, ContactId: undefined } }).then(response => {
       if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
       if (response.result && response.result.ContactId) {
         onLocalData(d => ({ ...d, contacts: d.contacts.map(c => c.ContactId === tempId ? { ...c, ContactId: response.result.ContactId } : c) }));
       }
+      window.__crmShowToast && window.__crmShowToast('Contact created');
     }).catch(err => {
       console.error(err);
+      window.__crmShowToast && window.__crmShowToast('Create failed — restoring server data');
       onRefreshAccount(account.AccountId);
     });
   };
@@ -2288,7 +2293,7 @@ function AccountDetail({
     if (!confirm('Remove this contact?')) return;
     onLocalData(d => ({ ...d, contacts: d.contacts.filter(c => c.ContactId !== contactId) }));
     window.__crmShowToast && window.__crmShowToast('Deleting…');
-    persistInBackground(apiPost('deleteContact', { contactId }), 'Contact removed');
+    persistInBackground(apiPost('deleteContact', { contactId }), 'Contact deleted');
   };
   const saveConnection = form => {
     const isNew = !form.ConnectionId;
@@ -2303,7 +2308,7 @@ function AccountDetail({
         ? [...d.connections, localConnection]
         : d.connections.map(c => c.ConnectionId === form.ConnectionId ? { ...c, ...localConnection } : c)
     }));
-    window.__crmShowToast && window.__crmShowToast('Saving…');
+    window.__crmShowToast && window.__crmShowToast(isNew ? 'Creating…' : 'Saving…');
     const request = isNew
       ? apiPost('createConnection', { data: { ...form, AccountId: account.AccountId } })
       : apiPost('updateConnection', { data: form });
@@ -2315,10 +2320,10 @@ function AccountDetail({
           connections: d.connections.map(c => c.ConnectionId === tempId ? { ...c, ConnectionId: response.result.ConnectionId } : c)
         }));
       }
-      window.__crmShowToast && window.__crmShowToast('Connection saved');
+      window.__crmShowToast && window.__crmShowToast(isNew ? 'Connection created' : 'Connection saved');
     }).catch(err => {
       console.error(err);
-      window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
+      window.__crmShowToast && window.__crmShowToast(isNew ? 'Create failed — restoring server data' : 'Save failed — restoring server data');
       onRefreshAccount(account.AccountId);
     });
   };
@@ -2326,7 +2331,7 @@ function AccountDetail({
     if (!confirm('Remove this connection?')) return;
     onLocalData(d => ({ ...d, connections: d.connections.filter(c => c.ConnectionId !== connectionId) }));
     window.__crmShowToast && window.__crmShowToast('Deleting…');
-    persistInBackground(apiPost('deleteConnection', { connectionId }), 'Connection removed');
+    persistInBackground(apiPost('deleteConnection', { connectionId }), 'Connection deleted');
   };
   const knownEmails = [...accountContacts, ...accountConnections].map(c => c.Email).filter(Boolean);
   const knownDomains = Array.from(new Set(knownEmails.map(e => (e.split('@')[1] || '').toLowerCase()).filter(Boolean)));
@@ -2419,7 +2424,7 @@ function AccountDetail({
         return { ...a, ...patch };
       })
     }));
-    window.__crmShowToast && window.__crmShowToast('Saving…');
+    window.__crmShowToast && window.__crmShowToast('Logging activity…');
     apiPost('createActivity', { data: payload }).then(response => {
       if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
       if (response.result && response.result.ActivityId) {
@@ -3742,6 +3747,7 @@ function App() {
   const [loadError, setLoadError] = useState(null);
   const [view, setView] = useState('list'); // 'list' | 'detail' | 'create'
   const [selectedId, setSelectedId] = useState(null);
+  const [signingOut, setSigningOut] = useState(false);
   // Remembers the last region selected across sessions (localStorage
   // persists even after closing the browser, unlike sessionStorage).
   const [region, setRegion] = useState(() => localStorage.getItem('bdd_crm_region') || 'Cape Cod'); // 'All Regions' | 'Cape Cod' | 'South Shore' | 'South Coast' — lives here (not in AccountList) so it survives navigating to an account and back
@@ -3833,13 +3839,12 @@ function App() {
     }
     refresh({ showFullLoader: !startupCache && !readCrmCache_() });
   }, [unlocked]);
-  const signOut = useCallback(async () => {
-    try {
-      await apiPost('logout', {});
-    } catch (err) {
-      // Even if the network call fails, still clear locally so the user
-      // isn't stuck "logged in" on this device.
-    }
+  const signOut = useCallback(() => {
+    // Sign out locally first so a slow Apps Script response never makes the
+    // button look unresponsive. The server-side logout finishes in the
+    // background, just like our optimistic save flows.
+    setSigningOut(true);
+
     sessionStorage.removeItem('bdd_crm_unlocked');
     sessionStorage.removeItem('bdd_crm_session_token');
     sessionStorage.removeItem('bdd_crm_user_email');
@@ -3847,15 +3852,35 @@ function App() {
     clearCrmCache_();
     setData(emptyCrmData_());
     setUnlocked(false);
+
+    apiPost('logout', {}).catch(err => {
+      console.warn('Background logout request failed:', err);
+      // Local credentials are already cleared, so the user is still signed
+      // out on this device even if Google's logout request fails.
+    }).finally(() => {
+      setSigningOut(false);
+    });
   }, []);
 
   // Autocomplete pools: curated defaults + whatever's already in the Sheet.
   const roleOptions = useMemo(() => uniqueSorted([...ROLE_DEFAULTS, ...data.contacts.map(c => c.Role), ...data.connections.map(c => c.Role)]), [data.contacts, data.connections]);
   const relationshipOptions = useMemo(() => uniqueSorted([...RELATIONSHIP_DEFAULTS, ...data.connections.map(c => c.Relationship)]), [data.connections]);
   const referralSourceOptions = useMemo(() => uniqueSorted([...REFERRAL_SOURCE_DEFAULTS, ...data.accounts.map(a => a.ReferralSource)]), [data.accounts]);
-  if (!unlocked) return /*#__PURE__*/React.createElement(Gate, {
-    onUnlock: () => setUnlocked(true)
-  });
+  if (!unlocked) return /*#__PURE__*/React.createElement(React.Fragment, null,
+    /*#__PURE__*/React.createElement(Gate, {
+      onUnlock: () => setUnlocked(true)
+    }),
+    signingOut && /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: 'fixed',
+        bottom: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 9999
+      },
+      className: "bg-navy-900 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg"
+    }, "Signing out…")
+  );
   if (loading) {
     return /*#__PURE__*/React.createElement("div", {
       className: "min-h-screen flex items-center justify-center text-navy-700/50"
@@ -3909,7 +3934,7 @@ function App() {
         // The Toast component remounts when the view changes, so wait until
         // the next paint before showing the initial status message.
         setTimeout(() => {
-          window.__crmShowToast && window.__crmShowToast('Saving…');
+          window.__crmShowToast && window.__crmShowToast('Creating…');
         }, 75);
 
         apiPost('createAccount', { data: form }).then(response => {
