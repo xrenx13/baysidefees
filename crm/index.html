@@ -664,11 +664,21 @@ function Gate({
   const [busy, setBusy] = useState(false);
   const [googleFailedToLoad, setGoogleFailedToLoad] = useState(false);
   const googleButtonRef = useRef(null);
+  const loginInFlightRef = useRef(false); // guards against duplicate callback firings, without needing to be a useCallback dependency
   const unlock = () => {
     sessionStorage.setItem('bdd_crm_unlocked', 'true');
     onUnlock();
   };
   const handleCredentialResponse = useCallback(async response => {
+    // Google's sign-in flow (especially with FedCM) can fire this callback
+    // more than once for a single sign-in action. Without a guard, each
+    // firing sends its own verifyGoogleLogin request, and those pile up
+    // competing for the same backend/Sheet — ignore anything after the
+    // first while one is already in flight. Uses a ref (not state) so this
+    // callback's own identity stays stable and doesn't retrigger the
+    // Google SDK initialization effect below.
+    if (loginInFlightRef.current) return;
+    loginInFlightRef.current = true;
     setBusy(true);
     setError('');
     try {
@@ -682,9 +692,11 @@ function Gate({
         unlock();
       } else {
         setError(result.error || "That Google account isn't authorized for this app.");
+        loginInFlightRef.current = false;
       }
     } catch (err) {
       setError('Something went wrong signing in — try again.');
+      loginInFlightRef.current = false;
     }
     setBusy(false);
   }, []);
