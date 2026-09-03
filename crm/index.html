@@ -612,8 +612,31 @@ async function apiGet(extraParams) {
     token: getSessionToken(),
     ...(extraParams || {})
   });
-  const res = await fetch(`${API_URL}?${params.toString()}`);
-  const result = await res.json();
+  // fetch() has no default timeout and will hang indefinitely against a
+  // slow/cold-starting Apps Script backend — give it a generous but finite
+  // window so a stuck request fails clearly instead of spinning forever.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  let res;
+  try {
+    res = await fetch(`${API_URL}?${params.toString()}`, { signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out — the Google Sheet may be slow to respond right now.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+  if (!res.ok) {
+    throw new Error(`Server returned an error (status ${res.status}).`);
+  }
+  let result;
+  try {
+    result = await res.json();
+  } catch (err) {
+    throw new Error('Server returned an unexpected response — please try again.');
+  }
   if (result.error === 'Unauthorized - please sign in again') {
     handleUnauthorized();
     return {
@@ -3365,6 +3388,7 @@ function App() {
     activities: []
   });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [view, setView] = useState('list'); // 'list' | 'detail' | 'create'
   const [selectedId, setSelectedId] = useState(null);
   // Remembers the last region selected across sessions (localStorage
@@ -3376,17 +3400,32 @@ function App() {
   }, [region]);
   const refresh = useCallback(async () => {
     setLoading(true);
-    try {
-      const result = await apiGet();
-      setData({
-        accounts: result.accounts || [],
-        contacts: result.contacts || [],
-        connections: result.connections || [],
-        notes: result.notes || [],
-        activities: result.activities || []
-      });
-    } catch (err) {
-      console.error(err);
+    setLoadError(null);
+    // One quiet automatic retry before bothering the user — Apps Script
+    // cold-starts (waking up after a period of inactivity) can cause a
+    // single request to fail or time out even though the backend is
+    // perfectly healthy a few seconds later.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const result = await apiGet();
+        setData({
+          accounts: result.accounts || [],
+          contacts: result.contacts || [],
+          connections: result.connections || [],
+          notes: result.notes || [],
+          activities: result.activities || []
+        });
+        setLoadError(null);
+        setLoading(false);
+        return;
+      } catch (err) {
+        console.error(err);
+        if (attempt === 2) {
+          setLoadError(err.message || 'Failed to load your accounts.');
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      }
     }
     setLoading(false);
   }, []);
@@ -3438,6 +3477,18 @@ function App() {
     return /*#__PURE__*/React.createElement("div", {
       className: "min-h-screen flex items-center justify-center text-navy-700/50"
     }, "Loading accounts…");
+  }
+  if (loadError && data.accounts.length === 0) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4"
+    }, /*#__PURE__*/React.createElement("p", {
+      className: "text-navy-900 font-medium"
+    }, "Couldn't load your accounts"), /*#__PURE__*/React.createElement("p", {
+      className: "text-navy-700/50 text-sm max-w-sm"
+    }, loadError), /*#__PURE__*/React.createElement("button", {
+      onClick: refresh,
+      className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
+    }, "Try again"));
   }
   const selectedAccount = data.accounts.find(a => a.AccountId === selectedId);
   if (view === 'create') {
