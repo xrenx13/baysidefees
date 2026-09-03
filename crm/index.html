@@ -343,7 +343,7 @@ function computeOverallFeesOpportunity(account) {
   if (parts.length === 0) {
     // Nothing manually assessed yet — fall back to the CMS-data score.
     const fallback = computePropensityScore(account);
-    return fallback ? { label: fallback.label, source: 'auto', factors: fallback.factors } : null;
+    return fallback ? { label: fallback.label, source: 'auto', factors: fallback.factors, trigger: account.FeesTrigger || '' } : null;
   }
   let avg = parts.reduce((a, b) => a + b, 0) / parts.length;
   const access = accessScale[account.AccessRelationship];
@@ -356,7 +356,7 @@ function computeOverallFeesOpportunity(account) {
     account.RehabActivity && account.RehabActivity !== 'Unknown' ? `Rehab Activity: ${account.RehabActivity}` : null,
     account.AccessRelationship && account.AccessRelationship !== 'None' ? `Access/Relationship: ${account.AccessRelationship}${accessBoost ? ' (boosts score)' : ''}` : null
   ].filter(Boolean);
-  return { label: label, source: 'manual', factors: factors };
+  return { label: label, source: 'manual', factors: factors, trigger: account.FeesTrigger || '' };
 }
 
 // Builds a multi-line plain-text tooltip explaining why an account landed
@@ -368,8 +368,14 @@ function buildOpportunityTooltip(opportunity) {
   const heading = opportunity.source === 'auto'
     ? `${opportunity.label} — based on facility data (CMS case-mix, programs, beds, ownership). Assess Clinical Need / Volume / Rehab Activity to use your own judgment instead.`
     : `${opportunity.label} — based on your Clinical Need / Volume / Rehab Activity / Access assessment.`;
-  if (!opportunity.factors || opportunity.factors.length === 0) return heading;
-  return heading + '\n\n' + opportunity.factors.map(f => '• ' + f).join('\n');
+  let tooltip = heading;
+  if (opportunity.factors && opportunity.factors.length > 0) {
+    tooltip += '\n\n' + opportunity.factors.map(f => '• ' + f).join('\n');
+  }
+  if (opportunity.trigger) {
+    tooltip += '\n\n"' + opportunity.trigger + '"';
+  }
+  return tooltip;
 }
 
 function overallOpportunityColor(label) {
