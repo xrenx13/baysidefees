@@ -1936,6 +1936,7 @@ function AccountDetail({
   onBack,
   onRefresh,
   onRefreshAccount,
+  onLocalData,
   roleOptions,
   relationshipOptions,
   referralSourceOptions
@@ -1991,87 +1992,115 @@ function AccountDetail({
   const daysSinceLastContact = daysSince(account.LastContactDate);
   const nextActionOverdue = account.NextFollowUp && new Date(account.NextFollowUp) < new Date(new Date().toDateString());
 
-  const saveAccount = async form => {
-    setBusy(true);
-    await apiPost('updateAccount', {
-      data: {
-        ...form,
-        AccountId: account.AccountId
-      }
+  // Optimistic saves: update the on-screen CRM + browser cache immediately,
+  // then let Apps Script persist in the background. This avoids making the
+  // user stare at Google's occasionally-slow web-app delivery path for every
+  // edit. On a genuine save failure we refresh that account from the server
+  // so the UI self-corrects rather than silently lying about what was saved.
+  const persistInBackground = (promise, successMessage) => {
+    Promise.resolve(promise).then(response => {
+      if (response && response.success === false) throw new Error(response.error || 'Save failed');
+      if (successMessage) window.__crmShowToast && window.__crmShowToast(successMessage);
+    }).catch(err => {
+      console.error(err);
+      window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
+      onRefreshAccount(account.AccountId);
     });
+  };
+  const saveAccount = form => {
+    const patch = { ...form, AccountId: account.AccountId };
     setEditingAccount(false);
     setBusy(false);
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Account saved');
+    onLocalData(d => ({
+      ...d,
+      accounts: d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, ...patch } : a)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Saving…');
+    persistInBackground(apiPost('updateAccount', { data: patch }), 'Account saved');
   };
-  const updateStage = async newStage => {
-    setBusy(true);
-    const response = await apiPost('updateAccount', {
-      data: {
-        AccountId: account.AccountId,
-        RelationshipStage: newStage
-      }
-    });
-    setBusy(false);
-    if (!response.success) {
-      window.__crmShowToast && window.__crmShowToast('Failed to update stage: ' + (response.error || 'unknown error'));
-      return;
-    }
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Stage updated');
+  const updateStage = newStage => {
+    onLocalData(d => ({
+      ...d,
+      accounts: d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, RelationshipStage: newStage } : a)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Saving…');
+    persistInBackground(apiPost('updateAccount', {
+      data: { AccountId: account.AccountId, RelationshipStage: newStage }
+    }), 'Stage updated');
   };
-  const convert = async () => {
+  const convert = () => {
     const simplePracticeUrl = window.prompt("SimplePractice client URL (optional — leave blank and click OK to skip):", '');
-    setBusy(true);
-    await apiPost('convertAccount', {
+    const convertedAt = new Date().toISOString();
+    onLocalData(d => ({
+      ...d,
+      accounts: d.accounts.map(a => a.AccountId === account.AccountId ? {
+        ...a,
+        Status: 'Customer',
+        DateConverted: convertedAt,
+        ...(simplePracticeUrl ? { SimplePracticeUrl: simplePracticeUrl } : {})
+      } : a)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Saving…');
+    persistInBackground(apiPost('convertAccount', {
       accountId: account.AccountId,
       simplePracticeUrl: simplePracticeUrl || ''
-    });
-    setBusy(false);
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Converted to customer');
+    }), 'Converted to customer');
   };
-  const revertToProspect = async () => {
-    setBusy(true);
-    await apiPost('updateAccount', {
-      data: {
-        AccountId: account.AccountId,
-        Status: 'Prospect'
-      }
-    });
-    setBusy(false);
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Reverted to prospect');
+  const revertToProspect = () => {
+    onLocalData(d => ({
+      ...d,
+      accounts: d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, Status: 'Prospect' } : a)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Saving…');
+    persistInBackground(apiPost('updateAccount', {
+      data: { AccountId: account.AccountId, Status: 'Prospect' }
+    }), 'Reverted to prospect');
   };
-  const removeAccount = async () => {
+  const removeAccount = () => {
     if (!confirm(`Delete "${account.AccountName}"? This also removes its contacts and activity history from view (rows stay in the Sheet's Contacts/Activities tabs but won't be linked to anything). This can't be undone from the app.`)) return;
-    setBusy(true);
-    await apiPost('deleteAccount', {
-      accountId: account.AccountId
-    });
-    setBusy(false);
-    onRefresh();
+    onLocalData(d => ({ ...d, accounts: d.accounts.filter(a => a.AccountId !== account.AccountId) }));
     onBack();
+    window.__crmShowToast && window.__crmShowToast('Deleting…');
+    apiPost('deleteAccount', { accountId: account.AccountId }).then(response => {
+      if (response && response.success === false) throw new Error(response.error || 'Delete failed');
+      window.__crmShowToast && window.__crmShowToast('Account deleted');
+    }).catch(err => {
+      console.error(err);
+      window.__crmShowToast && window.__crmShowToast('Delete failed — refreshing');
+      onRefresh();
+    });
   };
-  const saveContact = async form => {
-    setBusy(true);
-    if (form.ContactId) {
-      await apiPost('updateContact', {
-        data: form
-      });
-    } else {
-      await apiPost('createContact', {
-        data: {
-          ...form,
-          AccountId: account.AccountId
-        }
-      });
-    }
+  const saveContact = form => {
+    const isNew = !form.ContactId;
+    const tempId = isNew ? `temp-${Date.now()}-${Math.random().toString(36).slice(2)}` : form.ContactId;
+    const localContact = { ...form, ContactId: tempId, AccountId: account.AccountId };
     setAddingContact(false);
     setEditingContactId(null);
     setBusy(false);
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Contact saved');
+    onLocalData(d => ({
+      ...d,
+      contacts: isNew
+        ? [...d.contacts, localContact]
+        : d.contacts.map(c => c.ContactId === form.ContactId ? { ...c, ...localContact } : c)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Saving…');
+    const request = isNew
+      ? apiPost('createContact', { data: { ...form, AccountId: account.AccountId } })
+      : apiPost('updateContact', { data: form });
+    Promise.resolve(request).then(response => {
+      if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
+      if (isNew && response.result && response.result.ContactId) {
+        onLocalData(d => ({
+          ...d,
+          contacts: d.contacts.map(c => c.ContactId === tempId ? { ...c, ContactId: response.result.ContactId } : c)
+        }));
+      }
+      window.__crmShowToast && window.__crmShowToast('Contact saved');
+    }).catch(err => {
+      console.error(err);
+      window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
+      onRefreshAccount(account.AccountId);
+    });
   };
   const loadSuggestedContacts = async () => {
     setSuggestionsLoading(true);
@@ -2089,59 +2118,70 @@ function AccountDetail({
     }
     setSuggestionsLoading(false);
   };
-  const addSuggestedContact = async suggestion => {
-    setAddingSuggestionEmail(suggestion.email);
-    await apiPost('createContact', {
-      data: {
-        AccountId: account.AccountId,
-        ContactName: suggestion.name || suggestion.email,
-        Email: suggestion.email,
-        PreferredContact: 'Email'
-      }
-    });
+  const addSuggestedContact = suggestion => {
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const localContact = {
+      ContactId: tempId,
+      AccountId: account.AccountId,
+      ContactName: suggestion.name || suggestion.email,
+      Email: suggestion.email,
+      PreferredContact: 'Email'
+    };
     setSuggestedContacts(prev => (prev || []).filter(s => s.email !== suggestion.email));
-    setAddingSuggestionEmail(null);
-    onRefreshAccount(account.AccountId);
-  };
-  const removeContact = async contactId => {
-    if (!confirm('Remove this contact?')) return;
-    setBusy(true);
-    await apiPost('deleteContact', {
-      contactId
+    onLocalData(d => ({ ...d, contacts: [...d.contacts, localContact] }));
+    apiPost('createContact', { data: { ...localContact, ContactId: undefined } }).then(response => {
+      if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
+      if (response.result && response.result.ContactId) {
+        onLocalData(d => ({ ...d, contacts: d.contacts.map(c => c.ContactId === tempId ? { ...c, ContactId: response.result.ContactId } : c) }));
+      }
+    }).catch(err => {
+      console.error(err);
+      onRefreshAccount(account.AccountId);
     });
-    setBusy(false);
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Contact removed');
   };
-  const saveConnection = async form => {
-    setBusy(true);
-    if (form.ConnectionId) {
-      await apiPost('updateConnection', {
-        data: form
-      });
-    } else {
-      await apiPost('createConnection', {
-        data: {
-          ...form,
-          AccountId: account.AccountId
-        }
-      });
-    }
+  const removeContact = contactId => {
+    if (!confirm('Remove this contact?')) return;
+    onLocalData(d => ({ ...d, contacts: d.contacts.filter(c => c.ContactId !== contactId) }));
+    window.__crmShowToast && window.__crmShowToast('Deleting…');
+    persistInBackground(apiPost('deleteContact', { contactId }), 'Contact removed');
+  };
+  const saveConnection = form => {
+    const isNew = !form.ConnectionId;
+    const tempId = isNew ? `temp-${Date.now()}-${Math.random().toString(36).slice(2)}` : form.ConnectionId;
+    const localConnection = { ...form, ConnectionId: tempId, AccountId: account.AccountId };
     setAddingConnection(false);
     setEditingConnectionId(null);
     setBusy(false);
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Connection saved');
-  };
-  const removeConnection = async connectionId => {
-    if (!confirm('Remove this connection?')) return;
-    setBusy(true);
-    await apiPost('deleteConnection', {
-      connectionId
+    onLocalData(d => ({
+      ...d,
+      connections: isNew
+        ? [...d.connections, localConnection]
+        : d.connections.map(c => c.ConnectionId === form.ConnectionId ? { ...c, ...localConnection } : c)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Saving…');
+    const request = isNew
+      ? apiPost('createConnection', { data: { ...form, AccountId: account.AccountId } })
+      : apiPost('updateConnection', { data: form });
+    Promise.resolve(request).then(response => {
+      if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
+      if (isNew && response.result && response.result.ConnectionId) {
+        onLocalData(d => ({
+          ...d,
+          connections: d.connections.map(c => c.ConnectionId === tempId ? { ...c, ConnectionId: response.result.ConnectionId } : c)
+        }));
+      }
+      window.__crmShowToast && window.__crmShowToast('Connection saved');
+    }).catch(err => {
+      console.error(err);
+      window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
+      onRefreshAccount(account.AccountId);
     });
-    setBusy(false);
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Connection removed');
+  };
+  const removeConnection = connectionId => {
+    if (!confirm('Remove this connection?')) return;
+    onLocalData(d => ({ ...d, connections: d.connections.filter(c => c.ConnectionId !== connectionId) }));
+    window.__crmShowToast && window.__crmShowToast('Deleting…');
+    persistInBackground(apiPost('deleteConnection', { connectionId }), 'Connection removed');
   };
   const knownEmails = [...accountContacts, ...accountConnections].map(c => c.Email).filter(Boolean);
   const knownDomains = Array.from(new Set(knownEmails.map(e => (e.split('@')[1] || '').toLowerCase()).filter(Boolean)));
@@ -2189,32 +2229,66 @@ function AccountDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account.AccountId, knownEmails.join(',')]);
 
-  const logActivity = async () => {
+  const logActivity = () => {
     if (!activityType) return;
-    setBusy(true);
-    const response = await apiPost('createActivity', {
-      data: {
-        AccountId: account.AccountId,
-        ActivityType: activityType,
-        ActivityResult: activityResult,
-        Details: activityDetails,
-        NextAction: activityNextAction,
-        NextActionDue: activityNextActionDue
-      }
-    });
-    setBusy(false);
-    if (!response.success) {
-      window.__crmShowToast && window.__crmShowToast('Failed to save: ' + (response.error || 'unknown error'));
-      return;
-    }
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const now = new Date().toISOString();
+    const newActivity = {
+      ActivityId: tempId,
+      AccountId: account.AccountId,
+      Timestamp: now,
+      ActivityType: activityType,
+      ActivityResult: activityResult,
+      Details: activityDetails,
+      NextAction: activityNextAction,
+      NextActionDue: activityNextActionDue
+    };
+    const payload = {
+      AccountId: account.AccountId,
+      ActivityType: activityType,
+      ActivityResult: activityResult,
+      Details: activityDetails,
+      NextAction: activityNextAction,
+      NextActionDue: activityNextActionDue
+    };
     setLoggingActivity(false);
     setActivityType('Call');
     setActivityResult('');
     setActivityDetails('');
     setActivityNextAction('');
     setActivityNextActionDue('');
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Activity logged');
+    setBusy(false);
+    onLocalData(d => ({
+      ...d,
+      activities: [...d.activities, newActivity],
+      accounts: d.accounts.map(a => {
+        if (a.AccountId !== account.AccountId) return a;
+        const patch = {
+          LastContactDate: now,
+          LastContactType: payload.ActivityType || '',
+          LastContactResult: payload.ActivityResult || ''
+        };
+        if (payload.NextAction) patch.NextAction = payload.NextAction;
+        if (payload.NextActionDue) patch.NextFollowUp = payload.NextActionDue;
+        if (!a.RelationshipStage || a.RelationshipStage === 'Target' || a.RelationshipStage === 'Researched') patch.RelationshipStage = 'Contacted';
+        return { ...a, ...patch };
+      })
+    }));
+    window.__crmShowToast && window.__crmShowToast('Saving…');
+    apiPost('createActivity', { data: payload }).then(response => {
+      if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
+      if (response.result && response.result.ActivityId) {
+        onLocalData(d => ({
+          ...d,
+          activities: d.activities.map(a => a.ActivityId === tempId ? { ...a, ActivityId: response.result.ActivityId } : a)
+        }));
+      }
+      window.__crmShowToast && window.__crmShowToast('Activity logged');
+    }).catch(err => {
+      console.error(err);
+      window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
+      onRefreshAccount(account.AccountId);
+    });
   };
 
   const startEditActivity = act => {
@@ -2226,42 +2300,31 @@ function AccountDetail({
     setEditActivityNextActionDue(act.NextActionDue || '');
   };
 
-  const saveActivityEdit = async () => {
+  const saveActivityEdit = () => {
     if (!editingActivityId) return;
-    setBusy(true);
-    const response = await apiPost('updateActivity', {
-      data: {
-        ActivityId: editingActivityId,
-        ActivityType: editActivityType,
-        ActivityResult: editActivityResult,
-        Details: editActivityDetails,
-        NextAction: editActivityNextAction,
-        NextActionDue: editActivityNextActionDue
-      }
-    });
-    setBusy(false);
-    if (!response.success) {
-      window.__crmShowToast && window.__crmShowToast('Failed to save: ' + (response.error || 'unknown error'));
-      return;
-    }
+    const patch = {
+      ActivityId: editingActivityId,
+      ActivityType: editActivityType,
+      ActivityResult: editActivityResult,
+      Details: editActivityDetails,
+      NextAction: editActivityNextAction,
+      NextActionDue: editActivityNextActionDue
+    };
     setEditingActivityId(null);
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Activity updated');
+    setBusy(false);
+    onLocalData(d => ({
+      ...d,
+      activities: d.activities.map(a => a.ActivityId === editingActivityId ? { ...a, ...patch } : a)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Saving…');
+    persistInBackground(apiPost('updateActivity', { data: patch }), 'Activity updated');
   };
 
-  const removeActivity = async activityId => {
+  const removeActivity = activityId => {
     if (!confirm("Delete this activity? This can't be undone.")) return;
-    setBusy(true);
-    const response = await apiPost('deleteActivity', {
-      activityId
-    });
-    setBusy(false);
-    if (!response.success) {
-      window.__crmShowToast && window.__crmShowToast('Failed to delete: ' + (response.error || 'unknown error'));
-      return;
-    }
-    onRefreshAccount(account.AccountId);
-    window.__crmShowToast && window.__crmShowToast('Activity deleted');
+    onLocalData(d => ({ ...d, activities: d.activities.filter(a => a.ActivityId !== activityId) }));
+    window.__crmShowToast && window.__crmShowToast('Deleting…');
+    persistInBackground(apiPost('deleteActivity', { activityId }), 'Activity deleted');
   };
 
   return /*#__PURE__*/React.createElement("div", {
@@ -3498,6 +3561,16 @@ function App() {
   useEffect(() => {
     localStorage.setItem('bdd_crm_region', region);
   }, [region]);
+  // One place for optimistic UI changes. Every local mutation also updates
+  // the browser cache, so a reload while a save is in flight still shows the
+  // user's latest edit instead of snapping back to stale data.
+  const updateDataLocal = useCallback(updater => {
+    setData(current => {
+      const nextData = typeof updater === 'function' ? updater(current) : updater;
+      writeCrmCache_(nextData);
+      return nextData;
+    });
+  }, []);
   const refresh = useCallback(async (options = {}) => {
     const showFullLoader = options && options.showFullLoader === true;
     // With cached data on screen, never blank the CRM while waiting on the
@@ -3636,6 +3709,7 @@ function App() {
       onBack: () => setView('list'),
       onRefresh: refresh,
       onRefreshAccount: refreshAccount,
+      onLocalData: updateDataLocal,
       roleOptions: roleOptions,
       relationshipOptions: relationshipOptions,
       referralSourceOptions: referralSourceOptions
