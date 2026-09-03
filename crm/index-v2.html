@@ -240,7 +240,7 @@ const VILLAGE_TO_TOWN = {
 const KNOWN_TOWNS = ['Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth', 'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth', 'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate', 'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth', 'New Bedford', 'Fall River', 'Dartmouth', 'Fairhaven', 'Somerset', 'Swansea', 'Westport', 'Acushnet', 'Taunton', 'Raynham', 'Middleborough', 'Middleboro', 'Easton', 'North Easton', 'Norton', 'Dighton', 'North Dighton', 'Bridgewater', 'East Bridgewater', 'West Bridgewater', 'Carver', 'Lakeville', 'Halifax', 'Rehoboth', 'Berkley', 'Dedham', 'Westwood', 'Norwood', 'Walpole', 'Foxborough', 'Mansfield', 'Needham', 'Canton', 'Stoughton', 'Wrentham', 'Sharon', 'Medfield', 'Norfolk', 'Franklin', 'Millis', 'Plainville'];
 
 // --- v2 additions: Relationship Stage / Contact Role / Activity logging ---
-const RELATIONSHIP_STAGES = ['TARGET', 'RESEARCHED', 'CONTACTED', 'CONNECTED', 'CLINICAL CHAMPION', 'REFERRAL DISCUSSION', 'FIRST FEES', 'ACTIVE REFERRER', 'DORMANT', 'NOT A FIT'];
+const RELATIONSHIP_STAGES = ['Target', 'Researched', 'Contacted', 'Connected', 'Clinical Champion', 'Referral Discussion', 'First FEES', 'Active Referrer', 'Dormant', 'Not a Fit'];
 const CONTACT_ROLE_CATEGORIES = ['Clinical Champion', 'SLP', 'Director of Rehab', 'Rehab Director', 'Administrator', 'DON', 'Medical Director', 'Admissions', 'Case Management', 'Regional/Central Decision Maker', 'Referral Coordinator', 'Other'];
 const DECISION_MAKER_ROLE_CATEGORIES = ['Administrator', 'DON', 'Regional/Central Decision Maker'];
 const ACTIVITY_TYPES = ['Call', 'Voicemail', 'Visit', 'Email', 'Text', 'Meeting', 'Referral', 'Other'];
@@ -285,16 +285,16 @@ function DistanceLinks({
 
 function stageColor(stage) {
   const map = {
-    'TARGET': 'bg-skyblue-100 text-navy-700/60',
-    'RESEARCHED': 'bg-skyblue-100 text-navy-700/70',
-    'CONTACTED': 'bg-amber-50 text-amber-700',
-    'CONNECTED': 'bg-amber-50 text-amber-700',
-    'CLINICAL CHAMPION': 'bg-teal-50 text-teal-700',
-    'REFERRAL DISCUSSION': 'bg-teal-50 text-teal-700',
-    'FIRST FEES': 'bg-teal-100 text-teal-800',
-    'ACTIVE REFERRER': 'bg-teal-500 text-white',
-    'DORMANT': 'bg-navy-100 text-navy-700/50',
-    'NOT A FIT': 'bg-navy-100 text-navy-700/40'
+    'Target': 'bg-skyblue-100 text-navy-700/60',
+    'Researched': 'bg-skyblue-100 text-navy-700/70',
+    'Contacted': 'bg-amber-50 text-amber-700',
+    'Connected': 'bg-amber-50 text-amber-700',
+    'Clinical Champion': 'bg-teal-50 text-teal-700',
+    'Referral Discussion': 'bg-teal-50 text-teal-700',
+    'First FEES': 'bg-teal-100 text-teal-800',
+    'Active Referrer': 'bg-teal-500 text-white',
+    'Dormant': 'bg-navy-100 text-navy-700/50',
+    'Not a Fit': 'bg-navy-100 text-navy-700/40'
   };
   return map[stage] || 'bg-skyblue-100 text-navy-700/60';
 }
@@ -871,7 +871,7 @@ function AccountForm({
     ReferralSource: '',
     Status: 'Prospect',
     Region: 'Cape Cod',
-    RelationshipStage: 'TARGET'
+    RelationshipStage: 'Target'
   });
   const [placesReady, setPlacesReady] = useState(false);
   const nameInputRef = useRef(null);
@@ -1001,7 +1001,7 @@ function AccountForm({
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-navy-700/70"
   }, "Relationship stage"), /*#__PURE__*/React.createElement("select", {
-    value: form.RelationshipStage || 'TARGET',
+    value: form.RelationshipStage || 'Target',
     onChange: set('RelationshipStage'),
     className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
   }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
@@ -1526,7 +1526,7 @@ function AccountSnapshot({
       }, "FEES OPPORTUNITY: ", opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)'),
       /*#__PURE__*/React.createElement("span", {
         className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
-      }, account.RelationshipStage || 'TARGET')
+      }, account.RelationshipStage || 'Target')
     ),
     /*#__PURE__*/React.createElement("div", { className: `${row} mb-1` },
       /*#__PURE__*/React.createElement(DistanceLinks, { account: account })
@@ -2402,11 +2402,11 @@ function getMarkerColor(a, colorBy) {
   }
   if (colorBy === 'stage') {
     const stageHex = {
-      'TARGET': '#a9c6dc', 'RESEARCHED': '#a9c6dc',
-      'CONTACTED': '#f59e0b', 'CONNECTED': '#f59e0b',
-      'CLINICAL CHAMPION': '#2dd4bf', 'REFERRAL DISCUSSION': '#2dd4bf',
-      'FIRST FEES': '#14b8a6', 'ACTIVE REFERRER': '#0f766e',
-      'DORMANT': '#94a3b8', 'NOT A FIT': '#cbd5e1'
+      'Target': '#a9c6dc', 'Researched': '#a9c6dc',
+      'Contacted': '#f59e0b', 'Connected': '#f59e0b',
+      'Clinical Champion': '#2dd4bf', 'Referral Discussion': '#2dd4bf',
+      'First FEES': '#14b8a6', 'Active Referrer': '#0f766e',
+      'Dormant': '#94a3b8', 'Not a Fit': '#cbd5e1'
     };
     return stageHex[a.RelationshipStage] || '#a9c6dc';
   }
@@ -3087,7 +3087,7 @@ function DashboardAccountCard({
     compact: true
   }), /*#__PURE__*/React.createElement("span", {
     className: `inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
-  }, account.RelationshipStage || 'TARGET'))), /*#__PURE__*/React.createElement("p", {
+  }, account.RelationshipStage || 'Target'))), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/50 mt-0.5"
   }, town), why && /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/70 mt-1.5"
@@ -3156,9 +3156,9 @@ function TodayDashboard({
     const days = daysSince(a.LastContactDate);
     return days === null || days > 14;
   });
-  const clinicalChampions = accounts.filter(a => a.RelationshipStage === 'CLINICAL CHAMPION');
-  const firstFees = accounts.filter(a => a.RelationshipStage === 'FIRST FEES');
-  const activeReferrers = accounts.filter(a => a.RelationshipStage === 'ACTIVE REFERRER');
+  const clinicalChampions = accounts.filter(a => a.RelationshipStage === 'Clinical Champion');
+  const firstFees = accounts.filter(a => a.RelationshipStage === 'First FEES');
+  const activeReferrers = accounts.filter(a => a.RelationshipStage === 'Active Referrer');
   const cadenceDue = accounts.filter(a => {
     const c = computeCadenceStatus(a);
     return c && c.overdue;
