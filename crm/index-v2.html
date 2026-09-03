@@ -2456,6 +2456,11 @@ function MapView({
   const markersRef = useRef([]);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'no-key'
   const [colorBy, setColorBy] = useState('status'); // 'status' | 'opportunity' | 'stage'
+  const [selectedLegendColor, setSelectedLegendColor] = useState(null); // null = show all
+
+  useEffect(() => {
+    setSelectedLegendColor(null); // legend colors mean something different per mode — reset on switch
+  }, [colorBy]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2485,7 +2490,9 @@ function MapView({
       const sharedInfoWindow = new google.maps.InfoWindow();
       const geocoder = new google.maps.Geocoder();
       const bounds = new google.maps.LatLngBounds();
-      const accountsWithAddress = accounts.filter(a => a.Address);
+      const accountsWithAddress = accounts
+        .filter(a => a.Address)
+        .filter(a => selectedLegendColor === null || getMarkerColor(a, colorBy) === selectedLegendColor);
       for (const a of accountsWithAddress) {
         if (cancelled) return;
         let lat = parseFloat(a.Latitude);
@@ -2564,7 +2571,7 @@ function MapView({
       markersRef.current.forEach(m => m.setMap(null));
       markersRef.current = [];
     };
-  }, [accounts, colorBy]);
+  }, [accounts, colorBy, selectedLegendColor]);
   if (status === 'no-key') {
     return /*#__PURE__*/React.createElement("div", {
       className: "bg-white rounded-xl border border-skyblue-100 p-10 text-center text-navy-700/50 text-sm"
@@ -2588,11 +2595,12 @@ function MapView({
     className: "w-full h-[500px]"
   }), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60 flex-wrap"
-  }, legend.map(item => /*#__PURE__*/React.createElement("span", {
+  }, legend.map(item => /*#__PURE__*/React.createElement("button", {
     key: item.label,
-    className: "flex items-center gap-1.5"
+    onClick: () => setSelectedLegendColor(prev => prev === item.color ? null : item.color),
+    className: `flex items-center gap-1.5 px-1.5 py-0.5 rounded transition ${selectedLegendColor === item.color ? 'bg-navy-900 text-white' : selectedLegendColor === null ? 'hover:bg-skyblue-100/50' : 'opacity-40 hover:opacity-100'}`
   }, /*#__PURE__*/React.createElement("span", {
-    className: "w-2.5 h-2.5 rounded-full border border-navy-900/20",
+    className: "w-2.5 h-2.5 rounded-full border border-navy-900/20 shrink-0",
     style: { backgroundColor: item.color }
   }), item.label))));
 }
