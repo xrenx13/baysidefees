@@ -2156,6 +2156,12 @@ function AccountDetail({
   const [meetingsLoading, setMeetingsLoading] = useState(false);
   const [meetingsError, setMeetingsError] = useState('');
   const [loggingActivity, setLoggingActivity] = useState(false);
+  useEffect(() => {
+    if (sessionStorage.getItem('bdd_crm_open_activity_form') === 'true') {
+      sessionStorage.removeItem('bdd_crm_open_activity_form');
+      setLoggingActivity(true);
+    }
+  }, []);
   const [activityType, setActivityType] = useState('Call');
   const [activityResult, setActivityResult] = useState('');
   const [activityDetails, setActivityDetails] = useState('');
@@ -3586,24 +3592,45 @@ function DashboardAccountCard({
   contacts,
   connections,
   why,
-  onSelect
+  onSelect,
+  onLog,
+  onComplete,
+  onReschedule
 }) {
   const propensity = computeOverallFeesOpportunity(account);
   const town = getTown(account.Address);
   const people = [...contacts.filter(c => c.AccountId === account.AccountId), ...connections.filter(c => c.AccountId === account.AccountId)];
-  const bestPhone = (people.find(p => p.Phone) || {}).Phone || account.Phone;
-  const bestEmail = (people.find(p => p.Email) || {}).Email;
+  const primaryPerson = people.find(p => p.Phone) || people[0] || null;
+  const bestPhone = primaryPerson?.Phone || account.Phone;
+  const bestEmail = primaryPerson?.Email;
+  const personName = primaryPerson ? (primaryPerson.Name || primaryPerson.ContactName || primaryPerson.FullName || '') : '';
+  const personRole = primaryPerson ? (primaryPerson.Role || primaryPerson.Relationship || '') : '';
+  const followUpState = followUpStatus(account.NextFollowUp);
+  let overdueText = '';
+  if (followUpState === 'overdue' && account.NextFollowUp) {
+    const clean = String(account.NextFollowUp).slice(0, 10);
+    const [y, m, d] = clean.split('-').map(Number);
+    const [ty, tm, td] = todayDateString().split('-').map(Number);
+    const daysLate = Math.max(1, Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(y, m - 1, d)) / 86400000));
+    overdueText = `${daysLate} day${daysLate === 1 ? '' : 's'} overdue`;
+  }
+  const lastContactText = account.LastContactDate
+    ? `Last contact: ${formatFollowUpDate(account.LastContactDate)}${account.LastContactType ? ` · ${account.LastContactType}` : ''}`
+    : 'Last contact: Never';
+
   return /*#__PURE__*/React.createElement("div", {
     className: `p-4 border-b border-skyblue-100 last:border-b-0 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between gap-3"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => onSelect(account),
-    className: "text-left w-full"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between gap-2 flex-wrap"
+    className: "text-left flex-1 min-w-0"
   }, /*#__PURE__*/React.createElement("p", {
-    className: "font-medium text-navy-900"
-  }, account.AccountName), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1.5"
+    className: "font-semibold text-navy-900"
+  }, account.AccountName), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/55 mt-0.5"
+  }, [account.Region, town].filter(Boolean).join(" · "))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1.5 flex-wrap justify-end"
   }, propensity && /*#__PURE__*/React.createElement(PropensityBadge, {
     account: account,
     compact: true
@@ -3611,31 +3638,61 @@ function DashboardAccountCard({
     className: `inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
   }, account.RelationshipStage || 'Target'), account.NextFollowUp && /*#__PURE__*/React.createElement(FollowUpBadge, {
     nextFollowUp: account.NextFollowUp
-  }))), account.Region && /*#__PURE__*/React.createElement("p", {
-    className: "text-xs font-medium text-navy-700/65 mt-1"
-  }, account.Region), /*#__PURE__*/React.createElement("p", {
-    className: "text-xs text-navy-700/50 mt-0.5"
-  }, town), why && /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-navy-700/70 mt-1.5"
-  }, why), account.NextAction && /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-teal-600 mt-1"
-  }, account.NextAction, account.NextFollowUp && ` — due ${formatShortDate(new Date(account.NextFollowUp))}`)), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-3 mt-3 pt-3 border-t border-skyblue-100 text-xs"
+  }))), overdueText && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs font-semibold text-red-600 mt-2"
+  }, overdueText), account.NextAction && /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 bg-skyblue-50/70 rounded-lg px-3 py-2"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-[10px] uppercase tracking-wide font-semibold text-navy-700/45 mb-0.5"
+  }, "Next action"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-900"
+  }, account.NextAction)), !account.NextAction && why && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/65 mt-2"
+  }, why), primaryPerson && /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 flex items-center justify-between gap-3 flex-wrap"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-medium text-navy-900"
+  }, personName || 'Contact'), personRole && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/50"
+  }, personRole)), bestPhone && /*#__PURE__*/React.createElement("a", {
+    href: `tel:${bestPhone.replace(/[^\d+]/g, '')}`,
+    className: "text-sm text-teal-600 font-semibold",
+    onClick: e => e.stopPropagation()
+  }, bestPhone)), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/45 mt-2"
+  }, lastContactText), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 mt-3 pt-3 border-t border-skyblue-100 flex-wrap"
   }, bestPhone && /*#__PURE__*/React.createElement("a", {
     href: `tel:${bestPhone.replace(/[^\d+]/g, '')}`,
-    className: "text-teal-600 hover:underline font-medium"
+    className: "px-3 py-1.5 rounded-lg bg-teal-50 text-teal-700 text-xs font-semibold"
   }, "Call"), bestEmail && /*#__PURE__*/React.createElement("a", {
     href: `mailto:${bestEmail}`,
-    className: "text-teal-600 hover:underline font-medium"
-  }, "Email"), account.Address && /*#__PURE__*/React.createElement("a", {
-    href: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(account.Address)}`,
-    target: "_blank",
-    rel: "noopener noreferrer",
-    className: "text-teal-600 hover:underline font-medium"
-  }, "Directions"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => onSelect(account),
-    className: "text-teal-600 hover:underline font-medium"
-  }, "Log activity")));
+    className: "px-3 py-1.5 rounded-lg bg-teal-50 text-teal-700 text-xs font-semibold"
+  }, "Email"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => onLog(account),
+    className: "px-3 py-1.5 rounded-lg bg-navy-900 text-white text-xs font-semibold"
+  }, "Log"), account.NextFollowUp && /*#__PURE__*/React.createElement("button", {
+    onClick: () => onComplete(account),
+    className: "px-3 py-1.5 rounded-lg bg-skyblue-100 text-navy-900 text-xs font-semibold"
+  }, "Done"), account.NextFollowUp && /*#__PURE__*/React.createElement("select", {
+    defaultValue: "",
+    onChange: e => {
+      if (e.target.value) onReschedule(account, e.target.value);
+      e.target.value = "";
+    },
+    className: "px-2 py-1.5 rounded-lg border border-skyblue-200 bg-white text-navy-700 text-xs font-semibold"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "",
+    disabled: true
+  }, "Reschedule"), /*#__PURE__*/React.createElement("option", {
+    value: "1"
+  }, "Tomorrow"), /*#__PURE__*/React.createElement("option", {
+    value: "3"
+  }, "+3 days"), /*#__PURE__*/React.createElement("option", {
+    value: "7"
+  }, "Next week"), /*#__PURE__*/React.createElement("option", {
+    value: "pick"
+  }, "Pick date"))));
 }
 
 function DashboardSection({
@@ -3644,27 +3701,35 @@ function DashboardSection({
   contacts,
   connections,
   onSelect,
+  onLog,
+  onComplete,
+  onReschedule,
   whyFn,
-  headerAction
+  headerAction,
+  tone = 'navy'
 }) {
   if (accounts.length === 0) return null;
+  const toneClass = tone === 'red' ? 'bg-red-50 border-red-100' : tone === 'amber' ? 'bg-amber-50 border-amber-100' : tone === 'teal' ? 'bg-teal-50 border-teal-100' : 'bg-skyblue-50 border-skyblue-100';
   return /*#__PURE__*/React.createElement("div", {
-    className: "mb-6"
+    className: "mb-7"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between gap-3 mb-2 flex-wrap"
+    className: `flex items-center justify-between gap-3 mb-2 px-3 py-2 rounded-lg border ${toneClass} flex-wrap`
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "text-xs font-semibold uppercase tracking-wide text-navy-700/50"
+    className: "text-xs font-bold uppercase tracking-wide text-navy-900"
   }, title, " ", /*#__PURE__*/React.createElement("span", {
-    className: "opacity-60"
+    className: "opacity-50"
   }, "(", accounts.length, ")")), headerAction), /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden"
+    className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden shadow-sm"
   }, accounts.map(a => /*#__PURE__*/React.createElement(DashboardAccountCard, {
     key: a.AccountId,
     account: a,
     contacts: contacts,
     connections: connections,
     why: whyFn(a),
-    onSelect: onSelect
+    onSelect: onSelect,
+    onLog: onLog,
+    onComplete: onComplete,
+    onReschedule: onReschedule
   }))));
 }
 
@@ -3673,10 +3738,36 @@ function TodayDashboard({
   contacts,
   connections,
   onSelect,
+  onLog,
+  onUpdateAccount,
   onBack
 }) {
   const [todaySortBy, setTodaySortBy] = useState('Region');
   const today = todayDateString();
+
+  const datePlusDays = days => {
+    const [y, m, d] = today.split('-').map(Number);
+    const dt = new Date(y, m - 1, d + days);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  };
+  const updateFollowUp = (account, nextDate, successMessage) => {
+    onUpdateAccount(account, { NextFollowUp: nextDate }, successMessage);
+  };
+  const completeFollowUp = account => updateFollowUp(account, '', 'Follow-up completed');
+  const rescheduleFollowUp = (account, choice) => {
+    if (choice === 'pick') {
+      const picked = window.prompt('New follow-up date (YYYY-MM-DD):', account.NextFollowUp ? String(account.NextFollowUp).slice(0, 10) : today);
+      if (!picked) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(picked)) {
+        window.__crmShowToast && window.__crmShowToast('Use YYYY-MM-DD');
+        return;
+      }
+      updateFollowUp(account, picked, 'Follow-up rescheduled');
+      return;
+    }
+    updateFollowUp(account, datePlusDays(Number(choice)), 'Follow-up rescheduled');
+  };
+
   const { overdue, dueToday, dueWeek, tier1 } = useMemo(() => {
     const getDaysAway = a => {
       if (!a.NextFollowUp) return null;
@@ -3692,7 +3783,6 @@ function TodayDashboard({
         return daysAway !== null && daysAway < 0;
       }),
       dueToday: accounts.filter(a => getDaysAway(a) === 0),
-      // Rolling week: tomorrow through seven days from today.
       dueWeek: accounts.filter(a => {
         const daysAway = getDaysAway(a);
         return daysAway !== null && daysAway >= 1 && daysAway <= 7;
@@ -3706,36 +3796,25 @@ function TodayDashboard({
     };
   }, [accounts, today]);
 
-  // Due-date sections stay chronological regardless of the Tier 1 sort.
   const sortByFollowUpDate = list => [...list].sort((a, b) => {
     const dateA = String(a.NextFollowUp || '').slice(0, 10);
     const dateB = String(b.NextFollowUp || '').slice(0, 10);
     return dateA.localeCompare(dateB) || (a.AccountName || '').localeCompare(b.AccountName || '');
   });
-
-  // This user-selected sort applies only to Tier 1 / High Opportunity.
   const sortTier1Accounts = list => {
     const sorted = [...list];
-    if (todaySortBy === 'Region') {
-      sorted.sort((a, b) => {
-        const byRegion = (a.Region || '').localeCompare(b.Region || '');
-        return byRegion || (a.AccountName || '').localeCompare(b.AccountName || '');
-      });
-    } else if (todaySortBy === 'Status') {
-      sorted.sort((a, b) => {
-        const byStatus = (a.Status || '').localeCompare(b.Status || '');
-        return byStatus || (a.AccountName || '').localeCompare(b.AccountName || '');
-      });
-    } else if (todaySortBy === 'Stage') {
-      sorted.sort((a, b) => {
-        const rankA = RELATIONSHIP_STAGES.indexOf(a.RelationshipStage);
-        const rankB = RELATIONSHIP_STAGES.indexOf(b.RelationshipStage);
-        const safeA = rankA === -1 ? 999 : rankA;
-        const safeB = rankB === -1 ? 999 : rankB;
-        return safeA - safeB || (a.AccountName || '').localeCompare(b.AccountName || '');
-      });
-    }
+    if (todaySortBy === 'Region') sorted.sort((a, b) => (a.Region || '').localeCompare(b.Region || '') || (a.AccountName || '').localeCompare(b.AccountName || ''));
+    else if (todaySortBy === 'Status') sorted.sort((a, b) => (a.Status || '').localeCompare(b.Status || '') || (a.AccountName || '').localeCompare(b.AccountName || ''));
+    else if (todaySortBy === 'Stage') sorted.sort((a, b) => {
+      const ra = RELATIONSHIP_STAGES.indexOf(a.RelationshipStage), rb = RELATIONSHIP_STAGES.indexOf(b.RelationshipStage);
+      return (ra === -1 ? 999 : ra) - (rb === -1 ? 999 : rb) || (a.AccountName || '').localeCompare(b.AccountName || '');
+    });
     return sorted;
+  };
+
+  const common = {
+    contacts, connections, onSelect, onLog,
+    onComplete: completeFollowUp, onReschedule: rescheduleFollowUp
   };
 
   return /*#__PURE__*/React.createElement("div", {
@@ -3744,40 +3823,30 @@ function TodayDashboard({
     onClick: onBack,
     className: "text-teal-600 hover:text-teal-700 text-sm mb-4"
   }, "← Back to accounts"), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-end justify-between gap-4 mb-6 flex-wrap"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
-    className: "font-display text-2xl text-navy-900 mb-1"
+    className: "mb-7 rounded-2xl bg-navy-900 text-white px-5 py-5 shadow-sm"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xs uppercase tracking-[0.18em] text-white/55 font-semibold mb-1"
+  }, "Daily work queue"), /*#__PURE__*/React.createElement("h1", {
+    className: "font-display text-3xl mb-1"
   }, "Today"), /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-navy-700/50"
-  }, "Who needs attention now and what should come next."))), /*#__PURE__*/React.createElement(DashboardSection, {
-    title: "Overdue",
+    className: "text-sm text-white/65"
+  }, "Call, log, complete, and reschedule without leaving this page.")), /*#__PURE__*/React.createElement(DashboardSection, {
+    ...common, title: "Overdue", tone: "red",
     accounts: sortByFollowUpDate(overdue),
-    contacts: contacts,
-    connections: connections,
-    onSelect: onSelect,
     whyFn: a => 'Next action is overdue'
   }), /*#__PURE__*/React.createElement(DashboardSection, {
-    title: "Due Today",
+    ...common, title: "Due Today", tone: "amber",
     accounts: sortByFollowUpDate(dueToday),
-    contacts: contacts,
-    connections: connections,
-    onSelect: onSelect,
     whyFn: a => a.NextAction ? `Due today: ${a.NextAction}` : 'Follow-up is due today'
   }), /*#__PURE__*/React.createElement(DashboardSection, {
-    title: "Due this Week",
+    ...common, title: "Due this Week", tone: "teal",
     accounts: sortByFollowUpDate(dueWeek),
-    contacts: contacts,
-    connections: connections,
-    onSelect: onSelect,
     whyFn: a => a.NextAction ? `${a.NextAction} — due ${formatFollowUpDate(a.NextFollowUp)}` : `Follow-up due ${formatFollowUpDate(a.NextFollowUp)}`
   }), /*#__PURE__*/React.createElement(DashboardSection, {
-    title: "Tier 1 / High Opportunity",
+    ...common, title: "Tier 1 / High Opportunity", tone: "navy",
     accounts: sortTier1Accounts(tier1),
-    contacts: contacts,
-    connections: connections,
-    onSelect: onSelect,
     headerAction: /*#__PURE__*/React.createElement("label", {
-      className: "text-xs text-navy-700/50 flex items-center gap-1.5 normal-case tracking-normal font-normal"
+      className: "text-xs text-navy-700/60 flex items-center gap-1.5 normal-case tracking-normal font-normal"
     }, "Sort by", /*#__PURE__*/React.createElement("select", {
       value: todaySortBy,
       onChange: e => setTodaySortBy(e.target.value),
@@ -4050,6 +4119,30 @@ function App() {
       onSelect: a => {
         setSelectedId(a.AccountId);
         setView('detail');
+      },
+      onLog: a => {
+        setSelectedId(a.AccountId);
+        sessionStorage.setItem('bdd_crm_open_activity_form', 'true');
+        setView('detail');
+      },
+      onUpdateAccount: (account, patch, successMessage) => {
+        const previous = { ...account };
+        updateDataLocal(d => ({
+          ...d,
+          accounts: d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, ...patch } : a)
+        }));
+        window.__crmShowToast && window.__crmShowToast('Saving…');
+        apiPost('updateAccount', { data: { AccountId: account.AccountId, ...patch } }).then(response => {
+          if (!response || response.success === false) throw new Error(response?.error || 'Update failed');
+          window.__crmShowToast && window.__crmShowToast(successMessage);
+        }).catch(err => {
+          console.error('Today quick update failed:', err);
+          updateDataLocal(d => ({
+            ...d,
+            accounts: d.accounts.map(a => a.AccountId === account.AccountId ? previous : a)
+          }));
+          window.__crmShowToast && window.__crmShowToast('Save failed — restored');
+        });
       },
       onBack: () => setView('list')
     }), /*#__PURE__*/React.createElement(Toast, null));
