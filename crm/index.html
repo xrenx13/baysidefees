@@ -3594,7 +3594,7 @@ function DashboardAccountCard({
   const bestPhone = (people.find(p => p.Phone) || {}).Phone || account.Phone;
   const bestEmail = (people.find(p => p.Email) || {}).Email;
   return /*#__PURE__*/React.createElement("div", {
-    className: `bg-white rounded-xl border border-skyblue-100 p-4 mb-3 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+    className: `p-4 border-b border-skyblue-100 last:border-b-0 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => onSelect(account),
     className: "text-left w-full"
@@ -3656,14 +3656,16 @@ function DashboardSection({
     className: "text-xs font-semibold uppercase tracking-wide text-navy-700/50"
   }, title, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
-  }, "(", accounts.length, ")")), headerAction), accounts.map(a => /*#__PURE__*/React.createElement(DashboardAccountCard, {
+  }, "(", accounts.length, ")")), headerAction), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden"
+  }, accounts.map(a => /*#__PURE__*/React.createElement(DashboardAccountCard, {
     key: a.AccountId,
     account: a,
     contacts: contacts,
     connections: connections,
     why: whyFn(a),
     onSelect: onSelect
-  })));
+  }))));
 }
 
 function TodayDashboard({
