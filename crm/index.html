@@ -3053,7 +3053,6 @@ function NewMapView({ accounts, contacts, connections, onSelect }) {
 
   return /*#__PURE__*/React.createElement('div', { className: 'space-y-3' },
     /*#__PURE__*/React.createElement('div', { className: 'bg-white rounded-xl border border-skyblue-100 p-3 flex items-center gap-3 flex-wrap' },
-      /*#__PURE__*/React.createElement('span', { className: 'text-xs font-semibold uppercase tracking-wide text-navy-700/40' }, 'New Map filters'),
       /*#__PURE__*/React.createElement('select', { value: stageFilter, onChange: e => setStageFilter(e.target.value), className: 'border border-skyblue-300 rounded-lg px-2 py-1.5 text-sm bg-white' },
         /*#__PURE__*/React.createElement('option', null, 'All stages'),
         RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement('option', { key: s, value: s }, s))
@@ -3658,7 +3657,7 @@ function AccountList({
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, mode)))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 mb-5 flex-wrap xl:flex-nowrap"
+    className: "flex items-center gap-3 mb-5 flex-nowrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0"
   }, ['All', 'Prospect', 'Customer', 'Follow-up'].map(s => /*#__PURE__*/React.createElement("button", {
@@ -3668,7 +3667,7 @@ function AccountList({
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 flex-wrap xl:flex-nowrap xl:ml-3"
+    className: "flex items-center gap-3 flex-nowrap ml-3 shrink-0"
   }, /*#__PURE__*/React.createElement("label", {
     className: "text-xs text-navy-700/50 flex items-center gap-1.5"
   }, "Sort by", /*#__PURE__*/React.createElement("select", {
@@ -3684,7 +3683,7 @@ function AccountList({
   }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
     key: c
   }, c))))), /*#__PURE__*/React.createElement("div", {
-    className: "relative w-full xl:w-[340px] shrink-0 xl:ml-auto"
+    className: "relative flex-1 min-w-[220px] max-w-[340px] ml-auto"
   }, /*#__PURE__*/React.createElement("input", {
     value: query,
     onChange: e => setQuery(e.target.value),
