@@ -3411,9 +3411,9 @@ function PipelineView({
       title: targetExpanded ? "Collapse Targets" : "Expand Targets",
       className: `w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${pipelineHeaderColor(stage)}`
     }, /*#__PURE__*/React.createElement("div", {
-      className: `flex items-center ${isCollapsedTarget ? 'flex-col gap-1' : 'justify-between gap-2'}`
+      className: "flex items-center justify-between gap-1"
     }, /*#__PURE__*/React.createElement("span", {
-      className: isCollapsedTarget ? "[writing-mode:vertical-rl] rotate-180 tracking-wide" : ""
+      className: isCollapsedTarget ? "text-[10px] tracking-tight" : ""
     }, "Target"), /*#__PURE__*/React.createElement("span", {
       className: "opacity-80"
     }, columns[stage].length)), !isCollapsedTarget && /*#__PURE__*/React.createElement("div", {
