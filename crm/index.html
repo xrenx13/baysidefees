@@ -3842,7 +3842,7 @@ function AccountList({
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, r))), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[350px] justify-center"
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[420px] justify-center"
   }, ['list', 'table', 'pipeline', 'map', 'newmap'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
@@ -3858,7 +3858,7 @@ function AccountList({
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
-    className: "relative w-full lg:w-[350px] lg:ml-auto shrink-0"
+    className: "relative w-full lg:w-[420px] lg:ml-auto shrink-0"
   }, /*#__PURE__*/React.createElement("input", {
     value: query,
     onChange: e => setQuery(e.target.value),
