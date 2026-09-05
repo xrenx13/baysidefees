@@ -3490,7 +3490,7 @@ function AccountList({
     return list;
   }, [filtered, sortBy]);
   return /*#__PURE__*/React.createElement("div", {
-    className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
+    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-6 flex-wrap gap-3"
   }, /*#__PURE__*/React.createElement("div", {
@@ -3549,23 +3549,23 @@ function AccountList({
       className: rowClass
     }, inner);
   }))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between gap-4 mb-6 flex-wrap"
+    className: "flex items-center justify-between gap-4 mb-4 flex-wrap"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit"
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit flex-wrap"
   }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'].map(r => /*#__PURE__*/React.createElement("button", {
     key: r,
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, r))), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1"
+  }, r)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 mb-5 flex-wrap lg:flex-nowrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0"
   }, ['list', 'table', 'map', 'pipeline'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, mode)))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-4 mb-5 flex-wrap"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 flex-wrap"
+  }, mode))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0"
   }, ['All', 'Prospect', 'Customer', 'Follow-up'].map(s => /*#__PURE__*/React.createElement("button", {
     key: s,
     onClick: () => setFilter(s),
@@ -3573,7 +3573,7 @@ function AccountList({
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
-    className: "relative flex-1 min-w-[180px]"
+    className: "relative flex-1 min-w-[220px]"
   }, /*#__PURE__*/React.createElement("input", {
     value: query,
     onChange: e => setQuery(e.target.value),
