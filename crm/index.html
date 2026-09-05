@@ -3051,6 +3051,253 @@ function MapView({
   }), item.label))));
 }
 
+
+
+// ---------------------------------------------------------------------
+// New Map view — a working map-planning view kept separate from the
+// original Map view while it is being refined. Pins are always colored by
+// relationship stage, urgency is shown with a red outline, and the sidebar
+// follows the currently visible map area.
+// ---------------------------------------------------------------------
+const NEW_MAP_STAGE_HEX = {
+  'Target': '#081e3d',
+  'Contacted': '#fde68a',
+  'Connected': '#fbbf24',
+  'Referral Discussion': '#ccfbf1',
+  'Active Referrer': '#14b8a6',
+  'Not a fit': '#cbd5e1'
+};
+
+function newMapStageHex(stage) {
+  return NEW_MAP_STAGE_HEX[stage || 'Target'] || NEW_MAP_STAGE_HEX.Target;
+}
+
+function newMapFollowUpBucket(value) {
+  if (!value) return 'none';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return 'none';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  d.setHours(0, 0, 0, 0);
+  const diff = Math.round((d - today) / 86400000);
+  if (diff < 0) return 'overdue';
+  if (diff <= 7) return 'soon';
+  return 'later';
+}
+
+function NewMapView({ accounts, contacts, connections, onSelect }) {
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
+  const markerByIdRef = useRef({});
+  const [status, setStatus] = useState('loading');
+  const [stageFilter, setStageFilter] = useState('All');
+  const [propensityFilter, setPropensityFilter] = useState('All');
+  const [followUpFilter, setFollowUpFilter] = useState('All');
+  const [visibleIds, setVisibleIds] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+
+  const filteredAccounts = useMemo(() => accounts.filter(a => {
+    const stage = a.RelationshipStage || 'Target';
+    if (stageFilter !== 'All' && stage !== stageFilter) return false;
+    if (propensityFilter !== 'All') {
+      const p = computeOverallFeesOpportunity(a);
+      const label = p ? p.label : 'Unassessed';
+      if (propensityFilter === 'High' && !(label === 'High' || label === 'Very High')) return false;
+      if (propensityFilter === 'Medium' && label !== 'Medium') return false;
+      if (propensityFilter === 'Low' && !(label === 'Low' || label === 'Unassessed')) return false;
+    }
+    if (followUpFilter !== 'All') {
+      const bucket = newMapFollowUpBucket(a.NextFollowUp);
+      if (followUpFilter === 'Overdue' && bucket !== 'overdue') return false;
+      if (followUpFilter === 'Due soon' && bucket !== 'soon') return false;
+      if (followUpFilter === 'No follow-up' && bucket !== 'none') return false;
+    }
+    return true;
+  }), [accounts, stageFilter, propensityFilter, followUpFilter]);
+
+  const sortedVisible = useMemo(() => {
+    const source = visibleIds.length ? filteredAccounts.filter(a => visibleIds.includes(a.AccountId)) : filteredAccounts;
+    const rank = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+    return [...source].sort((a, b) => {
+      const au = newMapFollowUpBucket(a.NextFollowUp) === 'overdue' ? 1 : 0;
+      const bu = newMapFollowUpBucket(b.NextFollowUp) === 'overdue' ? 1 : 0;
+      if (au !== bu) return bu - au;
+      const ap = computeOverallFeesOpportunity(a);
+      const bp = computeOverallFeesOpportunity(b);
+      return (rank[bp?.label] || 0) - (rank[ap?.label] || 0) || String(a.AccountName || '').localeCompare(String(b.AccountName || ''));
+    });
+  }, [filteredAccounts, visibleIds]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatus('loading');
+    loadGoogleMaps(GOOGLE_MAPS_API_KEY).then(async google => {
+      if (cancelled || !mapRef.current) return;
+      const map = new google.maps.Map(mapRef.current, {
+        center: { lat: 41.7, lng: -70.3 },
+        zoom: 9,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+      });
+      mapInstanceRef.current = map;
+      window.__crmSelectAccountNewMap = accountId => {
+        const account = accounts.find(a => a.AccountId === accountId);
+        if (account) onSelect(account);
+      };
+      const sharedInfoWindow = new google.maps.InfoWindow();
+      const geocoder = new google.maps.Geocoder();
+      const bounds = new google.maps.LatLngBounds();
+      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current = [];
+      markerByIdRef.current = {};
+
+      for (const a of filteredAccounts.filter(a => a.Address)) {
+        if (cancelled) return;
+        let lat = parseFloat(a.Latitude);
+        let lng = parseFloat(a.Longitude);
+        if (!lat || !lng) {
+          try {
+            const result = await new Promise((resolve, reject) => {
+              geocoder.geocode({ address: a.Address }, (results, geoStatus) => {
+                if (geoStatus === 'OK' && results && results[0]) resolve(results[0]); else reject(geoStatus);
+              });
+            });
+            lat = result.geometry.location.lat();
+            lng = result.geometry.location.lng();
+            await apiPost('updateAccount', { data: { AccountId: a.AccountId, Latitude: lat, Longitude: lng } });
+          } catch (err) {
+            continue;
+          }
+        }
+        const propensity = computeOverallFeesOpportunity(a);
+        const highPriority = propensity && (propensity.label === 'High' || propensity.label === 'Very High');
+        const followBucket = newMapFollowUpBucket(a.NextFollowUp);
+        const urgent = followBucket === 'overdue';
+        const position = { lat, lng };
+        const marker = new google.maps.Marker({
+          position,
+          map,
+          title: a.AccountName,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: highPriority ? 10 : 8,
+            fillColor: newMapStageHex(a.RelationshipStage),
+            fillOpacity: 1,
+            strokeColor: urgent ? '#dc2626' : '#ffffff',
+            strokeWeight: urgent ? 3 : 2
+          }
+        });
+        const stage = a.RelationshipStage || 'Target';
+        const followText = !a.NextFollowUp ? 'No follow-up set' : `${followBucket === 'overdue' ? 'Overdue' : followBucket === 'soon' ? 'Due soon' : 'Follow-up'}: ${escapeHtml_(formatShortDate(new Date(a.NextFollowUp)))}`;
+        const lastContact = a.LastContactDate ? formatShortDate(new Date(a.LastContactDate)) : 'Never contacted';
+        const content = `<div style="font-family:'Source Sans 3',sans-serif;padding:3px;min-width:230px;max-width:300px;">
+          <div style="color:#081e3d;font-weight:700;font-size:15px;line-height:1.3;">${escapeHtml_(a.AccountName)}</div>
+          <div style="font-size:12px;color:#5a6b80;margin-top:2px;">${escapeHtml_(getTown(a.Address))} · ${escapeHtml_(stage)}</div>
+          <div style="font-size:12px;color:#334;margin-top:6px;">${propensity ? `FEES fit: <strong>${escapeHtml_(propensity.label)}</strong>` : 'FEES fit: not assessed'}${a.BedCount ? ` · ${escapeHtml_(a.BedCount)} beds` : ''}</div>
+          ${a.NextAction ? `<div style="font-size:12px;color:#334;margin-top:5px;"><strong>Next:</strong> ${escapeHtml_(a.NextAction)}</div>` : ''}
+          <div style="font-size:12px;color:${urgent ? '#dc2626' : '#556'};margin-top:3px;">${followText}</div>
+          <div style="font-size:12px;color:#556;margin-top:2px;">Last contact: ${escapeHtml_(lastContact)}</div>
+          <button onclick="window.__crmSelectAccountNewMap('${escapeHtml_(a.AccountId)}')" style="margin-top:8px;background:#0f766e;color:white;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">Open account</button>
+        </div>`;
+        marker.addListener('click', () => {
+          setSelectedId(a.AccountId);
+          sharedInfoWindow.setContent(content);
+          sharedInfoWindow.open(map, marker);
+        });
+        marker.__accountId = a.AccountId;
+        markersRef.current.push(marker);
+        markerByIdRef.current[a.AccountId] = marker;
+        bounds.extend(position);
+      }
+
+      const refreshVisible = () => {
+        const b = map.getBounds();
+        if (!b) return;
+        setVisibleIds(markersRef.current.filter(m => b.contains(m.getPosition())).map(m => m.__accountId));
+      };
+      map.addListener('idle', refreshVisible);
+      if (!bounds.isEmpty()) map.fitBounds(bounds);
+      if (!cancelled) setStatus('ready');
+    }).catch(() => setStatus('no-key'));
+    return () => {
+      cancelled = true;
+      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current = [];
+      markerByIdRef.current = {};
+    };
+  }, [filteredAccounts]);
+
+  const focusAccount = a => {
+    const marker = markerByIdRef.current[a.AccountId];
+    const map = mapInstanceRef.current;
+    if (!marker || !map) return;
+    setSelectedId(a.AccountId);
+    map.panTo(marker.getPosition());
+    if (map.getZoom() < 12) map.setZoom(12);
+    google.maps.event.trigger(marker, 'click');
+  };
+
+  if (status === 'no-key') return /*#__PURE__*/React.createElement('div', { className: 'bg-white rounded-xl border border-skyblue-100 p-10 text-center text-navy-700/50 text-sm' }, 'New Map needs a Google Maps API key configured in GOOGLE_MAPS_API_KEY.');
+
+  return /*#__PURE__*/React.createElement('div', { className: 'space-y-3' },
+    /*#__PURE__*/React.createElement('div', { className: 'bg-white rounded-xl border border-skyblue-100 p-3 flex items-center gap-3 flex-wrap' },
+      /*#__PURE__*/React.createElement('span', { className: 'text-xs font-semibold uppercase tracking-wide text-navy-700/40' }, 'New Map filters'),
+      /*#__PURE__*/React.createElement('select', { value: stageFilter, onChange: e => setStageFilter(e.target.value), className: 'border border-skyblue-300 rounded-lg px-2 py-1.5 text-sm bg-white' },
+        /*#__PURE__*/React.createElement('option', null, 'All stages'),
+        RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement('option', { key: s, value: s }, s))
+      ),
+      /*#__PURE__*/React.createElement('select', { value: propensityFilter, onChange: e => setPropensityFilter(e.target.value), className: 'border border-skyblue-300 rounded-lg px-2 py-1.5 text-sm bg-white' },
+        ['All', 'High', 'Medium', 'Low'].map(v => /*#__PURE__*/React.createElement('option', { key: v, value: v }, v === 'All' ? 'All propensity' : `${v} propensity`))
+      ),
+      /*#__PURE__*/React.createElement('select', { value: followUpFilter, onChange: e => setFollowUpFilter(e.target.value), className: 'border border-skyblue-300 rounded-lg px-2 py-1.5 text-sm bg-white' },
+        ['All', 'Overdue', 'Due soon', 'No follow-up'].map(v => /*#__PURE__*/React.createElement('option', { key: v, value: v }, v === 'All' ? 'All follow-up' : v))
+      ),
+      /*#__PURE__*/React.createElement('span', { className: 'text-xs text-navy-700/40 ml-auto' }, `${filteredAccounts.length} account${filteredAccounts.length === 1 ? '' : 's'}`)
+    ),
+    /*#__PURE__*/React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-3' },
+      /*#__PURE__*/React.createElement('div', { className: 'bg-white rounded-xl border border-skyblue-100 overflow-hidden' },
+        status === 'loading' && /*#__PURE__*/React.createElement('p', { className: 'text-center text-navy-700/40 text-sm py-2' }, 'Plotting accounts…'),
+        /*#__PURE__*/React.createElement('div', { ref: mapRef, className: 'w-full h-[560px]' }),
+        /*#__PURE__*/React.createElement('div', { className: 'px-4 py-2.5 border-t border-skyblue-100 flex items-center gap-3 flex-wrap text-xs text-navy-700/60' },
+          RELATIONSHIP_STAGES.map(stage => /*#__PURE__*/React.createElement('span', { key: stage, className: 'inline-flex items-center gap-1.5' },
+            /*#__PURE__*/React.createElement('span', { className: 'w-2.5 h-2.5 rounded-full border border-navy-900/20', style: { backgroundColor: newMapStageHex(stage) } }), stage
+          )),
+          /*#__PURE__*/React.createElement('span', { className: 'inline-flex items-center gap-1.5 ml-auto' }, /*#__PURE__*/React.createElement('span', { className: 'w-3 h-3 rounded-full border-[2px] border-red-600' }), 'Overdue'),
+          /*#__PURE__*/React.createElement('span', { className: 'inline-flex items-center gap-1.5' }, /*#__PURE__*/React.createElement('span', { className: 'w-3.5 h-3.5 rounded-full bg-navy-900/20 border border-navy-900/20' }), 'Larger = high propensity')
+        )
+      ),
+      /*#__PURE__*/React.createElement('div', { className: 'bg-white rounded-xl border border-skyblue-100 overflow-hidden flex flex-col h-[620px]' },
+        /*#__PURE__*/React.createElement('div', { className: 'px-4 py-3 border-b border-skyblue-100' },
+          /*#__PURE__*/React.createElement('p', { className: 'font-medium text-navy-900' }, 'Visible accounts'),
+          /*#__PURE__*/React.createElement('p', { className: 'text-xs text-navy-700/40' }, `${sortedVisible.length} in the current map area · overdue first`)
+        ),
+        /*#__PURE__*/React.createElement('div', { className: 'overflow-y-auto flex-1 divide-y divide-skyblue-100' },
+          sortedVisible.length === 0 ? /*#__PURE__*/React.createElement('div', { className: 'p-5 text-sm text-navy-700/40' }, 'No matching accounts are visible in this area.') :
+          sortedVisible.map(a => {
+            const p = computeOverallFeesOpportunity(a);
+            const bucket = newMapFollowUpBucket(a.NextFollowUp);
+            return /*#__PURE__*/React.createElement('button', { key: a.AccountId, onClick: () => focusAccount(a), className: `w-full text-left px-4 py-3 hover:bg-skyblue-100/30 transition ${selectedId === a.AccountId ? 'bg-skyblue-100/40' : ''}` },
+              /*#__PURE__*/React.createElement('div', { className: 'flex items-start gap-2' },
+                /*#__PURE__*/React.createElement('span', { className: 'w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 border border-navy-900/20', style: { backgroundColor: newMapStageHex(a.RelationshipStage) } }),
+                /*#__PURE__*/React.createElement('div', { className: 'min-w-0 flex-1' },
+                  /*#__PURE__*/React.createElement('p', { className: 'text-sm font-medium text-navy-900 truncate' }, a.AccountName),
+                  /*#__PURE__*/React.createElement('p', { className: 'text-xs text-navy-700/50 mt-0.5' }, `${p ? p.label : 'Unassessed'} propensity${a.BedCount ? ` · ${a.BedCount} beds` : ''}`),
+                  a.NextAction && /*#__PURE__*/React.createElement('p', { className: 'text-xs text-navy-700/70 mt-1 truncate' }, a.NextAction),
+                  /*#__PURE__*/React.createElement('p', { className: `text-xs mt-1 ${bucket === 'overdue' ? 'text-red-600 font-medium' : bucket === 'soon' ? 'text-amber-600' : 'text-navy-700/40'}` },
+                    !a.NextFollowUp ? 'No follow-up' : `${bucket === 'overdue' ? 'Overdue' : bucket === 'soon' ? 'Due soon' : 'Follow-up'} · ${formatShortDate(new Date(a.NextFollowUp))}`
+                  )
+                )
+              )
+            );
+          })
+        )
+      )
+    )
+  );
+}
+
 // ---------------------------------------------------------------------
 // Single account row — shared between the town-grouped view (sort: Name)
 // and the flat sorted view (sort: Propensity / CMS Rating).
@@ -3595,12 +3842,12 @@ function AccountList({
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, r))), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[260px] justify-center"
-  }, ['list', 'table', 'pipeline', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[350px] justify-center"
+  }, ['list', 'table', 'pipeline', 'map', 'newmap'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, mode)))), /*#__PURE__*/React.createElement("div", {
+  }, mode === 'newmap' ? 'New Map' : mode)))), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-4 mb-5 flex-wrap lg:flex-nowrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0"
@@ -3611,7 +3858,7 @@ function AccountList({
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
-    className: "relative w-full lg:w-[260px] lg:ml-auto shrink-0"
+    className: "relative w-full lg:w-[350px] lg:ml-auto shrink-0"
   }, /*#__PURE__*/React.createElement("input", {
     value: query,
     onChange: e => setQuery(e.target.value),
@@ -3637,7 +3884,12 @@ function AccountList({
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
   }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(MapView, {
+  }, c))))), viewMode === 'newmap' ? /*#__PURE__*/React.createElement(NewMapView, {
+    accounts: filtered,
+    contacts: contacts,
+    connections: connections,
+    onSelect: onSelect
+  }) : viewMode === 'map' ? /*#__PURE__*/React.createElement(MapView, {
     accounts: filtered,
     contacts: contacts,
     connections: connections,
