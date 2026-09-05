@@ -292,9 +292,9 @@ function DistanceLinks({
 
 function stageColor(stage) {
   const map = {
-    'Target': 'bg-skyblue-100 text-navy-700/60',
-    'Contacted': 'bg-amber-50 text-amber-700',
-    'Connected': 'bg-amber-50 text-amber-700',
+    'Target': 'bg-navy-900 text-white',
+    'Contacted': 'bg-amber-100 text-amber-800',
+    'Connected': 'bg-amber-300 text-amber-900',
     'Referral Discussion': 'bg-teal-50 text-teal-700',
     'Active Referrer': 'bg-teal-500 text-white',
     'Not a fit': 'bg-navy-100 text-navy-700/40'
@@ -3334,8 +3334,6 @@ function PipelineView({
     }, /*#__PURE__*/React.createElement(PropensityBadge, {
       account: a,
       compact: true
-    }), /*#__PURE__*/React.createElement(StatusPill, {
-      status: a.Status
     })), stale && /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-amber-600"
     }, days === null ? 'Never contacted' : `${days} day${days === 1 ? '' : 's'} since contact`));
