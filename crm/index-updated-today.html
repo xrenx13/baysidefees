@@ -1993,7 +1993,8 @@ function ActivityLogCard({
   onDelete
 }) {
   return /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+    id: "activity-log-card",
+    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6 scroll-mt-6"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-4"
   }, /*#__PURE__*/React.createElement("h2", {
@@ -2171,6 +2172,17 @@ function AccountDetail({
     if (sessionStorage.getItem('bdd_crm_open_activity_form') === 'true') {
       sessionStorage.removeItem('bdd_crm_open_activity_form');
       setLoggingActivity(true);
+      // Today -> Log should land directly on this account's Activity Log card,
+      // rather than at the top of the account detail page. Wait for the
+      // expanded activity form to render before scrolling it into view.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.getElementById('activity-log-card')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        });
+      });
     }
   }, []);
   const [activityType, setActivityType] = useState('Call');
@@ -2488,8 +2500,10 @@ function AccountDetail({
           LastContactType: payload.ActivityType || '',
           LastContactResult: payload.ActivityResult || ''
         };
-        if (payload.NextAction) patch.NextAction = payload.NextAction;
-        if (payload.NextActionDue) patch.NextFollowUp = payload.NextActionDue;
+        // Logging a new activity completes the prior next step. If a new next
+        // action/follow-up is entered, replace it; otherwise clear the old one.
+        patch.NextAction = payload.NextAction || '';
+        patch.NextFollowUp = payload.NextActionDue || '';
         if (!a.RelationshipStage || a.RelationshipStage === 'Target' || a.RelationshipStage === 'Researched') patch.RelationshipStage = 'Contacted';
         return { ...a, ...patch };
       })
@@ -3767,7 +3781,6 @@ function DashboardAccountCard({
   why,
   onSelect,
   onLog,
-  onComplete,
   onReschedule
 }) {
   const propensity = computeOverallFeesOpportunity(account);
@@ -3861,10 +3874,7 @@ function DashboardAccountCard({
   }, "Email"), /*#__PURE__*/React.createElement("button", {
     onClick: () => onLog(account),
     className: "px-3 py-1.5 rounded-lg bg-navy-900 text-white text-xs font-semibold"
-  }, "Log"), account.NextFollowUp && /*#__PURE__*/React.createElement("button", {
-    onClick: () => onComplete(account),
-    className: "px-3 py-1.5 rounded-lg bg-skyblue-100 text-navy-900 text-xs font-semibold"
-  }, "Done"), account.NextFollowUp && /*#__PURE__*/React.createElement("select", {
+  }, "Log"), account.NextFollowUp && /*#__PURE__*/React.createElement("select", {
     defaultValue: "",
     onChange: e => {
       if (e.target.value) onReschedule(account, e.target.value);
@@ -3892,7 +3902,6 @@ function DashboardSection({
   connections,
   onSelect,
   onLog,
-  onComplete,
   onReschedule,
   whyFn,
   headerAction,
@@ -3918,7 +3927,6 @@ function DashboardSection({
     why: whyFn(a),
     onSelect: onSelect,
     onLog: onLog,
-    onComplete: onComplete,
     onReschedule: onReschedule
   }))));
 }
@@ -3943,7 +3951,6 @@ function TodayDashboard({
   const updateFollowUp = (account, nextDate, successMessage) => {
     onUpdateAccount(account, { NextFollowUp: nextDate }, successMessage);
   };
-  const completeFollowUp = account => updateFollowUp(account, '', 'Follow-up completed');
   const rescheduleFollowUp = (account, choice) => {
     if (choice === 'pick') {
       const picked = window.prompt('New follow-up date (YYYY-MM-DD):', account.NextFollowUp ? String(account.NextFollowUp).slice(0, 10) : today);
@@ -4004,7 +4011,7 @@ function TodayDashboard({
 
   const common = {
     contacts, connections, onSelect, onLog,
-    onComplete: completeFollowUp, onReschedule: rescheduleFollowUp
+    onReschedule: rescheduleFollowUp
   };
 
   return /*#__PURE__*/React.createElement("div", {
