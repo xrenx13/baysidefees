@@ -299,7 +299,8 @@ function stageColor(stage) {
     'Active Referrer': 'bg-teal-500 text-white',
     'Not a fit': 'bg-navy-100 text-navy-700/40'
   };
-  return map[stage] || 'bg-skyblue-100 text-navy-700/60';
+  const normalizedStage = String(stage || 'Target').trim();
+  return map[normalizedStage] || 'bg-skyblue-100 text-navy-700/60';
 }
 
 // --- Phase 2: FEES Business Development ---
@@ -1359,10 +1360,11 @@ function AccountForm({
   }, "Relationship stage"), /*#__PURE__*/React.createElement("select", {
     value: form.RelationshipStage || 'Target',
     onChange: set('RelationshipStage'),
-    className: "mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 bg-white"
+    className: `mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 font-semibold ${stageColor(form.RelationshipStage)}`
   }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
     key: s,
-    value: s
+    value: s,
+    className: stageColor(s)
   }, s)))), form.Status === 'Customer' && /*#__PURE__*/React.createElement("label", {
     className: "text-sm sm:col-span-2"
   }, /*#__PURE__*/React.createElement("span", {
@@ -1893,7 +1895,8 @@ function AccountSnapshot({
         }
       }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
         key: s,
-        value: s
+        value: s,
+        className: stageColor(s)
       }, s)))
     ),
     /*#__PURE__*/React.createElement("div", { className: `${row} mb-1` },
@@ -3583,15 +3586,15 @@ function AccountList({
     key: r,
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, r)))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-4 mb-5 flex-wrap lg:flex-nowrap"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0"
-  }, ['list', 'table', 'map', 'pipeline'].map(mode => /*#__PURE__*/React.createElement("button", {
+  }, r))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
+  }, ['list', 'table', 'pipeline', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, mode))), /*#__PURE__*/React.createElement("div", {
+  }, mode)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 mb-5 flex-wrap lg:flex-nowrap"
+  }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0"
   }, ['All', 'Prospect', 'Customer', 'Follow-up'].map(s => /*#__PURE__*/React.createElement("button", {
     key: s,
