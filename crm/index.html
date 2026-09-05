@@ -3624,7 +3624,7 @@ function AccountList({
   }, "+ New account"), /*#__PURE__*/React.createElement("details", {
     className: "relative"
   }, /*#__PURE__*/React.createElement("summary", {
-    className: "list-none cursor-pointer w-8 h-8 rounded-full bg-navy-900 text-white text-xs font-semibold flex items-center justify-center shrink-0 hover:bg-navy-700 transition focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2",
+    className: "list-none cursor-pointer w-8 h-8 rounded-full bg-navy-900 text-white text-xs font-semibold flex items-center justify-center shrink-0 hover:bg-navy-700 transition focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 [&::-webkit-details-marker]:hidden [&::marker]:content-none",
     title: sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User',
     "aria-label": "Open profile menu"
   }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))), /*#__PURE__*/React.createElement("div", {
