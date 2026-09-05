@@ -3259,14 +3259,14 @@ function NewMapView({ accounts, contacts, connections, onSelect }) {
     /*#__PURE__*/React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-3' },
       /*#__PURE__*/React.createElement('div', { className: 'bg-white rounded-xl border border-skyblue-100 overflow-hidden' },
         status === 'loading' && /*#__PURE__*/React.createElement('p', { className: 'text-center text-navy-700/40 text-sm py-2' }, 'Plotting accounts…'),
-        /*#__PURE__*/React.createElement('div', { ref: mapRef, className: 'w-full h-[560px]' }),
-        /*#__PURE__*/React.createElement('div', { className: 'px-4 py-2.5 border-t border-skyblue-100 flex items-center gap-3 flex-wrap text-xs text-navy-700/60' },
+        /*#__PURE__*/React.createElement('div', { className: 'px-4 py-2.5 border-b border-skyblue-100 flex items-center gap-3 flex-wrap text-xs text-navy-700/60' },
           RELATIONSHIP_STAGES.map(stage => /*#__PURE__*/React.createElement('span', { key: stage, className: 'inline-flex items-center gap-1.5' },
             /*#__PURE__*/React.createElement('span', { className: 'w-2.5 h-2.5 rounded-full border border-navy-900/20', style: { backgroundColor: newMapStageHex(stage) } }), stage
           )),
           /*#__PURE__*/React.createElement('span', { className: 'inline-flex items-center gap-1.5 ml-auto' }, /*#__PURE__*/React.createElement('span', { className: 'w-3 h-3 rounded-full border-[2px] border-red-600' }), 'Overdue'),
           /*#__PURE__*/React.createElement('span', { className: 'inline-flex items-center gap-1.5' }, /*#__PURE__*/React.createElement('span', { className: 'w-3.5 h-3.5 rounded-full bg-navy-900/20 border border-navy-900/20' }), 'Larger = high propensity')
-        )
+        ),
+        /*#__PURE__*/React.createElement('div', { ref: mapRef, className: 'w-full h-[560px]' })
       ),
       /*#__PURE__*/React.createElement('div', { className: 'bg-white rounded-xl border border-skyblue-100 overflow-hidden flex flex-col h-[620px]' },
         /*#__PURE__*/React.createElement('div', { className: 'px-4 py-3 border-b border-skyblue-100' },
@@ -3842,12 +3842,12 @@ function AccountList({
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, r))), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[420px] justify-center"
-  }, ['list', 'table', 'pipeline', 'map', 'newmap'].map(mode => /*#__PURE__*/React.createElement("button", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[340px] justify-center"
+  }, ['list', 'table', 'pipeline', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, mode === 'newmap' ? 'New Map' : mode)))), /*#__PURE__*/React.createElement("div", {
+  }, mode)))), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-4 mb-5 flex-wrap lg:flex-nowrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0"
@@ -3858,7 +3858,7 @@ function AccountList({
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
-    className: "relative w-full lg:w-[420px] lg:ml-auto shrink-0"
+    className: "relative w-full lg:w-[340px] lg:ml-auto shrink-0"
   }, /*#__PURE__*/React.createElement("input", {
     value: query,
     onChange: e => setQuery(e.target.value),
@@ -3884,12 +3884,7 @@ function AccountList({
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
   }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c))))), viewMode === 'newmap' ? /*#__PURE__*/React.createElement(NewMapView, {
-    accounts: filtered,
-    contacts: contacts,
-    connections: connections,
-    onSelect: onSelect
-  }) : viewMode === 'map' ? /*#__PURE__*/React.createElement(MapView, {
+  }, c))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
     accounts: filtered,
     contacts: contacts,
     connections: connections,
