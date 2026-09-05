@@ -2863,6 +2863,196 @@ function AccountDetail({
 // fly via Google's client-side Geocoder and cached back to the Sheet
 // (Latitude/Longitude) so repeat visits don't re-geocode every address.
 // ---------------------------------------------------------------------
+function getMarkerColor(a, colorBy) {
+  if (colorBy === 'opportunity') {
+    const o = computeOverallFeesOpportunity(a);
+    if (!o) return '#94a3b8';
+    return o.label === 'Very High' || o.label === 'High' ? '#0f766e' : o.label === 'Medium' ? '#f59e0b' : '#94a3b8';
+  }
+  if (colorBy === 'stage') {
+    const stageHex = {
+      'Target': '#a9c6dc',
+      'Contacted': '#f59e0b', 'Connected': '#f59e0b',
+      'Referral Discussion': '#2dd4bf',
+      'Active Referrer': '#0f766e',
+      'Not a fit': '#cbd5e1'
+    };
+    return stageHex[a.RelationshipStage] || '#a9c6dc';
+  }
+  return a.Status === 'Customer' ? '#0f766e' : '#a9c6dc'; // default: status
+}
+
+const MAP_LEGENDS = {
+  status: [{ color: '#0f766e', label: 'Customer' }, { color: '#a9c6dc', label: 'Prospect' }],
+  opportunity: [{ color: '#0f766e', label: 'High / Very High' }, { color: '#f59e0b', label: 'Medium' }, { color: '#94a3b8', label: 'Low / not assessed' }],
+  stage: [{ color: '#0f766e', label: 'Active Referrer' }, { color: '#2dd4bf', label: 'Referral Discussion' }, { color: '#f59e0b', label: 'Contacted / Connected' }, { color: '#a9c6dc', label: 'Target' }, { color: '#cbd5e1', label: 'Not a fit' }]
+};
+
+function MapView({
+  accounts,
+  contacts,
+  connections,
+  onSelect
+}) {
+  const mapRef = useRef(null);
+  const markersRef = useRef([]);
+  const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'no-key'
+  const [colorBy, setColorBy] = useState('status'); // 'status' | 'opportunity' | 'stage'
+  const [selectedLegendColor, setSelectedLegendColor] = useState(null); // null = show all
+
+  useEffect(() => {
+    setSelectedLegendColor(null); // legend colors mean something different per mode — reset on switch
+  }, [colorBy]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadGoogleMaps(GOOGLE_MAPS_API_KEY).then(async google => {
+      if (cancelled || !mapRef.current) return;
+      const map = new google.maps.Map(mapRef.current, {
+        center: {
+          lat: 41.7,
+          lng: -70.3
+        },
+        // roughly Cape Cod
+        zoom: 10,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+      });
+
+      // Let info-window "View account" buttons (raw HTML, outside React)
+      // call back into the app.
+      window.__crmSelectAccount = accountId => {
+        const account = accounts.find(a => a.AccountId === accountId);
+        if (account) onSelect(account);
+      };
+
+      // One shared InfoWindow reused for every marker — opening it on a new
+      // marker automatically closes whatever was previously showing.
+      const sharedInfoWindow = new google.maps.InfoWindow();
+      const geocoder = new google.maps.Geocoder();
+      const bounds = new google.maps.LatLngBounds();
+      const accountsWithAddress = accounts
+        .filter(a => a.Address)
+        .filter(a => selectedLegendColor === null || getMarkerColor(a, colorBy) === selectedLegendColor);
+      for (const a of accountsWithAddress) {
+        if (cancelled) return;
+        let lat = parseFloat(a.Latitude);
+        let lng = parseFloat(a.Longitude);
+        if (!lat || !lng) {
+          try {
+            const result = await new Promise((resolve, reject) => {
+              geocoder.geocode({
+                address: a.Address
+              }, (results, geoStatus) => {
+                if (geoStatus === 'OK' && results && results[0]) resolve(results[0]);else reject(geoStatus);
+              });
+            });
+            lat = result.geometry.location.lat();
+            lng = result.geometry.location.lng();
+            // Cache so this address never needs re-geocoding. Awaited
+            // deliberately -- if several accounts need geocoding at once
+            // (e.g. right after importing a new region), firing these
+            // without waiting would send multiple overlapping writes to
+            // the backend in quick succession.
+            await apiPost('updateAccount', {
+              data: {
+                AccountId: a.AccountId,
+                Latitude: lat,
+                Longitude: lng
+              }
+            });
+          } catch (err) {
+            continue; // couldn't geocode this address — skip its pin
+          }
+        }
+        if (cancelled) return;
+        const position = {
+          lat,
+          lng
+        };
+        const marker = new google.maps.Marker({
+          position,
+          map,
+          title: a.AccountName,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: getMarkerColor(a, colorBy),
+            fillOpacity: 1,
+            strokeColor: '#081e3d',
+            strokeWeight: 1.5
+          }
+        });
+        const propensity = computeOverallFeesOpportunity(a);
+        const town = getTown(a.Address);
+        const distanceLinksHtml = DISTANCE_FIELDS
+          .filter(d => a[d.field])
+          .map(d => `<a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(d.address)}&destination=${encodeURIComponent(a.Address)}" target="_blank" rel="noopener noreferrer" style="color:#0f766e;">${escapeHtml_(String(a[d.field]))} mi from ${escapeHtml_(d.label)}</a>`)
+          .join('<span style="color:#ccc;">·</span>');
+        const content = `<div style="font-family:'Source Sans 3',sans-serif;padding:2px;min-width:170px;">
+            <div style="color:#081e3d;font-weight:700 !important;font-size:15px;line-height:1.3;">${escapeHtml_(a.AccountName)}</div>
+            ${town && town !== 'Unknown' ? `<div style="font-size:12px;color:#5a6b80;margin-top:1px;">${escapeHtml_(town)}</div>` : ''}
+            <div style="margin-top:4px;">
+              <span style="font-size:12px;color:${a.Status === 'Customer' ? '#0f766e' : '#334'};">${escapeHtml_(a.Status)}</span>
+              ${propensity ? `<span style="font-size:11px;color:#b45309;margin-left:6px;" title="${escapeHtml_(buildOpportunityTooltip(propensity))}">· FEES fit: ${escapeHtml_(propensity.label)}</span>` : ''}
+            </div>
+            ${a.Rating ? `<div style="font-size:12px;color:#b45309;margin-top:2px;">★ ${escapeHtml_(a.Rating)}</div>` : ''}
+            ${a.BedCount ? `<div style="font-size:12px;color:#556;">${escapeHtml_(a.BedCount)} beds</div>` : ''}
+            ${distanceLinksHtml ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;">${distanceLinksHtml}</div>` : ''}
+            <button onclick="window.__crmSelectAccount('${escapeHtml_(a.AccountId)}')" style="margin-top:6px;background:#0f766e;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">View account</button>
+          </div>`;
+        marker.addListener('click', () => {
+          sharedInfoWindow.setContent(content);
+          sharedInfoWindow.open(map, marker);
+        });
+        markersRef.current.push(marker);
+        bounds.extend(position);
+      }
+      if (!bounds.isEmpty()) map.fitBounds(bounds);
+      if (!cancelled) setStatus('ready');
+    }).catch(() => setStatus('no-key'));
+    return () => {
+      cancelled = true;
+      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current = [];
+    };
+  }, [accounts, colorBy, selectedLegendColor]);
+  if (status === 'no-key') {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "bg-white rounded-xl border border-skyblue-100 p-10 text-center text-navy-700/50 text-sm"
+    }, "Map view needs a Google Maps API key configured in GOOGLE_MAPS_API_KEY — see the README.");
+  }
+  const legend = MAP_LEGENDS[colorBy];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 px-4 py-2 border-b border-skyblue-100"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-navy-700/50"
+  }, "Color by:"), ['status', 'opportunity', 'stage'].map(mode => /*#__PURE__*/React.createElement("button", {
+    key: mode,
+    onClick: () => setColorBy(mode),
+    className: `px-2.5 py-1 rounded-md text-xs font-medium capitalize transition ${colorBy === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
+  }, mode === 'opportunity' ? 'FEES Opportunity' : mode))), status === 'loading' && /*#__PURE__*/React.createElement("p", {
+    className: "text-center text-navy-700/40 text-sm py-3"
+  }, "Plotting accounts…"), /*#__PURE__*/React.createElement("div", {
+    ref: mapRef,
+    className: "w-full h-[500px]"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 px-4 py-2.5 border-t border-skyblue-100 text-xs text-navy-700/60 flex-wrap"
+  }, legend.map(item => /*#__PURE__*/React.createElement("button", {
+    key: item.label,
+    onClick: () => setSelectedLegendColor(prev => prev === item.color ? null : item.color),
+    className: `flex items-center gap-1.5 px-1.5 py-0.5 rounded transition ${selectedLegendColor === item.color ? 'bg-navy-900 text-white' : selectedLegendColor === null ? 'hover:bg-skyblue-100/50' : 'opacity-40 hover:opacity-100'}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2.5 h-2.5 rounded-full border border-navy-900/20 shrink-0",
+    style: { backgroundColor: item.color }
+  }), item.label))));
+}
+
+
+
 // ---------------------------------------------------------------------
 // New Map view — a working map-planning view kept separate from the
 // original Map view while it is being refined. Pins are always colored by
@@ -3053,6 +3243,7 @@ function NewMapView({ accounts, contacts, connections, onSelect }) {
 
   return /*#__PURE__*/React.createElement('div', { className: 'space-y-3' },
     /*#__PURE__*/React.createElement('div', { className: 'bg-white rounded-xl border border-skyblue-100 p-3 flex items-center gap-3 flex-wrap' },
+      /*#__PURE__*/React.createElement('span', { className: 'text-xs font-semibold uppercase tracking-wide text-navy-700/40' }, 'New Map filters'),
       /*#__PURE__*/React.createElement('select', { value: stageFilter, onChange: e => setStageFilter(e.target.value), className: 'border border-skyblue-300 rounded-lg px-2 py-1.5 text-sm bg-white' },
         /*#__PURE__*/React.createElement('option', null, 'All stages'),
         RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement('option', { key: s, value: s }, s))
@@ -3421,6 +3612,7 @@ function AccountList({
 }) {
   const [filter, setFilter] = useState('All');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'table' | 'map' | 'pipeline'
+  const [profileOpen, setProfileOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
   const [chainFilter, setChainFilter] = useState('All Chains');
@@ -3608,12 +3800,42 @@ function AccountList({
     onClick: onCreate,
     className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
   }, "+ New account"), /*#__PURE__*/React.createElement("div", {
-    className: "w-8 h-8 rounded-full bg-navy-900 text-white text-xs font-semibold flex items-center justify-center shrink-0",
-    title: sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || ''
-  }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))), /*#__PURE__*/React.createElement("button", {
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setProfileOpen(open => !open),
+    className: "w-8 h-8 rounded-full bg-navy-900 text-white text-xs font-semibold flex items-center justify-center shrink-0 hover:ring-2 hover:ring-teal-500/30 transition",
+    title: "Profile",
+    "aria-label": "Open profile menu"
+  }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))), profileOpen && /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-0 top-11 z-50 w-72 bg-white rounded-xl border border-skyblue-100 shadow-xl overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "px-4 py-3 border-b border-skyblue-100"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-[11px] uppercase tracking-wide text-navy-700/40 font-semibold"
+  }, "Name"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-semibold text-navy-900 mt-0.5"
+  }, sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User')), /*#__PURE__*/React.createElement("div", {
+    className: "p-2"
+  }, [
+    ['BDD Website', 'http://baysidefees.com'],
+    ['One Pager', 'http://baysidefees.com/why_bdd.pdf'],
+    ['BDD Email', 'http://gmail.com'],
+    ['BDD Calendar', 'http://calendar.google.com'],
+    ['SimplePractice', 'https://secure.simplepractice.com/']
+  ].map(([label, href]) => /*#__PURE__*/React.createElement("a", {
+    key: label,
+    href: href,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "flex items-center justify-between px-3 py-2 rounded-lg text-sm text-navy-700 hover:bg-skyblue-100/50 transition"
+  }, /*#__PURE__*/React.createElement("span", null, label), /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/30"
+  }, "↗"))), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-skyblue-100 mt-1 pt-1"
+  }, /*#__PURE__*/React.createElement("button", {
     onClick: onSignOut,
-    className: "text-navy-700/40 hover:text-navy-700/70 text-sm px-2 py-2 transition"
-  }, "Sign out"))), topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-navy-700 hover:bg-skyblue-100/50 transition"
+  }, "Sign out"))))))), topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100 p-5 mb-6"
   }, /*#__PURE__*/React.createElement("h2", {
     className: "font-display text-base text-navy-900 mb-3"
@@ -3643,7 +3865,7 @@ function AccountList({
       className: rowClass
     }, inner);
   }))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-4 mb-4 flex-wrap"
+    className: "flex items-center justify-between gap-4 mb-4 flex-wrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit flex-wrap"
   }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'].map(r => /*#__PURE__*/React.createElement("button", {
@@ -3651,13 +3873,13 @@ function AccountList({
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, r))), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[340px] justify-center"
   }, ['list', 'table', 'pipeline', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, mode)))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 mb-5 flex-nowrap"
+    className: "flex items-center gap-4 mb-5 flex-wrap lg:flex-nowrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0"
   }, ['All', 'Prospect', 'Customer', 'Follow-up'].map(s => /*#__PURE__*/React.createElement("button", {
@@ -3667,7 +3889,18 @@ function AccountList({
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 flex-nowrap ml-3 shrink-0"
+    className: "relative w-full lg:w-[340px] lg:ml-auto shrink-0"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: query,
+    onChange: e => setQuery(e.target.value),
+    placeholder: "Search accounts, contacts, activities...",
+    className: "border border-skyblue-300 rounded-lg pl-3 pr-8 py-1.5 text-sm w-full"
+  }), query && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setQuery(''),
+    "aria-label": "Clear search",
+    className: "absolute right-2 top-1/2 -translate-y-1/2 text-navy-700/40 hover:text-navy-700/70 text-lg leading-none px-1"
+  }, "\u00D7"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 mb-5 flex-wrap"
   }, /*#__PURE__*/React.createElement("label", {
     className: "text-xs text-navy-700/50 flex items-center gap-1.5"
   }, "Sort by", /*#__PURE__*/React.createElement("select", {
@@ -3682,18 +3915,7 @@ function AccountList({
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
   }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c))))), /*#__PURE__*/React.createElement("div", {
-    className: "relative flex-1 min-w-[220px] max-w-[340px] ml-auto"
-  }, /*#__PURE__*/React.createElement("input", {
-    value: query,
-    onChange: e => setQuery(e.target.value),
-    placeholder: "Search accounts, contacts, activities...",
-    className: "border border-skyblue-300 rounded-lg pl-3 pr-8 py-1.5 text-sm w-full"
-  }), query && /*#__PURE__*/React.createElement("button", {
-    onClick: () => setQuery(''),
-    "aria-label": "Clear search",
-    className: "absolute right-2 top-1/2 -translate-y-1/2 text-navy-700/40 hover:text-navy-700/70 text-lg leading-none px-1"
-  }, "\u00D7"))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
+  }, c))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
     accounts: filtered,
     contacts: contacts,
     connections: connections,
