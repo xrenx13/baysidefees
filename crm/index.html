@@ -3280,13 +3280,42 @@ function PipelineView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts]);
 
+  const pipelineHeaderColor = stage => {
+    const colors = {
+      'Target': 'bg-navy-900 text-white',
+      'Contacted': 'bg-amber-100 text-amber-800',
+      'Connected': 'bg-amber-300 text-amber-900',
+      'Referral Discussion': 'bg-teal-50 text-teal-700',
+      'Active Referrer': 'bg-teal-500 text-white'
+    };
+    return colors[stage] || stageColor(stage);
+  };
+
   return /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-3 overflow-x-auto pb-2"
+    className: "overflow-x-auto pb-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "min-w-[960px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-3 mb-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "col-span-4 flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-navy-700/60 whitespace-nowrap"
+  }, "Prospects"), /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-navy-900/25 flex-1"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "col-span-1 flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-700 whitespace-nowrap"
+  }, "Customers"), /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-teal-500/40 flex-1"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-3"
   }, stages.map(stage => /*#__PURE__*/React.createElement("div", {
     key: stage,
-    className: "flex-1 min-w-[180px]"
+    className: "min-w-[180px]"
   }, /*#__PURE__*/React.createElement("div", {
-    className: `px-3 py-2 rounded-t-lg text-xs font-semibold ${stageColor(stage)}`
+    className: `px-3 py-2 rounded-t-lg text-xs font-semibold ${pipelineHeaderColor(stage)}`
   }, stage, " · ", columns[stage].length), /*#__PURE__*/React.createElement("div", {
     className: "bg-skyblue-100/30 rounded-b-lg p-2 min-h-[120px] space-y-2"
   }, columns[stage].length === 0 ? /*#__PURE__*/React.createElement("p", {
@@ -3310,7 +3339,7 @@ function PipelineView({
     })), stale && /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-amber-600"
     }, days === null ? 'Never contacted' : `${days} day${days === 1 ? '' : 's'} since contact`));
-  })))));
+  })))))));
 }
 
 function AccountList({
