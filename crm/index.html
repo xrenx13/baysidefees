@@ -3334,7 +3334,7 @@ function PipelineView({
 }) {
   const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a fit');
   const [targetExpanded, setTargetExpanded] = useState(false);
-  const pipelineGridStyle = { gridTemplateColumns: targetExpanded ? 'repeat(5, minmax(180px, 1fr))' : '92px repeat(4, minmax(190px, 1fr))' };
+  const pipelineGridStyle = { gridTemplateColumns: targetExpanded ? 'repeat(5, minmax(0, 1fr))' : '72px repeat(4, minmax(0, 1fr))' };
   const columns = useMemo(() => {
     const byStage = {};
     stages.forEach(s => byStage[s] = []);
@@ -3371,17 +3371,23 @@ function PipelineView({
   }).length;
 
   return /*#__PURE__*/React.createElement("div", {
-    className: "overflow-x-auto pb-2"
+    className: "overflow-x-auto lg:overflow-visible pb-2"
   }, /*#__PURE__*/React.createElement("div", {
-    className: targetExpanded ? "min-w-[960px]" : "min-w-[900px]"
+    className: targetExpanded ? "min-w-[960px] lg:min-w-0" : "min-w-[860px] lg:min-w-0"
   }, /*#__PURE__*/React.createElement("div", {
     className: "grid gap-3 mb-2",
     style: pipelineGridStyle
-  }, /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-navy-700/60 whitespace-nowrap"
+  }, "Prospect"), /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-navy-900/25 flex-1"
+  })), /*#__PURE__*/React.createElement("div", {
     className: "col-span-3 flex items-center gap-3"
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-navy-700/60 whitespace-nowrap"
-  }, "Prospects"), /*#__PURE__*/React.createElement("div", {
+  }, "Pipeline"), /*#__PURE__*/React.createElement("div", {
     className: "h-px bg-navy-900/25 flex-1"
   })), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-3"
@@ -3396,20 +3402,24 @@ function PipelineView({
     const isCollapsedTarget = stage === 'Target' && !targetExpanded;
     return /*#__PURE__*/React.createElement("div", {
       key: stage,
-      className: isCollapsedTarget ? "min-w-0" : "min-w-[180px]"
-    }, stage === 'Target' ? /*#__PURE__*/React.createElement("button", {
+      className: "min-w-0"
+    }, stage === 'Target' ? /*#__PURE__*/React.createElement("div", {
+      className: "sticky top-0 z-20"
+    }, /*#__PURE__*/React.createElement("button", {
       type: "button",
       onClick: () => setTargetExpanded(v => !v),
       title: targetExpanded ? "Collapse Targets" : "Expand Targets",
-      className: `w-full px-3 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${pipelineHeaderColor(stage)}`
+      className: `w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${pipelineHeaderColor(stage)}`
     }, /*#__PURE__*/React.createElement("div", {
       className: `flex items-center ${isCollapsedTarget ? 'flex-col gap-1' : 'justify-between gap-2'}`
-    }, /*#__PURE__*/React.createElement("span", null, "Target"), /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
+      className: isCollapsedTarget ? "[writing-mode:vertical-rl] rotate-180 tracking-wide" : ""
+    }, "Target"), /*#__PURE__*/React.createElement("span", {
       className: "opacity-80"
     }, columns[stage].length)), !isCollapsedTarget && /*#__PURE__*/React.createElement("div", {
       className: "mt-0.5 text-[10px] font-medium opacity-75 text-left"
-    }, highOpportunityCount(stage), " high opportunity")) : /*#__PURE__*/React.createElement("div", {
-      className: `sticky top-0 z-10 px-3 py-2 rounded-t-lg text-xs font-semibold shadow-sm ${pipelineHeaderColor(stage)}`
+    }, highOpportunityCount(stage), " high opportunity"))) : /*#__PURE__*/React.createElement("div", {
+      className: `sticky top-0 z-20 px-3 py-2 rounded-t-lg text-xs font-semibold shadow-sm ${pipelineHeaderColor(stage)}`
     }, /*#__PURE__*/React.createElement("div", {
       className: "flex items-center justify-between gap-2"
     }, /*#__PURE__*/React.createElement("span", null, stage), /*#__PURE__*/React.createElement("span", {
