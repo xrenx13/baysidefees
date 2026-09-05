@@ -3245,6 +3245,74 @@ function TableView({
     }, a.NextFollowUp ? formatShortDate(new Date(a.NextFollowUp)) : '—'));
   })))));
 }
+
+// ---------------------------------------------------------------------
+// Pipeline view: accounts grouped into columns by RelationshipStage, so
+// you can see the whole prospect base's progress at a glance. Click-
+// through only (no drag-and-drop) -- change stage from the account page
+// itself, same as everywhere else. "Not a fit" accounts are excluded
+// entirely, since they're no longer active prospects worth tracking here.
+// Within each column, accounts are sorted by staleness (longest since
+// contact first), so whoever most needs attention floats to the top.
+// ---------------------------------------------------------------------
+function PipelineView({
+  accounts,
+  onSelect
+}) {
+  const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a fit');
+  const columns = useMemo(() => {
+    const byStage = {};
+    stages.forEach(s => byStage[s] = []);
+    accounts.forEach(a => {
+      const stage = stages.includes(a.RelationshipStage) ? a.RelationshipStage : 'Target';
+      byStage[stage].push(a);
+    });
+    stages.forEach(s => {
+      byStage[s].sort((a, b) => {
+        const daysA = daysSince(a.LastContactDate);
+        const daysB = daysSince(b.LastContactDate);
+        // Never-contacted accounts (null) count as maximally stale, so they
+        // don't get buried behind accounts with an old-but-real contact date.
+        return (daysB === null ? Infinity : daysB) - (daysA === null ? Infinity : daysA);
+      });
+    });
+    return byStage;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts]);
+
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 overflow-x-auto pb-2"
+  }, stages.map(stage => /*#__PURE__*/React.createElement("div", {
+    key: stage,
+    className: "flex-1 min-w-[180px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `px-3 py-2 rounded-t-lg text-xs font-semibold ${stageColor(stage)}`
+  }, stage, " · ", columns[stage].length), /*#__PURE__*/React.createElement("div", {
+    className: "bg-skyblue-100/30 rounded-b-lg p-2 min-h-[120px] space-y-2"
+  }, columns[stage].length === 0 ? /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 text-center py-4"
+  }, "No accounts") : columns[stage].map(a => {
+    const days = daysSince(a.LastContactDate);
+    const stale = days === null || days > 14;
+    return /*#__PURE__*/React.createElement("button", {
+      key: a.AccountId,
+      onClick: () => onSelect(a),
+      className: "w-full text-left bg-white border border-skyblue-100 rounded-lg p-2.5 hover:border-teal-500 transition"
+    }, /*#__PURE__*/React.createElement("p", {
+      className: "font-display text-sm text-navy-900 mb-1.5 leading-tight"
+    }, a.AccountName), /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center gap-1 flex-wrap mb-1"
+    }, /*#__PURE__*/React.createElement(PropensityBadge, {
+      account: a,
+      compact: true
+    }), /*#__PURE__*/React.createElement(StatusPill, {
+      status: a.Status
+    })), stale && /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-amber-600"
+    }, days === null ? 'Never contacted' : `${days} day${days === 1 ? '' : 's'} since contact`));
+  })))));
+}
+
 function AccountList({
   accounts,
   contacts,
@@ -3258,7 +3326,7 @@ function AccountList({
   setRegion
 }) {
   const [filter, setFilter] = useState('All');
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'table' | 'map'
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'table' | 'map' | 'pipeline'
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
   const [chainFilter, setChainFilter] = useState('All Chains');
@@ -3490,7 +3558,7 @@ function AccountList({
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, r))), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1"
-  }, ['list', 'table', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
+  }, ['list', 'table', 'map', 'pipeline'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
@@ -3535,6 +3603,9 @@ function AccountList({
     accounts: filtered,
     contacts: contacts,
     connections: connections,
+    onSelect: onSelect
+  }) : viewMode === 'pipeline' ? /*#__PURE__*/React.createElement(PipelineView, {
+    accounts: filtered,
     onSelect: onSelect
   }) : viewMode === 'table' ? filtered.length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100"
