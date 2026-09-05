@@ -3621,13 +3621,38 @@ function AccountList({
   }, "Today"), /*#__PURE__*/React.createElement("button", {
     onClick: onCreate,
     className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
-  }, "+ New account"), /*#__PURE__*/React.createElement("div", {
-    className: "w-8 h-8 rounded-full bg-navy-900 text-white text-xs font-semibold flex items-center justify-center shrink-0",
-    title: sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || ''
-  }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))), /*#__PURE__*/React.createElement("button", {
+  }, "+ New account"), /*#__PURE__*/React.createElement("details", {
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("summary", {
+    className: "list-none cursor-pointer w-8 h-8 rounded-full bg-navy-900 text-white text-xs font-semibold flex items-center justify-center shrink-0 hover:bg-navy-700 transition focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2",
+    title: sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User',
+    "aria-label": "Open profile menu"
+  }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-0 top-11 z-[1000] w-64 bg-white rounded-xl border border-skyblue-100 shadow-xl overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "px-4 py-3 border-b border-skyblue-100"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-[11px] uppercase tracking-wide text-navy-700/40 font-semibold mb-1"
+  }, "Profile"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-semibold text-navy-900 truncate",
+    title: sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User'
+  }, sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User')), /*#__PURE__*/React.createElement("div", {
+    className: "p-2"
+  }, [["BDD Website", "http://baysidefees.com"], ["One Pager", "http://baysidefees.com/why_bdd.pdf"], ["BDD Email", "http://gmail.com"], ["BDD Calendar", "http://calendar.google.com"], ["SimplePractice", "https://secure.simplepractice.com/"]].map(([label, href]) => /*#__PURE__*/React.createElement("a", {
+    key: label,
+    href: href,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm text-navy-700 hover:bg-skyblue-100/50 hover:text-navy-900 transition"
+  }, /*#__PURE__*/React.createElement("span", null, label), /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/30 text-xs"
+  }, "↗"))), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-skyblue-100 my-1"
+  }), /*#__PURE__*/React.createElement("button", {
+    type: "button",
     onClick: onSignOut,
-    className: "text-navy-700/40 hover:text-navy-700/70 text-sm px-2 py-2 transition"
-  }, "Sign out"))), topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "w-full text-left px-3 py-2 rounded-lg text-sm text-navy-700 hover:bg-skyblue-100/50 hover:text-navy-900 transition"
+  }, "Sign out")))))), topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100 p-5 mb-6"
   }, /*#__PURE__*/React.createElement("h2", {
     className: "font-display text-base text-navy-900 mb-3"
