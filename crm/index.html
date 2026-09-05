@@ -3363,6 +3363,10 @@ function PipelineView({
     };
     return colors[stage] || stageColor(stage);
   };
+  const highOpportunityCount = stage => columns[stage].filter(a => {
+    const opportunity = computeOverallFeesOpportunity(a);
+    return opportunity && (opportunity.label === 'High' || opportunity.label === 'Very High');
+  }).length;
 
   return /*#__PURE__*/React.createElement("div", {
     className: "overflow-x-auto pb-2"
@@ -3383,23 +3387,34 @@ function PipelineView({
   }, "Customers"), /*#__PURE__*/React.createElement("div", {
     className: "h-px bg-teal-500/40 flex-1"
   }))), /*#__PURE__*/React.createElement("div", {
-    className: "grid grid-cols-5 gap-3"
+    className: "grid grid-cols-5 gap-3 items-start"
   }, stages.map(stage => /*#__PURE__*/React.createElement("div", {
     key: stage,
     className: "min-w-[180px]"
   }, /*#__PURE__*/React.createElement("div", {
-    className: `px-3 py-2 rounded-t-lg text-xs font-semibold ${pipelineHeaderColor(stage)}`
-  }, stage, " · ", columns[stage].length), /*#__PURE__*/React.createElement("div", {
+    className: `sticky top-0 z-10 px-3 py-2 rounded-t-lg text-xs font-semibold shadow-sm ${pipelineHeaderColor(stage)}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between gap-2"
+  }, /*#__PURE__*/React.createElement("span", null, stage), /*#__PURE__*/React.createElement("span", {
+    className: "opacity-80"
+  }, columns[stage].length)), /*#__PURE__*/React.createElement("div", {
+    className: "mt-0.5 text-[10px] font-medium opacity-75"
+  }, highOpportunityCount(stage), " high opportunity")), /*#__PURE__*/React.createElement("div", {
     className: "bg-skyblue-100/30 rounded-b-lg py-2 min-h-[120px] space-y-2"
   }, columns[stage].length === 0 ? /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40 text-center py-4"
   }, "No accounts") : columns[stage].map(a => {
     const days = daysSince(a.LastContactDate);
     const stale = days === null || days > 14;
+    const followUp = followUpStatus(a.NextFollowUp);
+    const opportunity = computeOverallFeesOpportunity(a);
+    const highOpportunity = opportunity && (opportunity.label === 'High' || opportunity.label === 'Very High');
+    const attentionBorder = followUp === 'overdue' ? 'border-l-4 border-l-red-500' : followUp === 'today' ? 'border-l-4 border-l-amber-400' : highOpportunity ? 'border-l-4 border-l-teal-400' : '';
+    const opportunityLift = highOpportunity ? 'shadow-sm ring-1 ring-teal-500/10' : '';
     return /*#__PURE__*/React.createElement("button", {
       key: a.AccountId,
       onClick: () => onSelect(a),
-      className: "w-full text-left bg-white border border-skyblue-100 rounded-lg p-2.5 hover:border-teal-500 transition"
+      className: `w-full text-left bg-white border border-skyblue-100 rounded-lg p-2.5 hover:border-teal-500 hover:shadow-sm transition ${attentionBorder} ${opportunityLift}`
     }, /*#__PURE__*/React.createElement("p", {
       className: "font-display text-sm text-navy-900 mb-1.5 leading-tight"
     }, a.AccountName), /*#__PURE__*/React.createElement("div", {
