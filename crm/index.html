@@ -2155,6 +2155,14 @@ function AccountDetail({
   const [meetings, setMeetings] = useState(null); // null = not loaded yet
   const [meetingsLoading, setMeetingsLoading] = useState(false);
   const [meetingsError, setMeetingsError] = useState('');
+  // Navigating here is a client-side view swap, not a real page load, so
+  // the browser keeps whatever scroll position you were at before (list
+  // view, or a previous account's detail page) -- without this, clicking
+  // a facility name can land you partway down the new page instead of
+  // at the top.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [account.AccountId]);
   const [loggingActivity, setLoggingActivity] = useState(false);
   useEffect(() => {
     if (sessionStorage.getItem('bdd_crm_open_activity_form') === 'true') {
