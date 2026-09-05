@@ -3333,13 +3333,21 @@ function PipelineView({
     }, /*#__PURE__*/React.createElement("p", {
       className: "font-display text-sm text-navy-900 mb-1.5 leading-tight"
     }, a.AccountName), /*#__PURE__*/React.createElement("div", {
-      className: "flex items-center gap-1 flex-wrap mb-1"
+      className: "flex items-center gap-1.5 flex-wrap mb-1.5"
     }, /*#__PURE__*/React.createElement(PropensityBadge, {
       account: a,
       compact: true
-    })), stale && /*#__PURE__*/React.createElement("p", {
-      className: "text-xs text-amber-600"
-    }, days === null ? 'Never contacted' : `${days} day${days === 1 ? '' : 's'} since contact`));
+    }), a.BedCount && /*#__PURE__*/React.createElement("span", {
+      className: "text-xs text-navy-700/60 whitespace-nowrap"
+    }, a.BedCount, " beds")), a.NextAction && /*#__PURE__*/React.createElement("p", {
+      className: "text-xs font-medium text-navy-900 leading-snug mb-1"
+    }, a.NextAction), a.NextFollowUp && /*#__PURE__*/React.createElement("div", {
+      className: "mb-1"
+    }, /*#__PURE__*/React.createElement(FollowUpBadge, {
+      nextFollowUp: a.NextFollowUp
+    })), /*#__PURE__*/React.createElement("p", {
+      className: `text-xs ${stale ? 'text-amber-600' : 'text-navy-700/50'}`
+    }, days === null ? 'Never contacted' : `Last contact ${formatShortDate(new Date(a.LastContactDate))}${stale ? ` · ${days} day${days === 1 ? '' : 's'} ago` : ''}`));
   })))))));
 }
 
@@ -3587,7 +3595,7 @@ function AccountList({
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, r))), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[260px] justify-center"
   }, ['list', 'table', 'pipeline', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
@@ -3603,7 +3611,7 @@ function AccountList({
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
-    className: "relative flex-1 min-w-[220px]"
+    className: "relative w-full lg:w-[260px] lg:ml-auto shrink-0"
   }, /*#__PURE__*/React.createElement("input", {
     value: query,
     onChange: e => setQuery(e.target.value),
