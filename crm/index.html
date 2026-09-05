@@ -3644,7 +3644,7 @@ function AccountList({
       className: rowClass
     }, inner);
   }))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between gap-4 mb-4 flex-wrap"
+    className: "flex items-center gap-4 mb-4 flex-wrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit flex-wrap"
   }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'].map(r => /*#__PURE__*/React.createElement("button", {
@@ -3652,7 +3652,23 @@ function AccountList({
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, r))), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto w-[340px] justify-center"
+    className: "flex items-center gap-3 flex-wrap ml-auto"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs text-navy-700/50 flex items-center gap-1.5"
+  }, "Sort by", /*#__PURE__*/React.createElement("select", {
+    value: sortBy,
+    onChange: e => setSortBy(e.target.value),
+    className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))), distinctChains.length > 0 && /*#__PURE__*/React.createElement("label", {
+    className: "text-xs text-navy-700/50 flex items-center gap-1.5"
+  }, "Chain", /*#__PURE__*/React.createElement("select", {
+    value: chainFilter,
+    onChange: e => setChainFilter(e.target.value),
+    className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
+  }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
+    key: c
+  }, c))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
   }, ['list', 'table', 'pipeline', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
@@ -3678,23 +3694,7 @@ function AccountList({
     onClick: () => setQuery(''),
     "aria-label": "Clear search",
     className: "absolute right-2 top-1/2 -translate-y-1/2 text-navy-700/40 hover:text-navy-700/70 text-lg leading-none px-1"
-  }, "\u00D7"))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 mb-5 flex-wrap"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "text-xs text-navy-700/50 flex items-center gap-1.5"
-  }, "Sort by", /*#__PURE__*/React.createElement("select", {
-    value: sortBy,
-    onChange: e => setSortBy(e.target.value),
-    className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))), distinctChains.length > 0 && /*#__PURE__*/React.createElement("label", {
-    className: "text-xs text-navy-700/50 flex items-center gap-1.5"
-  }, "Chain", /*#__PURE__*/React.createElement("select", {
-    value: chainFilter,
-    onChange: e => setChainFilter(e.target.value),
-    className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
-    key: c
-  }, c))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
+  }, "\u00D7"))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
     accounts: filtered,
     contacts: contacts,
     connections: connections,
