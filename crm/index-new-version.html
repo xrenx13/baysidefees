@@ -128,6 +128,25 @@
   .saas-primary:hover { background:#122b4d; }
   .saas-secondary { border:1px solid var(--saas-line); background:#fff; color:#4b5563; border-radius:9px; padding:8px 11px; font-size:12px; line-height:1; font-weight:600; cursor:pointer; transition:.15s; }
   .saas-secondary:hover { background:#f8fafc; color:#1f2937; }
+  .saas-global-search { position:relative; width:min(360px, 28vw); min-width:220px; }
+  .saas-global-search input { width:100%; height:34px; border:1px solid var(--saas-line); border-radius:9px; background:#fff; padding:0 34px 0 12px; font-size:12px; color:#0f172a; outline:none; transition:.15s; }
+  .saas-global-search input:focus { border-color:#94a3b8; box-shadow:0 0 0 3px rgba(148,163,184,.12); }
+  .saas-global-search-icon { position:absolute; right:11px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none; }
+  .saas-search-results { position:absolute; right:0; top:40px; width:min(420px, 80vw); max-height:340px; overflow:auto; background:#fff; border:1px solid var(--saas-line); border-radius:12px; box-shadow:0 14px 35px rgba(15,23,42,.14); padding:6px; z-index:1200; }
+  .saas-search-result { width:100%; text-align:left; border:0; background:transparent; padding:9px 10px; border-radius:8px; cursor:pointer; }
+  .saas-search-result:hover { background:#f8fafc; }
+  .saas-search-result strong { display:block; font-size:12px; color:#0f172a; }
+  .saas-search-result span { display:block; margin-top:2px; font-size:11px; color:#64748b; }
+  .saas-referral-btn { border:1px solid #0f766e; background:#fff; color:#0f766e; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; transition:.15s; white-space:nowrap; }
+  .saas-referral-btn:hover { background:#f0fdfa; }
+  .saas-modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.36); display:flex; align-items:center; justify-content:center; padding:20px; z-index:2000; }
+  .saas-modal { width:min(520px, 100%); background:#fff; border-radius:16px; border:1px solid var(--saas-line); box-shadow:0 24px 70px rgba(15,23,42,.25); padding:20px; }
+  .saas-modal h3 { font-size:16px; font-weight:700; color:#0f172a; margin:0; }
+  .saas-modal p { font-size:12px; color:#64748b; margin:6px 0 0; }
+  .saas-modal label { display:block; font-size:11px; font-weight:650; color:#475569; margin:16px 0 6px; }
+  .saas-modal input, .saas-modal select { width:100%; border:1px solid var(--saas-line); border-radius:9px; padding:9px 10px; font-size:13px; background:#fff; color:#0f172a; outline:none; }
+  .saas-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+  @media (max-width: 980px) { .saas-global-search { width:220px; min-width:160px; } }
 
   body.saas-enabled #root > div:not(.saas-chrome):not(.saas-topbar) { margin-left: var(--saas-sidebar) !important; padding-top: calc(var(--saas-topbar) + 28px) !important; max-width: none !important; }
   body.saas-enabled .bdd-account-list { padding-left: 28px !important; padding-right: 28px !important; padding-bottom: 40px !important; }
@@ -3702,20 +3721,26 @@ function PipelineView({
     style: pipelineGridStyle
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-3"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-navy-700/60 whitespace-nowrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-navy-900/25 flex-1"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-navy-700/60 whitespace-nowrap text-center"
   }, "Prospects"), /*#__PURE__*/React.createElement("div", {
     className: "h-px bg-navy-900/25 flex-1"
   })), /*#__PURE__*/React.createElement("div", {
     className: "col-span-3 flex items-center gap-3"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-navy-700/60 whitespace-nowrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-navy-900/25 flex-1"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-navy-700/60 whitespace-nowrap text-center"
   }, "Pipeline"), /*#__PURE__*/React.createElement("div", {
     className: "h-px bg-navy-900/25 flex-1"
   })), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-3"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-700 whitespace-nowrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-teal-500/40 flex-1"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-700 whitespace-nowrap text-center"
   }, "Customers"), /*#__PURE__*/React.createElement("div", {
     className: "h-px bg-teal-500/40 flex-1"
   }))), /*#__PURE__*/React.createElement("div", {
@@ -4651,12 +4676,47 @@ function SaaSMiniCalendar() {
   );
 }
 
-function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onCreate, onSignOut, detailAccount, onDetailStageChange }) {
+function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onCreate, onSignOut, detailAccount, onDetailStageChange, searchData, onSelectSearchAccount, onNewReferral }) {
   useEffect(() => {
     document.body.classList.add('saas-enabled');
     return () => document.body.classList.remove('saas-enabled');
   }, []);
   const displayName = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [referralAccountId, setReferralAccountId] = useState('');
+  const [referralAccountQuery, setReferralAccountQuery] = useState('');
+  const [globalReferralDate, setGlobalReferralDate] = useState(() => {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  });
+  const allAccounts = (searchData && searchData.accounts) || [];
+  const globalSearchResults = useMemo(() => {
+    const q = globalSearch.trim().toLowerCase();
+    if (!q) return [];
+    const contacts = (searchData && searchData.contacts) || [];
+    const activities = (searchData && searchData.activities) || [];
+    const matchedIds = new Set();
+    allAccounts.forEach(a => {
+      const hay = [a.AccountName, a.Town, a.Region, a.RelationshipStage, a.Status, a.Chain].filter(Boolean).join(' ').toLowerCase();
+      if (hay.includes(q)) matchedIds.add(a.AccountId);
+    });
+    contacts.forEach(c => {
+      const hay = [c.FirstName, c.LastName, c.Name, c.Role, c.Email, c.Phone].filter(Boolean).join(' ').toLowerCase();
+      if (hay.includes(q)) matchedIds.add(c.AccountId);
+    });
+    activities.forEach(a => {
+      const hay = [a.ActivityType, a.ActivityResult, a.Details].filter(Boolean).join(' ').toLowerCase();
+      if (hay.includes(q)) matchedIds.add(a.AccountId);
+    });
+    return allAccounts.filter(a => matchedIds.has(a.AccountId)).slice(0, 8);
+  }, [globalSearch, searchData]);
+  const referralAccountOptions = useMemo(() => {
+    const q = referralAccountQuery.trim().toLowerCase();
+    const rows = !q ? allAccounts : allAccounts.filter(a => [a.AccountName, a.Town, a.Region].filter(Boolean).join(' ').toLowerCase().includes(q));
+    return rows.slice().sort((a,b) => String(a.AccountName || '').localeCompare(String(b.AccountName || ''))).slice(0, 100);
+  }, [allAccounts, referralAccountQuery]);
   const [sidebarTheme, setSidebarTheme] = useState(() => localStorage.getItem('bdd_crm_sidebar_theme') === 'dark' ? 'dark' : 'light');
   const toggleSidebarTheme = () => setSidebarTheme(current => {
     const next = current === 'dark' ? 'light' : 'dark';
@@ -4727,9 +4787,42 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         )
       ),
       /*#__PURE__*/React.createElement('div', { className: 'saas-top-actions' },
-        activeView !== 'home' && /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onHome, className: 'saas-secondary' }, 'Home'),
-        activeView !== 'today' && /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onToday, className: 'saas-secondary' }, 'Today'),
-        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onCreate, className: 'saas-primary' }, '+ New account')
+        /*#__PURE__*/React.createElement('div', { className: 'saas-global-search' },
+          /*#__PURE__*/React.createElement('input', { value: globalSearch, onChange: e => setGlobalSearch(e.target.value), placeholder: 'Search accounts, contacts, activities…', 'aria-label': 'Search CRM' }),
+          /*#__PURE__*/React.createElement('span', { className: 'saas-global-search-icon' }, '⌕'),
+          globalSearch.trim() && /*#__PURE__*/React.createElement('div', { className: 'saas-search-results' },
+            globalSearchResults.length ? globalSearchResults.map(a => /*#__PURE__*/React.createElement('button', { key:a.AccountId, type:'button', className:'saas-search-result', onClick:() => { setGlobalSearch(''); onSelectSearchAccount && onSelectSearchAccount(a); } },
+              /*#__PURE__*/React.createElement('strong', null, a.AccountName || 'Unnamed account'),
+              /*#__PURE__*/React.createElement('span', null, [a.Region, a.Town, a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
+            )) : /*#__PURE__*/React.createElement('div', { className:'px-3 py-3 text-xs text-slate-500' }, 'No matching accounts')
+          )
+        ),
+        /*#__PURE__*/React.createElement('button', { type:'button', onClick:() => setShowReferralModal(true), className:'saas-referral-btn' }, '+ New Referral'),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onCreate, className: 'saas-primary' }, '+ New Account')
+      )
+    ),
+    showReferralModal && /*#__PURE__*/React.createElement('div', { className:'saas-modal-backdrop', onClick:e => { if (e.target === e.currentTarget) setShowReferralModal(false); } },
+      /*#__PURE__*/React.createElement('div', { className:'saas-modal' },
+        /*#__PURE__*/React.createElement('div', { className:'flex items-start justify-between gap-4' },
+          /*#__PURE__*/React.createElement('div', null,
+            /*#__PURE__*/React.createElement('h3', null, 'Record Referral'),
+            /*#__PURE__*/React.createElement('p', null, 'Choose the facility associated with this referral. No patient information is stored in BDD CRM.')
+          ),
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:()=>setShowReferralModal(false) }, 'Close')
+        ),
+        /*#__PURE__*/React.createElement('label', null, 'Find account'),
+        /*#__PURE__*/React.createElement('input', { value:referralAccountQuery, onChange:e=>setReferralAccountQuery(e.target.value), placeholder:'Search facility name or town…' }),
+        /*#__PURE__*/React.createElement('label', null, 'Associated account'),
+        /*#__PURE__*/React.createElement('select', { value:referralAccountId, onChange:e=>setReferralAccountId(e.target.value) },
+          /*#__PURE__*/React.createElement('option', { value:'' }, 'Select an account…'),
+          referralAccountOptions.map(a => /*#__PURE__*/React.createElement('option', { key:a.AccountId, value:a.AccountId }, `${a.AccountName || 'Unnamed account'}${a.Town ? ` · ${a.Town}` : ''}`))
+        ),
+        /*#__PURE__*/React.createElement('label', null, 'Referral date'),
+        /*#__PURE__*/React.createElement('input', { type:'date', value:globalReferralDate, onChange:e=>setGlobalReferralDate(e.target.value) }),
+        /*#__PURE__*/React.createElement('div', { className:'saas-modal-actions' },
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:()=>setShowReferralModal(false) }, 'Cancel'),
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-primary', disabled:!referralAccountId || !globalReferralDate, onClick:() => { if (!referralAccountId || !globalReferralDate) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate); setShowReferralModal(false); setReferralAccountId(''); setReferralAccountQuery(''); } }, 'Record & Open SimplePractice')
+        )
       )
     )
   );
@@ -4899,7 +4992,46 @@ function App() {
     }, "Try again"));
   }
   const selectedAccount = data.accounts.find(a => a.AccountId === selectedId);
-  const chromeProps = pageTitle => ({ activeView: view === 'home' ? 'home' : view === 'today' ? 'today' : view === 'pipeline' ? 'pipeline' : 'accounts', pageTitle, onHome: () => setView('home'), onAccounts: () => setView('list'), onToday: () => setView('today'), onPipeline: () => setView('pipeline'), onCreate: () => setView('create'), onSignOut: signOut });
+  const handleGlobalReferral = (accountId, referralDate) => {
+    if (!accountId || !referralDate) return;
+    const account = data.accounts.find(a => a.AccountId === accountId);
+    if (!account) return;
+    const simplePracticeWindow = window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
+    const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
+    const localReferral = { ReferralActivityId:tempId, AccountId:accountId, ReferralDate:referralDate, RecordedBy:recordedBy };
+    updateDataLocal(d => ({
+      ...d,
+      referralActivity:[...(d.referralActivity || []), localReferral],
+      accounts:d.accounts.map(a => a.AccountId === accountId && (a.RelationshipStage || 'Target') !== 'Active Referrer' ? { ...a, RelationshipStage:'Active Referrer', Status:'Customer' } : a)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Referral recorded — opening SimplePractice');
+    apiPost('createReferralActivity', { data:{ AccountId:accountId, ReferralDate:referralDate, RecordedBy:recordedBy } }).then(response => {
+      if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
+      const savedId = response.result && response.result.ReferralActivityId;
+      if (savedId) updateDataLocal(d => ({ ...d, referralActivity:(d.referralActivity || []).map(r => r.ReferralActivityId === tempId ? { ...r, ReferralActivityId:savedId } : r) }));
+      window.__crmShowToast && window.__crmShowToast('Referral activity saved');
+    }).catch(err => {
+      console.error(err);
+      updateDataLocal(d => ({ ...d, referralActivity:(d.referralActivity || []).filter(r => r.ReferralActivityId !== tempId) }));
+      window.__crmShowToast && window.__crmShowToast('Referral save failed — restoring server data');
+      refreshAccount(accountId);
+    });
+    if (!simplePracticeWindow) window.__crmShowToast && window.__crmShowToast('Referral recorded — allow pop-ups to open SimplePractice');
+  };
+  const chromeProps = pageTitle => ({
+    activeView: view === 'home' ? 'home' : view === 'today' ? 'today' : view === 'pipeline' ? 'pipeline' : 'accounts',
+    pageTitle,
+    onHome: () => setView('home'),
+    onAccounts: () => setView('list'),
+    onToday: () => setView('today'),
+    onPipeline: () => setView('pipeline'),
+    onCreate: () => setView('create'),
+    onSignOut: signOut,
+    searchData: { accounts:data.accounts, contacts:data.contacts, activities:data.activities },
+    onSelectSearchAccount: a => { setSelectedId(a.AccountId); setView('detail'); },
+    onNewReferral: handleGlobalReferral
+  });
   if (view === 'home') {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Home')), /*#__PURE__*/React.createElement(HomeDashboard, {
       accounts: data.accounts,
