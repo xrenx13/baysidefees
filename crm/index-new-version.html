@@ -128,7 +128,63 @@
   body.saas-enabled .max-w-4xl, body.saas-enabled .max-w-5xl, body.saas-enabled .max-w-6xl { padding-left:28px !important; padding-right:28px !important; }
   body.saas-enabled a, body.saas-enabled .text-teal-600 { text-decoration:none; }
 
+
+  /* Home analytics */
+  .bdd-home { margin-left:var(--saas-sidebar); padding:calc(var(--saas-topbar) + 30px) 28px 44px; min-height:100vh; }
+  .home-shell { max-width:1240px; margin:0 auto; }
+  .home-hero { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:20px; }
+  .home-eyebrow { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#98a2b3; margin-bottom:6px; }
+  .home-title { font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.035em; color:var(--saas-ink); }
+  .home-subtitle { margin-top:7px; font-size:14px; color:#737d8c; }
+  .home-period { font-size:12px; color:#667085; border:1px solid var(--saas-line); background:#fff; border-radius:9px; padding:8px 11px; }
+  .home-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+  .home-kpi { background:#fff; border:1px solid var(--saas-line); border-radius:13px; padding:16px 17px; }
+  .home-kpi-label { font-size:11px; font-weight:650; color:#7a8493; margin-bottom:8px; }
+  .home-kpi-value { font-size:26px; line-height:1; font-weight:720; letter-spacing:-.035em; color:var(--saas-ink); }
+  .home-kpi-note { margin-top:7px; font-size:11px; color:#a0a8b5; }
+  .home-grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(320px,.8fr); gap:16px; margin-bottom:16px; }
+  .home-card { background:#fff; border:1px solid var(--saas-line); border-radius:14px; padding:18px; min-width:0; }
+  .home-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  .home-card-title { font-size:14px; font-weight:680; color:var(--saas-ink); letter-spacing:-.015em; }
+  .home-card-copy { font-size:11px; color:#98a2b3; margin-top:3px; }
+  .home-link { border:0; background:transparent; color:#0f766e; font-size:11px; font-weight:650; cursor:pointer; padding:0; }
+  .home-referral-summary { display:flex; gap:24px; align-items:baseline; flex-wrap:wrap; margin-bottom:18px; }
+  .home-referral-stat strong { font-size:22px; color:var(--saas-ink); letter-spacing:-.03em; }
+  .home-referral-stat span { font-size:11px; color:#8a94a3; margin-left:5px; }
+  .home-chart { height:150px; display:flex; align-items:flex-end; gap:12px; padding-top:8px; }
+  .home-chart-col { flex:1; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:6px; }
+  .home-chart-value { font-size:10px; font-weight:650; color:#657084; }
+  .home-chart-bar-wrap { width:100%; height:105px; display:flex; align-items:flex-end; justify-content:center; }
+  .home-chart-bar { width:min(34px,68%); min-height:3px; border-radius:6px 6px 2px 2px; background:#a8d1cc; }
+  .home-chart-label { font-size:10px; color:#9aa3af; white-space:nowrap; }
+  .home-source-row { display:grid; grid-template-columns:minmax(0,1fr) 42px 42px 42px; gap:8px; align-items:center; padding:9px 0; border-top:1px solid #f0f2f5; font-size:12px; }
+  .home-source-row:first-of-type { border-top:0; }
+  .home-source-name { border:0; background:transparent; padding:0; text-align:left; color:#334155; font-weight:600; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .home-source-num { text-align:right; color:#4b5563; font-variant-numeric:tabular-nums; }
+  .home-source-head { color:#a0a8b5; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  .home-pipeline { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+  .home-stage { background:#f7f8fa; border-radius:10px; padding:12px; min-width:0; }
+  .home-stage-value { font-size:20px; font-weight:700; color:var(--saas-ink); }
+  .home-stage-label { font-size:10px; color:#7f8997; margin-top:4px; line-height:1.25; }
+  .home-stage-bar { height:3px; border-radius:999px; background:#d8dee6; margin-top:10px; overflow:hidden; }
+  .home-stage-fill { height:100%; background:#78bdb5; border-radius:999px; }
+  .home-attention-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #f0f2f5; }
+  .home-attention-row:first-of-type { border-top:0; }
+  .home-attention-main { min-width:0; }
+  .home-attention-name { border:0; background:transparent; padding:0; font-size:12px; font-weight:650; color:#334155; cursor:pointer; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .home-attention-meta { font-size:10px; color:#98a2b3; margin-top:2px; }
+  .home-badge { flex:none; font-size:10px; font-weight:650; color:#a14b43; background:#fff2f0; border-radius:999px; padding:4px 7px; }
+  .home-empty { padding:22px 0; text-align:center; font-size:12px; color:#98a2b3; }
+  .home-today-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .home-today-stat { border:1px solid #edf0f3; border-radius:10px; padding:12px; background:#fafbfc; }
+  .home-today-stat strong { display:block; font-size:19px; color:var(--saas-ink); }
+  .home-today-stat span { display:block; margin-top:3px; font-size:10px; color:#8b95a3; }
+
   @media (max-width: 900px) {
+    .bdd-home { padding-left:18px; padding-right:18px; }
+    .home-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .home-grid { grid-template-columns:1fr; }
+
     :root { --saas-sidebar: 72px; }
     .saas-brand { justify-content:center; padding:0; }
     .saas-brand-copy, .saas-nav-label, .saas-nav-btn span:last-child, .saas-profile-name, .saas-signout { display:none; }
@@ -4435,9 +4491,102 @@ function TodayDashboard({
 }
 
 
+
+function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccounts }) {
+  const analytics = useMemo(() => {
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const cutoff30 = new Date(startToday.getTime() - 29 * 86400000);
+    const cutoff90 = new Date(startToday.getTime() - 89 * 86400000);
+    const ytdStart = new Date(now.getFullYear(), 0, 1);
+    const referrals = (referralActivity || []).map(r => ({ ...r, _date: r.ReferralDate ? new Date(r.ReferralDate) : null })).filter(r => r._date && !Number.isNaN(r._date.getTime()) && r._date <= now);
+    const inRange = (r, start) => r._date >= start;
+    const last30 = referrals.filter(r => inRange(r, cutoff30));
+    const last90 = referrals.filter(r => inRange(r, cutoff90));
+    const ytd = referrals.filter(r => inRange(r, ytdStart));
+    const active = (accounts || []).filter(a => (a.RelationshipStage || '') === 'Active Referrer' || a.Status === 'Customer');
+    const pipelineStages = ['Contacted', 'Connected', 'Referral Discussion'];
+    const pipelineAccounts = (accounts || []).filter(a => pipelineStages.includes(a.RelationshipStage || 'Target'));
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const due = (accounts || []).filter(a => {
+      const d = String(a.NextFollowUp || '').slice(0,10);
+      return /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey;
+    });
+    const overdue = due.filter(a => String(a.NextFollowUp || '').slice(0,10) < todayKey);
+    const dueToday = due.filter(a => String(a.NextFollowUp || '').slice(0,10) === todayKey);
+    const highNoAction = (accounts || []).filter(a => {
+      const p = computeOverallFeesOpportunity(a);
+      return p && (p.label === 'High' || p.label === 'Very High') && !String(a.NextAction || '').trim() && (a.RelationshipStage || 'Target') !== 'Active Referrer';
+    });
+    const accountMap = Object.fromEntries((accounts || []).map(a => [a.AccountId, a]));
+    const sourceStats = {};
+    referrals.forEach(r => {
+      if (!sourceStats[r.AccountId]) sourceStats[r.AccountId] = { last30:0, last90:0, ytd:0, latest:null };
+      const st = sourceStats[r.AccountId];
+      if (inRange(r, cutoff30)) st.last30++;
+      if (inRange(r, cutoff90)) st.last90++;
+      if (inRange(r, ytdStart)) st.ytd++;
+      if (!st.latest || r._date > st.latest) st.latest = r._date;
+    });
+    const topSources = Object.entries(sourceStats).map(([id, st]) => ({ id, account: accountMap[id], ...st })).filter(x => x.account).sort((a,b) => b.last30-a.last30 || b.last90-a.last90 || b.ytd-a.ytd).slice(0,6);
+    const needsAttention = active.map(a => ({ account:a, latest: sourceStats[a.AccountId]?.latest || null })).filter(x => !x.latest || x.latest < cutoff90).sort((a,b) => (a.latest?.getTime() || 0) - (b.latest?.getTime() || 0)).slice(0,5);
+    const months = [];
+    for (let offset=5; offset>=0; offset--) {
+      const d = new Date(now.getFullYear(), now.getMonth()-offset, 1);
+      months.push({ year:d.getFullYear(), month:d.getMonth(), label:d.toLocaleDateString(undefined,{month:'short'}), count:0 });
+    }
+    referrals.forEach(r => {
+      const m = months.find(x => x.year === r._date.getFullYear() && x.month === r._date.getMonth());
+      if (m) m.count++;
+    });
+    const stageCounts = ['Target','Contacted','Connected','Referral Discussion','Active Referrer'].map(stage => ({ stage, count:(accounts || []).filter(a => (a.RelationshipStage || 'Target') === stage).length }));
+    return { last30:last30.length, last90:last90.length, ytd:ytd.length, activeCount:active.length, pipelineCount:pipelineAccounts.length, dueCount:due.length, overdueCount:overdue.length, dueTodayCount:dueToday.length, highNoActionCount:highNoAction.length, topSources, needsAttention, months, stageCounts };
+  }, [accounts, referralActivity]);
+  const maxMonth = Math.max(1, ...analytics.months.map(m => m.count));
+  const maxStage = Math.max(1, ...analytics.stageCounts.map(s => s.count));
+  const fmtLast = date => !date ? 'No referrals recorded' : `Last referral ${date.toLocaleDateString(undefined,{month:'short',day:'numeric'})}`;
+  return /*#__PURE__*/React.createElement('main', { className:'bdd-home' }, /*#__PURE__*/React.createElement('div', { className:'home-shell' },
+    /*#__PURE__*/React.createElement('div', { className:'home-hero' }, /*#__PURE__*/React.createElement('div', null,
+      /*#__PURE__*/React.createElement('div', { className:'home-eyebrow' }, 'BDD CRM'),
+      /*#__PURE__*/React.createElement('h1', { className:'home-title' }, 'Business Development Overview'),
+      /*#__PURE__*/React.createElement('p', { className:'home-subtitle' }, 'Referral performance, pipeline health, and relationships that need attention.')
+    ), /*#__PURE__*/React.createElement('div', { className:'home-period' }, 'Live CRM data')),
+    /*#__PURE__*/React.createElement('div', { className:'home-kpis' },
+      [['Active Referrers',analytics.activeCount,'Current referral relationships'],['Referrals · 30d',analytics.last30,`${analytics.last90} in the last 90 days`],['Pipeline Accounts',analytics.pipelineCount,'Contacted through referral discussion'],['Follow-ups Due',analytics.dueCount,`${analytics.overdueCount} overdue · ${analytics.dueTodayCount} today`]].map(([label,value,note]) => /*#__PURE__*/React.createElement('div',{className:'home-kpi',key:label}, /*#__PURE__*/React.createElement('div',{className:'home-kpi-label'},label), /*#__PURE__*/React.createElement('div',{className:'home-kpi-value'},value), /*#__PURE__*/React.createElement('div',{className:'home-kpi-note'},note)))
+    ),
+    /*#__PURE__*/React.createElement('div', { className:'home-grid' },
+      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Referral Activity'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Referral events recorded across all facilities'))),
+        /*#__PURE__*/React.createElement('div',{className:'home-referral-summary'}, [['30 days',analytics.last30],['90 days',analytics.last90],['YTD',analytics.ytd]].map(([label,value]) => /*#__PURE__*/React.createElement('div',{className:'home-referral-stat',key:label}, /*#__PURE__*/React.createElement('strong',null,value), /*#__PURE__*/React.createElement('span',null,label)))),
+        /*#__PURE__*/React.createElement('div',{className:'home-chart'}, analytics.months.map(m => /*#__PURE__*/React.createElement('div',{className:'home-chart-col',key:`${m.year}-${m.month}`}, /*#__PURE__*/React.createElement('div',{className:'home-chart-value'},m.count), /*#__PURE__*/React.createElement('div',{className:'home-chart-bar-wrap'}, /*#__PURE__*/React.createElement('div',{className:'home-chart-bar',style:{height:`${Math.max(3,(m.count/maxMonth)*100)}%`}})), /*#__PURE__*/React.createElement('div',{className:'home-chart-label'},m.label))))
+      ),
+      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Top Referral Sources'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Ranked by recent referral activity'))),
+        analytics.topSources.length ? /*#__PURE__*/React.createElement(React.Fragment,null,
+          /*#__PURE__*/React.createElement('div',{className:'home-source-row home-source-head'}, /*#__PURE__*/React.createElement('div',null,'Facility'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'30d'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'90d'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'YTD')),
+          analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row',key:x.id}, /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.last30), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.last90), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.ytd)))
+        ) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'Referral activity will appear here once referrals are recorded.')
+      )
+    ),
+    /*#__PURE__*/React.createElement('div', { className:'home-grid' },
+      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Pipeline Health'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Where referral-source relationships currently sit')), /*#__PURE__*/React.createElement('button',{className:'home-link',onClick:onAccounts},'View accounts →')),
+        /*#__PURE__*/React.createElement('div',{className:'home-pipeline'}, analytics.stageCounts.map(s => /*#__PURE__*/React.createElement('div',{className:'home-stage',key:s.stage}, /*#__PURE__*/React.createElement('div',{className:'home-stage-value'},s.count), /*#__PURE__*/React.createElement('div',{className:'home-stage-label'},s.stage), /*#__PURE__*/React.createElement('div',{className:'home-stage-bar'}, /*#__PURE__*/React.createElement('div',{className:'home-stage-fill',style:{width:`${Math.max(4,(s.count/maxStage)*100)}%`}})))))
+      ),
+      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Needs Attention'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Active referrers quiet for 90+ days'))),
+        analytics.needsAttention.length ? analytics.needsAttention.map(x => /*#__PURE__*/React.createElement('div',{className:'home-attention-row',key:x.account.AccountId}, /*#__PURE__*/React.createElement('div',{className:'home-attention-main'}, /*#__PURE__*/React.createElement('button',{className:'home-attention-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'), /*#__PURE__*/React.createElement('div',{className:'home-attention-meta'},fmtLast(x.latest))), /*#__PURE__*/React.createElement('span',{className:'home-badge'},'Review'))) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'No active referrers are currently quiet for 90+ days.')
+      )
+    ),
+    /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Today at a Glance'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'A compact preview of the work queue')), /*#__PURE__*/React.createElement('button',{className:'home-link',onClick:onToday},'Open Today →')),
+      /*#__PURE__*/React.createElement('div',{className:'home-today-grid'}, [['Overdue follow-ups',analytics.overdueCount],['Due today',analytics.dueTodayCount],['High opportunity · no next action',analytics.highNoActionCount]].map(([label,value]) => /*#__PURE__*/React.createElement('div',{className:'home-today-stat',key:label}, /*#__PURE__*/React.createElement('strong',null,value), /*#__PURE__*/React.createElement('span',null,label))))
+    )
+  ));
+}
+
 function SaaSIcon({ name }) {
   const common = { viewBox: '0 0 24 24', 'aria-hidden': 'true' };
   const paths = {
+    home: [
+      /*#__PURE__*/React.createElement('path', { key: 'a', d: 'M3 11.5 12 4l9 7.5' }),
+      /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M5.5 10.5V20h13v-9.5M9.5 20v-6h5v6' })
+    ],
     today: [
       /*#__PURE__*/React.createElement('rect', { key: 'a', x: 3, y: 4.5, width: 18, height: 16, rx: 2 }),
       /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M8 2.5v4M16 2.5v4M3 9h18' }),
@@ -4457,7 +4606,7 @@ function SaaSIcon({ name }) {
   return /*#__PURE__*/React.createElement('span', { className: 'saas-nav-icon' }, /*#__PURE__*/React.createElement('svg', common, ...(paths[name] || paths.accounts)));
 }
 
-function SaaSChrome({ activeView, pageTitle, onAccounts, onToday, onCreate, onSignOut }) {
+function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onCreate, onSignOut }) {
   useEffect(() => {
     document.body.classList.add('saas-enabled');
     return () => document.body.classList.remove('saas-enabled');
@@ -4474,6 +4623,7 @@ function SaaSChrome({ activeView, pageTitle, onAccounts, onToday, onCreate, onSi
       ),
       /*#__PURE__*/React.createElement('nav', { className: 'saas-nav' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label' }, 'Workspace'),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onHome, className: `saas-nav-btn ${activeView === 'home' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'home' }), /*#__PURE__*/React.createElement('span', null, 'Home')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onToday, className: `saas-nav-btn ${activeView === 'today' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'today' }), /*#__PURE__*/React.createElement('span', null, 'Today')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onAccounts, className: `saas-nav-btn ${activeView === 'accounts' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'accounts' }), /*#__PURE__*/React.createElement('span', null, 'Accounts')),
         /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label mt-2' }, 'Tools'),
@@ -4489,10 +4639,11 @@ function SaaSChrome({ activeView, pageTitle, onAccounts, onToday, onCreate, onSi
     ),
     /*#__PURE__*/React.createElement('header', { className: 'saas-topbar' },
       /*#__PURE__*/React.createElement('div', null,
-        /*#__PURE__*/React.createElement('div', { className: 'saas-page-kicker' }, activeView === 'today' ? 'Work queue' : 'Business development'),
+        /*#__PURE__*/React.createElement('div', { className: 'saas-page-kicker' }, activeView === 'today' ? 'Work queue' : activeView === 'home' ? 'Overview' : 'Business development'),
         /*#__PURE__*/React.createElement('div', { className: 'saas-page-title' }, pageTitle || 'BDD CRM')
       ),
       /*#__PURE__*/React.createElement('div', { className: 'saas-top-actions' },
+        activeView !== 'home' && /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onHome, className: 'saas-secondary' }, 'Home'),
         activeView !== 'today' && /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onToday, className: 'saas-secondary' }, 'Today'),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onCreate, className: 'saas-primary' }, '+ New account')
       )
@@ -4508,7 +4659,7 @@ function App() {
   const [data, setData] = useState(() => startupCache || emptyCrmData_());
   const [loading, setLoading] = useState(() => !startupCache);
   const [loadError, setLoadError] = useState(null);
-  const [view, setView] = useState('list'); // 'list' | 'detail' | 'create'
+  const [view, setView] = useState('home'); // 'home' | 'today' | 'list' | 'detail' | 'create'
   const [selectedId, setSelectedId] = useState(null);
   const [signingOut, setSigningOut] = useState(false);
   // Remembers the last region selected across sessions (localStorage
@@ -4664,7 +4815,19 @@ function App() {
     }, "Try again"));
   }
   const selectedAccount = data.accounts.find(a => a.AccountId === selectedId);
-  const chromeProps = pageTitle => ({ activeView: view === 'today' ? 'today' : 'accounts', pageTitle, onAccounts: () => setView('list'), onToday: () => setView('today'), onCreate: () => setView('create'), onSignOut: signOut });
+  const chromeProps = pageTitle => ({ activeView: view === 'home' ? 'home' : view === 'today' ? 'today' : 'accounts', pageTitle, onHome: () => setView('home'), onAccounts: () => setView('list'), onToday: () => setView('today'), onCreate: () => setView('create'), onSignOut: signOut });
+  if (view === 'home') {
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Home')), /*#__PURE__*/React.createElement(HomeDashboard, {
+      accounts: data.accounts,
+      referralActivity: data.referralActivity || [],
+      onSelect: a => {
+        setSelectedId(a.AccountId);
+        setView('detail');
+      },
+      onToday: () => setView('today'),
+      onAccounts: () => setView('list')
+    }), /*#__PURE__*/React.createElement(Toast, null));
+  }
   if (view === 'create') {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('New account')), /*#__PURE__*/React.createElement("div", {
       className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
