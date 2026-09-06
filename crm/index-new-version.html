@@ -137,8 +137,8 @@
   .saas-search-result:hover { background:#f8fafc; }
   .saas-search-result strong { display:block; font-size:12px; color:#0f172a; }
   .saas-search-result span { display:block; margin-top:2px; font-size:11px; color:#64748b; }
-  .saas-referral-btn { border:1px solid #15803d; background:#16a34a; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; transition:.15s; white-space:nowrap; }
-  .saas-referral-btn:hover { background:#15803d; border-color:#166534; }
+  .saas-referral-btn { border:1px solid #14b8a6; background:#14b8a6; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; transition:.15s; white-space:nowrap; }
+  .saas-referral-btn:hover { background:#0d9488; border-color:#0d9488; }
   .saas-modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.36); display:flex; align-items:center; justify-content:center; padding:20px; z-index:2000; }
   .saas-modal { width:min(520px, 100%); background:#fff; border-radius:16px; border:1px solid var(--saas-line); box-shadow:0 24px 70px rgba(15,23,42,.25); padding:20px; }
   .saas-modal h3 { font-size:16px; font-weight:700; color:#0f172a; margin:0; }
@@ -1590,7 +1590,11 @@ function AccountForm({
   }, "Relationship stage"), /*#__PURE__*/React.createElement("select", {
     value: form.RelationshipStage || 'Target',
     onChange: set('RelationshipStage'),
-    className: `mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 font-semibold ${stageColor(form.RelationshipStage)}`
+    className: `appearance-none mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 pr-9 font-semibold bg-[right_0.75rem_center] bg-no-repeat ${stageColor(form.RelationshipStage)}`,
+    style: {
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${['Target','Active Referrer'].includes(form.RelationshipStage || 'Target') ? '%23ffffff' : '%23081e3d'}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+      backgroundSize: '10px'
+    }
   }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
     key: s,
     value: s,
@@ -4325,7 +4329,7 @@ function DashboardAccountCard({
     title: "Change relationship stage",
     className: `appearance-none cursor-pointer border-none inline-flex items-center px-2 py-0.5 pr-6 rounded-full text-xs font-semibold bg-[right_0.35rem_center] bg-no-repeat ${stageColor(account.RelationshipStage)}`,
     style: {
-      backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${['Target','Active Referrer'].includes(account.RelationshipStage || 'Target') ? '%23ffffff' : '%23081e3d'}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
       backgroundSize: "10px"
     }
   }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
@@ -4810,8 +4814,8 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           /*#__PURE__*/React.createElement('div', { className: 'saas-page-title min-w-0' }, pageTitle || 'BDD CRM'),
           detailAccount && (() => {
             const opportunity = computeOverallFeesOpportunity(detailAccount);
-            const isTarget = (detailAccount.RelationshipStage || 'Target') === 'Target';
-            const arrowStroke = isTarget ? '%23ffffff' : '%23081e3d';
+            const stageNeedsWhiteArrow = ['Target', 'Active Referrer'].includes(detailAccount.RelationshipStage || 'Target');
+            const arrowStroke = stageNeedsWhiteArrow ? '%23ffffff' : '%23081e3d';
             return /*#__PURE__*/React.createElement('div', { className: 'flex items-center gap-2 flex-wrap' },
               opportunity && /*#__PURE__*/React.createElement('span', {
                 className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${overallOpportunityColor(opportunity.label)} text-white`,
@@ -4873,7 +4877,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         ),
         /*#__PURE__*/React.createElement('div', { className:'saas-modal-actions' },
           /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:()=>setShowReferralModal(false) }, 'Cancel'),
-          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-primary', disabled:!referralAccountId || !globalReferralDate || globalReferralRate === '' || !Number.isFinite(Number(globalReferralRate)) || Number(globalReferralRate) < 0, onClick:() => { const rate = Number(globalReferralRate); if (!referralAccountId || !globalReferralDate || !Number.isFinite(rate) || rate < 0) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate, rate); setShowReferralModal(false); setReferralAccountId(''); setReferralAccountQuery(''); setGlobalReferralRate(''); } }, 'Record & Open SimplePractice')
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-referral-btn', disabled:!referralAccountId || !globalReferralDate || globalReferralRate === '' || !Number.isFinite(Number(globalReferralRate)) || Number(globalReferralRate) < 0, onClick:() => { const rate = Number(globalReferralRate); if (!referralAccountId || !globalReferralDate || !Number.isFinite(rate) || rate < 0) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate, rate); setShowReferralModal(false); setReferralAccountId(''); setReferralAccountQuery(''); setGlobalReferralRate(''); } }, 'Record & Open SimplePractice')
         )
       )
     )
