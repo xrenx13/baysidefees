@@ -2400,13 +2400,22 @@ function AccountDetail({
   const [meetings, setMeetings] = useState(null); // null = not loaded yet
   const [meetingsLoading, setMeetingsLoading] = useState(false);
   const [meetingsError, setMeetingsError] = useState('');
-  // Navigating here is a client-side view swap, not a real page load, so
-  // the browser keeps whatever scroll position you were at before (list
-  // view, or a previous account's detail page) -- without this, clicking
-  // a facility name can land you partway down the new page instead of
-  // at the top.
+  // Account Detail is a client-side view swap, so browsers can preserve the
+  // prior page's scroll position. Reset immediately and again after layout
+  // settles so a newly opened account always starts at Account Details.
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const resetScroll = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    resetScroll();
+    const raf = requestAnimationFrame(resetScroll);
+    const timer = setTimeout(resetScroll, 80);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
   }, [account.AccountId]);
   const [loggingActivity, setLoggingActivity] = useState(false);
   useEffect(() => {
@@ -5349,6 +5358,7 @@ function App() {
 
   if (view === 'detail' && selectedAccount) {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, { ...chromeProps(selectedAccount.AccountName || 'Account'), detailAccount: selectedAccount, onDetailStageChange: updateSelectedAccountStage }), /*#__PURE__*/React.createElement(AccountDetail, {
+      key: selectedAccount.AccountId,
       account: selectedAccount,
       contacts: data.contacts,
       connections: data.connections,
