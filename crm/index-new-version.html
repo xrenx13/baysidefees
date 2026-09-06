@@ -251,7 +251,19 @@
     .saas-topbar { padding:0 18px; }
     body.saas-enabled .bdd-account-list, body.saas-enabled .max-w-4xl, body.saas-enabled .max-w-5xl, body.saas-enabled .max-w-6xl { padding-left:18px !important; padding-right:18px !important; }
   }
-</style>
+
+    .home-trend-card { margin-bottom: 18px; }
+    .home-chart-large { min-height: 270px; padding-top: 14px; }
+    .home-chart-large .home-chart-bar-wrap { height: 180px; }
+    .home-chart-count { font-size: 11px; color: rgba(34, 59, 84, .58); margin: 2px 0 6px; white-space: nowrap; }
+    .home-revenue-mix { display: flex; flex-direction: column; gap: 15px; padding-top: 4px; }
+    .home-mix-row { min-width: 0; }
+    .home-mix-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 6px; }
+    .home-mix-top strong { font-size: 13px; color: #17324d; white-space: nowrap; }
+    .home-mix-track { height: 7px; border-radius: 999px; background: #edf3f5; overflow: hidden; }
+    .home-mix-fill { height: 100%; border-radius: 999px; background: #0f766e; }
+
+  </style>
 
 <style>
   .account-detail-top-grid {
@@ -4572,43 +4584,51 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
     const cutoff90 = new Date(startToday.getTime() - 89 * 86400000);
     const ytdStart = new Date(now.getFullYear(), 0, 1);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const referrals = (referralActivity || []).map(r => ({ ...r, _date: r.ReferralDate ? new Date(r.ReferralDate) : null, _rate: Number.isFinite(Number(r.Rate)) ? Number(r.Rate) : 0 })).filter(r => r._date && !Number.isNaN(r._date.getTime()) && r._date <= now);
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const referrals = (referralActivity || []).map(r => ({
+      ...r,
+      _date: r.ReferralDate ? new Date(r.ReferralDate) : null,
+      _rate: Number.isFinite(Number(r.Rate)) ? Number(r.Rate) : 0
+    })).filter(r => r._date && !Number.isNaN(r._date.getTime()) && r._date <= now);
     const inRange = (r, start) => r._date >= start;
     const last30 = referrals.filter(r => inRange(r, cutoff30));
     const last90 = referrals.filter(r => inRange(r, cutoff90));
     const ytd = referrals.filter(r => inRange(r, ytdStart));
     const mtd = referrals.filter(r => inRange(r, monthStart));
+    const prevMonth = referrals.filter(r => r._date >= prevMonthStart && r._date < monthStart);
     const revenueMtd = mtd.reduce((sum, r) => sum + r._rate, 0);
     const revenue30 = last30.reduce((sum, r) => sum + r._rate, 0);
     const revenue90 = last90.reduce((sum, r) => sum + r._rate, 0);
     const revenueYtd = ytd.reduce((sum, r) => sum + r._rate, 0);
+    const prevMonthRevenue = prevMonth.reduce((sum, r) => sum + r._rate, 0);
+    const avgRevenuePerReferral = ytd.length ? revenueYtd / ytd.length : 0;
+    const revenueMtdChange = prevMonthRevenue > 0 ? ((revenueMtd - prevMonthRevenue) / prevMonthRevenue) * 100 : null;
     const active = (accounts || []).filter(a => (a.RelationshipStage || '') === 'Active Referrer' || a.Status === 'Customer');
     const pipelineStages = ['Contacted', 'Connected', 'Referral Discussion'];
     const pipelineAccounts = (accounts || []).filter(a => pipelineStages.includes(a.RelationshipStage || 'Target'));
-    const todayKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-    const due = (accounts || []).filter(a => {
-      const d = String(a.NextFollowUp || '').slice(0,10);
-      return /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey;
-    });
-    const overdue = due.filter(a => String(a.NextFollowUp || '').slice(0,10) < todayKey);
-    const dueToday = due.filter(a => String(a.NextFollowUp || '').slice(0,10) === todayKey);
-    const highNoAction = (accounts || []).filter(a => {
-      const p = computeOverallFeesOpportunity(a);
-      return p && (p.label === 'High' || p.label === 'Very High') && !String(a.NextAction || '').trim() && (a.RelationshipStage || 'Target') !== 'Active Referrer';
-    });
     const accountMap = Object.fromEntries((accounts || []).map(a => [a.AccountId, a]));
     const sourceStats = {};
     referrals.forEach(r => {
-      if (!sourceStats[r.AccountId]) sourceStats[r.AccountId] = { mtd:0, last30:0, last90:0, ytd:0, revenueMtd:0, revenue30:0, revenue90:0, revenueYtd:0, latest:null };
+      if (!sourceStats[r.AccountId]) sourceStats[r.AccountId] = { mtd:0, last30:0, last90:0, ytd:0, revenueMtd:0, revenue30:0, revenue90:0, revenueYtd:0, latest:null, first:null };
       const st = sourceStats[r.AccountId];
       if (inRange(r, monthStart)) { st.mtd++; st.revenueMtd += r._rate; }
       if (inRange(r, cutoff30)) { st.last30++; st.revenue30 += r._rate; }
       if (inRange(r, cutoff90)) { st.last90++; st.revenue90 += r._rate; }
       if (inRange(r, ytdStart)) { st.ytd++; st.revenueYtd += r._rate; }
       if (!st.latest || r._date > st.latest) st.latest = r._date;
+      if (!st.first || r._date < st.first) st.first = r._date;
     });
-    const topSources = Object.entries(sourceStats).map(([id, st]) => ({ id, account: accountMap[id], ...st })).filter(x => x.account).sort((a,b) => b.revenueMtd-a.revenueMtd || b.mtd-a.mtd || b.last30-a.last30 || b.ytd-a.ytd).slice(0,6);
+    const allSources = Object.entries(sourceStats).map(([id, st]) => ({ id, account: accountMap[id], ...st })).filter(x => x.account);
+    const topSources = [...allSources].sort((a,b) => b.revenueYtd-a.revenueYtd || b.ytd-a.ytd || b.revenueMtd-a.revenueMtd).slice(0,6);
+    const revenueMixSources = [...allSources].filter(x => x.revenueYtd > 0).sort((a,b) => b.revenueYtd-a.revenueYtd).slice(0,5);
+    const top5Revenue = revenueMixSources.reduce((sum, x) => sum + x.revenueYtd, 0);
+    const top5Share = revenueYtd > 0 ? Math.round((top5Revenue / revenueYtd) * 100) : 0;
+    const maxSourceRevenue = Math.max(1, ...revenueMixSources.map(x => x.revenueYtd));
     const needsAttention = active.map(a => ({ account:a, latest: sourceStats[a.AccountId]?.latest || null })).filter(x => !x.latest || x.latest < cutoff90).sort((a,b) => (a.latest?.getTime() || 0) - (b.latest?.getTime() || 0)).slice(0,5);
+    const newActive90 = active.filter(a => {
+      const first = sourceStats[a.AccountId]?.first;
+      return first && first >= cutoff90;
+    }).length;
     const months = [];
     for (let offset=5; offset>=0; offset--) {
       const d = new Date(now.getFullYear(), now.getMonth()-offset, 1);
@@ -4618,43 +4638,150 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       const m = months.find(x => x.year === r._date.getFullYear() && x.month === r._date.getMonth());
       if (m) { m.count++; m.revenue += r._rate; }
     });
-    const stageCounts = ['Target','Contacted','Connected','Referral Discussion','Active Referrer'].map(stage => ({ stage, count:(accounts || []).filter(a => (a.RelationshipStage || 'Target') === stage).length }));
-    return { mtd:mtd.length, last30:last30.length, last90:last90.length, ytd:ytd.length, revenueMtd, revenue30, revenue90, revenueYtd, activeCount:active.length, pipelineCount:pipelineAccounts.length, dueCount:due.length, overdueCount:overdue.length, dueTodayCount:dueToday.length, highNoActionCount:highNoAction.length, topSources, needsAttention, months, stageCounts };
+    const stageCounts = ['Target','Contacted','Connected','Referral Discussion','Active Referrer'].map(stage => ({
+      stage,
+      count:(accounts || []).filter(a => (a.RelationshipStage || 'Target') === stage).length
+    }));
+    return {
+      mtd:mtd.length, last30:last30.length, last90:last90.length, ytd:ytd.length,
+      revenueMtd, revenue30, revenue90, revenueYtd, prevMonthRevenue, revenueMtdChange,
+      avgRevenuePerReferral, activeCount:active.length, pipelineCount:pipelineAccounts.length,
+      topSources, revenueMixSources, top5Share, maxSourceRevenue, needsAttention, newActive90,
+      months, stageCounts
+    };
   }, [accounts, referralActivity]);
+
   const maxMonth = Math.max(1, ...analytics.months.map(m => m.revenue));
   const maxStage = Math.max(1, ...analytics.stageCounts.map(s => s.count));
   const fmtLast = date => !date ? 'No referrals recorded' : `Last referral ${date.toLocaleDateString(undefined,{month:'short',day:'numeric'})}`;
+  const mtdTrend = analytics.revenueMtdChange === null
+    ? 'No prior-month revenue to compare'
+    : `${analytics.revenueMtdChange >= 0 ? '↑' : '↓'} ${Math.abs(analytics.revenueMtdChange).toFixed(0)}% vs last month`;
+
   return /*#__PURE__*/React.createElement('main', { className:'bdd-home' }, /*#__PURE__*/React.createElement('div', { className:'home-shell' },
     /*#__PURE__*/React.createElement('div', { className:'home-hero' }, /*#__PURE__*/React.createElement('div', null,
       /*#__PURE__*/React.createElement('div', { className:'home-eyebrow' }, 'BDD CRM'),
-      /*#__PURE__*/React.createElement('h1', { className:'home-title' }, 'Business Development Overview'),
-      /*#__PURE__*/React.createElement('p', { className:'home-subtitle' }, 'Referral performance, pipeline health, and relationships that need attention.')
+      /*#__PURE__*/React.createElement('h1', { className:'home-title' }, 'Revenue & Referral Performance'),
+      /*#__PURE__*/React.createElement('p', { className:'home-subtitle' }, 'Revenue momentum, referral trends, and the relationships driving growth.')
     ), /*#__PURE__*/React.createElement('div', { className:'home-period' }, 'Live CRM data')),
+
     /*#__PURE__*/React.createElement('div', { className:'home-kpis' },
-      [['Active Referrers',analytics.activeCount,'Current referral relationships'],['Referrals · 30d',analytics.last30,`${analytics.last90} in the last 90 days`],['Revenue · MTD',formatCurrency(analytics.revenueMtd),`${analytics.mtd} referrals this month · ${formatCurrency(analytics.revenue30)} in 30d`],['Revenue · YTD',formatCurrency(analytics.revenueYtd),`${analytics.ytd} referrals year to date`],['Pipeline Accounts',analytics.pipelineCount,'Contacted through referral discussion'],['Follow-ups Due',analytics.dueCount,`${analytics.overdueCount} overdue · ${analytics.dueTodayCount} today`]].map(([label,value,note]) => /*#__PURE__*/React.createElement('div',{className:'home-kpi',key:label}, /*#__PURE__*/React.createElement('div',{className:'home-kpi-label'},label), /*#__PURE__*/React.createElement('div',{className:'home-kpi-value'},value), /*#__PURE__*/React.createElement('div',{className:'home-kpi-note'},note)))
+      [
+        ['Revenue · MTD',formatCurrency(analytics.revenueMtd),mtdTrend],
+        ['Revenue · 30d',formatCurrency(analytics.revenue30),`${analytics.last30} referrals in the last 30 days`],
+        ['Revenue · YTD',formatCurrency(analytics.revenueYtd),`${analytics.ytd} referrals year to date`],
+        ['Referrals · 30d',analytics.last30,`${analytics.last90} in the last 90 days`],
+        ['Avg. Revenue / Referral',formatCurrency(analytics.avgRevenuePerReferral),'Based on recorded YTD referral rates'],
+        ['Active Referrers',analytics.activeCount,`${analytics.newActive90} began referring in the last 90 days`]
+      ].map(([label,value,note]) => /*#__PURE__*/React.createElement('div',{className:'home-kpi',key:label},
+        /*#__PURE__*/React.createElement('div',{className:'home-kpi-label'},label),
+        /*#__PURE__*/React.createElement('div',{className:'home-kpi-value'},value),
+        /*#__PURE__*/React.createElement('div',{className:'home-kpi-note'},note)
+      ))
     ),
-    /*#__PURE__*/React.createElement('div', { className:'home-grid' },
-      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Referral Activity'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Referral events recorded across all facilities'))),
-        /*#__PURE__*/React.createElement('div',{className:'home-referral-summary'}, [['30 days',`${analytics.last30} · ${formatCurrency(analytics.revenue30)}`],['90 days',`${analytics.last90} · ${formatCurrency(analytics.revenue90)}`],['YTD',`${analytics.ytd} · ${formatCurrency(analytics.revenueYtd)}`]].map(([label,value]) => /*#__PURE__*/React.createElement('div',{className:'home-referral-stat',key:label}, /*#__PURE__*/React.createElement('strong',null,value), /*#__PURE__*/React.createElement('span',null,label)))),
-        /*#__PURE__*/React.createElement('div',{className:'home-chart'}, analytics.months.map(m => /*#__PURE__*/React.createElement('div',{className:'home-chart-col',key:`${m.year}-${m.month}`}, /*#__PURE__*/React.createElement('div',{className:'home-chart-value'},`${m.count} · ${formatCurrency(m.revenue)}`), /*#__PURE__*/React.createElement('div',{className:'home-chart-bar-wrap'}, /*#__PURE__*/React.createElement('div',{className:'home-chart-bar',style:{height:`${Math.max(3,(m.revenue/maxMonth)*100)}%`}})), /*#__PURE__*/React.createElement('div',{className:'home-chart-label'},m.label))))
+
+    /*#__PURE__*/React.createElement('section',{className:'home-card home-trend-card'},
+      /*#__PURE__*/React.createElement('div',{className:'home-card-head'},
+        /*#__PURE__*/React.createElement('div',null,
+          /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Revenue & Referral Trend · 6 Months'),
+          /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Monthly revenue with referral volume shown above each bar')
+        )
       ),
-      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Top Referral Sources'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Monthly referral volume and revenue by facility'))),
+      /*#__PURE__*/React.createElement('div',{className:'home-chart home-chart-large'},
+        analytics.months.map(m => /*#__PURE__*/React.createElement('div',{className:'home-chart-col',key:`${m.year}-${m.month}`},
+          /*#__PURE__*/React.createElement('div',{className:'home-chart-value'},formatCurrency(m.revenue)),
+          /*#__PURE__*/React.createElement('div',{className:'home-chart-count'},`${m.count} referral${m.count === 1 ? '' : 's'}`),
+          /*#__PURE__*/React.createElement('div',{className:'home-chart-bar-wrap'}, /*#__PURE__*/React.createElement('div',{className:'home-chart-bar',style:{height:`${Math.max(3,(m.revenue/maxMonth)*100)}%`}})),
+          /*#__PURE__*/React.createElement('div',{className:'home-chart-label'},m.label)
+        ))
+      )
+    ),
+
+    /*#__PURE__*/React.createElement('div', { className:'home-grid' },
+      /*#__PURE__*/React.createElement('section',{className:'home-card'},
+        /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null,
+          /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Top Referral Sources'),
+          /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Ranked by YTD revenue')
+        )),
         analytics.topSources.length ? /*#__PURE__*/React.createElement(React.Fragment,null,
-          /*#__PURE__*/React.createElement('div',{className:'home-source-row home-source-head'}, /*#__PURE__*/React.createElement('div',null,'Facility'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'MTD'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ MTD'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'YTD'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ YTD')),
-          analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row',key:x.id}, /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.mtd), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueMtd)), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.ytd), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueYtd))))
+          /*#__PURE__*/React.createElement('div',{className:'home-source-row home-source-head'},
+            /*#__PURE__*/React.createElement('div',null,'Facility'),
+            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'MTD'),
+            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ MTD'),
+            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'YTD'),
+            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ YTD')
+          ),
+          analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row',key:x.id},
+            /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
+            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.mtd),
+            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueMtd)),
+            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.ytd),
+            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueYtd))
+          ))
         ) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'Referral activity will appear here once referrals are recorded.')
-      )
-    ),
-    /*#__PURE__*/React.createElement('div', { className:'home-grid' },
-      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Pipeline Health'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Where referral-source relationships currently sit')), /*#__PURE__*/React.createElement('button',{className:'home-link',onClick:onAccounts},'View accounts →')),
-        /*#__PURE__*/React.createElement('div',{className:'home-pipeline'}, analytics.stageCounts.map(s => /*#__PURE__*/React.createElement('div',{className:'home-stage',key:s.stage}, /*#__PURE__*/React.createElement('div',{className:'home-stage-value'},s.count), /*#__PURE__*/React.createElement('div',{className:'home-stage-label'},s.stage), /*#__PURE__*/React.createElement('div',{className:'home-stage-bar'}, /*#__PURE__*/React.createElement('div',{className:'home-stage-fill',style:{width:`${Math.max(4,(s.count/maxStage)*100)}%`}})))))
       ),
-      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Needs Attention'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Active referrers quiet for 90+ days'))),
-        analytics.needsAttention.length ? analytics.needsAttention.map(x => /*#__PURE__*/React.createElement('div',{className:'home-attention-row',key:x.account.AccountId}, /*#__PURE__*/React.createElement('div',{className:'home-attention-main'}, /*#__PURE__*/React.createElement('button',{className:'home-attention-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'), /*#__PURE__*/React.createElement('div',{className:'home-attention-meta'},fmtLast(x.latest))), /*#__PURE__*/React.createElement('span',{className:'home-badge'},'Review'))) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'No active referrers are currently quiet for 90+ days.')
+
+      /*#__PURE__*/React.createElement('section',{className:'home-card'},
+        /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null,
+          /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Revenue Mix'),
+          /*#__PURE__*/React.createElement('div',{className:'home-card-copy'}, analytics.revenueMixSources.length ? `Top 5 sources generate ${analytics.top5Share}% of YTD revenue` : 'Revenue concentration by referral source')
+        )),
+        analytics.revenueMixSources.length ? /*#__PURE__*/React.createElement('div',{className:'home-revenue-mix'},
+          analytics.revenueMixSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-mix-row',key:x.id},
+            /*#__PURE__*/React.createElement('div',{className:'home-mix-top'},
+              /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
+              /*#__PURE__*/React.createElement('strong',null,formatCurrency(x.revenueYtd))
+            ),
+            /*#__PURE__*/React.createElement('div',{className:'home-mix-track'},
+              /*#__PURE__*/React.createElement('div',{className:'home-mix-fill',style:{width:`${Math.max(3,(x.revenueYtd/analytics.maxSourceRevenue)*100)}%`}})
+            )
+          ))
+        ) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'Revenue mix will appear once referral rates are recorded.')
       )
     ),
-    /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Today at a Glance'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'A compact preview of the work queue')), /*#__PURE__*/React.createElement('button',{className:'home-link',onClick:onToday},'Open Today →')),
-      /*#__PURE__*/React.createElement('div',{className:'home-today-grid'}, [['Overdue follow-ups',analytics.overdueCount],['Due today',analytics.dueTodayCount],['High opportunity · no next action',analytics.highNoActionCount]].map(([label,value]) => /*#__PURE__*/React.createElement('div',{className:'home-today-stat',key:label}, /*#__PURE__*/React.createElement('strong',null,value), /*#__PURE__*/React.createElement('span',null,label))))
+
+    /*#__PURE__*/React.createElement('div', { className:'home-grid' },
+      /*#__PURE__*/React.createElement('section',{className:'home-card'},
+        /*#__PURE__*/React.createElement('div',{className:'home-card-head'},
+          /*#__PURE__*/React.createElement('div',null,
+            /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Business Development Momentum'),
+            /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'How the referral-source pipeline is translating into active business')
+          ),
+          /*#__PURE__*/React.createElement('button',{className:'home-link',onClick:onAccounts},'View pipeline →')
+        ),
+        /*#__PURE__*/React.createElement('div',{className:'home-referral-summary'},
+          [
+            ['Active Referrers',analytics.activeCount],
+            ['New Referrers · 90d',analytics.newActive90],
+            ['Referral Discussion',analytics.stageCounts.find(s=>s.stage==='Referral Discussion')?.count || 0],
+            ['Connected',analytics.stageCounts.find(s=>s.stage==='Connected')?.count || 0]
+          ].map(([label,value]) => /*#__PURE__*/React.createElement('div',{className:'home-referral-stat',key:label},
+            /*#__PURE__*/React.createElement('strong',null,value),
+            /*#__PURE__*/React.createElement('span',null,label)
+          ))
+        ),
+        /*#__PURE__*/React.createElement('div',{className:'home-pipeline'},
+          analytics.stageCounts.map(s => /*#__PURE__*/React.createElement('div',{className:'home-stage',key:s.stage},
+            /*#__PURE__*/React.createElement('div',{className:'home-stage-value'},s.count),
+            /*#__PURE__*/React.createElement('div',{className:'home-stage-label'},s.stage),
+            /*#__PURE__*/React.createElement('div',{className:'home-stage-bar'}, /*#__PURE__*/React.createElement('div',{className:'home-stage-fill',style:{width:`${Math.max(4,(s.count/maxStage)*100)}%`}}))
+          ))
+        )
+      ),
+
+      /*#__PURE__*/React.createElement('section',{className:'home-card'},
+        /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null,
+          /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Needs Attention'),
+          /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Active referrers quiet for 90+ days')
+        )),
+        analytics.needsAttention.length ? analytics.needsAttention.map(x => /*#__PURE__*/React.createElement('div',{className:'home-attention-row',key:x.account.AccountId},
+          /*#__PURE__*/React.createElement('div',{className:'home-attention-main'},
+            /*#__PURE__*/React.createElement('button',{className:'home-attention-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
+            /*#__PURE__*/React.createElement('div',{className:'home-attention-meta'},fmtLast(x.latest))
+          ),
+          /*#__PURE__*/React.createElement('span',{className:'home-badge'},'Review')
+        )) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'No active referrers are currently quiet for 90+ days.')
+      )
     )
   ));
 }
