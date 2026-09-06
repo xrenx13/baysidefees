@@ -267,6 +267,9 @@
     .home-mix-track { height: 7px; border-radius: 999px; background: #edf3f5; overflow: hidden; }
     .home-mix-fill { height: 100%; border-radius: 999px; background: #0f766e; }
 
+  
+    .account-detail-page { display:flex; flex-direction:column; }
+    .account-detail-page > .account-connections-card { order:99; }
   </style>
 
 <style>
@@ -2400,22 +2403,13 @@ function AccountDetail({
   const [meetings, setMeetings] = useState(null); // null = not loaded yet
   const [meetingsLoading, setMeetingsLoading] = useState(false);
   const [meetingsError, setMeetingsError] = useState('');
-  // Account Detail is a client-side view swap, so browsers can preserve the
-  // prior page's scroll position. Reset immediately and again after layout
-  // settles so a newly opened account always starts at Account Details.
+  // Navigating here is a client-side view swap, not a real page load, so
+  // the browser keeps whatever scroll position you were at before (list
+  // view, or a previous account's detail page) -- without this, clicking
+  // a facility name can land you partway down the new page instead of
+  // at the top.
   useEffect(() => {
-    const resetScroll = () => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-    resetScroll();
-    const raf = requestAnimationFrame(resetScroll);
-    const timer = setTimeout(resetScroll, 80);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(timer);
-    };
+    window.scrollTo(0, 0);
   }, [account.AccountId]);
   const [loggingActivity, setLoggingActivity] = useState(false);
   useEffect(() => {
@@ -3136,6 +3130,50 @@ function AccountDetail({
     rel: "noopener noreferrer",
     className: "flex-1 text-center py-2.5 text-teal-600 hover:bg-skyblue-100/30 transition font-medium"
   }, "Open in Apple Maps"))), /*#__PURE__*/React.createElement("div", {
+    className: "account-connections-card bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-1"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900"
+  }, "Connections"), !addingConnection && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setAddingConnection(true),
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
+  }, "+ Add connection")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 mb-4"
+  }, "People tied to this account who don't work there — e.g. a covering physician or referral partner."), addingConnection && /*#__PURE__*/React.createElement(ConnectionForm, {
+    onSave: saveConnection,
+    onCancel: () => setAddingConnection(false),
+    roleOptions: roleOptions,
+    relationshipOptions: relationshipOptions
+  }), accountConnections.length === 0 && !addingConnection && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No connections yet — add the first one above."), accountConnections.map(c => editingConnectionId === c.ConnectionId ? /*#__PURE__*/React.createElement(ConnectionForm, {
+    key: c.ConnectionId,
+    initial: c,
+    onSave: saveConnection,
+    onCancel: () => setEditingConnectionId(null),
+    roleOptions: roleOptions,
+    relationshipOptions: relationshipOptions
+  }) : /*#__PURE__*/React.createElement("div", {
+    key: c.ConnectionId,
+    className: "flex items-center justify-between py-3 border-b border-skyblue-100 last:border-0"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium text-navy-900"
+  }, c.ContactName, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/50 font-normal"
+  }, "— ", c.Role)), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/60"
+  }, [c.Phone, c.Email].filter(Boolean).join(' · ')), c.Relationship && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-teal-600/80 mt-0.5"
+  }, c.Relationship)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 text-sm"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEditingConnectionId(c.ConnectionId),
+    className: "text-teal-600 hover:text-teal-700"
+  }, "Edit"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeConnection(c.ConnectionId),
+    className: "text-navy-700/40 hover:text-red-500"
+  }, "Remove"))))), /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-1"
@@ -3222,51 +3260,7 @@ function AccountDetail({
     minute: '2-digit'
   }))), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/50 mt-0.5"
-  }, m.matchedGuest, m.location ? ` · ${m.location}` : '')))))), /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between mb-1"
-  }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
-  }, "Connections"), !addingConnection && /*#__PURE__*/React.createElement("button", {
-    onClick: () => setAddingConnection(true),
-    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
-  }, "+ Add connection")), /*#__PURE__*/React.createElement("p", {
-    className: "text-xs text-navy-700/40 mb-4"
-  }, "People tied to this account who don't work there — e.g. a covering physician or referral partner."), addingConnection && /*#__PURE__*/React.createElement(ConnectionForm, {
-    onSave: saveConnection,
-    onCancel: () => setAddingConnection(false),
-    roleOptions: roleOptions,
-    relationshipOptions: relationshipOptions
-  }), accountConnections.length === 0 && !addingConnection && /*#__PURE__*/React.createElement("p", {
-    className: "text-navy-700/40 text-sm"
-  }, "No connections yet — add the first one above."), accountConnections.map(c => editingConnectionId === c.ConnectionId ? /*#__PURE__*/React.createElement(ConnectionForm, {
-    key: c.ConnectionId,
-    initial: c,
-    onSave: saveConnection,
-    onCancel: () => setEditingConnectionId(null),
-    roleOptions: roleOptions,
-    relationshipOptions: relationshipOptions
-  }) : /*#__PURE__*/React.createElement("div", {
-    key: c.ConnectionId,
-    className: "flex items-center justify-between py-3 border-b border-skyblue-100 last:border-0"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
-    className: "font-medium text-navy-900"
-  }, c.ContactName, " ", /*#__PURE__*/React.createElement("span", {
-    className: "text-navy-700/50 font-normal"
-  }, "— ", c.Role)), /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-navy-700/60"
-  }, [c.Phone, c.Email].filter(Boolean).join(' · ')), c.Relationship && /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-teal-600/80 mt-0.5"
-  }, c.Relationship)), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-3 text-sm"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setEditingConnectionId(c.ConnectionId),
-    className: "text-teal-600 hover:text-teal-700"
-  }, "Edit"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => removeConnection(c.ConnectionId),
-    className: "text-navy-700/40 hover:text-red-500"
-  }, "Remove")))));
+  }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))));
 }
 
 // ---------------------------------------------------------------------
@@ -5358,7 +5352,6 @@ function App() {
 
   if (view === 'detail' && selectedAccount) {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, { ...chromeProps(selectedAccount.AccountName || 'Account'), detailAccount: selectedAccount, onDetailStageChange: updateSelectedAccountStage }), /*#__PURE__*/React.createElement(AccountDetail, {
-      key: selectedAccount.AccountId,
       account: selectedAccount,
       contacts: data.contacts,
       connections: data.connections,
