@@ -137,8 +137,8 @@
   .saas-search-result:hover { background:#f8fafc; }
   .saas-search-result strong { display:block; font-size:12px; color:#0f172a; }
   .saas-search-result span { display:block; margin-top:2px; font-size:11px; color:#64748b; }
-  .saas-referral-btn { border:1px solid #0f766e; background:#fff; color:#0f766e; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; transition:.15s; white-space:nowrap; }
-  .saas-referral-btn:hover { background:#f0fdfa; }
+  .saas-referral-btn { border:1px solid #15803d; background:#16a34a; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; transition:.15s; white-space:nowrap; }
+  .saas-referral-btn:hover { background:#15803d; border-color:#166534; }
   .saas-modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.36); display:flex; align-items:center; justify-content:center; padding:20px; z-index:2000; }
   .saas-modal { width:min(520px, 100%); background:#fff; border-radius:16px; border:1px solid var(--saas-line); box-shadow:0 24px 70px rgba(15,23,42,.25); padding:20px; }
   .saas-modal h3 { font-size:16px; font-weight:700; color:#0f172a; margin:0; }
@@ -194,7 +194,7 @@
   .home-title { font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.035em; color:var(--saas-ink); }
   .home-subtitle { margin-top:7px; font-size:14px; color:#737d8c; }
   .home-period { font-size:12px; color:#667085; border:1px solid var(--saas-line); background:#fff; border-radius:9px; padding:8px 11px; }
-  .home-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+  .home-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
   .home-kpi { background:#fff; border:1px solid var(--saas-line); border-radius:13px; padding:16px 17px; }
   .home-kpi-label { font-size:11px; font-weight:650; color:#7a8493; margin-bottom:8px; }
   .home-kpi-value { font-size:26px; line-height:1; font-weight:720; letter-spacing:-.035em; color:var(--saas-ink); }
@@ -214,7 +214,7 @@
   .home-chart-bar-wrap { width:100%; height:105px; display:flex; align-items:flex-end; justify-content:center; }
   .home-chart-bar { width:min(34px,68%); min-height:3px; border-radius:6px 6px 2px 2px; background:#a8d1cc; }
   .home-chart-label { font-size:10px; color:#9aa3af; white-space:nowrap; }
-  .home-source-row { display:grid; grid-template-columns:minmax(0,1fr) 42px 42px 42px; gap:8px; align-items:center; padding:9px 0; border-top:1px solid #f0f2f5; font-size:12px; }
+  .home-source-row { display:grid; grid-template-columns:minmax(0,1fr) 42px 72px 42px 78px; gap:8px; align-items:center; padding:9px 0; border-top:1px solid #f0f2f5; font-size:12px; }
   .home-source-row:first-of-type { border-top:0; }
   .home-source-name { border:0; background:transparent; padding:0; text-align:left; color:#334155; font-weight:600; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .home-source-num { text-align:right; color:#4b5563; font-variant-numeric:tabular-nums; }
@@ -828,6 +828,12 @@ function formatShortDate(date) {
     month: 'short',
     day: 'numeric'
   });
+}
+
+function formatCurrency(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return '—';
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: amount % 1 === 0 ? 0 : 2 }).format(amount);
 }
 
 // Two-letter initials from a full name (e.g. "Melanie Reynolds" -> "MR"),
@@ -2405,6 +2411,7 @@ function AccountDetail({
   const [editActivityNextAction, setEditActivityNextAction] = useState('');
   const [editActivityNextActionDue, setEditActivityNextActionDue] = useState('');
   const [recordingReferral, setRecordingReferral] = useState(false);
+  const [referralRate, setReferralRate] = useState('');
   const [referralDate, setReferralDate] = useState(() => {
     const d = new Date();
     const y = d.getFullYear();
@@ -2440,6 +2447,21 @@ function AccountDetail({
     const d = referralDateAtMidnight_(r.ReferralDate);
     return d && !isNaN(d.getTime()) && d.getFullYear() === new Date().getFullYear();
   }).length;
+  const referralRevenueSince_ = days => {
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setDate(cutoff.getDate() - (days - 1));
+    return accountReferralActivity.reduce((sum, r) => {
+      const d = referralDateAtMidnight_(r.ReferralDate);
+      const rate = Number(r.Rate);
+      return d && !isNaN(d.getTime()) && d >= cutoff && Number.isFinite(rate) ? sum + rate : sum;
+    }, 0);
+  };
+  const referralRevenueYtd = accountReferralActivity.reduce((sum, r) => {
+    const d = referralDateAtMidnight_(r.ReferralDate);
+    const rate = Number(r.Rate);
+    return d && !isNaN(d.getTime()) && d.getFullYear() === new Date().getFullYear() && Number.isFinite(rate) ? sum + rate : sum;
+  }, 0);
   const lastReferral = accountReferralActivity.length ? accountReferralActivity[0].ReferralDate : '';
 
   // Derived for the header: which contact is the primary clinical contact
@@ -2756,7 +2778,8 @@ function AccountDetail({
   };
 
   const recordReferral = () => {
-    if (!referralDate) return;
+    const numericRate = Number(referralRate);
+    if (!referralDate || referralRate === '' || !Number.isFinite(numericRate) || numericRate < 0) return;
     const simplePracticeWindow = window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
     const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
@@ -2764,9 +2787,11 @@ function AccountDetail({
       ReferralActivityId: tempId,
       AccountId: account.AccountId,
       ReferralDate: referralDate,
+      Rate: numericRate,
       RecordedBy: recordedBy
     };
     setRecordingReferral(false);
+    setReferralRate('');
     onLocalData(d => ({
       ...d,
       referralActivity: [...(d.referralActivity || []), localReferral],
@@ -2778,6 +2803,7 @@ function AccountDetail({
     apiPost('createReferralActivity', { data: {
       AccountId: account.AccountId,
       ReferralDate: referralDate,
+      Rate: numericRate,
       RecordedBy: recordedBy
     }}).then(response => {
       if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
@@ -2949,8 +2975,8 @@ function AccountDetail({
     onClick: () => setRecordingReferral(true),
     className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
   }, "+ Record Referral")), /*#__PURE__*/React.createElement("div", {
-    className: "grid grid-cols-2 md:grid-cols-4 gap-3 mb-5"
-  }, [["Last Referral", lastReferral ? formatShortDate(referralDateAtMidnight_(lastReferral)) : "—"], ["30 Days", String(referralCountSince_(30))], ["90 Days", String(referralCountSince_(90))], ["YTD", String(referralYtd)]].map(([label, value]) => /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-3 gap-3 mb-5"
+  }, [["Last Referral", lastReferral ? formatShortDate(referralDateAtMidnight_(lastReferral)) : "—"], ["30 Days", String(referralCountSince_(30))], ["90 Days", String(referralCountSince_(90))], ["YTD", String(referralYtd)], ["Revenue · 30d", formatCurrency(referralRevenueSince_(30))], ["Revenue · YTD", formatCurrency(referralRevenueYtd)]].map(([label, value]) => /*#__PURE__*/React.createElement("div", {
     key: label,
     className: "rounded-lg border border-skyblue-100 bg-skyblue-50/30 px-4 py-3"
   }, /*#__PURE__*/React.createElement("p", {
@@ -2968,9 +2994,13 @@ function AccountDetail({
     className: "flex items-center justify-between gap-4 py-2.5 text-sm"
   }, /*#__PURE__*/React.createElement("span", {
     className: "font-medium text-navy-900"
-  }, formatShortDate(referralDateAtMidnight_(r.ReferralDate))), /*#__PURE__*/React.createElement("span", {
-    className: "text-navy-700/50 text-right"
-  }, r.RecordedBy || "BDD User")))))) : /*#__PURE__*/React.createElement("p", {
+  }, formatShortDate(referralDateAtMidnight_(r.ReferralDate))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-5 text-right"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold text-navy-900"
+  }, formatCurrency(r.Rate)), /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/50"
+  }, r.RecordedBy || "BDD User"))))))) : /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/40 border-t border-skyblue-100 pt-4"
   }, "No referrals recorded yet."), /*#__PURE__*/React.createElement("div", {
     className: "mt-4 rounded-lg bg-teal-50 border border-teal-100 px-4 py-3 text-xs text-teal-800"
@@ -2995,7 +3025,16 @@ function AccountDetail({
     value: referralDate,
     onChange: e => setReferralDate(e.target.value),
     className: "w-full rounded-lg border border-skyblue-200 px-3 py-2 text-navy-900 focus:outline-none focus:ring-2 focus:ring-teal-400"
-  }), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-medium text-navy-900 mb-1.5 mt-4"
+  }, "Rate"), /*#__PURE__*/React.createElement("div", {
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute left-3 top-2 text-navy-700/55"
+  }, "$"), /*#__PURE__*/React.createElement("input", {
+    type: "number", min: "0", step: "0.01", inputMode: "decimal", value: referralRate, onChange: e => setReferralRate(e.target.value), placeholder: "450",
+    className: "w-full rounded-lg border border-skyblue-200 pl-7 pr-3 py-2 text-navy-900 focus:outline-none focus:ring-2 focus:ring-teal-400"
+  })), /*#__PURE__*/React.createElement("div", {
     className: "mt-4 rounded-lg bg-skyblue-50 border border-skyblue-100 px-4 py-3 text-sm text-navy-700/70"
   }, /*#__PURE__*/React.createElement("strong", {
     className: "text-navy-900"
@@ -3006,7 +3045,7 @@ function AccountDetail({
     className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
   }, "Cancel"), /*#__PURE__*/React.createElement("button", {
     onClick: recordReferral,
-    disabled: !referralDate,
+    disabled: !referralDate || referralRate === '' || !Number.isFinite(Number(referralRate)) || Number(referralRate) < 0,
     className: "bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
   }, "Record & Open SimplePractice")))), /*#__PURE__*/React.createElement(ActivityLogCard, {
     activities: accountActivities,
@@ -4530,11 +4569,17 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
     const cutoff30 = new Date(startToday.getTime() - 29 * 86400000);
     const cutoff90 = new Date(startToday.getTime() - 89 * 86400000);
     const ytdStart = new Date(now.getFullYear(), 0, 1);
-    const referrals = (referralActivity || []).map(r => ({ ...r, _date: r.ReferralDate ? new Date(r.ReferralDate) : null })).filter(r => r._date && !Number.isNaN(r._date.getTime()) && r._date <= now);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const referrals = (referralActivity || []).map(r => ({ ...r, _date: r.ReferralDate ? new Date(r.ReferralDate) : null, _rate: Number.isFinite(Number(r.Rate)) ? Number(r.Rate) : 0 })).filter(r => r._date && !Number.isNaN(r._date.getTime()) && r._date <= now);
     const inRange = (r, start) => r._date >= start;
     const last30 = referrals.filter(r => inRange(r, cutoff30));
     const last90 = referrals.filter(r => inRange(r, cutoff90));
     const ytd = referrals.filter(r => inRange(r, ytdStart));
+    const mtd = referrals.filter(r => inRange(r, monthStart));
+    const revenueMtd = mtd.reduce((sum, r) => sum + r._rate, 0);
+    const revenue30 = last30.reduce((sum, r) => sum + r._rate, 0);
+    const revenue90 = last90.reduce((sum, r) => sum + r._rate, 0);
+    const revenueYtd = ytd.reduce((sum, r) => sum + r._rate, 0);
     const active = (accounts || []).filter(a => (a.RelationshipStage || '') === 'Active Referrer' || a.Status === 'Customer');
     const pipelineStages = ['Contacted', 'Connected', 'Referral Discussion'];
     const pipelineAccounts = (accounts || []).filter(a => pipelineStages.includes(a.RelationshipStage || 'Target'));
@@ -4552,28 +4597,29 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
     const accountMap = Object.fromEntries((accounts || []).map(a => [a.AccountId, a]));
     const sourceStats = {};
     referrals.forEach(r => {
-      if (!sourceStats[r.AccountId]) sourceStats[r.AccountId] = { last30:0, last90:0, ytd:0, latest:null };
+      if (!sourceStats[r.AccountId]) sourceStats[r.AccountId] = { mtd:0, last30:0, last90:0, ytd:0, revenueMtd:0, revenue30:0, revenue90:0, revenueYtd:0, latest:null };
       const st = sourceStats[r.AccountId];
-      if (inRange(r, cutoff30)) st.last30++;
-      if (inRange(r, cutoff90)) st.last90++;
-      if (inRange(r, ytdStart)) st.ytd++;
+      if (inRange(r, monthStart)) { st.mtd++; st.revenueMtd += r._rate; }
+      if (inRange(r, cutoff30)) { st.last30++; st.revenue30 += r._rate; }
+      if (inRange(r, cutoff90)) { st.last90++; st.revenue90 += r._rate; }
+      if (inRange(r, ytdStart)) { st.ytd++; st.revenueYtd += r._rate; }
       if (!st.latest || r._date > st.latest) st.latest = r._date;
     });
-    const topSources = Object.entries(sourceStats).map(([id, st]) => ({ id, account: accountMap[id], ...st })).filter(x => x.account).sort((a,b) => b.last30-a.last30 || b.last90-a.last90 || b.ytd-a.ytd).slice(0,6);
+    const topSources = Object.entries(sourceStats).map(([id, st]) => ({ id, account: accountMap[id], ...st })).filter(x => x.account).sort((a,b) => b.revenueMtd-a.revenueMtd || b.mtd-a.mtd || b.last30-a.last30 || b.ytd-a.ytd).slice(0,6);
     const needsAttention = active.map(a => ({ account:a, latest: sourceStats[a.AccountId]?.latest || null })).filter(x => !x.latest || x.latest < cutoff90).sort((a,b) => (a.latest?.getTime() || 0) - (b.latest?.getTime() || 0)).slice(0,5);
     const months = [];
     for (let offset=5; offset>=0; offset--) {
       const d = new Date(now.getFullYear(), now.getMonth()-offset, 1);
-      months.push({ year:d.getFullYear(), month:d.getMonth(), label:d.toLocaleDateString(undefined,{month:'short'}), count:0 });
+      months.push({ year:d.getFullYear(), month:d.getMonth(), label:d.toLocaleDateString(undefined,{month:'short'}), count:0, revenue:0 });
     }
     referrals.forEach(r => {
       const m = months.find(x => x.year === r._date.getFullYear() && x.month === r._date.getMonth());
-      if (m) m.count++;
+      if (m) { m.count++; m.revenue += r._rate; }
     });
     const stageCounts = ['Target','Contacted','Connected','Referral Discussion','Active Referrer'].map(stage => ({ stage, count:(accounts || []).filter(a => (a.RelationshipStage || 'Target') === stage).length }));
-    return { last30:last30.length, last90:last90.length, ytd:ytd.length, activeCount:active.length, pipelineCount:pipelineAccounts.length, dueCount:due.length, overdueCount:overdue.length, dueTodayCount:dueToday.length, highNoActionCount:highNoAction.length, topSources, needsAttention, months, stageCounts };
+    return { mtd:mtd.length, last30:last30.length, last90:last90.length, ytd:ytd.length, revenueMtd, revenue30, revenue90, revenueYtd, activeCount:active.length, pipelineCount:pipelineAccounts.length, dueCount:due.length, overdueCount:overdue.length, dueTodayCount:dueToday.length, highNoActionCount:highNoAction.length, topSources, needsAttention, months, stageCounts };
   }, [accounts, referralActivity]);
-  const maxMonth = Math.max(1, ...analytics.months.map(m => m.count));
+  const maxMonth = Math.max(1, ...analytics.months.map(m => m.revenue));
   const maxStage = Math.max(1, ...analytics.stageCounts.map(s => s.count));
   const fmtLast = date => !date ? 'No referrals recorded' : `Last referral ${date.toLocaleDateString(undefined,{month:'short',day:'numeric'})}`;
   return /*#__PURE__*/React.createElement('main', { className:'bdd-home' }, /*#__PURE__*/React.createElement('div', { className:'home-shell' },
@@ -4583,17 +4629,17 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       /*#__PURE__*/React.createElement('p', { className:'home-subtitle' }, 'Referral performance, pipeline health, and relationships that need attention.')
     ), /*#__PURE__*/React.createElement('div', { className:'home-period' }, 'Live CRM data')),
     /*#__PURE__*/React.createElement('div', { className:'home-kpis' },
-      [['Active Referrers',analytics.activeCount,'Current referral relationships'],['Referrals · 30d',analytics.last30,`${analytics.last90} in the last 90 days`],['Pipeline Accounts',analytics.pipelineCount,'Contacted through referral discussion'],['Follow-ups Due',analytics.dueCount,`${analytics.overdueCount} overdue · ${analytics.dueTodayCount} today`]].map(([label,value,note]) => /*#__PURE__*/React.createElement('div',{className:'home-kpi',key:label}, /*#__PURE__*/React.createElement('div',{className:'home-kpi-label'},label), /*#__PURE__*/React.createElement('div',{className:'home-kpi-value'},value), /*#__PURE__*/React.createElement('div',{className:'home-kpi-note'},note)))
+      [['Active Referrers',analytics.activeCount,'Current referral relationships'],['Referrals · 30d',analytics.last30,`${analytics.last90} in the last 90 days`],['Revenue · MTD',formatCurrency(analytics.revenueMtd),`${analytics.mtd} referrals this month · ${formatCurrency(analytics.revenue30)} in 30d`],['Revenue · YTD',formatCurrency(analytics.revenueYtd),`${analytics.ytd} referrals year to date`],['Pipeline Accounts',analytics.pipelineCount,'Contacted through referral discussion'],['Follow-ups Due',analytics.dueCount,`${analytics.overdueCount} overdue · ${analytics.dueTodayCount} today`]].map(([label,value,note]) => /*#__PURE__*/React.createElement('div',{className:'home-kpi',key:label}, /*#__PURE__*/React.createElement('div',{className:'home-kpi-label'},label), /*#__PURE__*/React.createElement('div',{className:'home-kpi-value'},value), /*#__PURE__*/React.createElement('div',{className:'home-kpi-note'},note)))
     ),
     /*#__PURE__*/React.createElement('div', { className:'home-grid' },
       /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Referral Activity'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Referral events recorded across all facilities'))),
-        /*#__PURE__*/React.createElement('div',{className:'home-referral-summary'}, [['30 days',analytics.last30],['90 days',analytics.last90],['YTD',analytics.ytd]].map(([label,value]) => /*#__PURE__*/React.createElement('div',{className:'home-referral-stat',key:label}, /*#__PURE__*/React.createElement('strong',null,value), /*#__PURE__*/React.createElement('span',null,label)))),
-        /*#__PURE__*/React.createElement('div',{className:'home-chart'}, analytics.months.map(m => /*#__PURE__*/React.createElement('div',{className:'home-chart-col',key:`${m.year}-${m.month}`}, /*#__PURE__*/React.createElement('div',{className:'home-chart-value'},m.count), /*#__PURE__*/React.createElement('div',{className:'home-chart-bar-wrap'}, /*#__PURE__*/React.createElement('div',{className:'home-chart-bar',style:{height:`${Math.max(3,(m.count/maxMonth)*100)}%`}})), /*#__PURE__*/React.createElement('div',{className:'home-chart-label'},m.label))))
+        /*#__PURE__*/React.createElement('div',{className:'home-referral-summary'}, [['30 days',`${analytics.last30} · ${formatCurrency(analytics.revenue30)}`],['90 days',`${analytics.last90} · ${formatCurrency(analytics.revenue90)}`],['YTD',`${analytics.ytd} · ${formatCurrency(analytics.revenueYtd)}`]].map(([label,value]) => /*#__PURE__*/React.createElement('div',{className:'home-referral-stat',key:label}, /*#__PURE__*/React.createElement('strong',null,value), /*#__PURE__*/React.createElement('span',null,label)))),
+        /*#__PURE__*/React.createElement('div',{className:'home-chart'}, analytics.months.map(m => /*#__PURE__*/React.createElement('div',{className:'home-chart-col',key:`${m.year}-${m.month}`}, /*#__PURE__*/React.createElement('div',{className:'home-chart-value'},`${m.count} · ${formatCurrency(m.revenue)}`), /*#__PURE__*/React.createElement('div',{className:'home-chart-bar-wrap'}, /*#__PURE__*/React.createElement('div',{className:'home-chart-bar',style:{height:`${Math.max(3,(m.revenue/maxMonth)*100)}%`}})), /*#__PURE__*/React.createElement('div',{className:'home-chart-label'},m.label))))
       ),
-      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Top Referral Sources'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Ranked by recent referral activity'))),
+      /*#__PURE__*/React.createElement('section',{className:'home-card'}, /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null, /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Top Referral Sources'), /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Monthly referral volume and revenue by facility'))),
         analytics.topSources.length ? /*#__PURE__*/React.createElement(React.Fragment,null,
-          /*#__PURE__*/React.createElement('div',{className:'home-source-row home-source-head'}, /*#__PURE__*/React.createElement('div',null,'Facility'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'30d'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'90d'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'YTD')),
-          analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row',key:x.id}, /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.last30), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.last90), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.ytd)))
+          /*#__PURE__*/React.createElement('div',{className:'home-source-row home-source-head'}, /*#__PURE__*/React.createElement('div',null,'Facility'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'MTD'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ MTD'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'YTD'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ YTD')),
+          analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row',key:x.id}, /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.mtd), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueMtd)), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.ytd), /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueYtd))))
         ) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'Referral activity will appear here once referrals are recorded.')
       )
     ),
@@ -4686,6 +4732,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [referralAccountId, setReferralAccountId] = useState('');
   const [referralAccountQuery, setReferralAccountQuery] = useState('');
+  const [globalReferralRate, setGlobalReferralRate] = useState('');
   const [globalReferralDate, setGlobalReferralDate] = useState(() => {
     const now = new Date();
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
@@ -4819,9 +4866,14 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         ),
         /*#__PURE__*/React.createElement('label', null, 'Referral date'),
         /*#__PURE__*/React.createElement('input', { type:'date', value:globalReferralDate, onChange:e=>setGlobalReferralDate(e.target.value) }),
+        /*#__PURE__*/React.createElement('label', null, 'Rate'),
+        /*#__PURE__*/React.createElement('div', { className:'relative' },
+          /*#__PURE__*/React.createElement('span', { className:'absolute left-3 top-2.5 text-slate-500' }, '$'),
+          /*#__PURE__*/React.createElement('input', { type:'number', min:'0', step:'0.01', inputMode:'decimal', value:globalReferralRate, onChange:e=>setGlobalReferralRate(e.target.value), placeholder:'450', style:{paddingLeft:'28px'} })
+        ),
         /*#__PURE__*/React.createElement('div', { className:'saas-modal-actions' },
           /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:()=>setShowReferralModal(false) }, 'Cancel'),
-          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-primary', disabled:!referralAccountId || !globalReferralDate, onClick:() => { if (!referralAccountId || !globalReferralDate) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate); setShowReferralModal(false); setReferralAccountId(''); setReferralAccountQuery(''); } }, 'Record & Open SimplePractice')
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-primary', disabled:!referralAccountId || !globalReferralDate || globalReferralRate === '' || !Number.isFinite(Number(globalReferralRate)) || Number(globalReferralRate) < 0, onClick:() => { const rate = Number(globalReferralRate); if (!referralAccountId || !globalReferralDate || !Number.isFinite(rate) || rate < 0) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate, rate); setShowReferralModal(false); setReferralAccountId(''); setReferralAccountQuery(''); setGlobalReferralRate(''); } }, 'Record & Open SimplePractice')
         )
       )
     )
@@ -4992,21 +5044,21 @@ function App() {
     }, "Try again"));
   }
   const selectedAccount = data.accounts.find(a => a.AccountId === selectedId);
-  const handleGlobalReferral = (accountId, referralDate) => {
-    if (!accountId || !referralDate) return;
+  const handleGlobalReferral = (accountId, referralDate, rate) => {
+    if (!accountId || !referralDate || !Number.isFinite(Number(rate)) || Number(rate) < 0) return;
     const account = data.accounts.find(a => a.AccountId === accountId);
     if (!account) return;
     const simplePracticeWindow = window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
     const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
-    const localReferral = { ReferralActivityId:tempId, AccountId:accountId, ReferralDate:referralDate, RecordedBy:recordedBy };
+    const localReferral = { ReferralActivityId:tempId, AccountId:accountId, ReferralDate:referralDate, Rate:Number(rate), RecordedBy:recordedBy };
     updateDataLocal(d => ({
       ...d,
       referralActivity:[...(d.referralActivity || []), localReferral],
       accounts:d.accounts.map(a => a.AccountId === accountId && (a.RelationshipStage || 'Target') !== 'Active Referrer' ? { ...a, RelationshipStage:'Active Referrer', Status:'Customer' } : a)
     }));
     window.__crmShowToast && window.__crmShowToast('Referral recorded — opening SimplePractice');
-    apiPost('createReferralActivity', { data:{ AccountId:accountId, ReferralDate:referralDate, RecordedBy:recordedBy } }).then(response => {
+    apiPost('createReferralActivity', { data:{ AccountId:accountId, ReferralDate:referralDate, Rate:Number(rate), RecordedBy:recordedBy } }).then(response => {
       if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
       const savedId = response.result && response.result.ReferralActivityId;
       if (savedId) updateDataLocal(d => ({ ...d, referralActivity:(d.referralActivity || []).map(r => r.ReferralActivityId === tempId ? { ...r, ReferralActivityId:savedId } : r) }));

@@ -44,7 +44,7 @@ const ACTIVITIES_HEADERS = [
 ];
 const REFERRAL_ACTIVITY_SHEET = 'Referral Activity';
 const REFERRAL_ACTIVITY_HEADERS = [
-  'ReferralActivityId', 'AccountId', 'ReferralDate', 'RecordedBy'
+  'ReferralActivityId', 'AccountId', 'ReferralDate', 'RecordedBy', 'Rate'
 ];
 const RELATIONSHIP_STAGES = [
   'Target', 'Contacted', 'Connected', 'Referral Discussion', 'Active Referrer', 'Not a fit'
@@ -1966,6 +1966,7 @@ function doGet(e) {
     timings.activities = Date.now() - t;
 
     t = Date.now();
+    ensureSheet_(getSpreadsheet_(), REFERRAL_ACTIVITY_SHEET, REFERRAL_ACTIVITY_HEADERS);
     const referralActivity = readSheet_(REFERRAL_ACTIVITY_SHEET, REFERRAL_ACTIVITY_HEADERS);
     timings.referralActivity = Date.now() - t;
 
@@ -2033,6 +2034,7 @@ function doGet(e) {
     timings.activities = Date.now() - t;
 
     t = Date.now();
+    ensureSheet_(getSpreadsheet_(), REFERRAL_ACTIVITY_SHEET, REFERRAL_ACTIVITY_HEADERS);
     const referralActivity = readSheet_(REFERRAL_ACTIVITY_SHEET, REFERRAL_ACTIVITY_HEADERS)
       .filter(r => r.AccountId === accountId);
     timings.referralActivity = Date.now() - t;
@@ -2364,6 +2366,8 @@ function createActivity_(data) {
 function createReferralActivity_(data) {
   if (!data || !data.AccountId) throw new Error('AccountId is required');
   if (!data.ReferralDate) throw new Error('ReferralDate is required');
+  const rate = Number(data.Rate);
+  if (!Number.isFinite(rate) || rate < 0) throw new Error('A valid Rate is required');
 
   // Create the lightweight Referral Activity tab on first use so existing
   // deployments do not require a separate manual setup step.
@@ -2376,7 +2380,8 @@ function createReferralActivity_(data) {
     ReferralActivityId: id,
     AccountId: data.AccountId,
     ReferralDate: data.ReferralDate,
-    RecordedBy: String(data.RecordedBy || '').trim()
+    RecordedBy: String(data.RecordedBy || '').trim(),
+    Rate: rate
   });
 
   // Receiving a referral is objective evidence that this facility is now an
