@@ -195,6 +195,19 @@
     body.saas-enabled .bdd-account-list, body.saas-enabled .max-w-4xl, body.saas-enabled .max-w-5xl, body.saas-enabled .max-w-6xl { padding-left:18px !important; padding-right:18px !important; }
   }
 </style>
+
+<style>
+  .account-detail-top-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .account-detail-top-grid > * { min-width: 0; }
+  @media (max-width: 900px) {
+    .account-detail-top-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -2785,7 +2798,7 @@ function AccountDetail({
     onCancel: () => setEditingAccount(false),
     onDelete: removeAccount,
     referralSourceOptions: referralSourceOptions
-  }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-start" },
+  }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", { className: "account-detail-top-grid mb-6" },
     /*#__PURE__*/React.createElement("div", {
     className: `md:col-span-2 bg-white rounded-xl border border-skyblue-100 p-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
   }, /*#__PURE__*/React.createElement("h1", {
@@ -3694,9 +3707,9 @@ function PipelineView({
       type: "button",
       onClick: () => stage === 'Target' ? setTargetExpanded(v => !v) : setActiveReferrersExpanded(v => !v),
       title: stage === 'Target' ? (targetExpanded ? "Collapse Targets" : "Expand Targets") : (activeReferrersExpanded ? "Collapse Active Referrer" : "Expand Active Referrer"),
-      className: `w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${pipelineHeaderColor(stage)}`
+      className: `w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${isCollapsedEdge ? 'min-h-[49px] flex items-center' : ''} ${pipelineHeaderColor(stage)}`
     }, /*#__PURE__*/React.createElement("div", {
-      className: "flex items-center justify-between gap-1"
+      className: "flex items-center justify-between gap-1 w-full"
     }, /*#__PURE__*/React.createElement("span", {
       className: isCollapsedEdge ? "text-[10px] tracking-tight" : ""
     }, stage === 'Active Referrer' ? "Active Referrer" : "Target"), /*#__PURE__*/React.createElement("span", {
