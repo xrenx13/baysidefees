@@ -77,10 +77,11 @@
   .saas-nav-icon { width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; color:currentColor; opacity:.92; }
   .saas-nav-icon svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
   .saas-side-bottom { margin-top:auto; padding:12px 10px 14px; border-top:1px solid var(--saas-line); }
-  .saas-profile { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:10px; }
+  .saas-profile { display:flex; align-items:flex-start; gap:9px; padding:8px 9px; border-radius:10px; }
   .saas-avatar { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#edf1f5; color:var(--saas-navy); font-size:11px; font-weight:700; }
-  .saas-profile-name { min-width:0; flex:1; font-size:12px; font-weight:600; color:#39465a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .saas-signout { border:0; background:transparent; color:#98a2b3; font-size:11px; cursor:pointer; padding:4px 6px; border-radius:6px; }
+  .saas-profile-copy { min-width:0; flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:2px; }
+  .saas-profile-name { width:100%; font-size:12px; line-height:1.35; font-weight:600; color:#39465a; white-space:normal; overflow:visible; text-overflow:clip; word-break:break-word; }
+  .saas-signout { border:0; background:transparent; color:#98a2b3; font-size:11px; cursor:pointer; padding:2px 0; border-radius:6px; }
   .saas-signout:hover { background:#f3f4f6; color:#4b5563; }
   .saas-topbar { position:fixed; left:var(--saas-sidebar); right:0; top:0; height:var(--saas-topbar); background:rgba(255,255,255,.94); backdrop-filter: blur(12px); border-bottom:1px solid var(--saas-line); z-index:850; display:flex; align-items:center; justify-content:space-between; padding:0 28px; }
   .saas-page-kicker { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:#a0a8b5; margin-bottom:2px; }
@@ -2033,21 +2034,7 @@ function AccountSnapshot({
       opportunity && /*#__PURE__*/React.createElement("span", {
         className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${overallOpportunityColor(opportunity.label)} text-white`,
         title: buildOpportunityTooltip(opportunity)
-      }, "FEES OPPORTUNITY: ", opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)'),
-      /*#__PURE__*/React.createElement("select", {
-        value: account.RelationshipStage || 'Target',
-        onChange: e => onStageChange(e.target.value),
-        title: "Change relationship stage",
-        className: `appearance-none cursor-pointer border-none inline-flex items-center px-2.5 py-1 pr-6 rounded-full text-xs font-semibold bg-[right_0.4rem_center] bg-no-repeat ${stageColor(account.RelationshipStage)}`,
-        style: {
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
-          backgroundSize: "10px"
-        }
-      }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
-        key: s,
-        value: s,
-        className: stageColor(s)
-      }, s)))
+      }, "FEES OPPORTUNITY: ", opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)')
     ),
     /*#__PURE__*/React.createElement("div", { className: `${row} mb-1` },
       /*#__PURE__*/React.createElement(DistanceLinks, { account: account })
@@ -2787,25 +2774,30 @@ function AccountDetail({
     className: "font-display text-base text-navy-900 truncate"
   }, account.AccountName), /*#__PURE__*/React.createElement(StatusPill, {
     status: account.Status
-  }), /*#__PURE__*/React.createElement("span", {
-    className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
-  }, account.RelationshipStage || 'Target')), editingAccount ? /*#__PURE__*/React.createElement(AccountForm, {
+  }), /*#__PURE__*/React.createElement("select", {
+    value: account.RelationshipStage || 'Target',
+    onChange: e => updateStage(e.target.value),
+    title: "Change relationship stage",
+    className: `appearance-none cursor-pointer border-none inline-flex items-center px-2.5 py-1 pr-6 rounded-full text-xs font-semibold bg-[right_0.4rem_center] bg-no-repeat ${stageColor(account.RelationshipStage)}`,
+    style: {
+      backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+      backgroundSize: "10px"
+    }
+  }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
+    key: s,
+    value: s,
+    className: stageColor(s)
+  }, s)))), editingAccount ? /*#__PURE__*/React.createElement(AccountForm, {
     initial: account,
     onSave: saveAccount,
     onCancel: () => setEditingAccount(false),
     onDelete: removeAccount,
     referralSourceOptions: referralSourceOptions
   }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: `rounded-t-xl px-6 py-2 text-xs font-semibold uppercase tracking-wide text-white ${account.Status === 'Customer' ? 'bg-teal-500' : 'bg-skyblue-500'}`
-  }, account.Status), /*#__PURE__*/React.createElement("div", {
-    className: `bg-white rounded-b-xl border border-skyblue-100 p-6 mb-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+    className: `bg-white rounded-xl border border-skyblue-100 p-6 mb-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-start justify-between flex-wrap gap-3"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 flex-wrap"
-  }, /*#__PURE__*/React.createElement("h1", {
-    className: "font-display text-2xl text-navy-900"
-  }, account.AccountName)), /*#__PURE__*/React.createElement(AccountSnapshot, {
+  }, /*#__PURE__*/React.createElement("div", { className: "min-w-0 flex-1" }, /*#__PURE__*/React.createElement(AccountSnapshot, {
     account: account,
     primaryClinicalContact: primaryClinicalContact,
     decisionMakerContact: decisionMakerContact,
@@ -3611,7 +3603,8 @@ function PipelineView({
 }) {
   const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a fit');
   const [targetExpanded, setTargetExpanded] = useState(false);
-  const pipelineGridStyle = { gridTemplateColumns: targetExpanded ? 'repeat(5, minmax(0, 1fr))' : '72px repeat(4, minmax(0, 1fr))' };
+  const [activeReferrersExpanded, setActiveReferrersExpanded] = useState(false);
+  const pipelineGridStyle = { gridTemplateColumns: `${targetExpanded ? 'minmax(0, 1fr)' : '72px'} repeat(3, minmax(0, 1fr)) ${activeReferrersExpanded ? 'minmax(0, 1fr)' : '72px'}` };
   const columns = useMemo(() => {
     const byStage = {};
     stages.forEach(s => byStage[s] = []);
@@ -3694,23 +3687,25 @@ function PipelineView({
     style: pipelineGridStyle
   }, stages.map(stage => {
     const isCollapsedTarget = stage === 'Target' && !targetExpanded;
+    const isCollapsedActiveReferrers = stage === 'Active Referrer' && !activeReferrersExpanded;
+    const isCollapsedEdge = isCollapsedTarget || isCollapsedActiveReferrers;
     return /*#__PURE__*/React.createElement("div", {
       key: stage,
       className: "min-w-0"
-    }, stage === 'Target' ? /*#__PURE__*/React.createElement("div", {
+    }, (stage === 'Target' || stage === 'Active Referrer') ? /*#__PURE__*/React.createElement("div", {
       className: "sticky top-0 z-20"
     }, /*#__PURE__*/React.createElement("button", {
       type: "button",
-      onClick: () => setTargetExpanded(v => !v),
-      title: targetExpanded ? "Collapse Targets" : "Expand Targets",
+      onClick: () => stage === 'Target' ? setTargetExpanded(v => !v) : setActiveReferrersExpanded(v => !v),
+      title: stage === 'Target' ? (targetExpanded ? "Collapse Targets" : "Expand Targets") : (activeReferrersExpanded ? "Collapse Active Referrers" : "Expand Active Referrers"),
       className: `w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${pipelineHeaderColor(stage)}`
     }, /*#__PURE__*/React.createElement("div", {
       className: "flex items-center justify-between gap-1"
     }, /*#__PURE__*/React.createElement("span", {
-      className: isCollapsedTarget ? "text-[10px] tracking-tight" : ""
-    }, "Target"), /*#__PURE__*/React.createElement("span", {
+      className: isCollapsedEdge ? "text-[10px] tracking-tight" : ""
+    }, stage === 'Active Referrer' ? "Active Referrers" : "Target"), /*#__PURE__*/React.createElement("span", {
       className: "opacity-80"
-    }, columns[stage].length)), !isCollapsedTarget && /*#__PURE__*/React.createElement("div", {
+    }, columns[stage].length)), !isCollapsedEdge && stage === 'Target' && /*#__PURE__*/React.createElement("div", {
       className: "mt-0.5 text-[10px] font-medium opacity-75 text-left"
     }, highOpportunityCount(stage), " high opportunity"))) : /*#__PURE__*/React.createElement("div", {
       className: `sticky top-0 z-20 px-3 py-2 rounded-t-lg text-xs font-semibold shadow-sm ${pipelineHeaderColor(stage)}`
@@ -3720,7 +3715,7 @@ function PipelineView({
       className: "opacity-80"
     }, columns[stage].length)), /*#__PURE__*/React.createElement("div", {
       className: "mt-0.5 text-[10px] font-medium opacity-75"
-    }, highOpportunityCount(stage), " high opportunity")), !isCollapsedTarget && /*#__PURE__*/React.createElement("div", {
+    }, highOpportunityCount(stage), " high opportunity")), !isCollapsedEdge && /*#__PURE__*/React.createElement("div", {
     className: "bg-skyblue-100/30 rounded-b-lg py-2 min-h-[120px] space-y-2"
   }, columns[stage].length === 0 ? /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40 text-center py-4"
@@ -4628,8 +4623,10 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       /*#__PURE__*/React.createElement('div', { className: 'saas-side-bottom' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-profile' },
           /*#__PURE__*/React.createElement('div', { className: 'saas-avatar' }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))),
-          /*#__PURE__*/React.createElement('div', { className: 'saas-profile-name', title: displayName }, displayName),
-          /*#__PURE__*/React.createElement('button', { type: 'button', className: 'saas-signout', onClick: onSignOut }, 'Sign out')
+          /*#__PURE__*/React.createElement('div', { className: 'saas-profile-copy' },
+            /*#__PURE__*/React.createElement('div', { className: 'saas-profile-name', title: displayName }, displayName),
+            /*#__PURE__*/React.createElement('button', { type: 'button', className: 'saas-signout', onClick: onSignOut }, 'Sign out')
+          )
         )
       )
     ),
