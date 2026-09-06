@@ -198,14 +198,24 @@
 
 <style>
   .account-detail-top-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+    display: flex !important;
+    flex-direction: row;
     gap: 1.5rem;
-    align-items: start;
+    align-items: flex-start;
+    width: 100%;
   }
-  .account-detail-top-grid > * { min-width: 0; }
+  .account-detail-main-card {
+    flex: 2 1 0%;
+    min-width: 0;
+  }
+  .account-detail-contacts-card {
+    flex: 1 1 320px;
+    min-width: 320px;
+  }
   @media (max-width: 900px) {
-    .account-detail-top-grid { grid-template-columns: minmax(0, 1fr); }
+    .account-detail-top-grid { flex-direction: column; }
+    .account-detail-main-card,
+    .account-detail-contacts-card { width: 100%; min-width: 0; flex: 1 1 auto; }
   }
 </style>
 </head>
@@ -2800,7 +2810,7 @@ function AccountDetail({
     referralSourceOptions: referralSourceOptions
   }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", { className: "account-detail-top-grid mb-6" },
     /*#__PURE__*/React.createElement("div", {
-    className: `bg-white rounded-xl border border-skyblue-100 p-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+    className: `account-detail-main-card bg-white rounded-xl border border-skyblue-100 p-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
   }, /*#__PURE__*/React.createElement("h1", {
     className: "font-display text-2xl text-navy-900 mb-1"
   }, account.AccountName), /*#__PURE__*/React.createElement("div", {
@@ -2823,7 +2833,7 @@ function AccountDetail({
     className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
   }, "Edit"))))),
     /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 p-6 h-full"
+    className: "account-detail-contacts-card bg-white rounded-xl border border-skyblue-100 p-6 h-full"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-4"
   }, /*#__PURE__*/React.createElement("h2", {
