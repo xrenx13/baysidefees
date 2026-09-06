@@ -3740,8 +3740,13 @@ function PipelineView({
     }, /*#__PURE__*/React.createElement("span", {
       className: isCollapsedEdge ? "text-[10px] tracking-tight" : ""
     }, stage === 'Active Referrer' ? "Active Referrer" : "Target"), /*#__PURE__*/React.createElement("span", {
+      className: "ml-auto flex items-center gap-1.5"
+    }, /*#__PURE__*/React.createElement("span", {
       className: "opacity-80"
-    }, columns[stage].length)), !isCollapsedEdge && stage === 'Target' && /*#__PURE__*/React.createElement("div", {
+    }, columns[stage].length), /*#__PURE__*/React.createElement("span", {
+      className: "text-base leading-none font-bold opacity-90",
+      "aria-hidden": "true"
+    }, stage === 'Target' ? (targetExpanded ? "‹" : "›") : (activeReferrersExpanded ? "›" : "‹")))), !isCollapsedEdge && stage === 'Target' && /*#__PURE__*/React.createElement("div", {
       className: "mt-0.5 text-[10px] font-medium opacity-75 text-left"
     }, highOpportunityCount(stage), " high opportunity"))) : /*#__PURE__*/React.createElement("div", {
       className: `sticky top-0 z-20 px-3 py-2 rounded-t-lg text-xs font-semibold shadow-sm ${pipelineHeaderColor(stage)}`
