@@ -121,10 +121,14 @@
   .saas-chrome.dark .saas-signout { color:#91a4bc; }
   .saas-chrome.dark .saas-signout:hover { background:rgba(255,255,255,.07); color:#fff; }
   .saas-topbar { position:fixed; left:var(--saas-sidebar); right:0; top:0; height:var(--saas-topbar); background:rgba(255,255,255,.94); backdrop-filter: blur(12px); border-bottom:1px solid var(--saas-line); z-index:850; display:flex; align-items:center; justify-content:space-between; padding:0 28px; }
+  .saas-topbar.saas-detail-topbar { height:92px; padding-top:10px; padding-bottom:10px; align-items:center; }
+  .saas-detail-topbar .saas-page-kicker { margin-bottom:3px; }
+  .saas-detail-topbar .saas-page-title { margin-bottom:5px; }
+  body.saas-enabled #root > div .account-detail-page { padding-top:52px !important; }
   .saas-page-kicker { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:#a0a8b5; margin-bottom:2px; }
   .saas-page-title { font-size:18px; line-height:1.2; font-weight:680; color:var(--saas-ink); letter-spacing:-.025em; max-width:54vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .saas-top-actions { display:flex; align-items:center; gap:8px; }
-  .saas-primary { border:1px solid #0b1f3a; background:#0b1f3a; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; box-shadow:0 1px 2px rgba(15,23,42,.08); transition:.15s; }
+  .saas-primary { white-space:nowrap; border:1px solid #0b1f3a; background:#0b1f3a; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; box-shadow:0 1px 2px rgba(15,23,42,.08); transition:.15s; }
   .saas-primary:hover { background:#122b4d; }
   .saas-secondary { border:1px solid var(--saas-line); background:#fff; color:#4b5563; border-radius:9px; padding:8px 11px; font-size:12px; line-height:1; font-weight:600; cursor:pointer; transition:.15s; }
   .saas-secondary:hover { background:#f8fafc; color:#1f2937; }
@@ -2886,7 +2890,7 @@ function AccountDetail({
   };
 
   return /*#__PURE__*/React.createElement("div", {
-    className: "max-w-7xl mx-auto px-4 sm:px-6 py-8"
+    className: "account-detail-page max-w-7xl mx-auto px-4 sm:px-6 py-8"
   }, editingAccount ? /*#__PURE__*/React.createElement(AccountForm, {
     initial: account,
     onSave: saveAccount,
@@ -3128,50 +3132,6 @@ function AccountDetail({
     className: "flex items-center justify-between mb-1"
   }, /*#__PURE__*/React.createElement("h2", {
     className: "font-display text-lg text-navy-900"
-  }, "Connections"), !addingConnection && /*#__PURE__*/React.createElement("button", {
-    onClick: () => setAddingConnection(true),
-    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
-  }, "+ Add connection")), /*#__PURE__*/React.createElement("p", {
-    className: "text-xs text-navy-700/40 mb-4"
-  }, "People tied to this account who don't work there — e.g. a covering physician or referral partner."), addingConnection && /*#__PURE__*/React.createElement(ConnectionForm, {
-    onSave: saveConnection,
-    onCancel: () => setAddingConnection(false),
-    roleOptions: roleOptions,
-    relationshipOptions: relationshipOptions
-  }), accountConnections.length === 0 && !addingConnection && /*#__PURE__*/React.createElement("p", {
-    className: "text-navy-700/40 text-sm"
-  }, "No connections yet — add the first one above."), accountConnections.map(c => editingConnectionId === c.ConnectionId ? /*#__PURE__*/React.createElement(ConnectionForm, {
-    key: c.ConnectionId,
-    initial: c,
-    onSave: saveConnection,
-    onCancel: () => setEditingConnectionId(null),
-    roleOptions: roleOptions,
-    relationshipOptions: relationshipOptions
-  }) : /*#__PURE__*/React.createElement("div", {
-    key: c.ConnectionId,
-    className: "flex items-center justify-between py-3 border-b border-skyblue-100 last:border-0"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
-    className: "font-medium text-navy-900"
-  }, c.ContactName, " ", /*#__PURE__*/React.createElement("span", {
-    className: "text-navy-700/50 font-normal"
-  }, "— ", c.Role)), /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-navy-700/60"
-  }, [c.Phone, c.Email].filter(Boolean).join(' · ')), c.Relationship && /*#__PURE__*/React.createElement("p", {
-    className: "text-sm text-teal-600/80 mt-0.5"
-  }, c.Relationship)), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-3 text-sm"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setEditingConnectionId(c.ConnectionId),
-    className: "text-teal-600 hover:text-teal-700"
-  }, "Edit"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => removeConnection(c.ConnectionId),
-    className: "text-navy-700/40 hover:text-red-500"
-  }, "Remove"))))), /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between mb-1"
-  }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
   }, "Emails"), emailThreads !== null && /*#__PURE__*/React.createElement("button", {
     onClick: loadEmails,
     disabled: emailsLoading,
@@ -3253,7 +3213,51 @@ function AccountDetail({
     minute: '2-digit'
   }))), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/50 mt-0.5"
-  }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))));
+  }, m.matchedGuest, m.location ? ` · ${m.location}` : '')))))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-1"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900"
+  }, "Connections"), !addingConnection && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setAddingConnection(true),
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
+  }, "+ Add connection")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/40 mb-4"
+  }, "People tied to this account who don't work there — e.g. a covering physician or referral partner."), addingConnection && /*#__PURE__*/React.createElement(ConnectionForm, {
+    onSave: saveConnection,
+    onCancel: () => setAddingConnection(false),
+    roleOptions: roleOptions,
+    relationshipOptions: relationshipOptions
+  }), accountConnections.length === 0 && !addingConnection && /*#__PURE__*/React.createElement("p", {
+    className: "text-navy-700/40 text-sm"
+  }, "No connections yet — add the first one above."), accountConnections.map(c => editingConnectionId === c.ConnectionId ? /*#__PURE__*/React.createElement(ConnectionForm, {
+    key: c.ConnectionId,
+    initial: c,
+    onSave: saveConnection,
+    onCancel: () => setEditingConnectionId(null),
+    roleOptions: roleOptions,
+    relationshipOptions: relationshipOptions
+  }) : /*#__PURE__*/React.createElement("div", {
+    key: c.ConnectionId,
+    className: "flex items-center justify-between py-3 border-b border-skyblue-100 last:border-0"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium text-navy-900"
+  }, c.ContactName, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/50 font-normal"
+  }, "— ", c.Role)), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/60"
+  }, [c.Phone, c.Email].filter(Boolean).join(' · ')), c.Relationship && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-teal-600/80 mt-0.5"
+  }, c.Relationship)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 text-sm"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEditingConnectionId(c.ConnectionId),
+    className: "text-teal-600 hover:text-teal-700"
+  }, "Edit"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeConnection(c.ConnectionId),
+    className: "text-navy-700/40 hover:text-red-500"
+  }, "Remove")))));
 }
 
 // ---------------------------------------------------------------------
@@ -4935,7 +4939,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         )
       )
     ),
-    /*#__PURE__*/React.createElement('header', { className: 'saas-topbar' },
+    /*#__PURE__*/React.createElement('header', { className: `saas-topbar${detailAccount ? ' saas-detail-topbar' : ''}` },
       /*#__PURE__*/React.createElement('div', { className: 'min-w-0' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-page-kicker' }, activeView === 'today' ? 'Work queue' : activeView === 'home' ? 'Overview' : 'Business development'),
         /*#__PURE__*/React.createElement('div', { className: 'flex items-center gap-3 flex-wrap min-w-0' },
