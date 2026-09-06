@@ -4176,7 +4176,7 @@ function AccountList({
     className: `px-3 py-1.5 rounded-md text-sm font-medium transition ${filter === s ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
-  }, "(", counts[s], ")")))), /*#__PURE__*/React.createElement("div", {
+  }, "(", counts[s], ")")))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-3 flex-nowrap ml-3 shrink-0"
   }, /*#__PURE__*/React.createElement("label", {
     className: "text-xs text-navy-700/50 flex items-center gap-1.5"
@@ -4192,18 +4192,7 @@ function AccountList({
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
   }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c))))), /*#__PURE__*/React.createElement("div", {
-    className: "relative flex-1 min-w-[220px] max-w-[340px] ml-auto"
-  }, /*#__PURE__*/React.createElement("input", {
-    value: query,
-    onChange: e => setQuery(e.target.value),
-    placeholder: "Search accounts, contacts, activities...",
-    className: "border border-skyblue-300 rounded-lg pl-3 pr-8 py-1.5 text-sm w-full"
-  }), query && /*#__PURE__*/React.createElement("button", {
-    onClick: () => setQuery(''),
-    "aria-label": "Clear search",
-    className: "absolute right-2 top-1/2 -translate-y-1/2 text-navy-700/40 hover:text-navy-700/70 text-lg leading-none px-1"
-  }, "\u00D7"))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
+  }, c)))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
     accounts: filtered,
     contacts: contacts,
     connections: connections,
