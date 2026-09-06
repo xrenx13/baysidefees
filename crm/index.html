@@ -3466,6 +3466,7 @@ function TableView({
 // ---------------------------------------------------------------------
 function PipelineView({
   accounts,
+  referralActivity,
   onSelect
 }) {
   const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a fit');
@@ -3505,6 +3506,23 @@ function PipelineView({
     const opportunity = computeOverallFeesOpportunity(a);
     return opportunity && (opportunity.label === 'High' || opportunity.label === 'Very High');
   }).length;
+  const referralStatsByAccount = useMemo(() => {
+    const stats = {};
+    const now = new Date();
+    const cutoff30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const cutoff90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    (referralActivity || []).forEach(r => {
+      if (!r || !r.AccountId || !r.ReferralDate) return;
+      const date = new Date(r.ReferralDate);
+      if (Number.isNaN(date.getTime())) return;
+      if (!stats[r.AccountId]) stats[r.AccountId] = { last30: 0, last90: 0, ytd: 0 };
+      if (date >= cutoff90 && date <= now) stats[r.AccountId].last90 += 1;
+      if (date >= cutoff30 && date <= now) stats[r.AccountId].last30 += 1;
+      if (date >= startOfYear && date <= now) stats[r.AccountId].ytd += 1;
+    });
+    return stats;
+  }, [referralActivity]);
 
   return /*#__PURE__*/React.createElement("div", {
     className: "overflow-x-auto lg:overflow-visible pb-2"
@@ -3570,8 +3588,10 @@ function PipelineView({
     const days = daysSince(a.LastContactDate);
     const stale = days === null || days > 14;
     const followUp = followUpStatus(a.NextFollowUp);
-    const opportunity = computeOverallFeesOpportunity(a);
+    const isActiveReferrer = stage === 'Active Referrer';
+    const opportunity = isActiveReferrer ? null : computeOverallFeesOpportunity(a);
     const highOpportunity = opportunity && (opportunity.label === 'High' || opportunity.label === 'Very High');
+    const referralStats = referralStatsByAccount[a.AccountId] || { last30: 0, last90: 0, ytd: 0 };
     const attentionBorder = followUp === 'overdue' ? 'border-l-4 border-l-red-500' : followUp === 'today' ? 'border-l-4 border-l-amber-400' : highOpportunity ? 'border-l-4 border-l-teal-400' : '';
     const opportunityLift = highOpportunity ? 'shadow-sm ring-1 ring-teal-500/10' : '';
     return /*#__PURE__*/React.createElement("button", {
@@ -3580,20 +3600,36 @@ function PipelineView({
       className: `w-full text-left bg-white border border-skyblue-100 rounded-lg p-2.5 hover:border-teal-500 hover:shadow-sm transition ${attentionBorder} ${opportunityLift}`
     }, /*#__PURE__*/React.createElement("p", {
       className: "font-display text-sm text-navy-900 mb-1.5 leading-tight"
-    }, a.AccountName), /*#__PURE__*/React.createElement("div", {
+    }, a.AccountName), !isActiveReferrer && /*#__PURE__*/React.createElement("div", {
       className: "flex items-center gap-1.5 flex-wrap mb-1.5"
     }, /*#__PURE__*/React.createElement(PropensityBadge, {
       account: a,
       compact: true
     }), a.BedCount && /*#__PURE__*/React.createElement("span", {
       className: "text-xs text-navy-700/60 whitespace-nowrap"
+    }, a.BedCount, " beds")), isActiveReferrer && /*#__PURE__*/React.createElement("div", {
+      className: "space-y-0.5 mb-1.5"
+    }, /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-navy-700/65"
+    }, "Referrals · 30 days: ", /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold text-navy-900"
+    }, referralStats.last30)), /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-navy-700/65"
+    }, "Referrals · 90 days: ", /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold text-navy-900"
+    }, referralStats.last90)), /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-navy-700/65"
+    }, "Referrals · YTD: ", /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold text-navy-900"
+    }, referralStats.ytd)), a.BedCount && /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-navy-700/50"
     }, a.BedCount, " beds")), a.NextAction && /*#__PURE__*/React.createElement("p", {
       className: "text-xs font-medium text-navy-900 leading-snug mb-1"
     }, a.NextAction), a.NextFollowUp && /*#__PURE__*/React.createElement("div", {
       className: "mb-1"
     }, /*#__PURE__*/React.createElement(FollowUpBadge, {
       nextFollowUp: a.NextFollowUp
-    })), /*#__PURE__*/React.createElement("p", {
+    })), !isActiveReferrer && /*#__PURE__*/React.createElement("p", {
       className: `text-xs ${stale ? 'text-amber-600' : 'text-navy-700/50'}`
     }, days === null ? 'Never contacted' : `Last contact ${formatShortDate(new Date(a.LastContactDate))}${stale ? ` · ${days} day${days === 1 ? '' : 's'} ago` : ''}`));
   })));
@@ -3605,6 +3641,7 @@ function AccountList({
   contacts,
   connections,
   activities,
+  referralActivity,
   onSelect,
   onCreate,
   onSignOut,
@@ -3918,6 +3955,7 @@ function AccountList({
     onSelect: onSelect
   }) : viewMode === 'pipeline' ? /*#__PURE__*/React.createElement(PipelineView, {
     accounts: filtered,
+    referralActivity: referralActivity,
     onSelect: onSelect
   }) : viewMode === 'table' ? filtered.length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100"
@@ -4601,6 +4639,7 @@ function App() {
     contacts: data.contacts,
     connections: data.connections,
     activities: data.activities,
+    referralActivity: data.referralActivity || [],
     onSelect: a => {
       setSelectedId(a.AccountId);
       setView('detail');
