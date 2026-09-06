@@ -2263,7 +2263,14 @@ function AccountDetail({
     });
   };
   const saveAccount = form => {
-    const patch = { ...form, AccountId: account.AccountId };
+    const patch = {
+      ...form,
+      AccountId: account.AccountId,
+      ...(form.RelationshipStage === 'Active Referrer' ? {
+        Status: 'Customer',
+        DateConverted: account.DateConverted || new Date().toISOString()
+      } : {})
+    };
     setEditingAccount(false);
     setBusy(false);
     onLocalData(d => ({
@@ -2274,32 +2281,21 @@ function AccountDetail({
     persistInBackground(apiPost('updateAccount', { data: patch }), 'Account saved');
   };
   const updateStage = newStage => {
+    const stagePatch = {
+      RelationshipStage: newStage,
+      ...(newStage === 'Active Referrer' ? {
+        Status: 'Customer',
+        DateConverted: account.DateConverted || new Date().toISOString()
+      } : {})
+    };
     onLocalData(d => ({
       ...d,
-      accounts: d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, RelationshipStage: newStage } : a)
+      accounts: d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, ...stagePatch } : a)
     }));
     window.__crmShowToast && window.__crmShowToast('Updating…');
     persistInBackground(apiPost('updateAccount', {
-      data: { AccountId: account.AccountId, RelationshipStage: newStage }
-    }), 'Stage updated');
-  };
-  const convert = () => {
-    const simplePracticeUrl = window.prompt("SimplePractice client URL (optional — leave blank and click OK to skip):", '');
-    const convertedAt = new Date().toISOString();
-    onLocalData(d => ({
-      ...d,
-      accounts: d.accounts.map(a => a.AccountId === account.AccountId ? {
-        ...a,
-        Status: 'Customer',
-        DateConverted: convertedAt,
-        ...(simplePracticeUrl ? { SimplePracticeUrl: simplePracticeUrl } : {})
-      } : a)
-    }));
-    window.__crmShowToast && window.__crmShowToast('Converting…');
-    persistInBackground(apiPost('convertAccount', {
-      accountId: account.AccountId,
-      simplePracticeUrl: simplePracticeUrl || ''
-    }), 'Converted to customer');
+      data: { AccountId: account.AccountId, ...stagePatch }
+    }), newStage === 'Active Referrer' ? 'Active Referrer · Customer' : 'Stage updated');
   };
   const revertToProspect = () => {
     onLocalData(d => ({
@@ -2671,11 +2667,7 @@ function AccountDetail({
     onStageChange: updateStage
   })), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-2"
-  }, account.Status === 'Prospect' && /*#__PURE__*/React.createElement("button", {
-    onClick: convert,
-    disabled: busy,
-    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
-  }, "Convert to customer"), account.Status === 'Customer' && /*#__PURE__*/React.createElement("button", {
+  }, account.Status === 'Customer' && /*#__PURE__*/React.createElement("button", {
     onClick: revertToProspect,
     disabled: busy,
     className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"

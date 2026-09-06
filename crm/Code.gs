@@ -2293,6 +2293,19 @@ function updateAccount_(data) {
   const sheet = getSpreadsheet_().getSheetByName(ACCOUNTS_SHEET);
   const rowIndex = findRowIndex_(ACCOUNTS_SHEET, 'AccountId', data.AccountId);
   if (rowIndex === -1) throw new Error('Account not found');
+
+  // Active Referrer is the CRM's objective customer stage. Keep Status in
+  // sync automatically so users never need a separate conversion action.
+  // Set DateConverted the first time the account reaches this stage.
+  if (data.RelationshipStage === 'Active Referrer') {
+    data.Status = 'Customer';
+    const convertedCol = ACCOUNTS_HEADERS.indexOf('DateConverted');
+    const existingConverted = convertedCol !== -1
+      ? sheet.getRange(rowIndex, convertedCol + 1).getValue()
+      : '';
+    if (!existingConverted && !data.DateConverted) data.DateConverted = new Date().toISOString();
+  }
+
   const addressCol = ACCOUNTS_HEADERS.indexOf('Address');
   const previousAddress = addressCol !== -1 ? sheet.getRange(rowIndex, addressCol + 1).getValue() : null;
   updateRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, rowIndex, data);
