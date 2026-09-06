@@ -663,7 +663,8 @@ function emptyCrmData_() {
     contacts: [],
     connections: [],
     notes: [],
-    activities: []
+    activities: [],
+    referralActivity: []
   };
 }
 
@@ -2135,6 +2136,7 @@ function AccountDetail({
   contacts,
   connections,
   activities,
+  referralActivity,
   onBack,
   onRefresh,
   onRefreshAccount,
@@ -2196,6 +2198,14 @@ function AccountDetail({
   const [editActivityDetails, setEditActivityDetails] = useState('');
   const [editActivityNextAction, setEditActivityNextAction] = useState('');
   const [editActivityNextActionDue, setEditActivityNextActionDue] = useState('');
+  const [recordingReferral, setRecordingReferral] = useState(false);
+  const [referralDate, setReferralDate] = useState(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  });
 
   const accountContacts = contacts.filter(c => c.AccountId === account.AccountId);
   const accountConnections = connections.filter(c => c.AccountId === account.AccountId);
@@ -2207,6 +2217,24 @@ function AccountDetail({
   const accountActivities = activities
     .filter(a => a.AccountId === account.AccountId)
     .sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+  const accountReferralActivity = (referralActivity || [])
+    .filter(r => r.AccountId === account.AccountId)
+    .sort((a, b) => String(b.ReferralDate || '').localeCompare(String(a.ReferralDate || '')));
+  const referralDateAtMidnight_ = value => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`) : null;
+  const referralCountSince_ = days => {
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setDate(cutoff.getDate() - days);
+    return accountReferralActivity.filter(r => {
+      const d = referralDateAtMidnight_(r.ReferralDate);
+      return d && !isNaN(d.getTime()) && d >= cutoff;
+    }).length;
+  };
+  const referralYtd = accountReferralActivity.filter(r => {
+    const d = referralDateAtMidnight_(r.ReferralDate);
+    return d && !isNaN(d.getTime()) && d.getFullYear() === new Date().getFullYear();
+  }).length;
+  const lastReferral = accountReferralActivity.length ? accountReferralActivity[0].ReferralDate : '';
 
   // Derived for the header: which contact is the primary clinical contact
   // vs. the decision maker, based on RoleCategory (falls back to nothing
@@ -2525,6 +2553,51 @@ function AccountDetail({
     });
   };
 
+  const recordReferral = () => {
+    if (!referralDate) return;
+    const simplePracticeWindow = window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
+    const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
+    const localReferral = {
+      ReferralActivityId: tempId,
+      AccountId: account.AccountId,
+      ReferralDate: referralDate,
+      RecordedBy: recordedBy
+    };
+    setRecordingReferral(false);
+    onLocalData(d => ({
+      ...d,
+      referralActivity: [...(d.referralActivity || []), localReferral],
+      accounts: d.accounts.map(a => a.AccountId === account.AccountId && (a.RelationshipStage || 'Target') !== 'Active Referrer'
+        ? { ...a, RelationshipStage: 'Active Referrer', Status: 'Customer' }
+        : a)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Referral recorded — opening SimplePractice');
+    apiPost('createReferralActivity', { data: {
+      AccountId: account.AccountId,
+      ReferralDate: referralDate,
+      RecordedBy: recordedBy
+    }}).then(response => {
+      if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
+      const savedId = response.result && response.result.ReferralActivityId;
+      if (savedId) {
+        onLocalData(d => ({
+          ...d,
+          referralActivity: (d.referralActivity || []).map(r => r.ReferralActivityId === tempId ? { ...r, ReferralActivityId: savedId } : r)
+        }));
+      }
+      window.__crmShowToast && window.__crmShowToast('Referral activity saved');
+    }).catch(err => {
+      console.error(err);
+      onLocalData(d => ({ ...d, referralActivity: (d.referralActivity || []).filter(r => r.ReferralActivityId !== tempId) }));
+      window.__crmShowToast && window.__crmShowToast('Referral save failed — restoring server data');
+      onRefreshAccount(account.AccountId);
+    });
+    if (!simplePracticeWindow) {
+      window.__crmShowToast && window.__crmShowToast('Referral recorded — allow pop-ups to open SimplePractice');
+    }
+  };
+
   const startEditActivity = act => {
     setEditingActivityId(act.ActivityId);
     setEditActivityType(act.ActivityType || 'Call');
@@ -2613,7 +2686,78 @@ function AccountDetail({
     onClick: removeAccount,
     disabled: busy,
     className: "border border-red-200 text-red-500 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition"
-  }, "Delete"))))), /*#__PURE__*/React.createElement(ActivityLogCard, {
+  }, "Delete"))))), (account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between gap-4 flex-wrap mb-5"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900"
+  }, "Referral Activity"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/55 mt-1"
+  }, "Track referral activity from this facility. No patient information is stored in BDD CRM.")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setRecordingReferral(true),
+    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
+  }, "+ Record Referral")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-4 gap-3 mb-5"
+  }, [["Last Referral", lastReferral ? formatShortDate(referralDateAtMidnight_(lastReferral)) : "—"], ["30 Days", String(referralCountSince_(30))], ["90 Days", String(referralCountSince_(90))], ["YTD", String(referralYtd)]].map(([label, value]) => /*#__PURE__*/React.createElement("div", {
+    key: label,
+    className: "rounded-lg border border-skyblue-100 bg-skyblue-50/30 px-4 py-3"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xs uppercase tracking-wide text-navy-700/45"
+  }, label), /*#__PURE__*/React.createElement("p", {
+    className: "text-lg font-semibold text-navy-900 mt-1"
+  }, value)))), accountReferralActivity.length > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-skyblue-100 pt-4"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xs font-semibold uppercase tracking-wide text-navy-700/45 mb-2"
+  }, "Recent Referral Activity"), /*#__PURE__*/React.createElement("div", {
+    className: "divide-y divide-skyblue-100"
+  }, accountReferralActivity.slice(0, 8).map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.ReferralActivityId,
+    className: "flex items-center justify-between gap-4 py-2.5 text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-medium text-navy-900"
+  }, formatShortDate(referralDateAtMidnight_(r.ReferralDate))), /*#__PURE__*/React.createElement("span", {
+    className: "text-navy-700/50 text-right"
+  }, r.RecordedBy || "BDD User")))))) : /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/40 border-t border-skyblue-100 pt-4"
+  }, "No referrals recorded yet."), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 rounded-lg bg-teal-50 border border-teal-100 px-4 py-3 text-xs text-teal-800"
+  }, "BDD CRM records only the referral event. Client details, clinical information, and PHI belong in SimplePractice.")), recordingReferral && /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 bg-navy-900/45 flex items-center justify-center p-4",
+    onClick: e => { if (e.target === e.currentTarget) setRecordingReferral(false); }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl shadow-xl border border-skyblue-100 w-full max-w-md p-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between gap-4 mb-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "font-display text-xl text-navy-900"
+  }, "Record Referral"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-navy-700/55 mt-1"
+  }, "Record a referral from ", account.AccountName, " and continue to SimplePractice.")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setRecordingReferral(false),
+    className: "text-navy-700/45 hover:text-navy-900 text-xl leading-none"
+  }, "×")), /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-medium text-navy-900 mb-1.5"
+  }, "Referral Date"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: referralDate,
+    onChange: e => setReferralDate(e.target.value),
+    className: "w-full rounded-lg border border-skyblue-200 px-3 py-2 text-navy-900 focus:outline-none focus:ring-2 focus:ring-teal-400"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 rounded-lg bg-skyblue-50 border border-skyblue-100 px-4 py-3 text-sm text-navy-700/70"
+  }, /*#__PURE__*/React.createElement("strong", {
+    className: "text-navy-900"
+  }, "No patient information is stored in BDD CRM."), " Enter all client details only after SimplePractice opens."), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-end gap-2 mt-5"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setRecordingReferral(false),
+    className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
+  }, "Cancel"), /*#__PURE__*/React.createElement("button", {
+    onClick: recordReferral,
+    disabled: !referralDate,
+    className: "bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
+  }, "Record & Open SimplePractice")))), /*#__PURE__*/React.createElement(ActivityLogCard, {
     activities: accountActivities,
     loggingActivity: loggingActivity,
     setLoggingActivity: setLoggingActivity,
@@ -4218,7 +4362,8 @@ function App() {
         contacts: result.contacts || [],
         connections: result.connections || [],
         notes: result.notes || [],
-        activities: result.activities || []
+        activities: result.activities || [],
+        referralActivity: result.referralActivity || []
       };
       setData(nextData);
       writeCrmCache_(nextData);
@@ -4247,7 +4392,8 @@ function App() {
             : d.accounts,
           contacts: [...d.contacts.filter(c => c.AccountId !== accountId), ...(result.contacts || [])],
           connections: [...d.connections.filter(c => c.AccountId !== accountId), ...(result.connections || [])],
-          activities: [...d.activities.filter(a => a.AccountId !== accountId), ...(result.activities || [])]
+          activities: [...d.activities.filter(a => a.AccountId !== accountId), ...(result.activities || [])],
+          referralActivity: [...(d.referralActivity || []).filter(r => r.AccountId !== accountId), ...(result.referralActivity || [])]
         };
         writeCrmCache_(nextData);
         return nextData;
@@ -4412,6 +4558,7 @@ function App() {
       contacts: data.contacts,
       connections: data.connections,
       activities: data.activities,
+      referralActivity: data.referralActivity || [],
       onBack: () => setView('list'),
       onRefresh: refresh,
       onRefreshAccount: refreshAccount,
