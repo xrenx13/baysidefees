@@ -198,24 +198,20 @@
 
 <style>
   .account-detail-top-grid {
-    display: flex !important;
-    flex-direction: row;
+    display: grid !important;
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr) !important;
     gap: 1.5rem;
-    align-items: flex-start;
+    align-items: start;
     width: 100%;
   }
-  .account-detail-main-card {
-    flex: 2 1 0%;
-    min-width: 0;
-  }
+  .account-detail-main-card,
   .account-detail-contacts-card {
-    flex: 1 1 320px;
-    min-width: 320px;
+    min-width: 0 !important;
+    width: auto !important;
+    grid-column: auto !important;
   }
-  @media (max-width: 900px) {
-    .account-detail-top-grid { flex-direction: column; }
-    .account-detail-main-card,
-    .account-detail-contacts-card { width: 100%; min-width: 0; flex: 1 1 auto; }
+  @media (max-width: 640px) {
+    .account-detail-top-grid { grid-template-columns: minmax(0, 1fr) !important; }
   }
 </style>
 </head>
