@@ -1859,7 +1859,8 @@ function ContactForm({
     Phone: '',
     Email: '',
     PreferredContact: 'Email',
-    RoleCategory: ''
+    RoleCategory: '',
+    Notes: ''
   });
   // Once editing an existing contact, or once the user manually picks a
   // Preferred Contact value, stop auto-guessing it.
@@ -1943,7 +1944,13 @@ function ContactForm({
     value: form.PreferredContact,
     onChange: setPreferred,
     className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Email"), /*#__PURE__*/React.createElement("option", null, "Phone"), /*#__PURE__*/React.createElement("option", null, "Text"))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("option", null, "Email"), /*#__PURE__*/React.createElement("option", null, "Phone"), /*#__PURE__*/React.createElement("option", null, "Text")), /*#__PURE__*/React.createElement("textarea", {
+    value: form.Notes || '',
+    onChange: set('Notes'),
+    placeholder: "Contact notes — e.g. personal details, preferences, relationship context",
+    rows: 3,
+    className: "sm:col-span-2 border border-skyblue-300 rounded-lg px-3 py-2 text-sm resize-y"
+  })), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-3 mt-3"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => onSave(form),
@@ -2928,7 +2935,9 @@ function AccountDetail({
     className: "text-navy-700/50 font-normal"
   }, "— ", c.Role)), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/60"
-  }, [c.Phone, c.Email].filter(Boolean).join(' · '))), /*#__PURE__*/React.createElement("div", {
+  }, [c.Phone, c.Email].filter(Boolean).join(' · ')), c.Notes && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-navy-700/60 mt-1 whitespace-pre-wrap"
+  }, c.Notes)), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-3 text-sm"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setEditingContactId(c.ContactId),
@@ -4765,9 +4774,12 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   }, [globalSearch, searchData]);
   const referralAccountOptions = useMemo(() => {
     const q = referralAccountQuery.trim().toLowerCase();
-    const rows = !q ? allAccounts : allAccounts.filter(a => [a.AccountName, a.Town, a.Region].filter(Boolean).join(' ').toLowerCase().includes(q));
-    return rows.slice().sort((a,b) => String(a.AccountName || '').localeCompare(String(b.AccountName || ''))).slice(0, 100);
+    if (!q) return [];
+    return allAccounts.filter(a => [a.AccountName, a.Town, a.Region, a.ChainAffiliation, a.Status, a.RelationshipStage].filter(Boolean).join(' ').toLowerCase().includes(q))
+      .sort((a,b) => String(a.AccountName || '').localeCompare(String(b.AccountName || '')))
+      .slice(0, 8);
   }, [allAccounts, referralAccountQuery]);
+  const selectedReferralAccount = useMemo(() => allAccounts.find(a => a.AccountId === referralAccountId) || null, [allAccounts, referralAccountId]);
   const [sidebarTheme, setSidebarTheme] = useState(() => localStorage.getItem('bdd_crm_sidebar_theme') === 'dark' ? 'dark' : 'light');
   const toggleSidebarTheme = () => setSidebarTheme(current => {
     const next = current === 'dark' ? 'light' : 'dark';
@@ -4861,12 +4873,33 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           ),
           /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:()=>setShowReferralModal(false) }, 'Close')
         ),
-        /*#__PURE__*/React.createElement('label', null, 'Find account'),
-        /*#__PURE__*/React.createElement('input', { value:referralAccountQuery, onChange:e=>setReferralAccountQuery(e.target.value), placeholder:'Search facility name or town…' }),
         /*#__PURE__*/React.createElement('label', null, 'Associated account'),
-        /*#__PURE__*/React.createElement('select', { value:referralAccountId, onChange:e=>setReferralAccountId(e.target.value) },
-          /*#__PURE__*/React.createElement('option', { value:'' }, 'Select an account…'),
-          referralAccountOptions.map(a => /*#__PURE__*/React.createElement('option', { key:a.AccountId, value:a.AccountId }, `${a.AccountName || 'Unnamed account'}${a.Town ? ` · ${a.Town}` : ''}`))
+        /*#__PURE__*/React.createElement('div', { className:'relative' },
+          /*#__PURE__*/React.createElement('input', {
+            value:referralAccountQuery,
+            onChange:e=>{ setReferralAccountQuery(e.target.value); setReferralAccountId(''); },
+            placeholder:'Search accounts by facility name, town, region…',
+            autoComplete:'off',
+            'aria-label':'Search for associated account'
+          }),
+          referralAccountQuery.trim() && !referralAccountId && /*#__PURE__*/React.createElement('div', { className:'saas-search-results', style:{left:0,right:'auto',top:'44px',width:'100%',maxHeight:'230px'} },
+            referralAccountOptions.length ? referralAccountOptions.map(a => /*#__PURE__*/React.createElement('button', {
+              key:a.AccountId,
+              type:'button',
+              className:'saas-search-result',
+              onClick:()=>{ setReferralAccountId(a.AccountId); setReferralAccountQuery(a.AccountName || 'Unnamed account'); }
+            },
+              /*#__PURE__*/React.createElement('strong', null, a.AccountName || 'Unnamed account'),
+              /*#__PURE__*/React.createElement('span', null, [a.Region, a.Town, a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
+            )) : /*#__PURE__*/React.createElement('div', { className:'px-3 py-3 text-xs text-slate-500' }, 'No matching accounts')
+          )
+        ),
+        selectedReferralAccount && /*#__PURE__*/React.createElement('div', { className:'mt-2 flex items-center justify-between rounded-lg border border-teal-100 bg-teal-50 px-3 py-2' },
+          /*#__PURE__*/React.createElement('div', null,
+            /*#__PURE__*/React.createElement('div', { className:'text-xs font-semibold text-teal-800' }, 'Selected account'),
+            /*#__PURE__*/React.createElement('div', { className:'text-xs text-teal-700 mt-0.5' }, `${selectedReferralAccount.AccountName || 'Unnamed account'}${selectedReferralAccount.Town ? ` · ${selectedReferralAccount.Town}` : ''}`)
+          ),
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'text-xs font-semibold text-teal-700 hover:text-teal-900', onClick:()=>{ setReferralAccountId(''); setReferralAccountQuery(''); } }, 'Change')
         ),
         /*#__PURE__*/React.createElement('label', null, 'Referral date'),
         /*#__PURE__*/React.createElement('input', { type:'date', value:globalReferralDate, onChange:e=>setGlobalReferralDate(e.target.value) }),

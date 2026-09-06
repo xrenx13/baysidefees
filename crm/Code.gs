@@ -36,7 +36,7 @@ const ACCOUNTS_HEADERS = [
   'VisitCadence', 'DistanceFromNorwell', 'DistanceFromCapeHouse', 'DistanceFromCapeCodHospital'
 ];
 const CONTACTS_HEADERS = [
-  'ContactId', 'AccountId', 'ContactName', 'Role', 'Phone', 'Email', 'PreferredContact', 'RoleCategory'
+  'ContactId', 'AccountId', 'ContactName', 'Role', 'Phone', 'Email', 'PreferredContact', 'RoleCategory', 'Notes'
 ];
 const ACTIVITIES_SHEET = 'Activities';
 const ACTIVITIES_HEADERS = [
@@ -2556,7 +2556,9 @@ function createContact_(data) {
     Role: data.Role || '',
     Phone: data.Phone || '',
     Email: data.Email || '',
-    PreferredContact: data.PreferredContact || ''
+    PreferredContact: data.PreferredContact || '',
+    RoleCategory: data.RoleCategory || '',
+    Notes: data.Notes || ''
   });
   return { ContactId: id };
 }
