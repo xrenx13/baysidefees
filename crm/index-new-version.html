@@ -2049,23 +2049,6 @@ function AccountSnapshot({
     ['SimplePractice', account.SimplePracticeUrl]
   ].filter(([, v]) => v);
   return /*#__PURE__*/React.createElement(React.Fragment, null,
-    /*#__PURE__*/React.createElement("div", { className: "flex items-center gap-2 flex-wrap mt-2 mb-2" },
-      opportunity && /*#__PURE__*/React.createElement("span", {
-        className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${overallOpportunityColor(opportunity.label)} text-white`,
-        title: buildOpportunityTooltip(opportunity)
-      }, "FEES OPPORTUNITY: ", opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)'),
-      /*#__PURE__*/React.createElement(StatusPill, { status: account.Status }),
-      /*#__PURE__*/React.createElement("select", {
-        value: account.RelationshipStage || 'Target',
-        onChange: e => onStageChange(e.target.value),
-        title: "Change relationship stage",
-        className: `appearance-none cursor-pointer border-none inline-flex items-center px-2.5 py-1 pr-6 rounded-full text-xs font-semibold bg-[right_0.4rem_center] bg-no-repeat ${stageColor(account.RelationshipStage)}`,
-        style: {
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
-          backgroundSize: "10px"
-        }
-      }, RELATIONSHIP_STAGES.map(stage => /*#__PURE__*/React.createElement("option", { key: stage, value: stage }, stage)))
-    ),
     /*#__PURE__*/React.createElement("div", { className: `${row} mb-1` },
       /*#__PURE__*/React.createElement(DistanceLinks, { account: account })
     ),
@@ -2807,9 +2790,9 @@ function AccountDetail({
   }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", { className: "account-detail-top-grid mb-6" },
     /*#__PURE__*/React.createElement("div", {
     className: `account-detail-main-card bg-white rounded-xl border border-skyblue-100 p-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
-  }, /*#__PURE__*/React.createElement("h1", {
-    className: "font-display text-2xl text-navy-900 mb-1"
-  }, account.AccountName), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-display text-lg text-navy-900 mb-1"
+  }, "Account Details"), /*#__PURE__*/React.createElement("div", {
     className: "flex items-start justify-between flex-wrap gap-3"
   }, /*#__PURE__*/React.createElement("div", { className: "min-w-0 flex-1" }, /*#__PURE__*/React.createElement(AccountSnapshot, {
     account: account,
@@ -4611,7 +4594,7 @@ function SaaSIcon({ name }) {
   return /*#__PURE__*/React.createElement('span', { className: 'saas-nav-icon' }, /*#__PURE__*/React.createElement('svg', common, ...(paths[name] || paths.accounts)));
 }
 
-function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onCreate, onSignOut }) {
+function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onCreate, onSignOut, detailAccount, onDetailStageChange }) {
   useEffect(() => {
     document.body.classList.add('saas-enabled');
     return () => document.body.classList.remove('saas-enabled');
@@ -4646,9 +4629,34 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       )
     ),
     /*#__PURE__*/React.createElement('header', { className: 'saas-topbar' },
-      /*#__PURE__*/React.createElement('div', null,
+      /*#__PURE__*/React.createElement('div', { className: 'min-w-0' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-page-kicker' }, activeView === 'today' ? 'Work queue' : activeView === 'home' ? 'Overview' : 'Business development'),
-        /*#__PURE__*/React.createElement('div', { className: 'saas-page-title' }, pageTitle || 'BDD CRM')
+        /*#__PURE__*/React.createElement('div', { className: 'flex items-center gap-3 flex-wrap min-w-0' },
+          /*#__PURE__*/React.createElement('div', { className: 'saas-page-title min-w-0' }, pageTitle || 'BDD CRM'),
+          detailAccount && (() => {
+            const opportunity = computeOverallFeesOpportunity(detailAccount);
+            const isTarget = (detailAccount.RelationshipStage || 'Target') === 'Target';
+            const arrowStroke = isTarget ? '%23ffffff' : '%23081e3d';
+            return /*#__PURE__*/React.createElement('div', { className: 'flex items-center gap-2 flex-wrap' },
+              opportunity && /*#__PURE__*/React.createElement('span', {
+                className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${overallOpportunityColor(opportunity.label)} text-white`,
+                title: buildOpportunityTooltip(opportunity)
+              }, 'FEES OPPORTUNITY: ', opportunity.label.toUpperCase(), opportunity.source === 'auto' && ' (AUTO)'),
+              /*#__PURE__*/React.createElement(StatusPill, { status: detailAccount.Status }),
+              /*#__PURE__*/React.createElement('select', {
+                value: detailAccount.RelationshipStage || 'Target',
+                onChange: e => onDetailStageChange && onDetailStageChange(e.target.value),
+                title: 'Change relationship stage',
+                'aria-label': 'Change relationship stage',
+                className: `appearance-none cursor-pointer border-none inline-flex items-center px-2.5 py-1 pr-6 rounded-full text-xs font-semibold bg-[right_0.4rem_center] bg-no-repeat ${stageColor(detailAccount.RelationshipStage)}`,
+                style: {
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${arrowStroke}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                  backgroundSize: '10px'
+                }
+              }, RELATIONSHIP_STAGES.map(stage => /*#__PURE__*/React.createElement('option', { key: stage, value: stage }, stage)))
+            );
+          })()
+        )
       ),
       /*#__PURE__*/React.createElement('div', { className: 'saas-top-actions' },
         activeView !== 'home' && /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onHome, className: 'saas-secondary' }, 'Home'),
@@ -4906,8 +4914,32 @@ function App() {
       referralSourceOptions: referralSourceOptions
     })), /*#__PURE__*/React.createElement(Toast, null));
   }
+  const updateSelectedAccountStage = newStage => {
+    if (!selectedAccount || !newStage || newStage === (selectedAccount.RelationshipStage || 'Target')) return;
+    const stagePatch = {
+      RelationshipStage: newStage,
+      ...(newStage === 'Active Referrer' ? {
+        Status: 'Customer',
+        DateConverted: selectedAccount.DateConverted || new Date().toISOString()
+      } : {})
+    };
+    updateDataLocal(d => ({
+      ...d,
+      accounts: d.accounts.map(a => a.AccountId === selectedAccount.AccountId ? { ...a, ...stagePatch } : a)
+    }));
+    window.__crmShowToast && window.__crmShowToast('Updating…');
+    apiPost('updateAccount', { data: { AccountId: selectedAccount.AccountId, ...stagePatch } }).then(response => {
+      if (response && response.success === false) throw new Error(response.error || 'Save failed');
+      window.__crmShowToast && window.__crmShowToast(newStage === 'Active Referrer' ? 'Active Referrer · Customer' : 'Stage updated');
+    }).catch(err => {
+      console.error(err);
+      window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
+      refreshAccount(selectedAccount.AccountId);
+    });
+  };
+
   if (view === 'detail' && selectedAccount) {
-    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps(selectedAccount.AccountName || 'Account')), /*#__PURE__*/React.createElement(AccountDetail, {
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, { ...chromeProps(selectedAccount.AccountName || 'Account'), detailAccount: selectedAccount, onDetailStageChange: updateSelectedAccountStage }), /*#__PURE__*/React.createElement(AccountDetail, {
       account: selectedAccount,
       contacts: data.contacts,
       connections: data.connections,
