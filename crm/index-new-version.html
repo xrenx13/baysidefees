@@ -93,6 +93,33 @@
   .saas-profile-name { width:100%; font-size:12px; line-height:1.35; font-weight:600; color:#39465a; white-space:normal; overflow:visible; text-overflow:clip; word-break:break-word; }
   .saas-signout { border:0; background:transparent; color:#98a2b3; font-size:11px; cursor:pointer; padding:2px 0; border-radius:6px; }
   .saas-signout:hover { background:#f3f4f6; color:#4b5563; }
+  .saas-theme-toggle { width:100%; height:36px; border:0; background:transparent; display:flex; align-items:center; gap:9px; padding:0 9px; margin-bottom:6px; border-radius:9px; color:#657084; font-size:12px; font-weight:600; cursor:pointer; transition:.15s ease; }
+  .saas-theme-toggle:hover { background:#f4f6f8; color:var(--saas-navy); }
+
+  /* Optional navy sidebar theme. Only the left navigation changes; the CRM workspace stays light. */
+  .saas-chrome.dark { background:var(--saas-navy); border-right-color:rgba(255,255,255,.10); }
+  .saas-chrome.dark .saas-brand { border-bottom-color:rgba(255,255,255,.10); }
+  .saas-chrome.dark .saas-brand-mark { background:#fff; box-shadow:none; }
+  .saas-chrome.dark .saas-brand-title { color:#fff; }
+  .saas-chrome.dark .saas-brand-sub { color:#91a4bc; }
+  .saas-chrome.dark .saas-nav-label { color:#7189a6; }
+  .saas-chrome.dark .saas-nav-btn { color:#b7c4d5; }
+  .saas-chrome.dark .saas-nav-btn:hover { background:rgba(255,255,255,.07); color:#fff; }
+  .saas-chrome.dark .saas-nav-btn.active { background:rgba(45,212,191,.15); color:#d7fffa; }
+  .saas-chrome.dark .saas-mini-cal { background:rgba(255,255,255,.045); border-color:rgba(255,255,255,.10); }
+  .saas-chrome.dark .saas-mini-cal-title { color:#e7edf5; }
+  .saas-chrome.dark .saas-mini-cal-arrow { color:#91a4bc; }
+  .saas-chrome.dark .saas-mini-cal-arrow:hover { background:rgba(255,255,255,.08); color:#fff; }
+  .saas-chrome.dark .saas-mini-cal-dow { color:#7189a6; }
+  .saas-chrome.dark .saas-mini-cal-day { color:#b7c4d5; }
+  .saas-chrome.dark .saas-mini-cal-day.today { background:#0f8a80; color:#fff; }
+  .saas-chrome.dark .saas-side-bottom { border-top-color:rgba(255,255,255,.10); }
+  .saas-chrome.dark .saas-theme-toggle { color:#b7c4d5; }
+  .saas-chrome.dark .saas-theme-toggle:hover { background:rgba(255,255,255,.07); color:#fff; }
+  .saas-chrome.dark .saas-avatar { background:rgba(255,255,255,.12); color:#fff; }
+  .saas-chrome.dark .saas-profile-name { color:#fff; }
+  .saas-chrome.dark .saas-signout { color:#91a4bc; }
+  .saas-chrome.dark .saas-signout:hover { background:rgba(255,255,255,.07); color:#fff; }
   .saas-topbar { position:fixed; left:var(--saas-sidebar); right:0; top:0; height:var(--saas-topbar); background:rgba(255,255,255,.94); backdrop-filter: blur(12px); border-bottom:1px solid var(--saas-line); z-index:850; display:flex; align-items:center; justify-content:space-between; padding:0 28px; }
   .saas-page-kicker { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:#a0a8b5; margin-bottom:2px; }
   .saas-page-title { font-size:18px; line-height:1.2; font-weight:680; color:var(--saas-ink); letter-spacing:-.025em; max-width:54vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -4436,15 +4463,15 @@ function TodayDashboard({
   }, /*#__PURE__*/React.createElement(DashboardSection, {
     ...common, title: "Overdue", tone: "red",
     accounts: sortByFollowUpDate(overdue),
-    whyFn: a => 'Next action is overdue'
+    whyFn: a => null
   }), /*#__PURE__*/React.createElement(DashboardSection, {
     ...common, title: "Due Today", tone: "amber",
     accounts: sortByFollowUpDate(dueToday),
-    whyFn: a => a.NextAction ? `Due today: ${a.NextAction}` : 'Follow-up is due today'
+    whyFn: a => null
   }), /*#__PURE__*/React.createElement(DashboardSection, {
     ...common, title: "Due this Week", tone: "teal",
     accounts: sortByFollowUpDate(dueWeek),
-    whyFn: a => a.NextAction ? `${a.NextAction} — due ${formatFollowUpDate(a.NextFollowUp)}` : `Follow-up due ${formatFollowUpDate(a.NextFollowUp)}`
+    whyFn: a => null
   }), /*#__PURE__*/React.createElement(DashboardSection, {
     ...common, title: "5 Targets to Consider", tone: "navy",
     accounts: sortTargetAccounts(targetsToConsider),
@@ -4580,6 +4607,13 @@ function SaaSIcon({ name }) {
       /*#__PURE__*/React.createElement('path', { key: 'a', d: 'M14 5h5v5' }),
       /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M10 14 19 5' }),
       /*#__PURE__*/React.createElement('path', { key: 'c', d: 'M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5' })
+    ],
+    moon: [
+      /*#__PURE__*/React.createElement('path', { key: 'a', d: 'M20.5 14.3A8.3 8.3 0 0 1 9.7 3.5 8.7 8.7 0 1 0 20.5 14.3Z' })
+    ],
+    sun: [
+      /*#__PURE__*/React.createElement('circle', { key: 'a', cx: 12, cy: 12, r: 3.5 }),
+      /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M12 2.5v2M12 19.5v2M4.5 4.5l1.4 1.4M18.1 18.1l1.4 1.4M2.5 12h2M19.5 12h2M4.5 19.5l1.4-1.4M18.1 5.9l1.4-1.4' })
     ]
   };
   return /*#__PURE__*/React.createElement('span', { className: 'saas-nav-icon' }, /*#__PURE__*/React.createElement('svg', common, ...(paths[name] || paths.accounts)));
@@ -4618,8 +4652,14 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     return () => document.body.classList.remove('saas-enabled');
   }, []);
   const displayName = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
+  const [sidebarTheme, setSidebarTheme] = useState(() => localStorage.getItem('bdd_crm_sidebar_theme') === 'dark' ? 'dark' : 'light');
+  const toggleSidebarTheme = () => setSidebarTheme(current => {
+    const next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('bdd_crm_sidebar_theme', next);
+    return next;
+  });
   return /*#__PURE__*/React.createElement(React.Fragment, null,
-    /*#__PURE__*/React.createElement('aside', { className: 'saas-chrome' },
+    /*#__PURE__*/React.createElement('aside', { className: `saas-chrome ${sidebarTheme === 'dark' ? 'dark' : ''}` },
       /*#__PURE__*/React.createElement('div', { className: 'saas-brand' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-brand-mark' }, /*#__PURE__*/React.createElement('img', { src: LOGO_DATA_URI, alt: '', className: 'w-full h-full object-contain' })),
         /*#__PURE__*/React.createElement('div', { className: 'saas-brand-copy' },
@@ -4638,6 +4678,10 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       ),
       /*#__PURE__*/React.createElement(SaaSMiniCalendar, null),
       /*#__PURE__*/React.createElement('div', { className: 'saas-side-bottom' },
+        /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-theme-toggle', onClick:toggleSidebarTheme, 'aria-label': sidebarTheme === 'dark' ? 'Use light sidebar' : 'Use dark sidebar', title: sidebarTheme === 'dark' ? 'Use light sidebar' : 'Use dark sidebar' },
+          /*#__PURE__*/React.createElement(SaaSIcon, { name: sidebarTheme === 'dark' ? 'sun' : 'moon' }),
+          /*#__PURE__*/React.createElement('span', null, sidebarTheme === 'dark' ? 'Light sidebar' : 'Dark sidebar')
+        ),
         /*#__PURE__*/React.createElement('div', { className: 'saas-profile' },
           /*#__PURE__*/React.createElement('div', { className: 'saas-avatar' }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))),
           /*#__PURE__*/React.createElement('div', { className: 'saas-profile-copy' },
