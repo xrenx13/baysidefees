@@ -2785,9 +2785,9 @@ function AccountDetail({
     onCancel: () => setEditingAccount(false),
     onDelete: removeAccount,
     referralSourceOptions: referralSourceOptions
-  }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", { className: "grid lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)] gap-6 mb-6 items-start" },
+  }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-start" },
     /*#__PURE__*/React.createElement("div", {
-    className: `bg-white rounded-xl border border-skyblue-100 p-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+    className: `md:col-span-2 bg-white rounded-xl border border-skyblue-100 p-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
   }, /*#__PURE__*/React.createElement("h1", {
     className: "font-display text-2xl text-navy-900 mb-1"
   }, account.AccountName), /*#__PURE__*/React.createElement("div", {
@@ -3693,13 +3693,13 @@ function PipelineView({
     }, /*#__PURE__*/React.createElement("button", {
       type: "button",
       onClick: () => stage === 'Target' ? setTargetExpanded(v => !v) : setActiveReferrersExpanded(v => !v),
-      title: stage === 'Target' ? (targetExpanded ? "Collapse Targets" : "Expand Targets") : (activeReferrersExpanded ? "Collapse Active Referrers" : "Expand Active Referrers"),
+      title: stage === 'Target' ? (targetExpanded ? "Collapse Targets" : "Expand Targets") : (activeReferrersExpanded ? "Collapse Active Referrer" : "Expand Active Referrer"),
       className: `w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${pipelineHeaderColor(stage)}`
     }, /*#__PURE__*/React.createElement("div", {
       className: "flex items-center justify-between gap-1"
     }, /*#__PURE__*/React.createElement("span", {
       className: isCollapsedEdge ? "text-[10px] tracking-tight" : ""
-    }, stage === 'Active Referrer' ? "Active Referrers" : "Target"), /*#__PURE__*/React.createElement("span", {
+    }, stage === 'Active Referrer' ? "Active Referrer" : "Target"), /*#__PURE__*/React.createElement("span", {
       className: "opacity-80"
     }, columns[stage].length)), !isCollapsedEdge && stage === 'Target' && /*#__PURE__*/React.createElement("div", {
       className: "mt-0.5 text-[10px] font-medium opacity-75 text-left"
