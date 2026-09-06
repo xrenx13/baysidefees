@@ -3608,18 +3608,14 @@ function PipelineView({
     }), a.BedCount && /*#__PURE__*/React.createElement("span", {
       className: "text-xs text-navy-700/60 whitespace-nowrap"
     }, a.BedCount, " beds")), isActiveReferrer && /*#__PURE__*/React.createElement("div", {
-      className: "space-y-0.5 mb-1.5"
+      className: "mb-1.5"
     }, /*#__PURE__*/React.createElement("p", {
-      className: "text-xs text-navy-700/65"
-    }, "Referrals · 30 days: ", /*#__PURE__*/React.createElement("span", {
+      className: "text-xs text-navy-700/65 whitespace-nowrap"
+    }, "Referrals Last 30 days: ", /*#__PURE__*/React.createElement("span", {
       className: "font-semibold text-navy-900"
-    }, referralStats.last30)), /*#__PURE__*/React.createElement("p", {
-      className: "text-xs text-navy-700/65"
-    }, "Referrals · 90 days: ", /*#__PURE__*/React.createElement("span", {
+    }, referralStats.last30), "  Last 90 days: ", /*#__PURE__*/React.createElement("span", {
       className: "font-semibold text-navy-900"
-    }, referralStats.last90)), /*#__PURE__*/React.createElement("p", {
-      className: "text-xs text-navy-700/65"
-    }, "Referrals · YTD: ", /*#__PURE__*/React.createElement("span", {
+    }, referralStats.last90), "  YTD: ", /*#__PURE__*/React.createElement("span", {
       className: "font-semibold text-navy-900"
     }, referralStats.ytd)), a.BedCount && /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-navy-700/50"
