@@ -1335,6 +1335,7 @@ function AccountForm({
   initial,
   onSave,
   onCancel,
+  onDelete,
   referralSourceOptions = []
 }) {
   const [form, setForm] = useState(initial || {
@@ -1747,7 +1748,10 @@ function AccountForm({
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => onSave(form),
     className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition"
-  }, "Save account"), /*#__PURE__*/React.createElement("button", {
+  }, "Save account"), onDelete && /*#__PURE__*/React.createElement("button", {
+    onClick: onDelete,
+    className: "border border-red-200 text-red-500 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition"
+  }, "Delete account"), /*#__PURE__*/React.createElement("button", {
     onClick: onCancel,
     className: "text-navy-700/60 hover:text-navy-900 text-sm px-3"
   }, "Cancel")));
@@ -2777,10 +2781,7 @@ function AccountDetail({
 
   return /*#__PURE__*/React.createElement("div", {
     className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: onBack,
-    className: "text-teal-600 hover:text-teal-700 text-sm mb-4 flex items-center gap-1"
-  }, "← Back to accounts"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "sticky top-0 z-20 px-4 py-2.5 mb-4 bg-white border border-skyblue-100 rounded-xl shadow-sm flex items-center gap-3"
   }, /*#__PURE__*/React.createElement("span", {
     className: "font-display text-base text-navy-900 truncate"
@@ -2792,6 +2793,7 @@ function AccountDetail({
     initial: account,
     onSave: saveAccount,
     onCancel: () => setEditingAccount(false),
+    onDelete: removeAccount,
     referralSourceOptions: referralSourceOptions
   }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: `rounded-t-xl px-6 py-2 text-xs font-semibold uppercase tracking-wide text-white ${account.Status === 'Customer' ? 'bg-teal-500' : 'bg-skyblue-500'}`
@@ -2819,11 +2821,7 @@ function AccountDetail({
   }, "Revert to prospect"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setEditingAccount(true),
     className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
-  }, "Edit"), /*#__PURE__*/React.createElement("button", {
-    onClick: removeAccount,
-    disabled: busy,
-    className: "border border-red-200 text-red-500 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition"
-  }, "Delete"))))), (account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("div", {
+  }, "Edit"))))), (account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-start justify-between gap-4 flex-wrap mb-5"
@@ -3144,10 +3142,7 @@ function AccountDetail({
     minute: '2-digit'
   }))), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/50 mt-0.5"
-  }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))), /*#__PURE__*/React.createElement("button", {
-    onClick: onBack,
-    className: "text-teal-600 hover:text-teal-700 text-sm mt-6 mb-2 flex items-center gap-1"
-  }, "← Back to accounts"));
+  }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))));
 }
 
 // ---------------------------------------------------------------------
@@ -3792,10 +3787,12 @@ function AccountList({
   onSignOut,
   onToday,
   region,
-  setRegion
+  setRegion,
+  initialViewMode = 'list'
 }) {
   const [filter, setFilter] = useState('All');
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'table' | 'map' | 'pipeline'
+  const [viewMode, setViewMode] = useState(initialViewMode); // 'list' | 'table' | 'map' | 'pipeline'
+  useEffect(() => { setViewMode(initialViewMode); }, [initialViewMode]);
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
   const [chainFilter, setChainFilter] = useState('All Chains');
@@ -4050,9 +4047,9 @@ function AccountList({
     key: r,
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, r))), /*#__PURE__*/React.createElement("div", {
+  }, r))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
-  }, ['list', 'table', 'pipeline', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
+  }, ['list', 'table', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
@@ -4216,14 +4213,12 @@ function DashboardAccountCard({
     className: "font-semibold text-navy-900"
   }, account.AccountName), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/55 mt-0.5"
-  }, [account.Region, town].filter(Boolean).join(" · "))), /*#__PURE__*/React.createElement("div", {
+  }, [account.Region, town, bedCount].filter(Boolean).join(" · "))), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1.5 flex-wrap justify-end"
   }, propensity && /*#__PURE__*/React.createElement(PropensityBadge, {
     account: account,
     compact: true
-  }), bedCount && /*#__PURE__*/React.createElement("span", {
-    className: "inline-flex items-center text-xs font-semibold text-navy-700/55 px-1"
-  }, bedCount), /*#__PURE__*/React.createElement("select", {
+  }), /*#__PURE__*/React.createElement("select", {
     value: account.RelationshipStage || 'Target',
     onChange: e => onStageChange(account, e.target.value),
     onClick: e => e.stopPropagation(),
@@ -4237,9 +4232,7 @@ function DashboardAccountCard({
     key: s,
     value: s,
     className: stageColor(s)
-  }, s))), account.NextFollowUp && /*#__PURE__*/React.createElement(FollowUpBadge, {
-    nextFollowUp: account.NextFollowUp
-  }))), account.NextAction && /*#__PURE__*/React.createElement("div", {
+  }, s))))), account.NextAction && /*#__PURE__*/React.createElement("div", {
     className: "mt-3 bg-skyblue-50/70 rounded-lg px-3 py-2"
   }, /*#__PURE__*/React.createElement("p", {
     className: "text-[10px] uppercase tracking-wide font-semibold text-navy-700/45 mb-0.5"
@@ -4436,10 +4429,7 @@ function TodayDashboard({
 
   return /*#__PURE__*/React.createElement("div", {
     className: "max-w-2xl mx-auto px-4 sm:px-6 py-8"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: onBack,
-    className: "text-teal-600 hover:text-teal-700 text-sm mb-4"
-  }, "← Back to accounts"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "mb-7 rounded-2xl bg-navy-900 text-white px-5 py-5 shadow-sm"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between gap-4"
@@ -4596,6 +4586,11 @@ function SaaSIcon({ name }) {
       /*#__PURE__*/React.createElement('rect', { key: 'a', x: 4, y: 3, width: 16, height: 18, rx: 2 }),
       /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M8 7h8M8 11h8M8 15h5' })
     ],
+    pipeline: [
+      /*#__PURE__*/React.createElement('rect', { key: 'a', x: 3, y: 4, width: 5, height: 16, rx: 1.5 }),
+      /*#__PURE__*/React.createElement('rect', { key: 'b', x: 9.5, y: 7, width: 5, height: 13, rx: 1.5 }),
+      /*#__PURE__*/React.createElement('rect', { key: 'c', x: 16, y: 10, width: 5, height: 10, rx: 1.5 })
+    ],
     plus: [/*#__PURE__*/React.createElement('path', { key: 'a', d: 'M12 5v14M5 12h14' })],
     external: [
       /*#__PURE__*/React.createElement('path', { key: 'a', d: 'M14 5h5v5' }),
@@ -4606,7 +4601,7 @@ function SaaSIcon({ name }) {
   return /*#__PURE__*/React.createElement('span', { className: 'saas-nav-icon' }, /*#__PURE__*/React.createElement('svg', common, ...(paths[name] || paths.accounts)));
 }
 
-function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onCreate, onSignOut }) {
+function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onCreate, onSignOut }) {
   useEffect(() => {
     document.body.classList.add('saas-enabled');
     return () => document.body.classList.remove('saas-enabled');
@@ -4625,6 +4620,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onCrea
         /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label' }, 'Workspace'),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onHome, className: `saas-nav-btn ${activeView === 'home' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'home' }), /*#__PURE__*/React.createElement('span', null, 'Home')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onToday, className: `saas-nav-btn ${activeView === 'today' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'today' }), /*#__PURE__*/React.createElement('span', null, 'Today')),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onPipeline, className: `saas-nav-btn ${activeView === 'pipeline' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'pipeline' }), /*#__PURE__*/React.createElement('span', null, 'Pipeline')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onAccounts, className: `saas-nav-btn ${activeView === 'accounts' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'accounts' }), /*#__PURE__*/React.createElement('span', null, 'Accounts')),
         /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label mt-2' }, 'Tools'),
         [['SimplePractice','https://secure.simplepractice.com/'],['BDD Calendar','http://calendar.google.com/'],['BDD Email','http://gmail.com/']].map(([label, href]) => /*#__PURE__*/React.createElement('a', { key: label, href, target: '_blank', rel: 'noopener noreferrer', className: 'saas-nav-btn' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'external' }), /*#__PURE__*/React.createElement('span', null, label)))
@@ -4815,7 +4811,7 @@ function App() {
     }, "Try again"));
   }
   const selectedAccount = data.accounts.find(a => a.AccountId === selectedId);
-  const chromeProps = pageTitle => ({ activeView: view === 'home' ? 'home' : view === 'today' ? 'today' : 'accounts', pageTitle, onHome: () => setView('home'), onAccounts: () => setView('list'), onToday: () => setView('today'), onCreate: () => setView('create'), onSignOut: signOut });
+  const chromeProps = pageTitle => ({ activeView: view === 'home' ? 'home' : view === 'today' ? 'today' : view === 'pipeline' ? 'pipeline' : 'accounts', pageTitle, onHome: () => setView('home'), onAccounts: () => setView('list'), onToday: () => setView('today'), onPipeline: () => setView('pipeline'), onCreate: () => setView('create'), onSignOut: signOut });
   if (view === 'home') {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Home')), /*#__PURE__*/React.createElement(HomeDashboard, {
       accounts: data.accounts,
@@ -4831,10 +4827,7 @@ function App() {
   if (view === 'create') {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('New account')), /*#__PURE__*/React.createElement("div", {
       className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => setView('list'),
-      className: "text-teal-600 hover:text-teal-700 text-sm mb-4"
-    }, "← Back to accounts"), /*#__PURE__*/React.createElement(AccountForm, {
+    }, /*#__PURE__*/React.createElement(AccountForm, {
       onSave: form => {
         // New accounts use the same optimistic-save pattern as activities
         // and account edits. Add a temporary local record and return to the
@@ -4953,6 +4946,25 @@ function App() {
       onBack: () => setView('list')
     }), /*#__PURE__*/React.createElement(Toast, null));
   }
+  if (view === 'pipeline') {
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Pipeline')), /*#__PURE__*/React.createElement(AccountList, {
+      accounts: data.accounts,
+      contacts: data.contacts,
+      connections: data.connections,
+      activities: data.activities,
+      referralActivity: data.referralActivity || [],
+      onSelect: a => {
+        setSelectedId(a.AccountId);
+        setView('detail');
+      },
+      onCreate: () => setView('create'),
+      onSignOut: signOut,
+      onToday: () => setView('today'),
+      region: region,
+      setRegion: setRegion,
+      initialViewMode: 'pipeline'
+    }), /*#__PURE__*/React.createElement(Toast, null));
+  }
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Accounts')), /*#__PURE__*/React.createElement(AccountList, {
     accounts: data.accounts,
     contacts: data.contacts,
@@ -4967,7 +4979,8 @@ function App() {
     onSignOut: signOut,
     onToday: () => setView('today'),
     region: region,
-    setRegion: setRegion
+    setRegion: setRegion,
+    initialViewMode: 'list'
   }), /*#__PURE__*/React.createElement(Toast, null));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
