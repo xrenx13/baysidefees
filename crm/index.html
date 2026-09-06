@@ -3611,11 +3611,13 @@ function PipelineView({
       className: "mb-1.5"
     }, /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-navy-700/65 whitespace-nowrap"
-    }, "Referrals Last 30 days: ", /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       className: "font-semibold text-navy-900"
-    }, referralStats.last30), "  Last 90 days: ", /*#__PURE__*/React.createElement("span", {
+    }, "Referrals"), "  30d: ", /*#__PURE__*/React.createElement("span", {
       className: "font-semibold text-navy-900"
-    }, referralStats.last90), "  YTD: ", /*#__PURE__*/React.createElement("span", {
+    }, referralStats.last30), "  │  90d: ", /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold text-navy-900"
+    }, referralStats.last90), "  │  YTD: ", /*#__PURE__*/React.createElement("span", {
       className: "font-semibold text-navy-900"
     }, referralStats.ytd)), a.BedCount && /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-navy-700/50"
