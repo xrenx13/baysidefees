@@ -1784,6 +1784,177 @@
 }
 </style>
 
+
+<style id="bdd-mobile-pipeline-v3">
+@media (max-width:640px) {
+  /* On mobile Pipeline, the old shared region/status rows are removed entirely.
+     Region now lives inside the dedicated Pipeline shell below. */
+  body.saas-enabled .pipeline-account-list .account-region-view-row,
+  body.saas-enabled .pipeline-account-list > .flex.items-center.gap-3.mb-5.flex-nowrap {
+    display:none !important;
+  }
+
+  body.saas-enabled .pipeline-account-list {
+    padding-left:0 !important;
+    padding-right:0 !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-shell-v3 {
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    padding:18px 18px 30px !important;
+    margin:0 !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-region-v3 {
+    display:block !important;
+    width:100% !important;
+    height:42px !important;
+    box-sizing:border-box !important;
+    margin:0 0 12px !important;
+    border:1px solid #d4dee7 !important;
+    border-radius:10px !important;
+    background:#fff !important;
+    padding:0 36px 0 12px !important;
+    color:#17324d !important;
+    font-size:14px !important;
+    font-weight:700 !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-list-v3 {
+    width:100% !important;
+    max-width:100% !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:9px !important;
+    margin:0 !important;
+    padding:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-section-v3 {
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-toggle-v3 {
+    width:100% !important;
+    min-height:50px !important;
+    box-sizing:border-box !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:11px !important;
+    padding:0 13px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:10px !important;
+    text-align:left !important;
+    font-size:13px !important;
+    font-weight:800 !important;
+    box-shadow:0 1px 2px rgba(15,23,42,.06) !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-name-v3 {
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+  body.saas-enabled .pipeline-mobile-meta-v3 {
+    flex:none !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:10px !important;
+  }
+  body.saas-enabled .pipeline-mobile-count-v3 {
+    font-size:12px !important;
+    font-weight:800 !important;
+    opacity:.8 !important;
+  }
+  body.saas-enabled .pipeline-mobile-arrow-v3 {
+    width:20px !important;
+    height:20px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    font-size:21px !important;
+    line-height:1 !important;
+    transform:rotate(-90deg) !important;
+    transition:transform .16s ease !important;
+  }
+  body.saas-enabled .pipeline-mobile-arrow-v3.open {
+    transform:rotate(0deg) !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-body-v3 {
+    width:100% !important;
+    box-sizing:border-box !important;
+    margin:2px 0 0 !important;
+    padding:8px !important;
+    border-radius:0 0 11px 11px !important;
+    background:rgba(232,241,246,.58) !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:8px !important;
+  }
+  body.saas-enabled .pipeline-mobile-account-v3 {
+    width:100% !important;
+    box-sizing:border-box !important;
+    margin:0 !important;
+    padding:12px !important;
+    border-top:1px solid #dfe7ed !important;
+    border-right:1px solid #dfe7ed !important;
+    border-bottom:1px solid #dfe7ed !important;
+    background:#fff !important;
+    border-radius:9px !important;
+    text-align:left !important;
+  }
+  body.saas-enabled .pipeline-mobile-account-name-v3 {
+    margin:0 !important;
+    font-size:14px !important;
+    font-weight:800 !important;
+    line-height:1.25 !important;
+    color:#15233b !important;
+    overflow-wrap:anywhere !important;
+  }
+  body.saas-enabled .pipeline-mobile-account-meta-v3 {
+    margin-top:7px !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:7px !important;
+    flex-wrap:wrap !important;
+    font-size:12px !important;
+    color:#65758a !important;
+  }
+  body.saas-enabled .pipeline-mobile-referrals-v3,
+  body.saas-enabled .pipeline-mobile-next-v3,
+  body.saas-enabled .pipeline-mobile-last-v3 {
+    margin-top:7px !important;
+    font-size:11px !important;
+    line-height:1.45 !important;
+    color:#65758a !important;
+  }
+  body.saas-enabled .pipeline-mobile-next-v3 {
+    font-size:12px !important;
+    font-weight:650 !important;
+    color:#17324d !important;
+  }
+  body.saas-enabled .pipeline-mobile-last-v3.stale { color:#b7791f !important; }
+  body.saas-enabled .pipeline-mobile-followup-v3 { margin-top:7px !important; }
+  body.saas-enabled .pipeline-mobile-empty-v3 {
+    padding:14px 8px !important;
+    text-align:center !important;
+    font-size:12px !important;
+    color:#8794a5 !important;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -5226,7 +5397,9 @@ function TableView({
 function PipelineView({
   accounts,
   referralActivity,
-  onSelect
+  onSelect,
+  region,
+  setRegion
 }) {
   const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a fit');
   const [targetExpanded, setTargetExpanded] = useState(false);
@@ -5290,34 +5463,45 @@ function PipelineView({
     const toggleMobileStage = stage => {
       setMobileExpandedStages(prev => prev.includes(stage) ? prev.filter(s => s !== stage) : [...prev, stage]);
     };
+    const regionOptions = ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'];
 
     return /*#__PURE__*/React.createElement("div", {
-      className: "pipeline-mobile-accordion"
+      className: "pipeline-mobile-shell-v3"
+    }, /*#__PURE__*/React.createElement("select", {
+      value: region,
+      onChange: e => setRegion(e.target.value),
+      className: "pipeline-mobile-region-v3",
+      "aria-label": "Region"
+    }, regionOptions.map(r => /*#__PURE__*/React.createElement("option", {
+      key: r,
+      value: r
+    }, r))), /*#__PURE__*/React.createElement("div", {
+      className: "pipeline-mobile-list-v3"
     }, stages.map(stage => {
       const expanded = mobileExpandedStages.includes(stage);
       const isActiveReferrer = stage === 'Active Referrer';
       return /*#__PURE__*/React.createElement("section", {
         key: stage,
-        className: "pipeline-mobile-section"
+        className: "pipeline-mobile-section-v3"
       }, /*#__PURE__*/React.createElement("button", {
         type: "button",
-        className: `pipeline-mobile-toggle ${pipelineHeaderColor(stage)}`,
+        className: `pipeline-mobile-toggle-v3 ${pipelineHeaderColor(stage)}`,
         onClick: () => toggleMobileStage(stage),
         "aria-expanded": expanded,
         "aria-label": `${expanded ? 'Collapse' : 'Expand'} ${stage}`
       }, /*#__PURE__*/React.createElement("span", {
-        className: "pipeline-mobile-toggle-name"
+        className: "pipeline-mobile-name-v3"
       }, stage), /*#__PURE__*/React.createElement("span", {
-        className: "pipeline-mobile-toggle-right"
+        className: "pipeline-mobile-meta-v3"
       }, /*#__PURE__*/React.createElement("span", {
-        className: "pipeline-mobile-toggle-count"
+        className: "pipeline-mobile-count-v3"
       }, columns[stage].length), /*#__PURE__*/React.createElement("span", {
-        className: `pipeline-mobile-toggle-arrow ${expanded ? 'open' : ''}`,
+        className: `pipeline-mobile-arrow-v3 ${expanded ? 'open' : ''}`,
         "aria-hidden": "true"
       }, "⌄"))), expanded && /*#__PURE__*/React.createElement("div", {
-        className: "pipeline-mobile-stage-body"
+        className: "pipeline-mobile-body-v3"
       }, columns[stage].length === 0 ? /*#__PURE__*/React.createElement("p", {
-        className: "pipeline-mobile-empty"
+        className: "pipeline-mobile-empty-v3"
       }, "No accounts") : columns[stage].map(a => {
         const days = daysSince(a.LastContactDate);
         const stale = days === null || days > 14;
@@ -5330,27 +5514,27 @@ function PipelineView({
           key: a.AccountId,
           type: "button",
           onClick: () => onSelect(a),
-          className: `pipeline-mobile-account ${attentionBorder}`
+          className: `pipeline-mobile-account-v3 ${attentionBorder}`
         }, /*#__PURE__*/React.createElement("p", {
-          className: "pipeline-mobile-account-name"
+          className: "pipeline-mobile-account-name-v3"
         }, a.AccountName), !isActiveReferrer && /*#__PURE__*/React.createElement("div", {
-          className: "pipeline-mobile-account-meta"
+          className: "pipeline-mobile-account-meta-v3"
         }, /*#__PURE__*/React.createElement(PropensityBadge, {
           account: a,
           compact: true
         }), a.BedCount && /*#__PURE__*/React.createElement("span", null, a.BedCount, " beds")), isActiveReferrer && /*#__PURE__*/React.createElement("p", {
-          className: "pipeline-mobile-referrals"
+          className: "pipeline-mobile-referrals-v3"
         }, "Referrals  30d: ", /*#__PURE__*/React.createElement("strong", null, referralStats.last30), "  │  90d: ", /*#__PURE__*/React.createElement("strong", null, referralStats.last90), "  │  YTD: ", /*#__PURE__*/React.createElement("strong", null, referralStats.ytd)), a.NextAction && /*#__PURE__*/React.createElement("p", {
-          className: "pipeline-mobile-next-action"
+          className: "pipeline-mobile-next-v3"
         }, a.NextAction), a.NextFollowUp && /*#__PURE__*/React.createElement("div", {
-          className: "pipeline-mobile-followup"
+          className: "pipeline-mobile-followup-v3"
         }, /*#__PURE__*/React.createElement(FollowUpBadge, {
           nextFollowUp: a.NextFollowUp
         })), !isActiveReferrer && /*#__PURE__*/React.createElement("p", {
-          className: `pipeline-mobile-last-contact ${stale ? 'stale' : ''}`
+          className: `pipeline-mobile-last-v3 ${stale ? 'stale' : ''}`
         }, days === null ? 'Never contacted' : `Last contact ${formatShortDate(new Date(a.LastContactDate))}${stale ? ` · ${days} day${days === 1 ? '' : 's'} ago` : ''}`));
       })));
-    }));
+    })));
   }
 
   return /*#__PURE__*/React.createElement("div", {
@@ -5800,7 +5984,9 @@ function AccountList({
   }) : viewMode === 'pipeline' ? /*#__PURE__*/React.createElement(PipelineView, {
     accounts: filtered,
     referralActivity: referralActivity,
-    onSelect: onSelect
+    onSelect: onSelect,
+    region: region,
+    setRegion: setRegion
   }) : viewMode === 'table' ? filtered.length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "bg-white rounded-xl border border-skyblue-100"
   }, /*#__PURE__*/React.createElement(EmptyState, {
