@@ -1955,6 +1955,157 @@
 }
 </style>
 
+
+<style id="bdd-home-mobile-chart-table">
+  .home-chart-mobile,
+  .home-source-mobile {
+    display:none;
+  }
+
+  @media (max-width:640px) {
+    body.saas-enabled .bdd-home .home-trend-card,
+    body.saas-enabled .bdd-home .home-card {
+      min-width:0 !important;
+    }
+
+    /* Replace the cramped 6-column chart with a vertical horizontal-bar chart. */
+    body.saas-enabled .home-chart-desktop {
+      display:none !important;
+    }
+
+    body.saas-enabled .home-chart-mobile {
+      display:flex !important;
+      flex-direction:column;
+      gap:12px;
+      margin-top:16px;
+    }
+
+    body.saas-enabled .home-chart-mobile-row {
+      width:100%;
+      border:0;
+      background:transparent;
+      padding:0;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    body.saas-enabled .home-chart-mobile-top {
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:3px;
+    }
+
+    body.saas-enabled .home-chart-mobile-month {
+      font-size:13px;
+      font-weight:800;
+      color:#17324d;
+    }
+
+    body.saas-enabled .home-chart-mobile-revenue {
+      font-size:15px;
+      line-height:1;
+      font-weight:800;
+      color:#536278;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+    }
+
+    body.saas-enabled .home-chart-mobile-meta {
+      margin-bottom:7px;
+      font-size:11px;
+      color:#8793a4;
+    }
+
+    body.saas-enabled .home-chart-mobile-track {
+      width:100%;
+      height:10px;
+      overflow:hidden;
+      border-radius:999px;
+      background:#edf3f4;
+    }
+
+    body.saas-enabled .home-chart-mobile-fill {
+      height:100%;
+      min-width:4px;
+      border-radius:999px;
+      background:#a8d1cc;
+    }
+
+    /* Top Referral Sources becomes card-based on phone instead of five cramped columns. */
+    body.saas-enabled .home-source-desktop {
+      display:none !important;
+    }
+
+    body.saas-enabled .home-source-mobile {
+      display:flex !important;
+      flex-direction:column;
+      gap:10px;
+      margin-top:4px;
+    }
+
+    body.saas-enabled .home-source-mobile-card {
+      border-top:1px solid #edf1f4;
+      padding:12px 0 2px;
+    }
+
+    body.saas-enabled .home-source-mobile-card:first-child {
+      border-top:0;
+      padding-top:2px;
+    }
+
+    body.saas-enabled .home-source-mobile-name {
+      width:100%;
+      border:0;
+      background:transparent;
+      padding:0;
+      margin:0 0 10px;
+      text-align:left;
+      font-size:14px;
+      line-height:1.3;
+      font-weight:800;
+      color:#17324d;
+      cursor:pointer;
+      overflow-wrap:anywhere;
+    }
+
+    body.saas-enabled .home-source-mobile-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+    }
+
+    body.saas-enabled .home-source-mobile-stat {
+      min-width:0;
+      padding:9px 10px;
+      border:1px solid #edf1f4;
+      border-radius:9px;
+      background:#fafcfd;
+    }
+
+    body.saas-enabled .home-source-mobile-stat span {
+      display:block;
+      margin-bottom:3px;
+      font-size:9px;
+      line-height:1.2;
+      font-weight:800;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      color:#929dad;
+    }
+
+    body.saas-enabled .home-source-mobile-stat strong {
+      display:block;
+      font-size:14px;
+      line-height:1.15;
+      color:#38475d;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+    }
+  }
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -6514,7 +6665,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
           /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Monthly revenue with referral volume shown above each bar')
         )
       ),
-      /*#__PURE__*/React.createElement('div',{className:'home-chart home-chart-large'},
+      /*#__PURE__*/React.createElement('div',{className:'home-chart home-chart-large home-chart-desktop'},
         analytics.months.map(m => /*#__PURE__*/React.createElement('div',{className:'home-chart-col',key:`${m.year}-${m.month}`},
           /*#__PURE__*/React.createElement('div',{className:'home-chart-value'},formatCurrency(m.revenue)),
           /*#__PURE__*/React.createElement('div',{className:'home-chart-count'},`${m.count} referral${m.count === 1 ? '' : 's'}`),
@@ -6523,6 +6674,25 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
             title:`View ${m.label} referral details`,'aria-label':`View ${m.label} referral details`
           }, /*#__PURE__*/React.createElement('div',{className:'home-chart-bar',style:{height:`${Math.max(3,(m.revenue/maxMonth)*100)}%`}}))),
           /*#__PURE__*/React.createElement('div',{className:'home-chart-label'},m.label)
+        ))
+      ),
+      /*#__PURE__*/React.createElement('div',{className:'home-chart-mobile'},
+        analytics.months.map(m => /*#__PURE__*/React.createElement('button',{
+          type:'button',
+          className:'home-chart-mobile-row',
+          key:`mobile-${m.year}-${m.month}`,
+          onClick:()=>setSelectedTrendMonth(m),
+          title:`View ${m.label} referral details`,
+          'aria-label':`View ${m.label} referral details`
+        },
+          /*#__PURE__*/React.createElement('div',{className:'home-chart-mobile-top'},
+            /*#__PURE__*/React.createElement('span',{className:'home-chart-mobile-month'},m.label),
+            /*#__PURE__*/React.createElement('span',{className:'home-chart-mobile-revenue'},formatCurrency(m.revenue))
+          ),
+          /*#__PURE__*/React.createElement('div',{className:'home-chart-mobile-meta'},`${m.count} referral${m.count === 1 ? '' : 's'}`),
+          /*#__PURE__*/React.createElement('div',{className:'home-chart-mobile-track'},
+            /*#__PURE__*/React.createElement('div',{className:'home-chart-mobile-fill',style:{width:`${Math.max(3,(m.revenue/maxMonth)*100)}%`}})
+          )
         ))
       )
     ),
@@ -6534,20 +6704,45 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
           /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Ranked by YTD revenue')
         )),
         analytics.topSources.length ? /*#__PURE__*/React.createElement(React.Fragment,null,
-          /*#__PURE__*/React.createElement('div',{className:'home-source-row home-source-head'},
-            /*#__PURE__*/React.createElement('div',null,'Facility'),
-            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'MTD'),
-            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ MTD'),
-            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'YTD'),
-            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ YTD')
+          /*#__PURE__*/React.createElement('div',{className:'home-source-desktop'},
+            /*#__PURE__*/React.createElement('div',{className:'home-source-row home-source-head'},
+              /*#__PURE__*/React.createElement('div',null,'Facility'),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'MTD'),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ MTD'),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'YTD'),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ YTD')
+            ),
+            analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row',key:x.id},
+              /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.mtd),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueMtd)),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.ytd),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueYtd))
+            ))
           ),
-          analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row',key:x.id},
-            /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
-            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.mtd),
-            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueMtd)),
-            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.ytd),
-            /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueYtd))
-          ))
+          /*#__PURE__*/React.createElement('div',{className:'home-source-mobile'},
+            analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-card',key:`mobile-${x.id}`},
+              /*#__PURE__*/React.createElement('button',{className:'home-source-mobile-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
+              /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-grid'},
+                /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-stat'},
+                  /*#__PURE__*/React.createElement('span',null,'MTD referrals'),
+                  /*#__PURE__*/React.createElement('strong',null,x.mtd)
+                ),
+                /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-stat'},
+                  /*#__PURE__*/React.createElement('span',null,'MTD revenue'),
+                  /*#__PURE__*/React.createElement('strong',null,formatCurrency(x.revenueMtd))
+                ),
+                /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-stat'},
+                  /*#__PURE__*/React.createElement('span',null,'YTD referrals'),
+                  /*#__PURE__*/React.createElement('strong',null,x.ytd)
+                ),
+                /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-stat'},
+                  /*#__PURE__*/React.createElement('span',null,'YTD revenue'),
+                  /*#__PURE__*/React.createElement('strong',null,formatCurrency(x.revenueYtd))
+                )
+              )
+            ))
+          )
         ) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'Referral activity will appear here once referrals are recorded.')
       ),
 
