@@ -2258,6 +2258,127 @@
 }
 </style>
 
+
+<style id="bdd-mobile-accounts-workspace-final">
+@media (max-width:640px) {
+  body.saas-enabled .mobile-accounts-page {
+    box-sizing:border-box !important;
+    margin-left:56px !important;
+    margin-right:0 !important;
+    width:calc(100% - 56px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+    padding-top:calc(var(--saas-topbar) + 18px) !important;
+    padding-left:0 !important;
+    padding-right:0 !important;
+    padding-bottom:34px !important;
+    overflow-x:hidden !important;
+  }
+
+  /* This inner workspace—not the page shell—owns the horizontal gutter. */
+  body.saas-enabled .mobile-accounts-workspace {
+    box-sizing:border-box !important;
+    width:calc(100% - 28px) !important;
+    max-width:calc(100% - 28px) !important;
+    margin-left:14px !important;
+    margin-right:14px !important;
+    padding:0 !important;
+    min-width:0 !important;
+  }
+
+  body.saas-enabled .mobile-accounts-region,
+  body.saas-enabled .mobile-accounts-summary,
+  body.saas-enabled .mobile-accounts-list,
+  body.saas-enabled .mobile-account-card,
+  body.saas-enabled .mobile-accounts-empty {
+    box-sizing:border-box !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    transform:none !important;
+    left:auto !important;
+    right:auto !important;
+  }
+
+  body.saas-enabled .mobile-accounts-region {
+    margin-bottom:12px !important;
+  }
+
+  body.saas-enabled .mobile-accounts-summary {
+    margin-top:0 !important;
+    margin-bottom:10px !important;
+    padding-left:2px !important;
+  }
+}
+</style>
+
+
+<style id="bdd-mobile-accountlist-root-fix">
+@media (max-width:640px) {
+  /*
+    Root cause fix:
+    a more-specific legacy #root rule was forcing AccountList pages back to
+    margin-left:0 while leaving their width reduced by the 56px rail.
+    That made both Accounts and Pipeline render underneath the fixed nav.
+  */
+  body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page,
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list {
+    box-sizing:border-box !important;
+    margin-left:56px !important;
+    margin-right:0 !important;
+    width:calc(100% - 56px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+  }
+
+  /* Accounts: one clean inner gutter after the rail. */
+  body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page {
+    padding-left:0 !important;
+    padding-right:0 !important;
+  }
+  body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page .mobile-accounts-workspace {
+    box-sizing:border-box !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 !important;
+    padding:0 14px !important;
+  }
+  body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page .mobile-accounts-region,
+  body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page .mobile-accounts-summary,
+  body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page .mobile-accounts-list,
+  body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page .mobile-account-card {
+    width:100% !important;
+    max-width:100% !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    transform:none !important;
+  }
+
+  /* Pipeline: remove all earlier experimental horizontal offsets.
+     Region and accordion now simply share the AccountList content gutter. */
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list {
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list .account-region-view-row,
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list .pipeline-mobile-shell,
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list .pipeline-mobile-accordion,
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list .pipeline-mobile-section,
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list .pipeline-mobile-toggle,
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list .pipeline-mobile-stage-body {
+    box-sizing:border-box !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -6150,6 +6271,8 @@ function AccountList({
   if (isMobileAccounts) {
     return /*#__PURE__*/React.createElement("div", {
       className: "bdd-account-list mobile-accounts-page"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "mobile-accounts-workspace"
     },
       /*#__PURE__*/React.createElement("label", {
         className: "mobile-accounts-region"
@@ -6208,7 +6331,7 @@ function AccountList({
           }, "›")
         );
       }))
-    );
+    ));
   }
 
   return /*#__PURE__*/React.createElement("div", {
