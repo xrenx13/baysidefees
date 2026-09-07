@@ -2584,6 +2584,69 @@
 }
 </style>
 
+
+<style id="bdd-account-detail-mobile-workspace-final">
+@media (max-width:640px) {
+  /* Proven mobile shell pattern: the page owns the rail offset; an inner
+     workspace owns the content gutter. This is the same structure that
+     fixed Accounts and Pipeline. */
+  body.saas-enabled #root > div.account-detail-page {
+    box-sizing:border-box !important;
+    margin-left:56px !important;
+    margin-right:0 !important;
+    width:calc(100% - 56px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+    padding-top:calc(var(--saas-topbar) + 14px) !important;
+    padding-right:0 !important;
+    padding-bottom:34px !important;
+    padding-left:0 !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+    overflow-x:hidden !important;
+  }
+
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace {
+    box-sizing:border-box !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin:0 !important;
+    padding:0 14px !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+  }
+
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace > *,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-detail-top-grid,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-detail-main-card,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-detail-contacts-card,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-connections-card,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-detail-map-card,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace #activity-log-card {
+    box-sizing:border-box !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+  }
+
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-detail-top-grid,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-detail-main-card,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-detail-contacts-card,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-connections-card,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace .account-detail-map-card,
+  body.saas-enabled #root > div.account-detail-page > .account-detail-workspace #activity-log-card {
+    width:100% !important;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -5188,6 +5251,8 @@ function AccountDetail({
 
   return /*#__PURE__*/React.createElement("div", {
     className: "account-detail-page max-w-7xl mx-auto px-4 sm:px-6 py-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "account-detail-workspace"
   }, editingAccount ? /*#__PURE__*/React.createElement(AccountForm, {
     initial: account,
     onSave: saveAccount,
@@ -5554,7 +5619,7 @@ function AccountDetail({
     minute: '2-digit'
   }))), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/50 mt-0.5"
-  }, m.matchedGuest, m.location ? ` · ${m.location}` : ''))))));
+  }, m.matchedGuest, m.location ? ` · ${m.location}` : '')))))));
 }
 
 // ---------------------------------------------------------------------
