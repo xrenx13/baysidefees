@@ -2106,6 +2106,158 @@
   }
 </style>
 
+
+<style id="bdd-mobile-accounts-simple">
+@media (max-width:640px) {
+  body.saas-enabled .mobile-accounts-page {
+    box-sizing:border-box !important;
+    margin-left:56px !important;
+    width:calc(100% - 56px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+    padding:calc(var(--saas-topbar) + 18px) 12px 34px !important;
+    overflow-x:hidden !important;
+  }
+
+  body.saas-enabled .mobile-accounts-region {
+    display:block;
+    width:100%;
+    margin:0 0 12px;
+  }
+
+  body.saas-enabled .mobile-accounts-region-label {
+    display:block;
+    margin:0 0 6px 2px;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:#8b96a7;
+  }
+
+  body.saas-enabled .mobile-accounts-region-select {
+    width:100%;
+    min-height:48px;
+    border:1px solid #d8e0e8;
+    border-radius:11px;
+    background:#fff;
+    padding:0 38px 0 14px;
+    font-size:15px;
+    font-weight:750;
+    color:#17324d;
+  }
+
+  body.saas-enabled .mobile-accounts-summary {
+    margin:0 2px 10px;
+    font-size:11px;
+    font-weight:700;
+    color:#929dad;
+  }
+
+  body.saas-enabled .mobile-accounts-list {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  body.saas-enabled .mobile-account-card {
+    position:relative;
+    width:100%;
+    min-width:0;
+    border:1px solid #dfe7ed;
+    border-radius:12px;
+    background:#fff;
+    padding:13px 38px 13px 14px;
+    text-align:left;
+    box-shadow:0 1px 2px rgba(15,23,42,.035);
+    cursor:pointer;
+  }
+
+  body.saas-enabled .mobile-account-card-main {
+    min-width:0;
+  }
+
+  body.saas-enabled .mobile-account-name {
+    font-size:15px;
+    line-height:1.25;
+    font-weight:800;
+    color:#15233b;
+    overflow-wrap:anywhere;
+  }
+
+  body.saas-enabled .mobile-account-location {
+    margin-top:3px;
+    font-size:11px;
+    line-height:1.3;
+    color:#8995a5;
+  }
+
+  body.saas-enabled .mobile-account-card-meta {
+    display:flex;
+    align-items:center;
+    gap:7px;
+    flex-wrap:wrap;
+    margin-top:9px;
+  }
+
+  body.saas-enabled .mobile-account-stage {
+    display:inline-flex;
+    align-items:center;
+    min-height:24px;
+    padding:3px 8px;
+    border-radius:999px;
+    font-size:10px;
+    line-height:1;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  body.saas-enabled .mobile-account-followup {
+    display:inline-flex;
+    align-items:center;
+    min-height:24px;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#f5f7f9;
+    color:#68768a;
+    font-size:10px;
+    line-height:1;
+    font-weight:750;
+    white-space:nowrap;
+  }
+
+  body.saas-enabled .mobile-account-followup.overdue {
+    background:#fff1ef;
+    color:#b42318;
+  }
+
+  body.saas-enabled .mobile-account-followup.today {
+    background:#fff7df;
+    color:#a15c00;
+  }
+
+  body.saas-enabled .mobile-account-chevron {
+    position:absolute;
+    right:14px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:24px;
+    line-height:1;
+    color:#9aa5b3;
+  }
+
+  body.saas-enabled .mobile-accounts-empty {
+    padding:28px 16px;
+    border:1px dashed #d8e0e8;
+    border-radius:12px;
+    background:#fff;
+    text-align:center;
+    font-size:13px;
+    color:#8a96a7;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -5992,6 +6144,73 @@ function AccountList({
     }
     return list;
   }, [filtered, sortBy]);
+  const isMobileAccounts = initialViewMode !== 'pipeline' && typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+  const mobileAccounts = useMemo(() => [...regionAccounts].sort((a, b) => String(a.AccountName || '').localeCompare(String(b.AccountName || ''))), [regionAccounts]);
+
+  if (isMobileAccounts) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "bdd-account-list mobile-accounts-page"
+    },
+      /*#__PURE__*/React.createElement("label", {
+        className: "mobile-accounts-region"
+      },
+        /*#__PURE__*/React.createElement("span", {
+          className: "mobile-accounts-region-label"
+        }, "Region"),
+        /*#__PURE__*/React.createElement("select", {
+          value: region,
+          onChange: e => setRegion(e.target.value),
+          className: "mobile-accounts-region-select"
+        }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'].map(r => /*#__PURE__*/React.createElement("option", {
+          key: r,
+          value: r
+        }, r)))
+      ),
+      /*#__PURE__*/React.createElement("div", {
+        className: "mobile-accounts-summary"
+      }, `${mobileAccounts.length} account${mobileAccounts.length === 1 ? '' : 's'}`),
+      mobileAccounts.length === 0 ? /*#__PURE__*/React.createElement("div", {
+        className: "mobile-accounts-empty"
+      }, "No accounts in this region.") : /*#__PURE__*/React.createElement("div", {
+        className: "mobile-accounts-list"
+      }, mobileAccounts.map(a => {
+        const town = getTown(a.Address);
+        const follow = followUpStatus(a.NextFollowUp);
+        return /*#__PURE__*/React.createElement("button", {
+          key: a.AccountId,
+          type: "button",
+          onClick: () => onSelect(a),
+          className: "mobile-account-card"
+        },
+          /*#__PURE__*/React.createElement("div", {
+            className: "mobile-account-card-main"
+          },
+            /*#__PURE__*/React.createElement("div", {
+              className: "mobile-account-name"
+            }, a.AccountName || 'Unnamed account'),
+            /*#__PURE__*/React.createElement("div", {
+              className: "mobile-account-location"
+            }, [town, a.Region].filter(Boolean).join(' · '))
+          ),
+          /*#__PURE__*/React.createElement("div", {
+            className: "mobile-account-card-meta"
+          },
+            /*#__PURE__*/React.createElement("span", {
+              className: `mobile-account-stage ${stageColor(a.RelationshipStage)}`
+            }, a.RelationshipStage || 'Target'),
+            a.NextFollowUp && /*#__PURE__*/React.createElement("span", {
+              className: `mobile-account-followup ${follow === 'overdue' ? 'overdue' : follow === 'today' ? 'today' : ''}`
+            }, follow === 'today' ? 'Follow-up today' : `Follow-up ${formatFollowUpDate(a.NextFollowUp)}`)
+          ),
+          /*#__PURE__*/React.createElement("span", {
+            className: "mobile-account-chevron",
+            "aria-hidden": "true"
+          }, "›")
+        );
+      }))
+    );
+  }
+
   return /*#__PURE__*/React.createElement("div", {
     className: `bdd-account-list ${initialViewMode === 'pipeline' ? 'pipeline-account-list' : ''} max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8`
   }, /*#__PURE__*/React.createElement("div", {
