@@ -2647,6 +2647,42 @@
 }
 </style>
 
+
+<style id="bdd-account-detail-mobile-hard-fallback">
+@media (max-width:640px) {
+  body.saas-enabled #root > .account-detail-page {
+    margin-left:56px !important;
+    margin-right:0 !important;
+    width:calc(100% - 56px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+    padding-left:0 !important;
+    padding-right:0 !important;
+    box-sizing:border-box !important;
+    overflow-x:hidden !important;
+  }
+
+  body.saas-enabled #root > .account-detail-page > .account-detail-workspace {
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin:0 !important;
+    padding-left:14px !important;
+    padding-right:14px !important;
+    box-sizing:border-box !important;
+  }
+
+  body.saas-enabled #root > .account-detail-page > .account-detail-workspace > * {
+    max-width:100% !important;
+    min-width:0 !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    transform:none !important;
+    box-sizing:border-box !important;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -4744,6 +4780,83 @@ function AccountDetail({
   relationshipOptions,
   referralSourceOptions
 }) {
+  const detailPageRef = useRef(null);
+
+  // Account Detail had several legacy/global layout rules competing with the
+  // mobile shell. Apply the proven 56px rail geometry directly to the rendered
+  // root element with inline !important declarations so later stylesheet rules
+  // cannot pull the page back underneath the fixed nav.
+  useEffect(() => {
+    const applyMobileDetailLayout = () => {
+      const page = detailPageRef.current;
+      if (!page) return;
+      const mobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+      const workspace = page.querySelector('.account-detail-workspace');
+
+      const setImportant = (el, prop, value) => {
+        if (el) el.style.setProperty(prop, value, 'important');
+      };
+      const clearProp = (el, prop) => {
+        if (el) el.style.removeProperty(prop);
+      };
+
+      if (mobile) {
+        setImportant(page, 'box-sizing', 'border-box');
+        setImportant(page, 'margin-left', '56px');
+        setImportant(page, 'margin-right', '0');
+        setImportant(page, 'width', 'calc(100% - 56px)');
+        setImportant(page, 'max-width', 'none');
+        setImportant(page, 'min-width', '0');
+        setImportant(page, 'padding-left', '0');
+        setImportant(page, 'padding-right', '0');
+        setImportant(page, 'overflow-x', 'hidden');
+        setImportant(page, 'transform', 'none');
+        setImportant(page, 'left', 'auto');
+        setImportant(page, 'right', 'auto');
+
+        setImportant(workspace, 'box-sizing', 'border-box');
+        setImportant(workspace, 'width', '100%');
+        setImportant(workspace, 'max-width', '100%');
+        setImportant(workspace, 'min-width', '0');
+        setImportant(workspace, 'margin-left', '0');
+        setImportant(workspace, 'margin-right', '0');
+        setImportant(workspace, 'padding-left', '14px');
+        setImportant(workspace, 'padding-right', '14px');
+        setImportant(workspace, 'transform', 'none');
+
+        // Make every direct mobile section obey the workspace instead of any
+        // old negative margin / desktop width behavior.
+        if (workspace) {
+          Array.from(workspace.children).forEach(child => {
+            setImportant(child, 'box-sizing', 'border-box');
+            setImportant(child, 'max-width', '100%');
+            setImportant(child, 'min-width', '0');
+            setImportant(child, 'margin-left', '0');
+            setImportant(child, 'margin-right', '0');
+            setImportant(child, 'transform', 'none');
+          });
+        }
+      } else {
+        ['box-sizing','margin-left','margin-right','width','max-width','min-width',
+         'padding-left','padding-right','overflow-x','transform','left','right'
+        ].forEach(prop => clearProp(page, prop));
+        if (workspace) {
+          ['box-sizing','width','max-width','min-width','margin-left','margin-right',
+           'padding-left','padding-right','transform'
+          ].forEach(prop => clearProp(workspace, prop));
+          Array.from(workspace.children).forEach(child => {
+            ['box-sizing','max-width','min-width','margin-left','margin-right','transform']
+              .forEach(prop => clearProp(child, prop));
+          });
+        }
+      }
+    };
+
+    applyMobileDetailLayout();
+    window.addEventListener('resize', applyMobileDetailLayout);
+    return () => window.removeEventListener('resize', applyMobileDetailLayout);
+  }, []);
+
   const [editingAccount, setEditingAccount] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
   const [editingContactId, setEditingContactId] = useState(null);
@@ -5250,6 +5363,7 @@ function AccountDetail({
   };
 
   return /*#__PURE__*/React.createElement("div", {
+    ref: detailPageRef,
     className: "account-detail-page max-w-7xl mx-auto px-4 sm:px-6 py-8"
   }, /*#__PURE__*/React.createElement("div", {
     className: "account-detail-workspace"
