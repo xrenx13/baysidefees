@@ -2379,6 +2379,158 @@
 }
 </style>
 
+
+<style id="bdd-account-detail-mobile-optimized">
+@media (max-width:640px) {
+  body.saas-enabled #root > div.account-detail-page {
+    box-sizing:border-box !important;
+    margin-left:56px !important;
+    margin-right:0 !important;
+    width:calc(100% - 56px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+    padding:calc(var(--saas-topbar) + 14px) 12px 34px !important;
+    overflow-x:hidden !important;
+  }
+
+  body.saas-enabled .account-detail-page,
+  body.saas-enabled .account-detail-page * { box-sizing:border-box; }
+
+  body.saas-enabled .account-detail-top-grid {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    gap:10px !important;
+    margin-bottom:10px !important;
+    width:100% !important;
+  }
+
+  body.saas-enabled .account-detail-main-card,
+  body.saas-enabled .account-detail-contacts-card,
+  body.saas-enabled .account-detail-page > .bg-white,
+  body.saas-enabled .account-detail-page > .account-connections-card,
+  body.saas-enabled .account-detail-map-card {
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    margin-bottom:10px !important;
+    padding:14px !important;
+    border-radius:12px !important;
+  }
+
+  body.saas-enabled .account-detail-main-card { border-left-width:3px !important; }
+
+  body.saas-enabled .account-detail-main-card h2,
+  body.saas-enabled .account-detail-contacts-card h2,
+  body.saas-enabled .account-detail-page > .bg-white h2,
+  body.saas-enabled .account-connections-card h2 {
+    font-size:16px !important;
+    line-height:1.2 !important;
+  }
+
+  body.saas-enabled .account-detail-summary-row { display:block !important; }
+  body.saas-enabled .account-detail-snapshot { width:100% !important; min-width:0 !important; }
+
+  body.saas-enabled .account-detail-snapshot p,
+  body.saas-enabled .account-detail-snapshot a,
+  body.saas-enabled .account-detail-contacts-card p,
+  body.saas-enabled .account-connections-card p {
+    max-width:100% !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
+  }
+
+  body.saas-enabled .account-detail-snapshot .grid {
+    grid-template-columns:minmax(0,1fr) !important;
+    gap:9px !important;
+  }
+
+  body.saas-enabled .account-detail-snapshot .text-sm {
+    font-size:12px !important;
+    line-height:1.45 !important;
+  }
+
+  body.saas-enabled .account-detail-actions {
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+    margin-top:12px !important;
+  }
+
+  body.saas-enabled .account-detail-actions > button {
+    width:100% !important;
+    min-height:40px !important;
+    padding:8px 10px !important;
+    font-size:12px !important;
+    white-space:normal !important;
+  }
+
+  body.saas-enabled .account-detail-actions > button:only-child { grid-column:1 / -1; }
+
+  body.saas-enabled .account-detail-contacts-card > div.flex.items-center.justify-between.py-3,
+  body.saas-enabled .account-connections-card > div.flex.items-center.justify-between.py-3 {
+    display:block !important;
+    padding:11px 0 !important;
+  }
+
+  body.saas-enabled .account-detail-contacts-card > div.flex.items-center.justify-between.py-3 > .flex,
+  body.saas-enabled .account-connections-card > div.flex.items-center.justify-between.py-3 > .flex {
+    margin-top:7px !important;
+  }
+
+  body.saas-enabled .account-detail-page .grid.grid-cols-2.md\:grid-cols-3 {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:7px !important;
+    margin-bottom:12px !important;
+  }
+
+  body.saas-enabled .account-detail-page .grid.grid-cols-2.md\:grid-cols-3 > div {
+    padding:9px 10px !important;
+  }
+
+  body.saas-enabled #activity-log-card {
+    padding:14px !important;
+    margin-bottom:10px !important;
+  }
+
+  body.saas-enabled #activity-log-card .grid { grid-template-columns:minmax(0,1fr) !important; }
+
+  body.saas-enabled #activity-log-card input,
+  body.saas-enabled #activity-log-card select,
+  body.saas-enabled #activity-log-card textarea {
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  body.saas-enabled #activity-log-card .-mx-6 {
+    margin-left:-14px !important;
+    margin-right:-14px !important;
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+
+  body.saas-enabled .account-detail-map-card { padding:0 !important; }
+  body.saas-enabled .account-detail-map-card iframe { display:none !important; }
+  body.saas-enabled .account-detail-map-card > .flex { border-top:0 !important; }
+  body.saas-enabled .account-detail-map-card a {
+    padding:12px 6px !important;
+    font-size:12px !important;
+  }
+
+  body.saas-enabled .account-detail-page .fixed.inset-0 {
+    padding-left:68px !important;
+    padding-right:12px !important;
+  }
+
+  body.saas-enabled .account-detail-page .fixed.inset-0 > div {
+    max-width:100% !important;
+    padding:16px !important;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -4995,8 +5147,8 @@ function AccountDetail({
   }, /*#__PURE__*/React.createElement("h2", {
     className: "font-display text-lg text-navy-900 mb-1"
   }, "Account Details"), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-start justify-between flex-wrap gap-3"
-  }, /*#__PURE__*/React.createElement("div", { className: "min-w-0 flex-1" }, /*#__PURE__*/React.createElement(AccountSnapshot, {
+    className: "account-detail-summary-row flex items-start justify-between flex-wrap gap-3"
+  }, /*#__PURE__*/React.createElement("div", { className: "account-detail-snapshot min-w-0 flex-1" }, /*#__PURE__*/React.createElement(AccountSnapshot, {
     account: account,
     primaryClinicalContact: primaryClinicalContact,
     decisionMakerContact: decisionMakerContact,
@@ -5004,7 +5156,7 @@ function AccountDetail({
     nextActionOverdue: nextActionOverdue,
     onStageChange: updateStage
   })), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-2"
+    className: "account-detail-actions flex gap-2"
   }, account.Status === 'Customer' && /*#__PURE__*/React.createElement("button", {
     onClick: revertToProspect,
     disabled: busy,
@@ -5200,7 +5352,7 @@ function AccountDetail({
     onSaveEdit: saveActivityEdit,
     onDelete: removeActivity
   }), account.Address && /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 overflow-hidden mb-6"
+    className: "account-detail-map-card bg-white rounded-xl border border-skyblue-100 overflow-hidden mb-6"
   }, /*#__PURE__*/React.createElement("iframe", {
     title: "Account location map",
     src: `https://www.google.com/maps?q=${encodeURIComponent(account.Address)}&output=embed`,
