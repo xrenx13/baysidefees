@@ -626,6 +626,75 @@
       }
     }
 
+  
+    /* Today mobile nav: keep theme/profile controls always visible */
+    @media (max-width:640px) {
+      body.saas-enabled:has(.today-page) .saas-chrome {
+        position:fixed;
+        height:100%;
+        overflow:hidden;
+      }
+
+      body.saas-enabled:has(.today-page) .saas-side-bottom {
+        position:absolute;
+        left:0;
+        right:0;
+        bottom:0;
+        margin-top:0;
+        padding:8px 0 10px;
+        background:inherit;
+        z-index:5;
+      }
+
+      body.saas-enabled:has(.today-page) .saas-theme-toggle {
+        width:100%;
+        height:44px;
+        margin:0;
+        padding:0;
+        justify-content:center;
+        gap:0;
+      }
+
+      body.saas-enabled:has(.today-page) .saas-theme-toggle > span:not(.saas-nav-icon) {
+        display:none !important;
+      }
+
+      body.saas-enabled:has(.today-page) .saas-theme-toggle .saas-nav-icon {
+        width:22px;
+        height:22px;
+      }
+
+      body.saas-enabled:has(.today-page) .saas-theme-toggle .saas-nav-icon svg {
+        width:20px;
+        height:20px;
+      }
+
+      body.saas-enabled:has(.today-page) .saas-profile {
+        padding:6px 0 2px;
+        margin:0;
+        justify-content:center;
+        align-items:center;
+      }
+
+      body.saas-enabled:has(.today-page) .saas-profile-copy {
+        display:none !important;
+      }
+
+      body.saas-enabled:has(.today-page) .saas-avatar {
+        flex:none;
+        width:34px;
+        height:34px;
+        font-size:11px;
+      }
+
+      /* Prevent nav items from sitting underneath the pinned bottom controls. */
+      body.saas-enabled:has(.today-page) .saas-nav {
+        padding-bottom:96px;
+        overflow-y:auto;
+        min-height:0;
+      }
+    }
+
   </style>
 
 <style>
