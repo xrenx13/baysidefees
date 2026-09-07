@@ -1242,6 +1242,92 @@
       }
     }
 
+  
+    .region-mobile-select { display:none; }
+
+    @media (max-width:640px) {
+      body.saas-enabled .account-region-view-row {
+        display:block !important;
+        margin-bottom:12px !important;
+      }
+      body.saas-enabled .region-segmented {
+        display:none !important;
+      }
+      body.saas-enabled .region-mobile-select {
+        display:flex !important;
+        width:100%;
+        min-width:0;
+        align-items:center;
+        gap:9px;
+      }
+      body.saas-enabled .region-mobile-label {
+        flex:none;
+        font-size:11px;
+        font-weight:800;
+        text-transform:uppercase;
+        letter-spacing:.05em;
+        color:#7f8da0;
+      }
+      body.saas-enabled .region-mobile-control {
+        width:100%;
+        min-width:0;
+        min-height:42px;
+        border:1px solid #d4dee7;
+        border-radius:9px;
+        background:#fff;
+        padding:0 34px 0 11px;
+        font-size:14px;
+        font-weight:650;
+        color:#17324d;
+      }
+
+      body.saas-enabled .pipeline-board {
+        width:100% !important;
+        max-width:100% !important;
+        overflow-x:visible !important;
+        padding-bottom:0 !important;
+      }
+      body.saas-enabled .pipeline-board-inner {
+        width:100% !important;
+        min-width:0 !important;
+        max-width:100% !important;
+      }
+      body.saas-enabled .pipeline-group-headings {
+        display:none !important;
+      }
+      body.saas-enabled .pipeline-stage-grid {
+        display:flex !important;
+        flex-direction:column !important;
+        width:100% !important;
+        gap:16px !important;
+      }
+      body.saas-enabled .pipeline-stage {
+        width:100% !important;
+        min-width:0 !important;
+        max-width:100% !important;
+      }
+      body.saas-enabled .pipeline-stage .sticky {
+        position:static !important;
+        top:auto !important;
+      }
+      body.saas-enabled .pipeline-stage > div:last-child {
+        width:100% !important;
+        min-width:0 !important;
+      }
+      body.saas-enabled .pipeline-stage .bg-skyblue-100\/30 {
+        min-height:0 !important;
+      }
+
+      /* Allow account status filters above pipeline to wrap cleanly. */
+      body.saas-enabled .bdd-account-list .flex.items-center.gap-3.mb-5.flex-nowrap {
+        flex-wrap:wrap !important;
+      }
+      body.saas-enabled .bdd-account-list .flex.items-center.gap-3.mb-5.flex-nowrap > div:first-child {
+        width:100% !important;
+        flex-wrap:wrap !important;
+      }
+    }
+
   </style>
 
 <style>
@@ -4709,6 +4795,7 @@ function PipelineView({
   const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a fit');
   const [targetExpanded, setTargetExpanded] = useState(false);
   const [activeReferrersExpanded, setActiveReferrersExpanded] = useState(false);
+  const isMobilePipeline = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   const pipelineGridStyle = { gridTemplateColumns: `${targetExpanded ? 'minmax(0, 1fr)' : '72px'} repeat(3, minmax(0, 1fr)) ${activeReferrersExpanded ? 'minmax(0, 1fr)' : '72px'}` };
   const columns = useMemo(() => {
     const byStage = {};
@@ -4763,11 +4850,11 @@ function PipelineView({
   }, [referralActivity]);
 
   return /*#__PURE__*/React.createElement("div", {
-    className: "overflow-x-auto lg:overflow-visible pb-2"
+    className: "pipeline-board overflow-x-auto lg:overflow-visible pb-2"
   }, /*#__PURE__*/React.createElement("div", {
-    className: targetExpanded ? "min-w-[960px] lg:min-w-0" : "min-w-[860px] lg:min-w-0"
+    className: `pipeline-board-inner ${targetExpanded ? "min-w-[960px] lg:min-w-0" : "min-w-[860px] lg:min-w-0"}`
   }, /*#__PURE__*/React.createElement("div", {
-    className: "grid gap-3 mb-2",
+    className: "pipeline-group-headings grid gap-3 mb-2",
     style: pipelineGridStyle
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-3"
@@ -4794,20 +4881,20 @@ function PipelineView({
   }, "Customers"), /*#__PURE__*/React.createElement("div", {
     className: "h-px bg-teal-500/40 flex-1"
   }))), /*#__PURE__*/React.createElement("div", {
-    className: "grid gap-3 items-start",
+    className: "pipeline-stage-grid grid gap-3 items-start",
     style: pipelineGridStyle
   }, stages.map(stage => {
-    const isCollapsedTarget = stage === 'Target' && !targetExpanded;
-    const isCollapsedActiveReferrers = stage === 'Active Referrer' && !activeReferrersExpanded;
+    const isCollapsedTarget = stage === 'Target' && !targetExpanded && !isMobilePipeline;
+    const isCollapsedActiveReferrers = stage === 'Active Referrer' && !activeReferrersExpanded && !isMobilePipeline;
     const isCollapsedEdge = isCollapsedTarget || isCollapsedActiveReferrers;
     return /*#__PURE__*/React.createElement("div", {
       key: stage,
-      className: "min-w-0"
+      className: `pipeline-stage pipeline-stage-${stage.toLowerCase().replace(/[^a-z0-9]+/g,'-')} min-w-0`
     }, (stage === 'Target' || stage === 'Active Referrer') ? /*#__PURE__*/React.createElement("div", {
       className: "sticky top-0 z-20"
     }, /*#__PURE__*/React.createElement("button", {
       type: "button",
-      onClick: () => stage === 'Target' ? setTargetExpanded(v => !v) : setActiveReferrersExpanded(v => !v),
+      onClick: () => { if (isMobilePipeline) return; stage === 'Target' ? setTargetExpanded(v => !v) : setActiveReferrersExpanded(v => !v); },
       title: stage === 'Target' ? (targetExpanded ? "Collapse Targets" : "Expand Targets") : (activeReferrersExpanded ? "Collapse Active Referrer" : "Expand Active Referrer"),
       className: `w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${isCollapsedEdge ? 'min-h-[49px] flex items-center' : ''} ${pipelineHeaderColor(stage)}`
     }, /*#__PURE__*/React.createElement("div", {
@@ -5151,14 +5238,25 @@ function AccountList({
       className: rowClass
     }, inner);
   }))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-4 mb-4 flex-wrap"
+    className: "account-region-view-row flex items-center gap-4 mb-4 flex-wrap"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit flex-wrap"
+    className: "region-segmented flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit flex-wrap"
   }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'].map(r => /*#__PURE__*/React.createElement("button", {
     key: r,
     onClick: () => setRegion(r),
     className: `px-4 py-1.5 rounded-md text-sm font-medium transition ${region === r ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, r))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
+  }, r))), /*#__PURE__*/React.createElement("label", {
+    className: "region-mobile-select"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "region-mobile-label"
+  }, "Region"), /*#__PURE__*/React.createElement("select", {
+    value: region,
+    onChange: e => setRegion(e.target.value),
+    className: "region-mobile-control"
+  }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'].map(r => /*#__PURE__*/React.createElement("option", {
+    key: r,
+    value: r
+  }, r)))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
   }, ['list', 'table', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
