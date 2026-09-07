@@ -1738,6 +1738,52 @@
     .account-detail-top-grid { grid-template-columns: minmax(0, 1fr) !important; }
   }
 </style>
+
+<style id="bdd-mobile-pipeline-final-alignment">
+@media (max-width:640px) {
+  /* One authoritative geometry for the mobile Pipeline accordion.
+     Align its LEFT and RIGHT edges to the Region dropdown above it. */
+  body.saas-enabled .pipeline-account-list .pipeline-mobile-accordion {
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    box-sizing: border-box !important;
+
+    /* AccountList's mobile content starts at the rail edge in this view.
+       Region has an 18px visual gutter, so give the accordion the same
+       explicit gutter on both sides. */
+    width: calc(100% - 36px) !important;
+    max-width: calc(100% - 36px) !important;
+    margin-left: 18px !important;
+    margin-right: 18px !important;
+    padding: 0 !important;
+  }
+
+  body.saas-enabled .pipeline-account-list .pipeline-mobile-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  body.saas-enabled .pipeline-account-list .pipeline-mobile-toggle,
+  body.saas-enabled .pipeline-account-list .pipeline-mobile-stage-body {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Tighten the vertical rhythm between Region and the first stage. */
+  body.saas-enabled .pipeline-account-list .account-region-view-row {
+    margin-bottom: 10px !important;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
