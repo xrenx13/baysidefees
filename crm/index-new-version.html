@@ -270,6 +270,26 @@
   
     .account-detail-page { display:flex; flex-direction:column; }
     .account-detail-page > .account-connections-card { order:99; }
+  
+    .home-view-toggle { display:inline-flex; align-items:center; gap:2px; padding:3px; border:1px solid #d9e3eb; border-radius:9px; background:#f7fafc; }
+    .home-view-toggle button { border:0; background:transparent; color:rgba(34,59,84,.62); font-size:13px; font-weight:700; padding:7px 12px; border-radius:6px; cursor:pointer; transition:.15s ease; }
+    .home-view-toggle button:hover { color:#17324d; background:#eef4f7; }
+    .home-view-toggle button.active { background:#0b1f3a; color:#fff; box-shadow:0 1px 2px rgba(11,31,58,.12); }
+    .home-table-card { overflow:hidden; }
+    .home-referral-table-wrap { overflow-x:auto; }
+    .home-referral-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .home-referral-table th { text-align:left; padding:11px 14px; border-bottom:1px solid #dfe7ed; background:#f7fafc; color:rgba(34,59,84,.62); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.045em; white-space:nowrap; }
+    .home-referral-table td { padding:13px 14px; border-bottom:1px solid #edf2f5; color:#17324d; vertical-align:middle; }
+    .home-referral-table tbody tr:hover { background:#fbfdfe; }
+    .home-referral-table tbody tr:last-child td { border-bottom:0; }
+    .home-referral-facility { border:0; padding:0; background:transparent; color:#0f766e; font-weight:750; cursor:pointer; text-align:left; }
+    .home-referral-facility:hover { text-decoration:underline; }
+    .home-referral-rate { font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap; }
+    .home-referral-date { white-space:nowrap; }
+    .home-referral-muted { color:rgba(34,59,84,.55); }
+    .home-table-summary { display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; padding:13px 14px; border-top:1px solid #dfe7ed; background:#f7fafc; font-size:12px; color:rgba(34,59,84,.65); }
+    .home-table-summary strong { color:#17324d; font-size:13px; }
+
   </style>
 
 <style>
@@ -4584,12 +4604,14 @@ function TodayDashboard({
 
 
 function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccounts }) {
+  const [homeView, setHomeView] = useState('dashboard');
   const analytics = useMemo(() => {
     const now = new Date();
     const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const cutoff30 = new Date(startToday.getTime() - 29 * 86400000);
     const cutoff90 = new Date(startToday.getTime() - 89 * 86400000);
     const ytdStart = new Date(now.getFullYear(), 0, 1);
+    const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const referrals = (referralActivity || []).map(r => ({
@@ -4601,11 +4623,13 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
     const last30 = referrals.filter(r => inRange(r, cutoff30));
     const last90 = referrals.filter(r => inRange(r, cutoff90));
     const ytd = referrals.filter(r => inRange(r, ytdStart));
+    const qtd = referrals.filter(r => inRange(r, quarterStart));
     const mtd = referrals.filter(r => inRange(r, monthStart));
     const prevMonth = referrals.filter(r => r._date >= prevMonthStart && r._date < monthStart);
     const revenueMtd = mtd.reduce((sum, r) => sum + r._rate, 0);
     const revenue30 = last30.reduce((sum, r) => sum + r._rate, 0);
     const revenue90 = last90.reduce((sum, r) => sum + r._rate, 0);
+    const revenueQtd = qtd.reduce((sum, r) => sum + r._rate, 0);
     const revenueYtd = ytd.reduce((sum, r) => sum + r._rate, 0);
     const prevMonthRevenue = prevMonth.reduce((sum, r) => sum + r._rate, 0);
     const avgRevenuePerReferral = ytd.length ? revenueYtd / ytd.length : 0;
@@ -4649,12 +4673,13 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       stage,
       count:(accounts || []).filter(a => (a.RelationshipStage || 'Target') === stage).length
     }));
+    const transactions = [...referrals].sort((a,b) => b._date - a._date);
     return {
-      mtd:mtd.length, last30:last30.length, last90:last90.length, ytd:ytd.length,
-      revenueMtd, revenue30, revenue90, revenueYtd, prevMonthRevenue, revenueMtdChange,
+      mtd:mtd.length, last30:last30.length, last90:last90.length, qtd:qtd.length, ytd:ytd.length,
+      revenueMtd, revenue30, revenue90, revenueQtd, revenueYtd, prevMonthRevenue, revenueMtdChange,
       avgRevenuePerReferral, activeCount:active.length, pipelineCount:pipelineAccounts.length,
       topSources, revenueMixSources, top5Share, maxSourceRevenue, needsAttention, newActive90,
-      months, stageCounts
+      months, stageCounts, transactions, accountMap
     };
   }, [accounts, referralActivity]);
 
@@ -4670,12 +4695,71 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       /*#__PURE__*/React.createElement('div', { className:'home-eyebrow' }, 'BDD CRM'),
       /*#__PURE__*/React.createElement('h1', { className:'home-title' }, 'Revenue & Referral Performance'),
       /*#__PURE__*/React.createElement('p', { className:'home-subtitle' }, 'Revenue momentum, referral trends, and the relationships driving growth.')
-    ), /*#__PURE__*/React.createElement('div', { className:'home-period' }, 'Live CRM data')),
+    ), /*#__PURE__*/React.createElement('div', { className:'home-view-toggle', role:'group', 'aria-label':'Home view' },
+      /*#__PURE__*/React.createElement('button', {
+        type:'button',
+        className: homeView === 'dashboard' ? 'active' : '',
+        onClick:()=>setHomeView('dashboard')
+      }, 'Dashboard'),
+      /*#__PURE__*/React.createElement('button', {
+        type:'button',
+        className: homeView === 'table' ? 'active' : '',
+        onClick:()=>setHomeView('table')
+      }, 'Table')
+    )),
 
+    homeView === 'table' ? /*#__PURE__*/React.createElement('section',{className:'home-card home-table-card'},
+      /*#__PURE__*/React.createElement('div',{className:'home-card-head'},
+        /*#__PURE__*/React.createElement('div',null,
+          /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Referral Transactions'),
+          /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Transaction-level detail for every referral recorded in BDD CRM')
+        ),
+        /*#__PURE__*/React.createElement('div',{className:'home-period'},`${analytics.transactions.length} referral${analytics.transactions.length === 1 ? '' : 's'}`)
+      ),
+      analytics.transactions.length ? /*#__PURE__*/React.createElement(React.Fragment,null,
+        /*#__PURE__*/React.createElement('div',{className:'home-referral-table-wrap'},
+          /*#__PURE__*/React.createElement('table',{className:'home-referral-table'},
+            /*#__PURE__*/React.createElement('thead',null,
+              /*#__PURE__*/React.createElement('tr',null,
+                /*#__PURE__*/React.createElement('th',null,'Referral Date'),
+                /*#__PURE__*/React.createElement('th',null,'Facility'),
+                /*#__PURE__*/React.createElement('th',null,'Town'),
+                /*#__PURE__*/React.createElement('th',null,'Region'),
+                /*#__PURE__*/React.createElement('th',null,'Rate'),
+                /*#__PURE__*/React.createElement('th',null,'Recorded By')
+              )
+            ),
+            /*#__PURE__*/React.createElement('tbody',null,
+              analytics.transactions.map((r,idx) => {
+                const account = analytics.accountMap[r.AccountId];
+                const key = r.ReferralActivityId || `${r.AccountId}-${r.ReferralDate}-${idx}`;
+                return /*#__PURE__*/React.createElement('tr',{key},
+                  /*#__PURE__*/React.createElement('td',{className:'home-referral-date'},r._date.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})),
+                  /*#__PURE__*/React.createElement('td',null,
+                    account ? /*#__PURE__*/React.createElement('button',{className:'home-referral-facility',onClick:()=>onSelect(account)},account.AccountName || 'Unnamed account')
+                      : /*#__PURE__*/React.createElement('span',{className:'home-referral-muted'},'Unknown account')
+                  ),
+                  /*#__PURE__*/React.createElement('td',null,account?.Town || '—'),
+                  /*#__PURE__*/React.createElement('td',null,account?.Region || '—'),
+                  /*#__PURE__*/React.createElement('td',{className:'home-referral-rate'},r.Rate === '' || r.Rate == null ? '—' : formatCurrency(r._rate)),
+                  /*#__PURE__*/React.createElement('td',null,r.RecordedBy || '—')
+                );
+              })
+            )
+          )
+        ),
+        /*#__PURE__*/React.createElement('div',{className:'home-table-summary'},
+          /*#__PURE__*/React.createElement('span',null,'All recorded referral transactions'),
+          /*#__PURE__*/React.createElement('span',null,'Total recorded revenue: ', /*#__PURE__*/React.createElement('strong',null,formatCurrency(analytics.transactions.reduce((sum,r)=>sum+r._rate,0))))
+        )
+      ) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'No referral transactions have been recorded yet.')
+    ) : null,
+
+    /*#__PURE__*/React.createElement('div',{style:{display:homeView === 'dashboard' ? 'contents' : 'none'}},
     /*#__PURE__*/React.createElement('div', { className:'home-kpis' },
       [
         ['Revenue · MTD',formatCurrency(analytics.revenueMtd),mtdTrend],
-        ['Revenue · 30d',formatCurrency(analytics.revenue30),`${analytics.last30} referrals in the last 30 days`],
+        ['Revenue · QTD',formatCurrency(analytics.revenueQtd),`${analytics.qtd} referrals quarter to date`],
         ['Revenue · YTD',formatCurrency(analytics.revenueYtd),`${analytics.ytd} referrals year to date`],
         ['Referrals · 30d',analytics.last30,`${analytics.last90} in the last 90 days`],
         ['Avg. Revenue / Referral',formatCurrency(analytics.avgRevenuePerReferral),'Based on recorded YTD referral rates'],
@@ -4789,6 +4873,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
           /*#__PURE__*/React.createElement('span',{className:'home-badge'},'Review')
         )) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'No active referrers are currently quiet for 90+ days.')
       )
+    )
     )
   ));
 }
