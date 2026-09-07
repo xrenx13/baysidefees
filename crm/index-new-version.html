@@ -400,6 +400,38 @@
       .today-quick-field.full { grid-column:auto; }
     }
 
+  
+    /* Today desktop refinement */
+    .today-page { max-width:1280px; padding-top:calc(var(--saas-topbar) + 24px); }
+    .today-layout { display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:24px; align-items:start; }
+    .today-main-column,.today-side-rail { min-width:0; }
+    .today-side-rail { position:sticky; top:calc(var(--saas-topbar) + 18px); }
+    .today-desktop-quick { background:#fff; border:1px solid #dfe7ed; border-radius:14px; padding:16px; margin-bottom:22px; }
+    .today-desktop-quick-title { font-size:14px; font-weight:800; color:#15233b; }
+    .today-desktop-quick-copy { margin-top:3px; font-size:12px; line-height:1.4; color:#8491a3; }
+    .today-desktop-quick-btn { width:100%; min-height:42px; margin-top:12px; border:0; border-radius:9px; background:#0b1f3a; color:#fff; font-size:13px; font-weight:800; cursor:pointer; }
+    .today-followup-prominent { font-size:13px !important; font-weight:800; color:#43556d; }
+    .today-followup-prominent.overdue { color:#b42318; }
+    .today-followup-prominent.due { color:#9a6700; }
+    .today-side-rail .today-section { margin-bottom:22px; }
+    .today-side-rail .today-section-copy { max-width:280px; }
+    .today-side-rail .today-card { padding:14px 13px; }
+    .today-side-rail .today-card-top { display:block; }
+    .today-side-rail .today-badges { margin-top:7px; justify-content:flex-start; }
+    .today-side-rail .today-person { align-items:flex-start; }
+    .today-side-rail .today-card-foot { display:block; }
+    .today-side-rail .today-card-foot span { display:block; margin-top:3px; }
+    .today-side-rail .today-actions { grid-template-columns:repeat(2,1fr); }
+    .today-side-rail .today-reschedule { grid-column:1/-1; width:100%; }
+    @media (max-width:1050px) {
+      .today-layout { grid-template-columns:1fr; }
+      .today-side-rail { position:static; }
+      .today-desktop-quick { display:none; }
+    }
+    @media (max-width:640px) {
+      .today-page { padding-top:calc(var(--saas-topbar) + 14px); }
+    }
+
   </style>
 
 <style>
@@ -4461,7 +4493,7 @@ function TodayActionCard({
       phone&&/*#__PURE__*/React.createElement("a",{href:`tel:${phone.replace(/[^\d+]/g,'')}`,className:"today-person-phone"},phone)
     ),
     /*#__PURE__*/React.createElement("div",{className:"today-card-foot"},
-      /*#__PURE__*/React.createElement("span",null,account.NextFollowUp?`Follow-up: ${follow==='today'?'Today':formatFollowUpDate(account.NextFollowUp)}`:"Follow-up: Not scheduled"),
+      /*#__PURE__*/React.createElement("span",{className:`today-followup-prominent ${follow==='overdue'?'overdue':follow==='today'?'due':''}`},account.NextFollowUp?`Follow-up: ${follow==='today'?'Today':formatFollowUpDate(account.NextFollowUp)}`:"Follow-up: Not scheduled"),
       /*#__PURE__*/React.createElement("span",null,account.LastContactDate?`Last contact: ${formatFollowUpDate(account.LastContactDate)}${account.LastContactType?` · ${account.LastContactType}`:''}`:"Last contact: Never")
     ),
     /*#__PURE__*/React.createElement("div",{className:"today-actions"},
@@ -4580,9 +4612,21 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
       /*#__PURE__*/React.createElement("div",{className:"today-summary-item"},/*#__PURE__*/React.createElement("div",{className:"today-summary-number"},comingUp.length),/*#__PURE__*/React.createElement("div",{className:"today-summary-label"},"Coming up")),
       /*#__PURE__*/React.createElement("div",{className:"today-summary-item"},/*#__PURE__*/React.createElement("div",{className:"today-summary-number"},completedLocal),/*#__PURE__*/React.createElement("div",{className:"today-summary-label"},"Logged this session"))
     ),
-    /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Needs Action Now",copy:"Overdue and due-today commitments, oldest first",accounts:needsNow,urgency:a=>daysAway(a)<0?'overdue':'today'}),
-    /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Coming Up",copy:"Committed follow-ups in the next 7 days",accounts:comingUp,urgency:"upcoming"}),
-    /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Suggested Outreach",copy:"High-opportunity targets to work after committed follow-ups",accounts:suggested,urgency:"opportunity",whyFn:a=>{const d=daysSince(a.LastContactDate);return d===null?'High-opportunity target with no recorded outreach':`High-opportunity target with no contact in ${d} days`;}}),
+    /*#__PURE__*/React.createElement("div",{className:"today-layout"},
+      /*#__PURE__*/React.createElement("div",{className:"today-main-column"},
+        /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Needs Action Now",copy:"Overdue and due-today commitments, oldest first",accounts:needsNow,urgency:a=>daysAway(a)<0?'overdue':'today'}),
+        /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Coming Up",copy:"Committed follow-ups in the next 7 days",accounts:comingUp,urgency:"upcoming"}),
+        !needsNow.length&&!comingUp.length&&/*#__PURE__*/React.createElement("div",{className:"today-empty"},"Your committed follow-up queue is clear.")
+      ),
+      /*#__PURE__*/React.createElement("aside",{className:"today-side-rail"},
+        /*#__PURE__*/React.createElement("div",{className:"today-desktop-quick"},
+          /*#__PURE__*/React.createElement("div",{className:"today-desktop-quick-title"},"Quick Log Activity"),
+          /*#__PURE__*/React.createElement("div",{className:"today-desktop-quick-copy"},"Record a call, email, visit, or meeting without leaving Today."),
+          /*#__PURE__*/React.createElement("button",{type:"button",className:"today-desktop-quick-btn",onClick:()=>setPickerOpen(true)},"+ Log Activity")
+        ),
+        /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Suggested Outreach",copy:"High-opportunity targets to work after committed follow-ups",accounts:suggested,urgency:"opportunity",whyFn:a=>{const d=daysSince(a.LastContactDate);return d===null?'High-opportunity target with no recorded outreach':`High-opportunity target with no contact in ${d} days`;}})
+      )
+    ),
     !needsNow.length&&!comingUp.length&&!suggested.length&&/*#__PURE__*/React.createElement("div",{className:"today-empty"},"Your action queue is clear."),
     /*#__PURE__*/React.createElement("button",{type:"button",className:"today-mobile-log",onClick:()=>setPickerOpen(true)},"+ Log Activity"),
     pickerOpen&&/*#__PURE__*/React.createElement("div",{className:"today-quick-backdrop",onMouseDown:e=>{if(e.target===e.currentTarget)setPickerOpen(false);}},
