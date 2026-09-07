@@ -3682,55 +3682,62 @@ function TableView({
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "flex justify-end mb-2"
-  }, /*#__PURE__*/React.createElement("button", {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "home-card home-table-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "home-card-head"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "home-card-title"
+  }, "Accounts"), /*#__PURE__*/React.createElement("div", {
+    className: "home-card-copy"
+  }, "Sortable account detail across the current account view")), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "home-period"
+  }, `${sorted.length} account${sorted.length === 1 ? '' : 's'}`), /*#__PURE__*/React.createElement("button", {
     onClick: exportCsv,
-    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
-  }, "Export CSV")), /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 overflow-x-auto"
+    className: "text-teal-600 hover:text-teal-700 text-sm font-medium whitespace-nowrap"
+  }, "Export CSV"))), /*#__PURE__*/React.createElement("div", {
+    className: "home-referral-table-wrap"
   }, /*#__PURE__*/React.createElement("table", {
-    className: "w-full text-sm"
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    className: "border-b border-skyblue-100"
-  }, columns.map(col => /*#__PURE__*/React.createElement("th", {
+    className: "home-referral-table"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, columns.map(col => /*#__PURE__*/React.createElement("th", {
     key: col.key,
     onClick: () => toggleSort(col.key),
-    className: "text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-navy-700/50 cursor-pointer hover:text-navy-900 whitespace-nowrap select-none"
+    className: "cursor-pointer hover:text-navy-900 whitespace-nowrap select-none"
   }, col.label, " ", sortCol === col.key ? sortDir === 'asc' ? '▲' : '▼' : '')))), /*#__PURE__*/React.createElement("tbody", null, sorted.map(a => {
     const propensity = computeOverallFeesOpportunity(a);
     const cmsNum = getCmsOverallNumber(a.CMSRating);
     return /*#__PURE__*/React.createElement("tr", {
       key: a.AccountId,
       onClick: () => onSelect(a),
-      className: "border-b border-skyblue-100 last:border-0 hover:bg-skyblue-100/30 cursor-pointer"
+      className: "cursor-pointer"
     }, /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5 font-medium text-navy-900 whitespace-nowrap"
-    }, a.AccountName), /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5"
-    }, /*#__PURE__*/React.createElement(StatusPill, {
+      className: "font-medium whitespace-nowrap"
+    }, a.AccountName), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusPill, {
       status: a.Status
     })), /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5 whitespace-nowrap"
+      className: "whitespace-nowrap"
     }, /*#__PURE__*/React.createElement("span", {
       className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(a.RelationshipStage)}`
     }, a.RelationshipStage || 'Target')), /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5 text-navy-700/60 whitespace-nowrap"
+      className: "home-referral-muted whitespace-nowrap"
     }, getTown(a.Address)), /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5 whitespace-nowrap"
+      className: "whitespace-nowrap"
     }, propensity ? /*#__PURE__*/React.createElement(PropensityBadge, {
       account: a,
       compact: true
     }) : '—'), /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5 whitespace-nowrap"
-    }, cmsNum !== null ? cmsNum + '/5' : '—'), /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5"
-    }, a.BedCount || '—'), /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5 text-navy-700/60 whitespace-nowrap"
+      className: "whitespace-nowrap"
+    }, cmsNum !== null ? cmsNum + '/5' : '—'), /*#__PURE__*/React.createElement("td", null, a.BedCount || '—'), /*#__PURE__*/React.createElement("td", {
+      className: "home-referral-muted whitespace-nowrap"
     }, a.ChainAffiliation || '—'), /*#__PURE__*/React.createElement("td", {
-      className: "px-3 py-2.5 text-navy-700/60 whitespace-nowrap"
+      className: "home-referral-muted whitespace-nowrap"
     }, a.NextFollowUp ? formatShortDate(new Date(a.NextFollowUp)) : '—'));
-  })))));
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "home-table-summary"
+  }, /*#__PURE__*/React.createElement("span", null, "Current account table"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("strong", null, `${sorted.length} account${sorted.length === 1 ? '' : 's'}`))));
+
 }
 
 // ---------------------------------------------------------------------
@@ -4605,6 +4612,8 @@ function TodayDashboard({
 
 function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccounts }) {
   const [homeView, setHomeView] = useState('dashboard');
+  const [referralSortCol, setReferralSortCol] = useState('ReferralDate');
+  const [referralSortDir, setReferralSortDir] = useState('desc');
   const analytics = useMemo(() => {
     const now = new Date();
     const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -4690,6 +4699,83 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
     ? 'No prior-month revenue to compare'
     : `${analytics.revenueMtdChange >= 0 ? '↑' : '↓'} ${Math.abs(analytics.revenueMtdChange).toFixed(0)}% vs last month`;
 
+  const referralColumns = [
+    { key:'ReferralDate', label:'Referral Date' },
+    { key:'Facility', label:'Facility' },
+    { key:'Town', label:'Town' },
+    { key:'Region', label:'Region' },
+    { key:'Rate', label:'Rate' },
+    { key:'RecordedBy', label:'Recorded By' }
+  ];
+
+  const toggleReferralSort = col => {
+    if (referralSortCol === col) {
+      setReferralSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setReferralSortCol(col);
+      setReferralSortDir(col === 'ReferralDate' || col === 'Rate' ? 'desc' : 'asc');
+    }
+  };
+
+  const getReferralSortValue = (r, col) => {
+    const account = analytics.accountMap[r.AccountId];
+    switch (col) {
+      case 'ReferralDate':
+        return r._date ? r._date.getTime() : 0;
+      case 'Facility':
+        return account?.AccountName || '';
+      case 'Town':
+        return account?.Town || getTown(account?.Address || '');
+      case 'Region':
+        return account?.Region || '';
+      case 'Rate':
+        return r.Rate === '' || r.Rate == null ? -1 : r._rate;
+      case 'RecordedBy':
+        return r.RecordedBy || '';
+      default:
+        return '';
+    }
+  };
+
+  const sortedReferralTransactions = useMemo(() => [...analytics.transactions].sort((a,b) => {
+    const va = getReferralSortValue(a, referralSortCol);
+    const vb = getReferralSortValue(b, referralSortCol);
+    let cmp;
+    if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
+    else cmp = String(va).localeCompare(String(vb), undefined, { sensitivity:'base' });
+    return referralSortDir === 'asc' ? cmp : -cmp;
+  }), [analytics.transactions, analytics.accountMap, referralSortCol, referralSortDir]);
+
+  const exportReferralCsv = () => {
+    const csvHeaders = ['Referral Date', 'Facility', 'Town', 'Region', 'Rate', 'Recorded By'];
+    const csvRows = sortedReferralTransactions.map(r => {
+      const account = analytics.accountMap[r.AccountId];
+      return [
+        r._date ? r._date.toISOString().slice(0,10) : '',
+        account?.AccountName || '',
+        account?.Town || getTown(account?.Address || ''),
+        account?.Region || '',
+        r.Rate === '' || r.Rate == null ? '' : r._rate.toFixed(2),
+        r.RecordedBy || ''
+      ];
+    });
+    const escapeCell = val => {
+      let s = String(val == null ? '' : val);
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const csvContent = [csvHeaders, ...csvRows].map(row => row.map(escapeCell).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'bdd-referrals-' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return /*#__PURE__*/React.createElement('main', { className:'bdd-home' }, /*#__PURE__*/React.createElement('div', { className:'home-shell' },
     /*#__PURE__*/React.createElement('div', { className:'home-hero' }, /*#__PURE__*/React.createElement('div', null,
       /*#__PURE__*/React.createElement('div', { className:'home-eyebrow' }, 'BDD CRM'),
@@ -4714,23 +4800,29 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
           /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Referral Transactions'),
           /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Transaction-level detail for every referral recorded in BDD CRM')
         ),
-        /*#__PURE__*/React.createElement('div',{className:'home-period'},`${analytics.transactions.length} referral${analytics.transactions.length === 1 ? '' : 's'}`)
+        /*#__PURE__*/React.createElement('div',{className:'flex items-center gap-4'},
+          /*#__PURE__*/React.createElement('div',{className:'home-period'},`${analytics.transactions.length} referral${analytics.transactions.length === 1 ? '' : 's'}`),
+          /*#__PURE__*/React.createElement('button',{
+            type:'button',
+            onClick:exportReferralCsv,
+            className:'text-teal-600 hover:text-teal-700 text-sm font-medium whitespace-nowrap'
+          },'Export CSV')
+        )
       ),
       analytics.transactions.length ? /*#__PURE__*/React.createElement(React.Fragment,null,
         /*#__PURE__*/React.createElement('div',{className:'home-referral-table-wrap'},
           /*#__PURE__*/React.createElement('table',{className:'home-referral-table'},
             /*#__PURE__*/React.createElement('thead',null,
               /*#__PURE__*/React.createElement('tr',null,
-                /*#__PURE__*/React.createElement('th',null,'Referral Date'),
-                /*#__PURE__*/React.createElement('th',null,'Facility'),
-                /*#__PURE__*/React.createElement('th',null,'Town'),
-                /*#__PURE__*/React.createElement('th',null,'Region'),
-                /*#__PURE__*/React.createElement('th',null,'Rate'),
-                /*#__PURE__*/React.createElement('th',null,'Recorded By')
+                referralColumns.map(col => /*#__PURE__*/React.createElement('th',{
+                  key:col.key,
+                  onClick:()=>toggleReferralSort(col.key),
+                  className:'cursor-pointer hover:text-navy-900 select-none'
+                },col.label,' ',referralSortCol === col.key ? referralSortDir === 'asc' ? '▲' : '▼' : ''))
               )
             ),
             /*#__PURE__*/React.createElement('tbody',null,
-              analytics.transactions.map((r,idx) => {
+              sortedReferralTransactions.map((r,idx) => {
                 const account = analytics.accountMap[r.AccountId];
                 const key = r.ReferralActivityId || `${r.AccountId}-${r.ReferralDate}-${idx}`;
                 return /*#__PURE__*/React.createElement('tr',{key},
@@ -4750,7 +4842,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
         ),
         /*#__PURE__*/React.createElement('div',{className:'home-table-summary'},
           /*#__PURE__*/React.createElement('span',null,'All recorded referral transactions'),
-          /*#__PURE__*/React.createElement('span',null,'Total recorded revenue: ', /*#__PURE__*/React.createElement('strong',null,formatCurrency(analytics.transactions.reduce((sum,r)=>sum+r._rate,0))))
+          /*#__PURE__*/React.createElement('span',null,'Total recorded revenue: ', /*#__PURE__*/React.createElement('strong',null,formatCurrency(sortedReferralTransactions.reduce((sum,r)=>sum+r._rate,0))))
         )
       ) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'No referral transactions have been recorded yet.')
     ) : null,
