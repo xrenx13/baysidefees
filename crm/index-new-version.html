@@ -695,6 +695,30 @@
       }
     }
 
+  
+    .saas-mobile-referral { display:none; }
+    @media (max-width:640px) {
+      body.saas-enabled:has(.today-page) .saas-mobile-referral {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:38px;
+        padding:0 12px;
+        border:0;
+        border-radius:9px;
+        background:#0f766e;
+        color:#fff;
+        font-size:13px;
+        font-weight:800;
+        white-space:nowrap;
+        cursor:pointer;
+      }
+      body.saas-enabled:has(.today-page) .saas-topbar {
+        justify-content:space-between;
+        gap:10px;
+      }
+    }
+
   </style>
 
 <style>
@@ -5496,6 +5520,11 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           })()
         )
       ),
+      activeView === 'today' && /*#__PURE__*/React.createElement('button', {
+        type:'button',
+        className:'saas-mobile-referral',
+        onClick:onNewReferral
+      }, '+ Referral'),
       /*#__PURE__*/React.createElement('div', { className: 'saas-top-actions' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-global-search' },
           /*#__PURE__*/React.createElement('input', { value: globalSearch, onChange: e => setGlobalSearch(e.target.value), placeholder: 'Search accounts, contacts, activities…', 'aria-label': 'Search CRM' }),
