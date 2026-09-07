@@ -1493,6 +1493,140 @@
       }
     }
 
+  
+    /* Mobile-only Search nav is hidden on desktop. */
+    .saas-mobile-search-nav { display:none !important; }
+
+    @media (max-width:640px) {
+      /* Search lives directly after Accounts in the compact mobile rail. */
+      body.saas-enabled .saas-mobile-search-nav {
+        display:flex !important;
+      }
+
+      /* Hide the three website shortcut icons on mobile only. Desktop keeps them. */
+      body.saas-enabled .saas-nav a.saas-nav-btn {
+        display:none !important;
+      }
+
+      /* Tighten Pipeline's top spacing and align all content to one inset. */
+      body.saas-enabled .pipeline-account-list {
+        padding-top:calc(var(--saas-topbar) + 8px) !important;
+      }
+      body.saas-enabled .pipeline-account-list .account-region-view-row {
+        margin-top:0 !important;
+        margin-bottom:10px !important;
+      }
+      body.saas-enabled .pipeline-account-list .pipeline-mobile-accordion {
+        box-sizing:border-box !important;
+        width:calc(100% - 20px) !important;
+        margin-left:10px !important;
+        margin-right:10px !important;
+        padding-bottom:18px !important;
+        gap:9px !important;
+      }
+
+      /* Search panel launched from the rail. */
+      body.saas-enabled .saas-mobile-search-backdrop {
+        position:fixed;
+        inset:0 0 0 56px;
+        z-index:1800;
+        background:rgba(11,31,58,.24);
+        padding:var(--saas-topbar) 10px 10px;
+        display:flex;
+        align-items:flex-start;
+        justify-content:center;
+      }
+      body.saas-enabled .saas-mobile-search-panel {
+        width:100%;
+        max-height:calc(100vh - var(--saas-topbar) - 20px);
+        overflow:hidden;
+        background:#fff;
+        border:1px solid #dfe7ed;
+        border-radius:12px;
+        box-shadow:0 18px 45px rgba(11,31,58,.18);
+      }
+      body.saas-enabled .saas-mobile-search-head {
+        height:46px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding:0 12px;
+        border-bottom:1px solid #e8edf2;
+      }
+      body.saas-enabled .saas-mobile-search-title {
+        font-size:14px;
+        font-weight:800;
+        color:#15233b;
+      }
+      body.saas-enabled .saas-mobile-search-close {
+        width:32px;
+        height:32px;
+        border:0;
+        background:transparent;
+        font-size:24px;
+        line-height:1;
+        color:#66758a;
+      }
+      body.saas-enabled .saas-mobile-search-input-wrap {
+        position:relative;
+        margin:10px;
+      }
+      body.saas-enabled .saas-mobile-search-input-wrap .saas-nav-icon {
+        position:absolute;
+        left:11px;
+        top:50%;
+        transform:translateY(-50%);
+        color:#8290a2;
+        pointer-events:none;
+      }
+      body.saas-enabled .saas-mobile-search-input-wrap input {
+        width:100%;
+        height:44px;
+        border:1px solid #d4dee7;
+        border-radius:9px;
+        padding:0 12px 0 39px;
+        font-size:14px;
+        color:#17324d;
+        background:#fff;
+      }
+      body.saas-enabled .saas-mobile-search-results {
+        max-height:calc(100vh - 190px);
+        overflow:auto;
+        border-top:1px solid #eef2f5;
+        padding:6px;
+      }
+      body.saas-enabled .saas-mobile-search-result {
+        width:100%;
+        border:0;
+        background:transparent;
+        border-radius:8px;
+        padding:10px;
+        text-align:left;
+      }
+      body.saas-enabled .saas-mobile-search-result:active {
+        background:#f2f7f7;
+      }
+      body.saas-enabled .saas-mobile-search-result strong {
+        display:block;
+        font-size:13px;
+        color:#15233b;
+      }
+      body.saas-enabled .saas-mobile-search-result span {
+        display:block;
+        margin-top:3px;
+        font-size:11px;
+        line-height:1.35;
+        color:#7b899b;
+      }
+      body.saas-enabled .saas-mobile-search-empty {
+        padding:18px 12px;
+        text-align:center;
+        font-size:12px;
+        color:#8a97a8;
+      }
+    }
+
   </style>
 
 <style>
@@ -5387,7 +5521,7 @@ function AccountList({
     return list;
   }, [filtered, sortBy]);
   return /*#__PURE__*/React.createElement("div", {
-    className: "bdd-account-list max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+    className: `bdd-account-list ${initialViewMode === 'pipeline' ? 'pipeline-account-list' : ''} max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8`
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-6 flex-wrap gap-3"
   }, /*#__PURE__*/React.createElement("div", {
@@ -6217,6 +6351,10 @@ function SaaSIcon({ name }) {
       /*#__PURE__*/React.createElement('rect', { key: 'c', x: 16, y: 10, width: 5, height: 10, rx: 1.5 })
     ],
     plus: [/*#__PURE__*/React.createElement('path', { key: 'a', d: 'M12 5v14M5 12h14' })],
+    search: [
+      /*#__PURE__*/React.createElement('circle', { key: 'a', cx: 10.5, cy: 10.5, r: 5.5 }),
+      /*#__PURE__*/React.createElement('path', { key: 'b', d: 'm15 15 4 4' })
+    ],
     external: [
       /*#__PURE__*/React.createElement('path', { key: 'a', d: 'M14 5h5v5' }),
       /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M10 14 19 5' }),
@@ -6267,6 +6405,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   }, []);
   const displayName = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
   const [globalSearch, setGlobalSearch] = useState('');
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [referralAccountId, setReferralAccountId] = useState('');
   const [referralAccountQuery, setReferralAccountQuery] = useState('');
@@ -6326,6 +6465,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onToday, className: `saas-nav-btn ${activeView === 'today' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'today' }), /*#__PURE__*/React.createElement('span', null, 'Today')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onPipeline, className: `saas-nav-btn ${activeView === 'pipeline' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'pipeline' }), /*#__PURE__*/React.createElement('span', null, 'Pipeline')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onAccounts, className: `saas-nav-btn ${activeView === 'accounts' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'accounts' }), /*#__PURE__*/React.createElement('span', null, 'Accounts')),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => { setGlobalSearch(''); setShowMobileSearch(true); }, className: 'saas-nav-btn saas-mobile-search-nav', 'aria-label': 'Search CRM', title: 'Search CRM' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'search' }), /*#__PURE__*/React.createElement('span', null, 'Search')),
         /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label mt-2' }, 'Tools'),
         [['SimplePractice','https://secure.simplepractice.com/'],['BDD Calendar','http://calendar.google.com/'],['BDD Email','http://gmail.com/']].map(([label, href]) => /*#__PURE__*/React.createElement('a', { key: label, href, target: '_blank', rel: 'noopener noreferrer', className: 'saas-nav-btn' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'external' }), /*#__PURE__*/React.createElement('span', null, label)))
       ),
@@ -6392,6 +6532,24 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         ),
         /*#__PURE__*/React.createElement('button', { type:'button', onClick:() => setShowReferralModal(true), className:'saas-referral-btn' }, '+ New Referral'),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onCreate, className: 'saas-primary' }, '+ New Account')
+      )
+    ),
+    showMobileSearch && /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-backdrop', onClick:e => { if (e.target === e.currentTarget) setShowMobileSearch(false); } },
+      /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-panel' },
+        /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-head' },
+          /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-title' }, 'Search CRM'),
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-mobile-search-close', onClick:()=>setShowMobileSearch(false), 'aria-label':'Close search' }, '×')
+        ),
+        /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-input-wrap' },
+          /*#__PURE__*/React.createElement(SaaSIcon, { name:'search' }),
+          /*#__PURE__*/React.createElement('input', { autoFocus:true, value:globalSearch, onChange:e=>setGlobalSearch(e.target.value), placeholder:'Search accounts, contacts, activities…', 'aria-label':'Search CRM' })
+        ),
+        /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-results' },
+          globalSearch.trim() ? (globalSearchResults.length ? globalSearchResults.map(a => /*#__PURE__*/React.createElement('button', { key:a.AccountId, type:'button', className:'saas-mobile-search-result', onClick:() => { setGlobalSearch(''); setShowMobileSearch(false); onSelectSearchAccount && onSelectSearchAccount(a); } },
+            /*#__PURE__*/React.createElement('strong', null, a.AccountName || 'Unnamed account'),
+            /*#__PURE__*/React.createElement('span', null, [a.Region, a.Town, a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
+          )) : /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-empty' }, 'No matching accounts')) : /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-empty' }, 'Start typing to search the CRM')
+        )
       )
     ),
     showReferralModal && /*#__PURE__*/React.createElement('div', { className:'saas-modal-backdrop', onClick:e => { if (e.target === e.currentTarget) setShowReferralModal(false); } },
