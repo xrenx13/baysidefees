@@ -1671,6 +1671,24 @@
       }
     }
 
+  
+    /* Final structural nudge for mobile Pipeline.
+       The accordion was still rendering against the rail despite inherited padding.
+       Translate the entire accordion right by one mobile content gutter. */
+    @media (max-width:640px) {
+      body.saas-enabled .pipeline-account-list .pipeline-mobile-accordion {
+        position:relative !important;
+        left:auto !important;
+        right:auto !important;
+        margin-left:0 !important;
+        margin-right:0 !important;
+        transform:translateX(10px) !important;
+        width:calc(100% - 10px) !important;
+        max-width:calc(100% - 10px) !important;
+        box-sizing:border-box !important;
+      }
+    }
+
   </style>
 
 <style>
