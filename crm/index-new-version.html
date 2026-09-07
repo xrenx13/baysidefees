@@ -2531,6 +2531,59 @@
 }
 </style>
 
+
+<style id="bdd-mobile-account-detail-root-fix">
+@media (max-width:640px) {
+  /*
+    Same proven root-level fix used for Accounts and Pipeline:
+    override the legacy #root child positioning at equal/higher specificity,
+    then let the detail page own only its internal gutter.
+  */
+  body.saas-enabled #root > div.account-detail-page {
+    box-sizing:border-box !important;
+    margin-left:56px !important;
+    margin-right:0 !important;
+    width:calc(100% - 56px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+    padding-top:calc(var(--saas-topbar) + 14px) !important;
+    padding-right:14px !important;
+    padding-bottom:34px !important;
+    padding-left:14px !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+    overflow-x:hidden !important;
+  }
+
+  body.saas-enabled #root > div.account-detail-page > *,
+  body.saas-enabled #root > div.account-detail-page .account-detail-top-grid,
+  body.saas-enabled #root > div.account-detail-page .account-detail-main-card,
+  body.saas-enabled #root > div.account-detail-page .account-detail-contacts-card,
+  body.saas-enabled #root > div.account-detail-page .account-connections-card,
+  body.saas-enabled #root > div.account-detail-page .account-detail-map-card,
+  body.saas-enabled #root > div.account-detail-page #activity-log-card {
+    box-sizing:border-box !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+  }
+
+  body.saas-enabled #root > div.account-detail-page .account-detail-top-grid,
+  body.saas-enabled #root > div.account-detail-page .account-detail-main-card,
+  body.saas-enabled #root > div.account-detail-page .account-detail-contacts-card,
+  body.saas-enabled #root > div.account-detail-page .account-connections-card,
+  body.saas-enabled #root > div.account-detail-page .account-detail-map-card,
+  body.saas-enabled #root > div.account-detail-page #activity-log-card {
+    width:100% !important;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
