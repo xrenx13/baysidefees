@@ -7035,7 +7035,17 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       /*#__PURE__*/React.createElement('button', {
         type:'button',
         className:'saas-mobile-referral',
-        onClick:onNewReferral
+        onClick:() => {
+          if (detailAccount && detailAccount.AccountId) {
+            setReferralAccountId(detailAccount.AccountId);
+            setReferralAccountQuery(detailAccount.AccountName || 'Unnamed account');
+          } else {
+            setReferralAccountId('');
+            setReferralAccountQuery('');
+          }
+          setGlobalReferralRate('');
+          setShowReferralModal(true);
+        }
       }, '+ Referral'),
       /*#__PURE__*/React.createElement('div', { className: 'saas-top-actions' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-global-search' },
