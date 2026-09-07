@@ -1627,6 +1627,29 @@
       }
     }
 
+  
+
+    /* Final mobile Pipeline spacing correction */
+    @media (max-width:640px) {
+      /* Pipeline has no mobile status/sort controls, so remove the empty row entirely. */
+      body.saas-enabled .pipeline-account-list > .flex.items-center.gap-3.mb-5.flex-nowrap {
+        display:none !important;
+      }
+
+      /* Keep the region selector compact and give the accordion the exact same visual inset/width. */
+      body.saas-enabled .pipeline-account-list .account-region-view-row {
+        margin-bottom:12px !important;
+      }
+      body.saas-enabled .pipeline-account-list .pipeline-mobile-accordion {
+        box-sizing:border-box !important;
+        width:calc(100% - 18px) !important;
+        margin-left:18px !important;
+        margin-right:0 !important;
+        gap:9px !important;
+        padding-bottom:18px !important;
+      }
+    }
+
   </style>
 
 <style>
