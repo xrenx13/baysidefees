@@ -862,6 +862,386 @@
       }
     }
 
+  
+    /* Home mobile layout refinement */
+    @media (max-width:640px) {
+      /* Match Today's tighter relationship to the compact rail. */
+      body.saas-enabled .bdd-home {
+        margin-left:56px !important;
+        width:calc(100% - 56px) !important;
+        min-width:0 !important;
+        padding:calc(var(--saas-topbar) + 14px) 10px 36px !important;
+        overflow-x:hidden;
+      }
+      body.saas-enabled .bdd-home .home-shell {
+        width:100%;
+        max-width:none;
+        min-width:0;
+        margin:0;
+      }
+
+      /* The desktop hero was consuming too much of the phone viewport. */
+      body.saas-enabled .bdd-home .home-hero {
+        display:block;
+        margin-bottom:14px;
+      }
+      body.saas-enabled .bdd-home .home-eyebrow {
+        font-size:9px;
+        margin-bottom:4px;
+      }
+      body.saas-enabled .bdd-home .home-title {
+        font-size:23px;
+        line-height:1.08;
+        letter-spacing:-.025em;
+        max-width:100%;
+      }
+      body.saas-enabled .bdd-home .home-subtitle {
+        margin-top:6px;
+        font-size:12px;
+        line-height:1.45;
+        max-width:100%;
+      }
+
+      /* Dashboard / Table becomes a proper full-width segmented control. */
+      body.saas-enabled .bdd-home .home-view-toggle {
+        display:flex;
+        width:100%;
+        margin-top:12px;
+      }
+      body.saas-enabled .bdd-home .home-view-toggle button {
+        flex:1 1 0;
+        min-width:0;
+        padding:8px 6px;
+      }
+
+      /* KPI cards keep the useful 2-up scan, but fit the SE cleanly. */
+      body.saas-enabled .bdd-home .home-kpis {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:8px;
+        margin-bottom:12px;
+      }
+      body.saas-enabled .bdd-home .home-kpi {
+        min-width:0;
+        padding:13px 12px;
+        border-radius:11px;
+      }
+      body.saas-enabled .bdd-home .home-kpi-label {
+        font-size:10px;
+        line-height:1.25;
+        margin-bottom:7px;
+      }
+      body.saas-enabled .bdd-home .home-kpi-value {
+        font-size:23px;
+      }
+      body.saas-enabled .bdd-home .home-kpi-note {
+        font-size:10px;
+        line-height:1.35;
+        overflow-wrap:anywhere;
+      }
+
+      body.saas-enabled .bdd-home .home-grid {
+        grid-template-columns:minmax(0,1fr);
+        gap:10px;
+        margin-bottom:10px;
+      }
+      body.saas-enabled .bdd-home .home-card {
+        min-width:0;
+        padding:14px 12px;
+        border-radius:12px;
+      }
+      body.saas-enabled .bdd-home .home-card-head {
+        gap:8px;
+        margin-bottom:12px;
+      }
+
+      /* Avoid any table/chart content widening the whole page. */
+      body.saas-enabled .bdd-home .home-referral-table-wrap,
+      body.saas-enabled .bdd-home .home-chart-large,
+      body.saas-enabled .bdd-home .home-trend-card,
+      body.saas-enabled .bdd-home .home-table-card {
+        max-width:100%;
+        min-width:0;
+      }
+
+      /* Slightly tighter compact rail spacing across Home as well. */
+      body.saas-enabled .saas-nav {
+        padding:10px 6px 96px !important;
+        gap:3px;
+      }
+      body.saas-enabled .saas-nav-btn {
+        width:44px;
+        min-height:44px;
+        height:44px;
+        margin:0 auto;
+        border-radius:10px;
+      }
+
+      /* Ensure the compact header button always fits an SE-width header. */
+      body.saas-enabled .saas-mobile-referral {
+        min-height:36px;
+        padding:0 10px;
+        font-size:12px;
+      }
+      body.saas-enabled .saas-topbar,
+      body.saas-enabled .saas-topbar.saas-detail-topbar {
+        padding-left:10px !important;
+        padding-right:8px !important;
+      }
+    }
+
+    @media (max-width:360px) {
+      body.saas-enabled .bdd-home .home-kpis {
+        grid-template-columns:1fr;
+      }
+    }
+
+  
+    /* ================================================================
+       SHARED MOBILE SHELL — authoritative for every CRM view
+       ================================================================ */
+    @media (max-width:640px) {
+      :root {
+        --saas-sidebar:56px !important;
+        --saas-topbar:68px;
+      }
+
+      html, body {
+        max-width:100%;
+        overflow-x:hidden;
+      }
+
+      /* Exact compact rail used by Today, now shared everywhere. */
+      body.saas-enabled .saas-chrome {
+        position:fixed !important;
+        inset:0 auto 0 0 !important;
+        width:56px !important;
+        height:100% !important;
+        display:flex !important;
+        flex-direction:column !important;
+        overflow:hidden !important;
+        z-index:900;
+      }
+
+      body.saas-enabled .saas-brand {
+        flex:0 0 var(--saas-topbar);
+        width:56px;
+        height:var(--saas-topbar) !important;
+        padding:0 !important;
+        justify-content:center !important;
+        gap:0 !important;
+      }
+      body.saas-enabled .saas-brand-mark {
+        width:34px !important;
+        height:34px !important;
+        border-radius:9px !important;
+        padding:5px;
+        flex:none;
+      }
+
+      body.saas-enabled .saas-brand-copy,
+      body.saas-enabled .saas-nav-label,
+      body.saas-enabled .saas-nav-btn > span:not(.saas-nav-icon),
+      body.saas-enabled .saas-mini-cal,
+      body.saas-enabled .saas-profile-copy,
+      body.saas-enabled .saas-profile-name,
+      body.saas-enabled .saas-signout {
+        display:none !important;
+      }
+
+      body.saas-enabled .saas-nav {
+        flex:1 1 auto !important;
+        min-height:0 !important;
+        overflow-y:auto !important;
+        overflow-x:hidden !important;
+        padding:10px 6px 96px !important;
+        gap:3px !important;
+      }
+      body.saas-enabled .saas-nav-btn {
+        flex:0 0 auto;
+        width:44px !important;
+        height:44px !important;
+        min-height:44px !important;
+        margin:0 auto !important;
+        padding:0 !important;
+        border-radius:10px !important;
+        justify-content:center !important;
+        gap:0 !important;
+      }
+      body.saas-enabled .saas-nav-icon {
+        width:20px !important;
+        height:20px !important;
+      }
+      body.saas-enabled .saas-nav-icon svg {
+        width:19px !important;
+        height:19px !important;
+      }
+
+      /* Theme and profile are permanently pinned at bottom, just like Today. */
+      body.saas-enabled .saas-side-bottom {
+        position:absolute !important;
+        left:0 !important;
+        right:0 !important;
+        bottom:0 !important;
+        margin:0 !important;
+        padding:8px 0 10px !important;
+        background:inherit;
+        z-index:5;
+      }
+      body.saas-enabled .saas-theme-toggle {
+        width:44px !important;
+        height:44px !important;
+        margin:0 auto !important;
+        padding:0 !important;
+        border-radius:10px !important;
+        display:flex !important;
+        justify-content:center !important;
+        align-items:center !important;
+        gap:0 !important;
+      }
+      body.saas-enabled .saas-theme-toggle > span:not(.saas-nav-icon) {
+        display:none !important;
+      }
+      body.saas-enabled .saas-theme-toggle .saas-nav-icon {
+        width:22px !important;
+        height:22px !important;
+      }
+      body.saas-enabled .saas-theme-toggle .saas-nav-icon svg {
+        width:20px !important;
+        height:20px !important;
+      }
+      body.saas-enabled .saas-profile {
+        width:56px !important;
+        margin:0 !important;
+        padding:6px 0 2px !important;
+        display:flex !important;
+        justify-content:center !important;
+        align-items:center !important;
+        gap:0 !important;
+      }
+      body.saas-enabled .saas-avatar {
+        width:34px !important;
+        height:34px !important;
+        flex:none !important;
+        font-size:11px !important;
+      }
+
+      /* One mobile header everywhere: current page name + green Referral. */
+      body.saas-enabled .saas-topbar,
+      body.saas-enabled .saas-topbar.saas-detail-topbar {
+        position:fixed !important;
+        top:0 !important;
+        left:56px !important;
+        right:0 !important;
+        width:auto !important;
+        height:var(--saas-topbar) !important;
+        min-height:var(--saas-topbar) !important;
+        padding:0 8px 0 12px !important;
+        display:flex !important;
+        align-items:center !important;
+        justify-content:space-between !important;
+        gap:8px !important;
+        z-index:850;
+      }
+      body.saas-enabled .saas-topbar > div:first-child {
+        min-width:0 !important;
+        flex:1 1 auto !important;
+      }
+      body.saas-enabled .saas-page-kicker {
+        margin:0 0 2px !important;
+        font-size:9px !important;
+      }
+      body.saas-enabled .saas-page-title {
+        max-width:100% !important;
+        min-width:0 !important;
+        font-size:18px !important;
+        line-height:1.1 !important;
+        white-space:nowrap !important;
+        overflow:hidden !important;
+        text-overflow:ellipsis !important;
+      }
+      body.saas-enabled .saas-global-search,
+      body.saas-enabled .saas-top-actions,
+      body.saas-enabled .saas-detail-header-meta {
+        display:none !important;
+      }
+      body.saas-enabled .saas-mobile-referral {
+        display:inline-flex !important;
+        flex:0 0 auto !important;
+        min-height:36px !important;
+        height:36px !important;
+        padding:0 10px !important;
+        border:0 !important;
+        border-radius:9px !important;
+        background:#0f766e !important;
+        color:#fff !important;
+        font-size:12px !important;
+        font-weight:800 !important;
+        white-space:nowrap !important;
+        align-items:center !important;
+        justify-content:center !important;
+      }
+
+      /* Shared workspace origin. No view may sit underneath the 56px rail. */
+      body.saas-enabled .bdd-home,
+      body.saas-enabled .today-page,
+      body.saas-enabled .bdd-account-list,
+      body.saas-enabled .account-detail-page,
+      body.saas-enabled .mobile-workspace-page {
+        box-sizing:border-box !important;
+        margin-left:56px !important;
+        margin-right:0 !important;
+        width:calc(100% - 56px) !important;
+        max-width:none !important;
+        min-width:0 !important;
+      }
+
+      body.saas-enabled .bdd-home {
+        padding:calc(var(--saas-topbar) + 14px) 10px 36px !important;
+      }
+      body.saas-enabled .today-page {
+        padding:calc(var(--saas-topbar) + 12px) 10px 92px !important;
+      }
+      body.saas-enabled .bdd-account-list,
+      body.saas-enabled .mobile-workspace-page {
+        padding-top:calc(var(--saas-topbar) + 14px) !important;
+        padding-left:10px !important;
+        padding-right:10px !important;
+        padding-bottom:36px !important;
+      }
+      body.saas-enabled .account-detail-page {
+        padding-top:calc(var(--saas-topbar) + 14px) !important;
+        padding-left:10px !important;
+        padding-right:10px !important;
+        padding-bottom:36px !important;
+      }
+
+      /* Remove legacy wrapper offsets which otherwise double-indent some views. */
+      body.saas-enabled #root > div:not(.saas-chrome):not(.saas-topbar) {
+        margin-left:0 !important;
+      }
+      body.saas-enabled #root > .bdd-home,
+      body.saas-enabled #root > .today-page,
+      body.saas-enabled #root > .bdd-account-list,
+      body.saas-enabled #root > .account-detail-page,
+      body.saas-enabled #root > .mobile-workspace-page {
+        margin-left:56px !important;
+      }
+
+      /* Account-detail desktop sticky header compensation is not needed on phone. */
+      body.saas-enabled #root > div .account-detail-page {
+        padding-top:calc(var(--saas-topbar) + 14px) !important;
+      }
+
+      /* Today's floating action remains aligned to the same shared rail. */
+      .today-mobile-log {
+        left:64px !important;
+        right:8px !important;
+      }
+      .today-quick-backdrop {
+        padding-left:56px !important;
+      }
+    }
+
   </style>
 
 <style>
@@ -5954,7 +6334,7 @@ function App() {
   }
   if (view === 'create') {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('New account')), /*#__PURE__*/React.createElement("div", {
-      className: "max-w-4xl mx-auto px-4 sm:px-6 py-8"
+      className: "mobile-workspace-page max-w-4xl mx-auto px-4 sm:px-6 py-8"
     }, /*#__PURE__*/React.createElement(AccountForm, {
       onSave: form => {
         // New accounts use the same optimistic-save pattern as activities
