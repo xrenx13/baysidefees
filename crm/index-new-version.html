@@ -463,6 +463,9 @@
       }
     }
 
+  
+    .today-main-column .today-section:has(.today-section-title:empty) .today-section-head { display:none; }
+
   </style>
 
 <style>
@@ -4646,7 +4649,7 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
     /*#__PURE__*/React.createElement("div",{className:"today-layout"},
       /*#__PURE__*/React.createElement("div",{className:"today-main-column"},
         /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Needs Action Now",copy:"Overdue and due-today commitments, oldest first",accounts:needsNow,urgency:a=>daysAway(a)<0?'overdue':'today'}),
-        /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Coming Up",copy:"Committed follow-ups in the next 7 days",accounts:comingUp,urgency:"upcoming"}),
+        /*#__PURE__*/React.createElement(TodaySection,{...common,title:"",copy:"",accounts:comingUp,urgency:"upcoming"}),
         !needsNow.length&&!comingUp.length&&/*#__PURE__*/React.createElement("div",{className:"today-empty"},"Your committed follow-up queue is clear.")
       ),
       /*#__PURE__*/React.createElement("aside",{className:"today-side-rail"},
