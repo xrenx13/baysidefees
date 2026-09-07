@@ -290,6 +290,26 @@
     .home-table-summary { display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; padding:13px 14px; border-top:1px solid #dfe7ed; background:#f7fafc; font-size:12px; color:rgba(34,59,84,.65); }
     .home-table-summary strong { color:#17324d; font-size:13px; }
 
+  
+    .home-chart-large .home-chart-value { font-size:18px; line-height:1.15; font-weight:800; color:#536278; }
+    .home-chart-bar-button { width:100%; height:100%; display:flex; align-items:flex-end; justify-content:center; border:0; padding:0; background:transparent; cursor:pointer; border-radius:8px; }
+    .home-chart-bar-button:hover .home-chart-bar { filter:brightness(.94); }
+    .home-chart-bar-button:focus-visible { outline:3px solid rgba(15,118,110,.22); outline-offset:2px; }
+    .home-month-modal-backdrop { position:fixed; inset:0; z-index:120; background:rgba(11,31,58,.28); display:flex; align-items:center; justify-content:center; padding:24px; }
+    .home-month-modal { width:min(620px,100%); max-height:82vh; overflow:auto; background:#fff; border:1px solid #dfe7ed; border-radius:16px; box-shadow:0 18px 55px rgba(11,31,58,.18); }
+    .home-month-modal-head { display:flex; justify-content:space-between; gap:20px; padding:20px 22px 16px; border-bottom:1px solid #e6edf2; }
+    .home-month-modal-title { font-size:18px; font-weight:800; color:#15233b; }
+    .home-month-modal-copy { margin-top:3px; font-size:13px; color:#8391a5; }
+    .home-month-modal-close { width:34px; height:34px; border:1px solid #dfe7ed; border-radius:8px; background:#fff; color:#607086; font-size:20px; cursor:pointer; }
+    .home-month-modal-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .home-month-modal-table th { padding:10px 22px; text-align:left; background:#f7fafc; border-bottom:1px solid #dfe7ed; color:#708095; font-size:11px; text-transform:uppercase; letter-spacing:.045em; }
+    .home-month-modal-table td { padding:13px 22px; border-bottom:1px solid #edf2f5; color:#17324d; }
+    .home-month-modal-table th:nth-child(n+2), .home-month-modal-table td:nth-child(n+2) { text-align:right; }
+    .home-month-modal-facility { border:0; padding:0; background:transparent; color:#0f766e; font-weight:750; cursor:pointer; text-align:left; }
+    .home-month-modal-facility:hover { text-decoration:underline; }
+    .home-month-modal-total { display:flex; justify-content:flex-end; gap:28px; padding:14px 22px 18px; background:#fbfdfe; font-size:13px; color:#65758a; }
+    .home-month-modal-total strong { color:#17324d; }
+
   </style>
 
 <style>
@@ -4614,6 +4634,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
   const [homeView, setHomeView] = useState('dashboard');
   const [referralSortCol, setReferralSortCol] = useState('ReferralDate');
   const [referralSortDir, setReferralSortDir] = useState('desc');
+  const [selectedTrendMonth, setSelectedTrendMonth] = useState(null);
   const analytics = useMemo(() => {
     const now = new Date();
     const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -4725,7 +4746,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       case 'Facility':
         return account?.AccountName || '';
       case 'Town':
-        return account?.Town || getTown(account?.Address || '');
+        return getTown(account?.Address || '') || account?.Town || '';
       case 'Region':
         return account?.Region || '';
       case 'Rate':
@@ -4746,6 +4767,20 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
     return referralSortDir === 'asc' ? cmp : -cmp;
   }), [analytics.transactions, analytics.accountMap, referralSortCol, referralSortDir]);
 
+  const getMonthFacilityDetails = month => {
+    if (!month) return [];
+    const grouped = {};
+    analytics.transactions.forEach(r => {
+      if (!r._date || r._date.getFullYear() !== month.year || r._date.getMonth() !== month.month) return;
+      const account = analytics.accountMap[r.AccountId];
+      const key = r.AccountId || 'unknown';
+      if (!grouped[key]) grouped[key] = { account, facility:account?.AccountName || 'Unknown account', referrals:0, revenue:0 };
+      grouped[key].referrals += 1;
+      grouped[key].revenue += r._rate || 0;
+    });
+    return Object.values(grouped).sort((a,b)=>b.revenue-a.revenue || b.referrals-a.referrals || a.facility.localeCompare(b.facility));
+  };
+
   const exportReferralCsv = () => {
     const csvHeaders = ['Referral Date', 'Facility', 'Town', 'Region', 'Rate', 'Recorded By'];
     const csvRows = sortedReferralTransactions.map(r => {
@@ -4753,7 +4788,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       return [
         r._date ? r._date.toISOString().slice(0,10) : '',
         account?.AccountName || '',
-        account?.Town || getTown(account?.Address || ''),
+        getTown(account?.Address || '') || account?.Town || '',
         account?.Region || '',
         r.Rate === '' || r.Rate == null ? '' : r._rate.toFixed(2),
         r.RecordedBy || ''
@@ -4831,7 +4866,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
                     account ? /*#__PURE__*/React.createElement('button',{className:'home-referral-facility',onClick:()=>onSelect(account)},account.AccountName || 'Unnamed account')
                       : /*#__PURE__*/React.createElement('span',{className:'home-referral-muted'},'Unknown account')
                   ),
-                  /*#__PURE__*/React.createElement('td',null,account?.Town || '—'),
+                  /*#__PURE__*/React.createElement('td',null,getTown(account?.Address || '') || account?.Town || '—'),
                   /*#__PURE__*/React.createElement('td',null,account?.Region || '—'),
                   /*#__PURE__*/React.createElement('td',{className:'home-referral-rate'},r.Rate === '' || r.Rate == null ? '—' : formatCurrency(r._rate)),
                   /*#__PURE__*/React.createElement('td',null,r.RecordedBy || '—')
@@ -4874,7 +4909,10 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
         analytics.months.map(m => /*#__PURE__*/React.createElement('div',{className:'home-chart-col',key:`${m.year}-${m.month}`},
           /*#__PURE__*/React.createElement('div',{className:'home-chart-value'},formatCurrency(m.revenue)),
           /*#__PURE__*/React.createElement('div',{className:'home-chart-count'},`${m.count} referral${m.count === 1 ? '' : 's'}`),
-          /*#__PURE__*/React.createElement('div',{className:'home-chart-bar-wrap'}, /*#__PURE__*/React.createElement('div',{className:'home-chart-bar',style:{height:`${Math.max(3,(m.revenue/maxMonth)*100)}%`}})),
+          /*#__PURE__*/React.createElement('div',{className:'home-chart-bar-wrap'}, /*#__PURE__*/React.createElement('button',{
+            type:'button',className:'home-chart-bar-button',onClick:()=>setSelectedTrendMonth(m),
+            title:`View ${m.label} referral details`,'aria-label':`View ${m.label} referral details`
+          }, /*#__PURE__*/React.createElement('div',{className:'home-chart-bar',style:{height:`${Math.max(3,(m.revenue/maxMonth)*100)}%`}}))),
           /*#__PURE__*/React.createElement('div',{className:'home-chart-label'},m.label)
         ))
       )
@@ -4966,7 +5004,42 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
         )) : /*#__PURE__*/React.createElement('div',{className:'home-empty'},'No active referrers are currently quiet for 90+ days.')
       )
     )
-    )
+    ),
+    selectedTrendMonth && (() => {
+      const details=getMonthFacilityDetails(selectedTrendMonth);
+      const totalReferrals=details.reduce((s,d)=>s+d.referrals,0);
+      const totalRevenue=details.reduce((s,d)=>s+d.revenue,0);
+      const monthName=new Date(selectedTrendMonth.year,selectedTrendMonth.month,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+      return /*#__PURE__*/React.createElement('div',{className:'home-month-modal-backdrop',onMouseDown:e=>{if(e.target===e.currentTarget)setSelectedTrendMonth(null);}},
+        /*#__PURE__*/React.createElement('div',{className:'home-month-modal',role:'dialog','aria-modal':'true','aria-label':`${monthName} referral details`},
+          /*#__PURE__*/React.createElement('div',{className:'home-month-modal-head'},
+            /*#__PURE__*/React.createElement('div',null,
+              /*#__PURE__*/React.createElement('div',{className:'home-month-modal-title'},monthName),
+              /*#__PURE__*/React.createElement('div',{className:'home-month-modal-copy'},'Referral activity by facility')
+            ),
+            /*#__PURE__*/React.createElement('button',{type:'button',className:'home-month-modal-close',onClick:()=>setSelectedTrendMonth(null),'aria-label':'Close'},'×')
+          ),
+          details.length ? /*#__PURE__*/React.createElement(React.Fragment,null,
+            /*#__PURE__*/React.createElement('table',{className:'home-month-modal-table'},
+              /*#__PURE__*/React.createElement('thead',null,/*#__PURE__*/React.createElement('tr',null,
+                /*#__PURE__*/React.createElement('th',null,'Facility'),
+                /*#__PURE__*/React.createElement('th',null,'Referrals'),
+                /*#__PURE__*/React.createElement('th',null,'Revenue')
+              )),
+              /*#__PURE__*/React.createElement('tbody',null,details.map((d,i)=>/*#__PURE__*/React.createElement('tr',{key:d.account?.AccountId||i},
+                /*#__PURE__*/React.createElement('td',null,d.account ? /*#__PURE__*/React.createElement('button',{type:'button',className:'home-month-modal-facility',onClick:()=>{setSelectedTrendMonth(null);onSelect(d.account);}},d.facility) : d.facility),
+                /*#__PURE__*/React.createElement('td',null,d.referrals),
+                /*#__PURE__*/React.createElement('td',{className:'home-referral-rate'},formatCurrency(d.revenue))
+              )))
+            ),
+            /*#__PURE__*/React.createElement('div',{className:'home-month-modal-total'},
+              /*#__PURE__*/React.createElement('span',null,'Referrals: ',/*#__PURE__*/React.createElement('strong',null,totalReferrals)),
+              /*#__PURE__*/React.createElement('span',null,'Revenue: ',/*#__PURE__*/React.createElement('strong',null,formatCurrency(totalRevenue)))
+            )
+          ) : /*#__PURE__*/React.createElement('div',{className:'p-6 text-sm text-slate-500'},'No referrals were recorded for this month.')
+        )
+      );
+    })()
   ));
 }
 
