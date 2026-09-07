@@ -719,6 +719,149 @@
       }
     }
 
+  
+    /* Unified mobile chrome for every CRM view */
+    @media (max-width:640px) {
+      :root { --saas-sidebar:56px; }
+
+      body.saas-enabled .saas-chrome {
+        width:56px !important;
+        position:fixed;
+        height:100%;
+        overflow:hidden;
+      }
+
+      body.saas-enabled .saas-brand {
+        height:var(--saas-topbar);
+        padding:0 !important;
+        justify-content:center;
+      }
+      body.saas-enabled .saas-brand-mark {
+        width:34px;
+        height:34px;
+        border-radius:9px;
+      }
+      body.saas-enabled .saas-brand-copy,
+      body.saas-enabled .saas-nav-label,
+      body.saas-enabled .saas-nav-btn span:last-child,
+      body.saas-enabled .saas-mini-cal,
+      body.saas-enabled .saas-profile-copy {
+        display:none !important;
+      }
+
+      body.saas-enabled .saas-nav {
+        min-height:0;
+        overflow-y:auto;
+        padding-bottom:96px;
+      }
+      body.saas-enabled .saas-nav-btn {
+        min-height:48px;
+        padding:0 !important;
+        justify-content:center;
+      }
+
+      body.saas-enabled .saas-side-bottom {
+        position:absolute;
+        left:0;
+        right:0;
+        bottom:0;
+        margin-top:0;
+        padding:8px 0 10px;
+        background:inherit;
+        z-index:5;
+      }
+      body.saas-enabled .saas-theme-toggle {
+        width:100%;
+        height:44px;
+        margin:0;
+        padding:0;
+        justify-content:center;
+        gap:0;
+      }
+      body.saas-enabled .saas-theme-toggle > span:not(.saas-nav-icon) {
+        display:none !important;
+      }
+      body.saas-enabled .saas-theme-toggle .saas-nav-icon {
+        width:22px;
+        height:22px;
+      }
+      body.saas-enabled .saas-theme-toggle .saas-nav-icon svg {
+        width:20px;
+        height:20px;
+      }
+      body.saas-enabled .saas-profile {
+        padding:6px 0 2px;
+        margin:0;
+        justify-content:center;
+        align-items:center;
+      }
+      body.saas-enabled .saas-avatar {
+        flex:none;
+        width:34px;
+        height:34px;
+        font-size:11px;
+      }
+
+      /* Same simple mobile header everywhere: page identity + Referral only. */
+      body.saas-enabled .saas-topbar,
+      body.saas-enabled .saas-topbar.saas-detail-topbar {
+        left:56px !important;
+        right:0;
+        height:var(--saas-topbar) !important;
+        min-height:var(--saas-topbar);
+        padding:0 12px !important;
+        align-items:center !important;
+        justify-content:space-between;
+        gap:10px;
+      }
+      body.saas-enabled .saas-topbar > div:first-child {
+        min-width:0;
+        flex:1 1 auto;
+      }
+      body.saas-enabled .saas-global-search,
+      body.saas-enabled .saas-top-actions,
+      body.saas-enabled .saas-detail-header-meta {
+        display:none !important;
+      }
+      body.saas-enabled .saas-page-kicker {
+        margin-bottom:2px;
+      }
+      body.saas-enabled .saas-page-title {
+        max-width:100% !important;
+        font-size:18px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      body.saas-enabled .saas-mobile-referral {
+        display:inline-flex !important;
+        flex:none;
+        align-items:center;
+        justify-content:center;
+        min-height:38px;
+        padding:0 12px;
+        border:0;
+        border-radius:9px;
+        background:#0f766e;
+        color:#fff;
+        font-size:13px;
+        font-weight:800;
+        white-space:nowrap;
+        cursor:pointer;
+      }
+
+      /* All normal workspace wrappers now key off the same 56px rail. */
+      body.saas-enabled #root > div:not(.saas-chrome):not(.saas-topbar) {
+        margin-left:56px !important;
+      }
+      body.saas-enabled .bdd-home {
+        margin-left:56px !important;
+      }
+      body.saas-enabled #root > div .account-detail-page {
+        padding-top:0 !important;
+      }
+    }
+
   </style>
 
 <style>
@@ -5499,7 +5642,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
             const opportunity = computeOverallFeesOpportunity(detailAccount);
             const stageNeedsWhiteArrow = ['Target', 'Active Referrer'].includes(detailAccount.RelationshipStage || 'Target');
             const arrowStroke = stageNeedsWhiteArrow ? '%23ffffff' : '%23081e3d';
-            return /*#__PURE__*/React.createElement('div', { className: 'flex items-center gap-2 flex-wrap' },
+            return /*#__PURE__*/React.createElement('div', { className: 'saas-detail-header-meta flex items-center gap-2 flex-wrap' },
               opportunity && /*#__PURE__*/React.createElement('span', {
                 className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${overallOpportunityColor(opportunity.label)} text-white`,
                 title: buildOpportunityTooltip(opportunity)
@@ -5520,7 +5663,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           })()
         )
       ),
-      activeView === 'today' && /*#__PURE__*/React.createElement('button', {
+      /*#__PURE__*/React.createElement('button', {
         type:'button',
         className:'saas-mobile-referral',
         onClick:onNewReferral
