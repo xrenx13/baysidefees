@@ -3041,6 +3041,77 @@
 }
 </style>
 
+
+<style id="bdd-mobile-map-layout-rebuild">
+@media (max-width:640px) {
+  body.saas-enabled #root > .mobile-map-page {
+    box-sizing:border-box !important;
+    margin-left:56px !important;
+    margin-right:0 !important;
+    width:calc(100% - 56px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+    padding-left:0 !important;
+    padding-right:0 !important;
+    overflow-x:hidden !important;
+  }
+
+  body.saas-enabled #root > .mobile-map-page > .mobile-map-workspace {
+    box-sizing:border-box !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    height:100% !important;
+    margin:0 !important;
+    padding-left:12px !important;
+    padding-right:12px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:8px !important;
+    overflow:hidden !important;
+  }
+
+  /* Phone-safe filters: Region full width, Stage + Follow-up below. */
+  body.saas-enabled .mobile-map-controls {
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:7px !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  body.saas-enabled .mobile-map-controls .mobile-map-filter:first-child {
+    grid-column:1 / -1 !important;
+  }
+
+  body.saas-enabled .mobile-map-filter {
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:42px !important;
+    padding-left:10px !important;
+    padding-right:28px !important;
+    font-size:11px !important;
+  }
+
+  body.saas-enabled .mobile-map-mode-toggle,
+  body.saas-enabled .mobile-map-canvas-wrap,
+  body.saas-enabled .mobile-map-nearby-list {
+    box-sizing:border-box !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    transform:none !important;
+  }
+
+  body.saas-enabled .mobile-map-canvas-wrap {
+    flex:1 1 auto !important;
+  }
+}
+</style>
+
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -6379,6 +6450,7 @@ function MobileMapView({ accounts, onSelect, region, setRegion }) {
     const applyMobileMapLayout = () => {
       const page = mobileMapPageRef.current;
       if (!page) return;
+      const workspace = page.querySelector('.mobile-map-workspace');
       const mobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
       const setImportant = (el, prop, value) => {
         if (el) el.style.setProperty(prop, value, 'important');
@@ -6394,14 +6466,24 @@ function MobileMapView({ accounts, onSelect, region, setRegion }) {
         setImportant(page, 'width', 'calc(100% - 56px)');
         setImportant(page, 'max-width', 'none');
         setImportant(page, 'min-width', '0');
-        setImportant(page, 'padding-left', '10px');
-        setImportant(page, 'padding-right', '10px');
+        setImportant(page, 'padding-left', '0');
+        setImportant(page, 'padding-right', '0');
         setImportant(page, 'transform', 'none');
+
+        setImportant(workspace, 'box-sizing', 'border-box');
+        setImportant(workspace, 'width', '100%');
+        setImportant(workspace, 'max-width', '100%');
+        setImportant(workspace, 'min-width', '0');
+        setImportant(workspace, 'margin-left', '0');
+        setImportant(workspace, 'margin-right', '0');
+        setImportant(workspace, 'padding-left', '12px');
+        setImportant(workspace, 'padding-right', '12px');
+        setImportant(workspace, 'transform', 'none');
         setImportant(page, 'left', 'auto');
         setImportant(page, 'right', 'auto');
         setImportant(page, 'overflow-x', 'hidden');
 
-        Array.from(page.children).forEach(child => {
+        Array.from((workspace || page).children).forEach(child => {
           setImportant(child, 'box-sizing', 'border-box');
           setImportant(child, 'max-width', '100%');
           setImportant(child, 'min-width', '0');
@@ -6570,6 +6652,8 @@ function MobileMapView({ accounts, onSelect, region, setRegion }) {
     ref: mobileMapPageRef,
     className: "mobile-map-page"
   }, /*#__PURE__*/React.createElement("div", {
+    className: "mobile-map-workspace"
+  }, /*#__PURE__*/React.createElement("div", {
     className: "mobile-map-controls"
   },
     /*#__PURE__*/React.createElement("select", {
@@ -6693,7 +6777,7 @@ function MobileMapView({ accounts, onSelect, region, setRegion }) {
         onClick:()=>onSelect(selected)
       }, "Open Account")
     )
-  )));
+  ))));
 }
 
 // ---------------------------------------------------------------------
