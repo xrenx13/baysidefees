@@ -183,9 +183,9 @@ try {
   .saas-switch:focus-visible { outline:2px solid #1b7f77; outline-offset:2px; }
   @media (max-width:480px) { .saas-preferences-grid { grid-template-columns:1fr; } }
   @media (max-width:640px) {
-    html { --crm-browser-bg:#fff; min-height:100%; background-color:var(--crm-browser-bg) !important; background-image:linear-gradient(var(--crm-browser-bg),var(--crm-browser-bg)) !important; }
+    html { --crm-browser-bg:#fff; min-height:100%; background-color:var(--crm-browser-bg) !important; }
     html[data-crm-theme="dark"] { --crm-browser-bg:#081e3d; }
-    body { position:relative; min-height:100%; background-color:var(--crm-browser-bg) !important; background-image:linear-gradient(var(--crm-browser-bg),var(--crm-browser-bg)) !important; overscroll-behavior-y:none; isolation:isolate; }
+    body { position:relative; min-height:100%; background-color:var(--crm-browser-bg) !important; overscroll-behavior-y:none; isolation:isolate; }
     body:before {
       content:'';
       position:fixed;
@@ -1880,7 +1880,7 @@ try {
         border:1px solid #d4dee7;
         border-radius:9px;
         padding:0 12px 0 39px;
-        font-size:14px;
+        font-size:16px;
         color:#17324d;
         background:#fff;
       }
@@ -5343,7 +5343,12 @@ try {
     .bdd-login-mobile-logo { box-sizing:border-box; display:flex; width:56px; height:56px; margin-bottom:25px; padding:8px; border-radius:15px; background:#0b1f3a; }
     .bdd-login-mobile-logo img { width:100%; height:100%; object-fit:contain; }
     .bdd-login-google-wrap { box-sizing:border-box; width:100%; max-width:100%; overflow:hidden; }
-    .bdd-login-google-wrap > div,
+    .bdd-login-google-wrap > div {
+      width:100% !important;
+      max-width:100% !important;
+      display:flex !important;
+      justify-content:center !important;
+    }
     .bdd-login-google-wrap iframe { max-width:100% !important; }
     .bdd-login-footer {
       box-sizing:border-box;
@@ -6020,6 +6025,45 @@ function formatCurrency(value) {
   return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: amount % 1 === 0 ? 0 : 2 }).format(amount);
 }
 
+// Launch installed mapping apps from mobile account details. Custom URL
+// schemes reliably hand off to the native app; if Google Maps is not
+// installed, return to its universal web URL after a short delay.
+function openMapApp_(provider, address) {
+  const query = encodeURIComponent(address || '');
+  if (!query) return;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  const webUrl = provider === 'apple'
+    ? `https://maps.apple.com/?q=${query}`
+    : `https://www.google.com/maps/search/?api=1&query=${query}`;
+  const appUrl = provider === 'apple'
+    ? (isIOS ? `maps://?q=${query}` : webUrl)
+    : (isIOS ? `comgooglemaps://?q=${query}` : (isAndroid ? `geo:0,0?q=${query}` : webUrl));
+
+  if (appUrl === webUrl) {
+    window.open(webUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  let fallbackTimer;
+  const cancelFallback = () => {
+    if (document.hidden) {
+      clearTimeout(fallbackTimer);
+      document.removeEventListener('visibilitychange', cancelFallback);
+      window.removeEventListener('pagehide', cancelFallback);
+    }
+  };
+  document.addEventListener('visibilitychange', cancelFallback);
+  window.addEventListener('pagehide', cancelFallback);
+  fallbackTimer = window.setTimeout(() => {
+    document.removeEventListener('visibilitychange', cancelFallback);
+    window.removeEventListener('pagehide', cancelFallback);
+    window.location.href = webUrl;
+  }, 1200);
+  window.location.href = appUrl;
+}
+
 // Two-letter initials from a full name (e.g. "Melanie Reynolds" -> "MR"),
 // falling back to the first two characters of an email if no name is on
 // file (older sessions signed in before this was tracked).
@@ -6382,10 +6426,14 @@ function Gate({
         callback: handleCredentialResponse
       });
       if (googleButtonRef.current) {
+        const googleButtonContainer = googleButtonRef.current.parentElement;
+        const availableGoogleButtonWidth = googleButtonContainer
+          ? Math.max(200, Math.floor(googleButtonContainer.clientWidth - 20))
+          : 280;
         google.accounts.id.renderButton(googleButtonRef.current, {
           theme: 'outline',
           size: 'large',
-          width: 280
+          width: Math.min(280, availableGoogleButtonWidth)
         });
       }
     }).catch(() => {
@@ -8515,13 +8563,11 @@ function AccountDetail({
     className: "flex divide-x divide-skyblue-100 border-t border-skyblue-100 text-sm"
   }, /*#__PURE__*/React.createElement("a", {
     href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(account.Address)}`,
-    target: "_blank",
-    rel: "noopener noreferrer",
+    onClick: e => { e.preventDefault(); openMapApp_('google', account.Address); },
     className: "flex-1 text-center py-2.5 text-teal-600 hover:bg-skyblue-100/30 transition font-medium"
   }, "Open in Google Maps"), /*#__PURE__*/React.createElement("a", {
     href: `https://maps.apple.com/?q=${encodeURIComponent(account.Address)}`,
-    target: "_blank",
-    rel: "noopener noreferrer",
+    onClick: e => { e.preventDefault(); openMapApp_('apple', account.Address); },
     className: "flex-1 text-center py-2.5 text-teal-600 hover:bg-skyblue-100/30 transition font-medium"
   }, "Open in Apple Maps")))), /*#__PURE__*/React.createElement("div", {
     className: "account-connections-card bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
@@ -11174,16 +11220,18 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   const [showCalendar, setShowCalendar] = useState(() => localStorage.getItem('bdd_crm_show_calendar') !== 'false');
   useEffect(() => {
     document.documentElement.dataset.crmTheme = sidebarTheme;
+    const browserBackground = sidebarTheme === 'dark' ? '#081e3d' : '#ffffff';
+    document.documentElement.style.backgroundColor = browserBackground;
+    document.body.style.backgroundColor = browserBackground;
     let themeMeta = document.querySelector('meta[name="theme-color"]');
     if (!themeMeta) {
       themeMeta = document.createElement('meta');
       themeMeta.name = 'theme-color';
       document.head.appendChild(themeMeta);
     }
-    themeMeta.content = sidebarTheme === 'dark' ? '#081e3d' : '#ffffff';
-    return () => {
-      delete document.documentElement.dataset.crmTheme;
-    };
+    themeMeta.content = browserBackground;
+    const appleStatusMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if (appleStatusMeta) appleStatusMeta.content = sidebarTheme === 'dark' ? 'black-translucent' : 'default';
   }, [sidebarTheme]);
   const updateShowTools = next => {
     const enabled = !!next;
