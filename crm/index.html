@@ -88,7 +88,9 @@
   .saas-mini-cal-day.empty { visibility:hidden; }
   .saas-side-bottom { margin-top:auto; padding:12px 10px 14px; border-top:1px solid var(--saas-line); }
   .saas-profile { display:flex; align-items:flex-start; gap:9px; padding:8px 9px; border-radius:10px; }
-  .saas-avatar { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#edf1f5; color:var(--saas-navy); font-size:11px; font-weight:700; }
+  .saas-avatar { width:30px; height:30px; border:0; padding:0; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#edf1f5; color:var(--saas-navy); font-size:11px; font-weight:700; cursor:pointer; transition:box-shadow .15s ease,transform .15s ease; }
+  .saas-avatar:hover { box-shadow:0 0 0 3px rgba(27,127,119,.14); transform:translateY(-1px); }
+  .saas-avatar:focus-visible { outline:2px solid #1b7f77; outline-offset:2px; }
   .saas-profile-copy { min-width:0; flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:2px; }
   .saas-profile-name { width:100%; font-size:12px; line-height:1.35; font-weight:600; color:#39465a; white-space:normal; overflow:visible; text-overflow:clip; word-break:break-word; }
   .saas-signout { border:0; background:transparent; color:#98a2b3; font-size:11px; cursor:pointer; padding:2px 0; border-radius:6px; }
@@ -127,6 +129,7 @@
   body.saas-enabled #root > div .account-detail-page { padding-top:52px !important; }
   .saas-page-kicker { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:#a0a8b5; margin-bottom:2px; }
   .saas-page-title { font-size:18px; line-height:1.2; font-weight:680; color:var(--saas-ink); letter-spacing:-.025em; max-width:54vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .saas-page-title-mobile { display:none; }
   .saas-top-actions { display:flex; align-items:center; gap:8px; }
   .saas-primary { white-space:nowrap; border:1px solid #0b1f3a; background:#0b1f3a; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; box-shadow:0 1px 2px rgba(15,23,42,.08); transition:.15s; }
   .saas-primary:hover { background:#122b4d; }
@@ -150,6 +153,25 @@
   .saas-modal label { display:block; font-size:11px; font-weight:650; color:#475569; margin:16px 0 6px; }
   .saas-modal input, .saas-modal select { width:100%; border:1px solid var(--saas-line); border-radius:9px; padding:9px 10px; font-size:13px; background:#fff; color:#0f172a; outline:none; }
   .saas-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+  .saas-preference-row { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:18px; padding:15px; border:1px solid #dbe5ed; border-radius:12px; background:#f7fafb; }
+  .saas-preference-copy { min-width:0; }
+  .saas-preference-copy strong { display:block; color:#132d4f; font-size:13px; }
+  .saas-preference-copy span { display:block; margin-top:3px; color:#718096; font-size:11.5px; line-height:1.45; }
+  .saas-preferences-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+  .saas-preferences-grid label { margin:0; }
+  .saas-preferences-grid select { margin-top:6px; }
+  .saas-preference-sync { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px; padding:13px 15px; border:1px solid #dbe5ed; border-radius:12px; background:#fff; }
+  .saas-preference-sync-copy strong { display:block; color:#132d4f; font-size:12.5px; }
+  .saas-preference-sync-copy span { display:block; margin-top:3px; color:#718096; font-size:11.5px; }
+  .saas-preference-refresh { flex:0 0 auto; border:1px solid #d5e2e8; border-radius:9px; padding:7px 10px; background:#f4f8f9; color:#276e69; font-size:11.5px; font-weight:650; cursor:pointer; }
+  .saas-preference-refresh:disabled { cursor:wait; opacity:.6; }
+  .saas-preference-signout { margin-right:auto; border:0; padding:7px 2px; background:transparent; color:#b54747; font-size:12px; font-weight:650; cursor:pointer; }
+  .saas-switch { position:relative; width:42px; height:24px; flex:0 0 42px; border:0; border-radius:999px; padding:0; background:#cbd5df; cursor:pointer; transition:background .18s ease; }
+  .saas-switch:after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(8,30,61,.25); transition:transform .18s ease; }
+  .saas-switch.on { background:#1b7f77; }
+  .saas-switch.on:after { transform:translateX(18px); }
+  .saas-switch:focus-visible { outline:2px solid #1b7f77; outline-offset:2px; }
+  @media (max-width:480px) { .saas-preferences-grid { grid-template-columns:1fr; } }
   @media (max-width: 980px) { .saas-global-search { width:220px; min-width:160px; } }
 
   body.saas-enabled #root > div:not(.saas-chrome):not(.saas-topbar) { margin-left: var(--saas-sidebar) !important; padding-top: calc(var(--saas-topbar) + 28px) !important; max-width: none !important; }
@@ -174,6 +196,186 @@
 
   /* Pipeline: quieter workspace, sharper cards */
   body.saas-enabled [class*='overflow-x-auto'] .sticky { backdrop-filter: blur(8px); }
+
+  /* Desktop Pipeline visual refresh inspired by the mobile accordion treatment.
+     Preserve the existing board structure and Target / Active Referrer collapse controls. */
+  @media (min-width: 641px) {
+    body.saas-enabled .pipeline-board {
+      padding-top: 4px;
+    }
+    body.saas-enabled .pipeline-group-headings {
+      margin-bottom: 10px !important;
+      gap: 14px !important;
+    }
+    body.saas-enabled .pipeline-stage-grid {
+      gap: 14px !important;
+    }
+    body.saas-enabled .pipeline-stage {
+      border-radius: 14px;
+      min-width: 0;
+    }
+    body.saas-enabled .pipeline-stage > .sticky {
+      top: calc(var(--saas-topbar) + 8px) !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky > button,
+    body.saas-enabled .pipeline-stage > .sticky[class*='rounded-t-lg'] {
+      min-height: 56px;
+      border-radius: 13px 13px 10px 10px !important;
+      padding: 11px 13px !important;
+      box-shadow: 0 2px 8px rgba(15,23,42,.07) !important;
+      border: 1px solid rgba(15,23,42,.06);
+      letter-spacing: -.01em;
+    }
+    body.saas-enabled .pipeline-stage > .sticky > button > div > span:first-child,
+    body.saas-enabled .pipeline-stage > .sticky[class*='rounded-t-lg'] > div:first-child > span:first-child {
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      font-size:14px !important;
+      line-height:1.18 !important;
+      font-weight:800 !important;
+      letter-spacing:-.015em !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky > button > div:first-child > span:first-child::before,
+    body.saas-enabled .pipeline-stage > .sticky[class*='rounded-t-lg'] > div:first-child > span:first-child::before {
+      content:"";
+      width:9px;
+      height:9px;
+      flex:0 0 9px;
+      border-radius:999px;
+      background:currentColor;
+      opacity:.48;
+    }
+    body.saas-enabled .pipeline-stage > .sticky > button > div:first-child,
+    body.saas-enabled .pipeline-stage > .sticky[class*='rounded-t-lg'] > div:first-child {
+      min-height:32px;
+      align-items:center !important;
+    }
+    body.saas-enabled .pipeline-stage-target > .sticky > button > div > span:first-child,
+    body.saas-enabled .pipeline-stage-active-referrer > .sticky > button > div > span:first-child {
+      white-space:normal !important;
+      min-width:0;
+    }
+    body.saas-enabled .pipeline-stage-contacted > .sticky > div:last-child,
+    body.saas-enabled .pipeline-stage-connected > .sticky > div:last-child,
+    body.saas-enabled .pipeline-stage-referral-discussion > .sticky > div:last-child {
+      display:none !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky > button > div.mt-0\.5 {
+      display:none !important;
+    }
+    body.saas-enabled .pipeline-group-headings > div:last-child {
+      margin-right:0;
+    }
+    body.saas-enabled .pipeline-stage > .sticky > button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15,23,42,.10) !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky span.opacity-80 {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:28px;
+      height:28px;
+      padding:0 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.55);
+      border:1px solid rgba(255,255,255,.25);
+      font-size:11px;
+      font-weight:700;
+      opacity:1 !important;
+    }
+    body.saas-enabled .pipeline-stage-target > .sticky span.opacity-80,
+    body.saas-enabled .pipeline-stage-active-referrer > .sticky span.opacity-80 {
+      background:rgba(255,255,255,.18);
+      color:inherit;
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div {
+      margin-top:7px;
+      padding:10px !important;
+      border:1px solid #e7ebf0;
+      border-radius:12px !important;
+      background:linear-gradient(180deg,#f8fafc 0%,#f4f7f9 100%) !important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button {
+      padding:12px 12px !important;
+      border-radius:11px !important;
+      border-color:#e4e8ee !important;
+      box-shadow:0 1px 2px rgba(15,23,42,.04);
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button:hover {
+      border-color:#8eb8b2 !important;
+      box-shadow:0 5px 14px rgba(15,23,42,.08) !important;
+      transform:translateY(-1px);
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button .font-display {
+      font-size:13px !important;
+      line-height:1.25 !important;
+      margin-bottom:7px !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button p.text-xs {
+      line-height:1.35;
+    }
+    body.saas-enabled .pipeline-stage-target,
+    body.saas-enabled .pipeline-stage-active-referrer {
+      transition:width .18s ease, min-width .18s ease;
+    }
+
+    /* Active Referrer account cards only. Keep the existing stage header unchanged. */
+    body.saas-enabled .pipeline-stage-active-referrer > .sticky + div > button.active-referrer-card-v2 {
+      position:relative;
+      padding:17px 16px 15px !important;
+      border:1px solid #d8e4ec !important;
+      border-radius:17px !important;
+      background:#fff !important;
+      box-shadow:0 1px 2px rgba(15,23,42,.025) !important;
+      overflow:visible;
+    }
+    body.saas-enabled .pipeline-stage-active-referrer > .sticky + div > button.active-referrer-card-v2:hover {
+      border-color:#82cbc3 !important;
+      box-shadow:0 4px 12px rgba(15,23,42,.06) !important;
+    }
+    body.saas-enabled .active-referrer-card-v2 .active-referrer-name-v2 {
+      margin:0 0 14px !important;
+      font-size:15px !important;
+      line-height:1.2 !important;
+      font-weight:800 !important;
+      letter-spacing:-.018em !important;
+      color:#122f54 !important;
+    }
+    body.saas-enabled .active-referrer-stats-v2 {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      border:1px solid #d4e7e3;
+      border-radius:12px;
+      background:#f3faf8;
+    }
+    body.saas-enabled .active-referrer-stat-v2 {
+      min-width:0;
+      padding:7px 3px 6px;
+      text-align:center;
+    }
+    body.saas-enabled .active-referrer-stat-v2 + .active-referrer-stat-v2 {
+      border-left:1px solid #d4e7e3;
+    }
+    body.saas-enabled .active-referrer-stat-v2 strong {
+      display:block;
+      font-size:14px;
+      line-height:1;
+      font-weight:800;
+      color:#076b64;
+      font-variant-numeric:tabular-nums;
+    }
+    body.saas-enabled .active-referrer-stat-v2 span {
+      display:block;
+      margin-top:4px;
+      font-size:11px;
+      line-height:1;
+      font-weight:500;
+      color:#5e7471;
+    }
+  }
   body.saas-enabled .ring-1 { --tw-ring-color: rgba(15,118,110,.12) !important; }
 
   /* Today page: convert the large marketing-style hero into a workbench summary */
@@ -358,7 +560,7 @@
     .today-quick-head { display:flex; justify-content:space-between; gap:14px; margin-bottom:15px; }
     .today-quick-title { font-size:17px; font-weight:800; color:#15233b; }
     .today-quick-sub { margin-top:2px; font-size:12px; color:#8491a3; }
-    .today-quick-close { width:36px; height:36px; border:1px solid #dfe7ed; border-radius:9px; background:#fff; font-size:20px; color:#607086; }
+    .today-quick-close { width:auto; min-width:58px; height:36px; padding:0 12px; border:1px solid #dfe7ed; border-radius:9px; background:#fff; font-size:13px; font-weight:700; color:#607086; }
     .today-quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .today-quick-field { min-width:0; }
     .today-quick-field.full { grid-column:1/-1; }
@@ -404,6 +606,13 @@
     /* Today desktop refinement */
     .today-page { max-width:1280px; padding-top:calc(var(--saas-topbar) + 24px); }
     .today-layout { display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:24px; align-items:start; }
+    /* Align desktop Today summary tiles to the same main/side-rail columns below. */
+    @media (min-width:1051px) {
+      .today-summary {
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr) 360px;
+        gap:24px;
+      }
+    }
     .today-main-column,.today-side-rail { min-width:0; }
     .today-side-rail { position:sticky; top:calc(var(--saas-topbar) + 18px); }
     .today-desktop-quick { background:#fff; border:1px solid #dfe7ed; border-radius:14px; padding:16px; margin-bottom:22px; }
@@ -883,7 +1092,17 @@
       /* The desktop hero was consuming too much of the phone viewport. */
       body.saas-enabled .bdd-home .home-hero {
         display:block;
-        margin-bottom:14px;
+        margin-bottom:10px;
+      }
+      /* Mobile Home uses the global header as the page heading, so remove the duplicate intro copy. */
+      body.saas-enabled .bdd-home .home-hero > div:first-child {
+        display:none !important;
+      }
+      body.saas-enabled .saas-page-title-desktop {
+        display:none !important;
+      }
+      body.saas-enabled .saas-page-title-mobile {
+        display:inline !important;
       }
       body.saas-enabled .bdd-home .home-eyebrow {
         font-size:9px;
@@ -902,16 +1121,9 @@
         max-width:100%;
       }
 
-      /* Dashboard / Table becomes a proper full-width segmented control. */
+      /* Mobile Home is dashboard-only; desktop keeps the Dashboard / Table control. */
       body.saas-enabled .bdd-home .home-view-toggle {
-        display:flex;
-        width:100%;
-        margin-top:12px;
-      }
-      body.saas-enabled .bdd-home .home-view-toggle button {
-        flex:1 1 0;
-        min-width:0;
-        padding:8px 6px;
+        display:none !important;
       }
 
       /* KPI cards keep the useful 2-up scan, but fit the SE cleanly. */
@@ -1560,13 +1772,16 @@
         color:#15233b;
       }
       body.saas-enabled .saas-mobile-search-close {
-        width:32px;
+        width:auto;
         height:32px;
+        padding:0 4px;
         border:0;
         background:transparent;
-        font-size:24px;
+        font-size:12px;
+        font-weight:700;
         line-height:1;
-        color:#66758a;
+        color:#475569;
+        cursor:pointer;
       }
       body.saas-enabled .saas-mobile-search-input-wrap {
         position:relative;
@@ -2031,6 +2246,11 @@
       min-width:4px;
       border-radius:999px;
       background:#a8d1cc;
+    }
+
+    /* Top Referral Sources remains available on desktop but is intentionally omitted from the mobile Home dashboard. */
+    body.saas-enabled .home-top-referral-sources {
+      display:none !important;
     }
 
     /* Top Referral Sources becomes card-based on phone instead of five cramped columns. */
@@ -3112,6 +3332,21 @@
 }
 </style>
 
+<style id="bdd-mobile-referral-modal-width-match">
+  @media (max-width:640px) {
+    /* Match Record Referral to the compact mobile Search / Activity modal width. */
+    body.saas-enabled .saas-modal-backdrop {
+      left:56px !important;
+      padding-left:10px !important;
+      padding-right:10px !important;
+    }
+    body.saas-enabled .saas-modal-backdrop > .saas-modal {
+      width:100% !important;
+      max-width:none !important;
+      box-sizing:border-box !important;
+    }
+  }
+</style>
 
 <style id="bdd-mobile-header-activity-and-map-final">
   .saas-mobile-header-actions,
@@ -3243,6 +3478,592 @@
   }
 </style>
 
+
+<style id="bdd-account-list-desktop-detail-language">
+.account-list-section-icon,.account-list-town-icon{display:none;}
+@media (min-width:641px){
+  body.saas-enabled .account-list-desktop{
+    max-width:1240px;
+  }
+  body.saas-enabled .account-list-desktop .account-list-upcoming-card,
+  body.saas-enabled .account-list-desktop .account-list-group-card,
+  body.saas-enabled .account-list-desktop .home-table-card{
+    border-color:#dbe5ed !important;
+    border-radius:15px !important;
+    box-shadow:0 2px 8px rgba(8,30,61,.035) !important;
+    overflow:hidden;
+  }
+  body.saas-enabled .account-list-desktop .account-list-section-heading{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding-bottom:12px;
+    border-bottom:1px solid #e8eef3;
+    letter-spacing:-.015em;
+  }
+  body.saas-enabled .account-list-desktop .account-list-section-icon{
+    display:inline-flex;
+    width:29px;
+    height:29px;
+    flex:0 0 29px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #dce7ed;
+    border-radius:9px;
+    background:#f3f8f9;
+    color:#52717a;
+    font-family:Inter,sans-serif;
+    font-size:15px;
+    font-weight:700;
+    line-height:1;
+  }
+  body.saas-enabled .account-list-desktop .account-region-view-row > div,
+  body.saas-enabled .account-list-desktop .account-status-toggle{
+    border-color:#dbe5ed !important;
+    border-radius:11px !important;
+    box-shadow:0 1px 4px rgba(8,30,61,.025);
+  }
+  body.saas-enabled .account-list-desktop .account-list-toolbar-top{
+    margin-bottom:0 !important;
+    padding:12px 14px 10px;
+    border:1px solid #dbe5ed;
+    border-bottom:0;
+    border-radius:15px 15px 0 0;
+    background:#fbfcfd;
+  }
+  body.saas-enabled .account-list-desktop .account-list-filter-row{
+    margin:0 0 20px !important;
+    padding:10px 14px 12px;
+    border:1px solid #dbe5ed;
+    border-top:1px solid #edf2f5;
+    border-radius:0 0 15px 15px;
+    background:#fbfcfd;
+    box-shadow:0 2px 8px rgba(8,30,61,.035);
+  }
+  body.saas-enabled .account-list-desktop .account-list-filter-row select{
+    min-height:34px;
+    border-color:#dbe5ed !important;
+    border-radius:9px !important;
+    color:#34475e;
+  }
+  body.saas-enabled .account-list-desktop .account-list-view-toggle button{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  body.saas-enabled .account-list-desktop .account-list-view-icon{
+    font-size:14px;
+    line-height:1;
+    opacity:.8;
+  }
+  body.saas-enabled .account-list-desktop .account-list-town-heading{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin:0 !important;
+    padding:9px 14px !important;
+    border:1px solid #dbe5ed;
+    border-bottom-color:#e7eef2;
+    border-radius:13px 13px 0 0;
+    background:#f3f8f9;
+    color:#66758a !important;
+    letter-spacing:.1em;
+  }
+  body.saas-enabled .account-list-desktop .account-list-town-icon{
+    display:inline-flex;
+    width:22px;
+    height:22px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #dce7ed;
+    border-radius:7px;
+    background:#f3f8f9;
+    color:#66828a;
+    font-size:13px;
+    letter-spacing:0;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row{
+    min-height:76px;
+    padding-top:13px !important;
+    padding-bottom:13px !important;
+    border-bottom-color:#e8eef3 !important;
+  }
+  body.saas-enabled .account-list-desktop .account-list-town-heading + .account-list-group-card{
+    border-top:0 !important;
+    border-radius:0 0 15px 15px !important;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row:nth-child(even){
+    background:#fbfcfd;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row:hover{
+    background:#f7fafb !important;
+    box-shadow:none !important;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row-copy{
+    position:relative;
+    min-width:0;
+    padding-left:39px;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row-copy:before{
+    content:'⌂';
+    position:absolute;
+    left:0;
+    top:1px;
+    display:flex;
+    width:29px;
+    height:29px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #e0e9ee;
+    border-radius:9px;
+    background:#f4f8f9;
+    color:#6b818c;
+    font-size:14px;
+    line-height:1;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row > div:last-child{
+    gap:7px !important;
+    padding-left:18px;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row > div:last-child > span:not(.account-list-row-chevron){
+    min-height:26px;
+    padding:4px 10px !important;
+    align-items:center;
+    border:1px solid rgba(86,115,130,.1);
+    font-size:11px !important;
+    line-height:1.1;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row > div:last-child > span[class*="bg-red-50"]{
+    border-color:#f2c9c9;
+    box-shadow:inset 3px 0 0 #dc6666;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row-chevron{
+    display:inline-flex;
+    width:25px;
+    height:25px;
+    flex:0 0 25px;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+    color:#8da0b3;
+    font-size:24px;
+    font-weight:300;
+    line-height:1;
+  }
+  body.saas-enabled .account-list-desktop .account-list-row:hover .account-list-row-chevron{
+    background:#eaf3f4;
+    color:#28736d;
+  }
+  body.saas-enabled .account-list-desktop .account-list-empty-card{
+    border-color:#dbe5ed !important;
+    border-radius:15px !important;
+    background:linear-gradient(180deg,#fff 0%,#f8fbfc 100%);
+    box-shadow:0 2px 8px rgba(8,30,61,.035);
+  }
+  body.saas-enabled .account-list-desktop .account-list-empty-card > div{
+    margin:18px;
+    padding:28px;
+    border:1px dashed #d8e5ea;
+    border-radius:12px;
+    background:#f6fafb;
+  }
+  body.saas-enabled .account-list-desktop .home-card-head{
+    border-bottom-color:#e8eef3 !important;
+    background:#fbfcfd;
+  }
+  body.saas-enabled .account-list-desktop .home-card-title:before{
+    content:'▦';
+    display:inline-flex;
+    width:28px;
+    height:28px;
+    margin-right:9px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #dce7ed;
+    border-radius:9px;
+    background:#f3f8f9;
+    color:#52717a;
+    font-family:Inter,sans-serif;
+    font-size:13px;
+    vertical-align:middle;
+  }
+  body.saas-enabled .account-list-desktop .account-list-table thead{
+    background:#eef5f7;
+  }
+  body.saas-enabled .account-list-desktop .account-list-table th{
+    padding-top:12px;
+    padding-bottom:12px;
+    border-bottom:1px solid #dbe5ed;
+    color:#66758a;
+    font-size:10px;
+    letter-spacing:.08em;
+  }
+  body.saas-enabled .account-list-desktop .account-list-table th.account-list-sort-active{
+    background:#e3f0f0;
+    color:#176f68;
+  }
+  body.saas-enabled .account-list-desktop .account-list-table tbody tr:nth-child(even){
+    background:#fbfcfd;
+  }
+  body.saas-enabled .account-list-desktop .account-list-table tbody tr:hover{
+    background:#f1f7f8;
+  }
+}
+</style>
+
+<style id="bdd-pipeline-desktop-region-container">
+@media (min-width:641px){
+  body.saas-enabled .pipeline-account-list .account-region-view-row{
+    box-sizing:border-box !important;
+    width:100% !important;
+    margin:0 0 18px !important;
+    padding:12px 14px !important;
+    border:1px solid #dbe5ed !important;
+    border-radius:15px !important;
+    background:#f8fafb !important;
+    box-shadow:0 2px 8px rgba(8,30,61,.035) !important;
+  }
+  body.saas-enabled .pipeline-account-list .account-region-view-row .region-segmented{
+    display:flex !important;
+    width:fit-content !important;
+    max-width:none !important;
+    justify-content:flex-start !important;
+    gap:4px !important;
+    padding:4px !important;
+    border:1px solid #d7e2ea !important;
+    border-radius:13px !important;
+    background:#fff !important;
+    box-shadow:0 1px 4px rgba(8,30,61,.025) !important;
+  }
+  body.saas-enabled .pipeline-account-list .account-region-view-row .region-segmented button{
+    flex:0 0 auto !important;
+    min-width:auto !important;
+    padding:6px 16px !important;
+    border-radius:7px !important;
+    white-space:nowrap !important;
+  }
+}
+</style>
+
+<style id="bdd-account-detail-desktop-mobile-language">
+.desktop-section-icon,.desktop-detail-line-icon{display:none;}
+@media (min-width:641px){
+  body.saas-enabled .account-detail-workspace{
+    max-width:1240px;
+    margin:0 auto;
+  }
+  body.saas-enabled .account-detail-main-card,
+  body.saas-enabled .account-detail-contacts-card,
+  body.saas-enabled #account-referral-activity-card,
+  body.saas-enabled #activity-log-card,
+  body.saas-enabled .account-connections-card,
+  body.saas-enabled .account-detail-map-card,
+  body.saas-enabled .account-detail-workspace > .bg-white{
+    border-color:#dbe5ed !important;
+    border-radius:15px !important;
+    box-shadow:0 2px 8px rgba(8,30,61,.035) !important;
+  }
+  body.saas-enabled .desktop-section-heading{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    letter-spacing:-.015em;
+  }
+  body.saas-enabled .desktop-section-icon{
+    display:inline-flex;
+    width:29px;
+    height:29px;
+    flex:0 0 29px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #dce7ed;
+    border-radius:9px;
+    background:#f3f8f9;
+    color:#52717a;
+    font-family:Inter,sans-serif;
+    font-size:14px;
+    font-weight:700;
+    line-height:1;
+  }
+  body.saas-enabled .account-detail-main-card > h2,
+  body.saas-enabled .account-detail-contacts-card > div:first-child,
+  body.saas-enabled #account-referral-activity-card > div:first-child,
+  body.saas-enabled #activity-log-card > div:first-child,
+  body.saas-enabled .account-connections-card > div:first-child,
+  body.saas-enabled .account-detail-workspace > .bg-white > div:first-child{
+    border-bottom:1px solid #e8eef3;
+    padding-bottom:12px;
+  }
+  body.saas-enabled .account-detail-main-card > h2{
+    margin-bottom:15px !important;
+  }
+  body.saas-enabled .desktop-detail-line{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    min-height:25px;
+    margin-bottom:3px !important;
+    color:#34475e !important;
+  }
+  body.saas-enabled .desktop-detail-line-icon{
+    display:inline-flex;
+    width:21px;
+    height:21px;
+    flex:0 0 21px;
+    align-items:center;
+    justify-content:center;
+    color:#77869a;
+    font-size:13px;
+    line-height:1;
+  }
+  body.saas-enabled .desktop-detail-line a{
+    overflow-wrap:anywhere;
+  }
+  body.saas-enabled .desktop-snapshot-grid{
+    gap:10px !important;
+    padding-top:14px !important;
+  }
+  body.saas-enabled .desktop-snapshot-grid > div{
+    min-width:0;
+    padding:11px 12px;
+    border:1px solid #e5edf2;
+    border-radius:10px;
+    background:#f7fafb;
+  }
+  body.saas-enabled .desktop-snapshot-grid > div.sm\:col-span-2{
+    background:#f2f8f7;
+    border-color:#dcebe7;
+  }
+  body.saas-enabled #account-referral-activity-card .grid.grid-cols-2.md\:grid-cols-3 > div{
+    border-color:#e0eaef !important;
+    border-radius:10px !important;
+    background:linear-gradient(135deg,#eef7fa,#f7fafc) !important;
+  }
+  body.saas-enabled .account-detail-layout-grid{
+    display:grid;
+    grid-template-columns:minmax(0,2fr) minmax(280px,1fr);
+    gap:1.5rem;
+    align-items:start;
+  }
+  body.saas-enabled .account-detail-layout-grid.has-referral{
+    grid-template-areas:
+      "main contacts"
+      "referral referral"
+      "activity connections"
+      "email map"
+      "meeting map";
+  }
+  body.saas-enabled .account-detail-layout-grid.no-referral{
+    grid-template-areas:
+      "main contacts"
+      "activity connections"
+      "email map"
+      "meeting map";
+  }
+  body.saas-enabled .account-detail-layout-grid > .account-detail-top-grid,
+  body.saas-enabled .account-detail-layout-grid > .account-detail-activity-map-grid{
+    display:contents !important;
+  }
+  body.saas-enabled .account-detail-layout-grid .account-detail-main-card{grid-area:main;}
+  body.saas-enabled .account-detail-layout-grid .account-detail-contacts-card{grid-area:contacts;}
+  body.saas-enabled .account-detail-layout-grid #account-referral-activity-card{grid-area:referral;}
+  body.saas-enabled .account-detail-layout-grid #activity-log-card{grid-area:activity;}
+  body.saas-enabled .account-detail-layout-grid .account-connections-card{grid-area:connections;}
+  body.saas-enabled .account-detail-layout-grid .account-detail-email-card{grid-area:email;}
+  body.saas-enabled .account-detail-layout-grid .account-detail-meetings-card{grid-area:meeting;}
+  body.saas-enabled .account-detail-layout-grid .account-detail-map-card{
+    grid-area:map;
+    align-self:stretch;
+    display:flex;
+    flex-direction:column;
+  }
+  body.saas-enabled .account-detail-layout-grid .account-detail-main-card,
+  body.saas-enabled .account-detail-layout-grid .account-detail-contacts-card,
+  body.saas-enabled .account-detail-layout-grid #account-referral-activity-card,
+  body.saas-enabled .account-detail-layout-grid #activity-log-card,
+  body.saas-enabled .account-detail-layout-grid .account-connections-card,
+  body.saas-enabled .account-detail-layout-grid .account-detail-email-card,
+  body.saas-enabled .account-detail-layout-grid .account-detail-meetings-card,
+  body.saas-enabled .account-detail-layout-grid .account-detail-map-card{
+    width:auto !important;
+    min-width:0 !important;
+    margin-bottom:0 !important;
+  }
+  body.saas-enabled .account-detail-layout-grid .account-detail-map-card iframe{
+    flex:1 1 auto;
+    min-height:360px;
+  }
+}
+@media (max-width:640px){
+  body.saas-enabled .account-detail-layout-grid{display:block;}
+  body.saas-enabled .account-detail-activity-map-grid{display:block;margin-bottom:0;}
+}
+</style>
+
+<style id="bdd-mobile-account-detail-mockup-cards">
+.mobile-detail-overview{display:none;}
+@media (max-width:640px){
+  body.saas-enabled .mobile-detail-overview{display:block;width:100%;}
+  body.saas-enabled .mobile-detail-overview .mobile-detail-card{background:#fff;border:1px solid rgba(181,204,224,.72);border-radius:12px;padding:14px 14px 12px;margin:0 0 10px;box-shadow:0 1px 2px rgba(8,30,61,.025);}
+  body.saas-enabled .mobile-detail-overview h2{font-family:var(--font-display,inherit);font-size:17px;line-height:1.2;font-weight:700;color:#081e3d;margin:0 0 12px;}
+  body.saas-enabled .mobile-key-details{padding-bottom:14px!important;}
+  body.saas-enabled .mobile-detail-row{display:grid;grid-template-columns:24px 70px minmax(0,1fr);gap:8px;align-items:start;padding:6px 0;color:#44546f;font-size:12px;line-height:1.35;}
+  body.saas-enabled .mobile-detail-icon{color:#6b7890;font-size:16px;text-align:center;line-height:1.15;}
+  body.saas-enabled .mobile-detail-label{font-weight:600;color:#4d5b73;}
+  body.saas-enabled .mobile-detail-value{min-width:0;color:#4d5b73;overflow-wrap:anywhere;text-decoration:none;}
+  body.saas-enabled .mobile-detail-link{color:#0f766e;}
+  body.saas-enabled .mobile-referral-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  body.saas-enabled .mobile-referral-metrics>div{background:linear-gradient(135deg,rgba(231,244,251,.95),rgba(243,249,252,.9));border-radius:9px;padding:11px 12px;}
+  body.saas-enabled .mobile-referral-metrics span{display:block;font-size:11px;font-weight:600;color:#5d6980;margin-bottom:3px;}
+  body.saas-enabled .mobile-referral-metrics strong{display:block;font-size:20px;line-height:1.05;color:#081e3d;}
+  body.saas-enabled .mobile-card-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #e6eef5;padding-bottom:7px;}
+  body.saas-enabled .mobile-card-heading h2{margin:0;}
+  body.saas-enabled .mobile-card-heading h2 span{color:#8a95a9;font-weight:600;}
+  body.saas-enabled .mobile-key-details-heading{margin-bottom:6px;}
+  body.saas-enabled .mobile-account-edit-btn{padding:4px 2px;min-width:34px;text-align:right;}
+
+  body.saas-enabled .mobile-view-all{font-size:12px;color:#0f766e;font-weight:600;}
+  body.saas-enabled .mobile-contact-row,body.saas-enabled .mobile-activity-row{display:grid;grid-template-columns:38px minmax(0,1fr) 18px;gap:9px;align-items:center;min-height:48px;border-bottom:1px solid #e6eef5;}
+  body.saas-enabled .mobile-contact-row:last-child,body.saas-enabled .mobile-activity-row:last-child{border-bottom:0;}
+  body.saas-enabled .mobile-contact-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e3f4f0;color:#0f766e;font-size:12px;font-weight:700;}
+  body.saas-enabled .mobile-contact-copy{display:flex;flex-direction:column;min-width:0;}
+  body.saas-enabled .mobile-contact-copy strong{font-size:12px;line-height:1.25;color:#081e3d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  body.saas-enabled .mobile-contact-copy small{font-size:11px;line-height:1.3;color:#7a879d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  body.saas-enabled .mobile-chevron{font-size:25px;line-height:1;color:#758197;text-align:right;}
+  body.saas-enabled .mobile-activity-row{grid-template-columns:18px minmax(0,1fr) 18px;padding:6px 0;}
+  body.saas-enabled .mobile-activity-dot{width:9px;height:9px;border-radius:50%;background:#0f8b7f;margin-left:2px;}
+  body.saas-enabled .mobile-empty{font-size:12px;color:#7a879d;padding:10px 0 2px;}
+  /* The compact overview replaces the duplicate long-form cards on phones; full forms remain available via Edit/+Activity and desktop is untouched. */
+  body.saas-enabled .account-detail-top-grid .account-detail-contacts-card{display:none!important;}
+  body.saas-enabled .account-detail-page>.account-detail-workspace>div>.bg-white.rounded-xl.border.border-skyblue-100.p-6.mb-6{ }
+  body.saas-enabled .account-detail-workspace>.bg-white.rounded-xl.border.border-skyblue-100.p-6.mb-6{display:none!important;}
+  body.saas-enabled #activity-log-card{margin-top:0!important;}
+  body.saas-enabled .mobile-view-all{background:none;border:0;padding:0;cursor:pointer;font:inherit;}
+  body.saas-enabled .mobile-contact-row,
+  body.saas-enabled .mobile-activity-row{width:100%;background:none;border-left:0;border-right:0;border-top:0;padding-left:0;padding-right:0;text-align:left;cursor:pointer;font:inherit;}
+  body.saas-enabled .account-detail-top-grid .account-detail-contacts-card.mobile-section-open{display:block!important;}
+  body.saas-enabled #account-referral-activity-card.mobile-section-open,
+  body.saas-enabled #activity-log-card.mobile-section-open{display:block!important;}
+}
+</style>
+
+<style id="bdd-mobile-pipeline-visual-refresh">
+@media (max-width:640px) {
+  /* Give the mobile Pipeline more presence while keeping the existing accordion behavior. */
+  body.saas-enabled .pipeline-mobile-shell-v3 {
+    padding:14px 10px 30px !important;
+    background:linear-gradient(180deg, rgba(246,249,251,.9) 0%, rgba(255,255,255,0) 180px) !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-region-v3 {
+    height:44px !important;
+    margin-bottom:14px !important;
+    border-radius:12px !important;
+    box-shadow:0 1px 2px rgba(15,23,42,.04) !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-list-v3 {
+    gap:12px !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-section-v3 {
+    border-radius:14px !important;
+    filter:drop-shadow(0 3px 8px rgba(15,23,42,.07));
+  }
+
+  body.saas-enabled .pipeline-mobile-toggle-v3 {
+    min-height:58px !important;
+    border-radius:14px !important;
+    padding:0 15px !important;
+    font-size:14px !important;
+    letter-spacing:.01em !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.18) !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-name-v3 {
+    display:flex !important;
+    align-items:center !important;
+    gap:9px !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-name-v3::before {
+    content:'';
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:currentColor;
+    opacity:.58;
+    flex:none;
+    box-shadow:0 0 0 4px rgba(255,255,255,.16);
+  }
+
+  body.saas-enabled .pipeline-mobile-count-v3 {
+    min-width:28px !important;
+    height:28px !important;
+    padding:0 8px !important;
+    border-radius:999px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    background:rgba(255,255,255,.48) !important;
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,.06) !important;
+    font-size:12px !important;
+    line-height:1 !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-arrow-v3 {
+    width:26px !important;
+    height:26px !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    font-size:20px !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-body-v3 {
+    margin-top:-4px !important;
+    padding:13px 9px 10px !important;
+    border-radius:0 0 14px 14px !important;
+    background:#f3f7f9 !important;
+    border:1px solid #e1e9ee !important;
+    border-top:0 !important;
+    gap:9px !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-account-v3 {
+    border:1px solid #dfe7ed !important;
+    border-left:4px solid #9db7c8 !important;
+    border-radius:11px !important;
+    padding:13px 12px !important;
+    box-shadow:0 1px 3px rgba(15,23,42,.05) !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-account-v3:active {
+    transform:translateY(1px);
+    background:#f9fbfc !important;
+  }
+
+  body.saas-enabled .pipeline-mobile-account-name-v3 {
+    font-size:14px !important;
+    line-height:1.3 !important;
+  }
+}
+</style>
+
+<style id="bdd-mobile-consistent-top-spacing">
+@media (max-width:640px) {
+  /* Match every primary mobile workspace to Today's compact gray gap below the fixed header. */
+  body.saas-enabled #root > .bdd-home,
+  body.saas-enabled #root > .today-page,
+  body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page,
+  body.saas-enabled #root > div.bdd-account-list.pipeline-account-list,
+  body.saas-enabled #root > .account-detail-page,
+  body.saas-enabled #root > .mobile-map-page,
+  body.saas-enabled #root > .mobile-workspace-page {
+    padding-top:calc(var(--saas-topbar) + 6px) !important;
+  }
+}
+</style>
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="root"></div>
@@ -5098,18 +5919,18 @@ function AccountSnapshot({
     /*#__PURE__*/React.createElement("div", { className: `${row} mb-1` },
       /*#__PURE__*/React.createElement(DistanceLinks, { account: account })
     ),
-    account.Address && /*#__PURE__*/React.createElement("p", { className: `${data} mb-0.5` }, account.Address),
-    account.Phone && /*#__PURE__*/React.createElement("p", { className: `${data} mb-0.5` }, account.Phone),
-    account.Website && /*#__PURE__*/React.createElement("p", { className: "mb-0.5" },
+    account.Address && /*#__PURE__*/React.createElement("p", { className: `${data} desktop-detail-line` }, /*#__PURE__*/React.createElement("span", { className: "desktop-detail-line-icon", "aria-hidden": "true" }, "●"), /*#__PURE__*/React.createElement("span", null, account.Address)),
+    account.Phone && /*#__PURE__*/React.createElement("p", { className: `${data} desktop-detail-line` }, /*#__PURE__*/React.createElement("span", { className: "desktop-detail-line-icon", "aria-hidden": "true" }, "☎"), /*#__PURE__*/React.createElement("span", null, account.Phone)),
+    account.Website && /*#__PURE__*/React.createElement("p", { className: "desktop-detail-line" }, /*#__PURE__*/React.createElement("span", { className: "desktop-detail-line-icon", "aria-hidden": "true" }, "◎"),
       /*#__PURE__*/React.createElement("a", {
         href: account.Website, target: "_blank", rel: "noopener noreferrer",
         className: `${data} text-teal-600 hover:underline`
-      }, account.Website)
+      }, account.Website, " ↗")
     ),
-    (account.BedCount || account.Rating || cmsNum !== null || account.ChainAffiliation) && /*#__PURE__*/React.createElement("p", { className: `${data} mb-3` },
-      [account.BedCount && `${account.BedCount} beds`, account.Rating && `★ ${account.Rating}`, cmsNum !== null && `CMS: ${cmsNum}/5`, account.ChainAffiliation].filter(Boolean).join(' | ')
+    (account.BedCount || account.Rating || cmsNum !== null || account.ChainAffiliation) && /*#__PURE__*/React.createElement("p", { className: `${data} desktop-detail-line mb-3` }, /*#__PURE__*/React.createElement("span", { className: "desktop-detail-line-icon", "aria-hidden": "true" }, "▰"), /*#__PURE__*/React.createElement("span", null,
+      [account.BedCount && `${account.BedCount} beds`, account.Rating && `★ ${account.Rating}`, cmsNum !== null && `CMS: ${cmsNum}/5`, account.ChainAffiliation].filter(Boolean).join(' | '))
     ),
-    /*#__PURE__*/React.createElement("div", { className: "grid sm:grid-cols-2 gap-3 pt-3 border-t border-skyblue-100" },
+    /*#__PURE__*/React.createElement("div", { className: "desktop-snapshot-grid grid sm:grid-cols-2 gap-3 pt-3 border-t border-skyblue-100" },
       /*#__PURE__*/React.createElement("div", null,
         /*#__PURE__*/React.createElement("p", { className: label }, "Primary Clinical Contact"),
         /*#__PURE__*/React.createElement("p", { className: data }, primaryClinicalContact ? `${primaryClinicalContact.RoleCategory} — ${primaryClinicalContact.ContactName}` : 'Unknown')
@@ -5194,8 +6015,8 @@ function ActivityLogCard({
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-4"
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
-  }, "Activity Log"), !loggingActivity && /*#__PURE__*/React.createElement("button", {
+    className: "desktop-section-heading font-display text-lg text-navy-900"
+  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "•"), "Activity Log"), !loggingActivity && /*#__PURE__*/React.createElement("button", {
     onClick: () => setLoggingActivity(true),
     className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
   }, "+ Log Activity")), loggingActivity && /*#__PURE__*/React.createElement("div", {
@@ -5418,6 +6239,7 @@ function AccountDetail({
   }, []);
 
   const [editingAccount, setEditingAccount] = useState(false);
+  const [mobileDetailSection, setMobileDetailSection] = useState(null);
   const [addingContact, setAddingContact] = useState(false);
   const [editingContactId, setEditingContactId] = useState(null);
   const [suggestedContacts, setSuggestedContacts] = useState(null); // null = not searched yet
@@ -5840,7 +6662,8 @@ function AccountDetail({
   const recordReferral = () => {
     const numericRate = Number(referralRate);
     if (!referralDate || referralRate === '' || !Number.isFinite(numericRate) || numericRate < 0) return;
-    const simplePracticeWindow = window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
+    const isMobileReferral = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+    const simplePracticeWindow = isMobileReferral ? null : window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
     const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
     const localReferral = {
@@ -5859,7 +6682,7 @@ function AccountDetail({
         ? { ...a, RelationshipStage: 'Active Referrer', Status: 'Customer' }
         : a)
     }));
-    window.__crmShowToast && window.__crmShowToast('Referral recorded — opening SimplePractice');
+    window.__crmShowToast && window.__crmShowToast(isMobileReferral ? 'Referral recorded' : 'Referral recorded — opening SimplePractice');
     apiPost('createReferralActivity', { data: {
       AccountId: account.AccountId,
       ReferralDate: referralDate,
@@ -5881,7 +6704,7 @@ function AccountDetail({
       window.__crmShowToast && window.__crmShowToast('Referral save failed — restoring server data');
       onRefreshAccount(account.AccountId);
     });
-    if (!simplePracticeWindow) {
+    if (!isMobileReferral && !simplePracticeWindow) {
       window.__crmShowToast && window.__crmShowToast('Referral recorded — allow pop-ups to open SimplePractice');
     }
   };
@@ -5915,6 +6738,45 @@ function AccountDetail({
     persistInBackground(apiPost('updateActivity', { data: patch }), 'Activity updated');
   };
 
+  const openAccountEditor = () => {
+    setEditingAccount(true);
+  };
+
+  useEffect(() => {
+    if (!editingAccount) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        detailPageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }, [editingAccount]);
+
+  const openMobileDetailSection = (section, contactId = null, activity = null) => {
+    if (contactId) setEditingContactId(contactId);
+    if (activity) startEditActivity(activity);
+    setMobileDetailSection(section);
+    window.setTimeout(() => {
+      const selector = section === 'contacts'
+        ? '.account-detail-contacts-card'
+        : section === 'referrals'
+          ? '#account-referral-activity-card'
+          : '#activity-log-card';
+      detailPageRef.current?.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  };
+
+  useEffect(() => {
+    const page = detailPageRef.current;
+    if (!page) return;
+    const contactsCard = page.querySelector('.account-detail-contacts-card');
+    const referralCard = page.querySelector('#account-referral-activity-card');
+    const activityCard = page.querySelector('#activity-log-card');
+    contactsCard?.classList.toggle('mobile-section-open', mobileDetailSection === 'contacts');
+    referralCard?.classList.toggle('mobile-section-open', mobileDetailSection === 'referrals');
+    activityCard?.classList.toggle('mobile-section-open', mobileDetailSection === 'activity');
+  }, [mobileDetailSection, editingContactId, editingActivityId]);
+
   const removeActivity = activityId => {
     if (!confirm("Delete this activity? This can't be undone.")) return;
     onLocalData(d => ({ ...d, activities: d.activities.filter(a => a.ActivityId !== activityId) }));
@@ -5926,19 +6788,65 @@ function AccountDetail({
     ref: detailPageRef,
     className: "account-detail-page max-w-7xl mx-auto px-4 sm:px-6 py-8"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "account-detail-workspace"
+    className: `account-detail-workspace ${!editingAccount ? `account-detail-layout-grid ${(account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') ? 'has-referral' : 'no-referral'}` : ''}`
   }, editingAccount ? /*#__PURE__*/React.createElement(AccountForm, {
     initial: account,
     onSave: saveAccount,
     onCancel: () => setEditingAccount(false),
     onDelete: removeAccount,
     referralSourceOptions: referralSourceOptions
-  }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", { className: "account-detail-top-grid mb-6" },
+  }) : /*#__PURE__*/React.createElement(React.Fragment, null,
+    /*#__PURE__*/React.createElement("div", { className: "mobile-detail-overview" },
+      /*#__PURE__*/React.createElement("section", { className: "mobile-detail-card mobile-key-details" },
+        /*#__PURE__*/React.createElement("div", { className: "mobile-card-heading mobile-key-details-heading" },
+          /*#__PURE__*/React.createElement("h2", null, "Key Details"),
+          /*#__PURE__*/React.createElement("button", { type: "button", className: "mobile-view-all mobile-account-edit-btn", onClick: openAccountEditor }, "Edit")
+        ),
+        account.Address && /*#__PURE__*/React.createElement("div", { className: "mobile-detail-row" }, /*#__PURE__*/React.createElement("span", { className: "mobile-detail-icon" }, "●"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-label" }, "Address"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-value" }, account.Address)),
+        account.Phone && /*#__PURE__*/React.createElement("div", { className: "mobile-detail-row" }, /*#__PURE__*/React.createElement("span", { className: "mobile-detail-icon" }, "☎"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-label" }, "Phone"), /*#__PURE__*/React.createElement("a", { href: `tel:${account.Phone}`, className: "mobile-detail-value" }, account.Phone)),
+        account.Website && /*#__PURE__*/React.createElement("div", { className: "mobile-detail-row" }, /*#__PURE__*/React.createElement("span", { className: "mobile-detail-icon" }, "◎"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-label" }, "Website"), /*#__PURE__*/React.createElement("a", { href: account.Website, target: "_blank", rel: "noopener noreferrer", className: "mobile-detail-value mobile-detail-link" }, account.Website, " ↗")),
+        account.ChainAffiliation && /*#__PURE__*/React.createElement("div", { className: "mobile-detail-row" }, /*#__PURE__*/React.createElement("span", { className: "mobile-detail-icon" }, "↗"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-label" }, "Chain"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-value" }, account.ChainAffiliation)),
+        account.BedCount && /*#__PURE__*/React.createElement("div", { className: "mobile-detail-row" }, /*#__PURE__*/React.createElement("span", { className: "mobile-detail-icon" }, "▰"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-label" }, "Beds"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-value" }, account.BedCount))
+      ),
+      (account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("section", { className: "mobile-detail-card mobile-referral-summary" },
+        /*#__PURE__*/React.createElement("h2", null, "Referral Activity"),
+        /*#__PURE__*/React.createElement("div", { className: "mobile-referral-metrics" },
+          /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Total Referrals"), /*#__PURE__*/React.createElement("strong", null, String(accountReferralActivity.length))),
+          /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "YTD Revenue"), /*#__PURE__*/React.createElement("strong", null, formatCurrency(referralRevenueYtd)))
+        )
+      ),
+      /*#__PURE__*/React.createElement("section", { className: "mobile-detail-card mobile-contacts-summary" },
+        /*#__PURE__*/React.createElement("div", { className: "mobile-card-heading" }, /*#__PURE__*/React.createElement("h2", null, "Contacts ", /*#__PURE__*/React.createElement("span", null, `(${accountContacts.length})`)), /*#__PURE__*/React.createElement("button", { type: "button", className: "mobile-view-all", onClick: () => openMobileDetailSection('contacts') }, "View All")),
+        accountContacts.length === 0 ? /*#__PURE__*/React.createElement("p", { className: "mobile-empty" }, "No contacts yet") : accountContacts.slice(0, 3).map(c => {
+          const initials = (c.ContactName || '?').split(/\s+/).filter(Boolean).slice(0,2).map(n => n[0]).join('').toUpperCase();
+          return /*#__PURE__*/React.createElement("button", { type: "button", key: c.ContactId, className: "mobile-contact-row", onClick: () => openMobileDetailSection('contacts', c.ContactId) },
+            /*#__PURE__*/React.createElement("span", { className: "mobile-contact-avatar" }, initials),
+            /*#__PURE__*/React.createElement("span", { className: "mobile-contact-copy" }, /*#__PURE__*/React.createElement("strong", null, c.ContactName || 'Contact'), /*#__PURE__*/React.createElement("small", null, c.Role || c.RoleCategory || '')),
+            /*#__PURE__*/React.createElement("span", { className: "mobile-chevron" }, "›")
+          );
+        })
+      ),
+      /*#__PURE__*/React.createElement("section", { className: "mobile-detail-card mobile-recent-summary" },
+        /*#__PURE__*/React.createElement("div", { className: "mobile-card-heading" }, /*#__PURE__*/React.createElement("h2", null, "Recent Activity"), /*#__PURE__*/React.createElement("button", { type: "button", className: "mobile-view-all", onClick: () => openMobileDetailSection('activity') }, "View All")),
+        accountActivities.length === 0 && accountReferralActivity.length === 0 ? /*#__PURE__*/React.createElement("p", { className: "mobile-empty" }, "No activity yet") : (() => {
+          const latestAct = accountActivities[0];
+          const latestRef = accountReferralActivity[0];
+          const actDate = latestAct && latestAct.Timestamp ? new Date(latestAct.Timestamp) : null;
+          const refDate = latestRef && latestRef.ReferralDate ? referralDateAtMidnight_(latestRef.ReferralDate) : null;
+          const useReferral = refDate && (!actDate || refDate >= actDate);
+          const title = useReferral ? 'Referral recorded' : ((latestAct && (latestAct.ActivityResult || latestAct.ActivityType)) || 'Activity logged');
+          const date = useReferral ? refDate : actDate;
+          const by = useReferral ? (latestRef.RecordedBy || 'BDD User') : '';
+          return /*#__PURE__*/React.createElement("button", { type: "button", className: "mobile-activity-row", onClick: () => useReferral ? openMobileDetailSection('referrals') : openMobileDetailSection('activity', null, latestAct) }, /*#__PURE__*/React.createElement("span", { className: "mobile-activity-dot" }), /*#__PURE__*/React.createElement("span", { className: "mobile-contact-copy" }, /*#__PURE__*/React.createElement("strong", null, title), /*#__PURE__*/React.createElement("small", null, date && !isNaN(date.getTime()) ? `${formatShortDate(date)}${by ? ` · by ${by}` : ''}` : by)), /*#__PURE__*/React.createElement("span", { className: "mobile-chevron" }, "›"));
+        })()
+      )
+    ),
+    /*#__PURE__*/React.createElement("div", { className: "account-detail-top-grid mb-6" },
     /*#__PURE__*/React.createElement("div", {
     className: `account-detail-main-card bg-white rounded-xl border border-skyblue-100 p-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900 mb-1"
-  }, "Account Details"), /*#__PURE__*/React.createElement("div", {
+    className: "desktop-section-heading font-display text-lg text-navy-900 mb-1"
+  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "◎"), "Account Details"), /*#__PURE__*/React.createElement("div", {
     className: "account-detail-summary-row flex items-start justify-between flex-wrap gap-3"
   }, /*#__PURE__*/React.createElement("div", { className: "account-detail-snapshot min-w-0 flex-1" }, /*#__PURE__*/React.createElement(AccountSnapshot, {
     account: account,
@@ -5954,7 +6862,7 @@ function AccountDetail({
     disabled: busy,
     className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
   }, "Revert to prospect"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setEditingAccount(true),
+    onClick: openAccountEditor,
     className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
   }, "Edit")))),
     /*#__PURE__*/React.createElement("div", {
@@ -5962,8 +6870,8 @@ function AccountDetail({
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-4"
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
-  }, "Contacts"), !addingContact && /*#__PURE__*/React.createElement("button", {
+    className: "desktop-section-heading font-display text-lg text-navy-900"
+  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "●"), "Contacts"), !addingContact && /*#__PURE__*/React.createElement("button", {
     onClick: () => setAddingContact(true),
     className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
   }, "+ Add contact")), addingContact && /*#__PURE__*/React.createElement(ContactForm, {
@@ -6029,12 +6937,13 @@ function AccountDetail({
   }, addingSuggestionEmail === s.email ? 'Adding…' : '+ Add')))), suggestionsError && /*#__PURE__*/React.createElement("p", {
     className: "text-red-500 text-sm mt-2"
   }, suggestionsError))))), (account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("div", {
+    id: "account-referral-activity-card",
     className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-start justify-between gap-4 flex-wrap mb-5"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
-  }, "Referral Activity"), /*#__PURE__*/React.createElement("p", {
+    className: "desktop-section-heading font-display text-lg text-navy-900"
+  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "↗"), "Referral Activity"), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/55 mt-1"
   }, "Track referral activity from this facility. No patient information is stored in BDD CRM.")), /*#__PURE__*/React.createElement("button", {
     onClick: () => setRecordingReferral(true),
@@ -6080,7 +6989,7 @@ function AccountDetail({
     className: "font-display text-xl text-navy-900"
   }, "Record Referral"), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/55 mt-1"
-  }, "Record a referral from ", account.AccountName, " and continue to SimplePractice.")), /*#__PURE__*/React.createElement("button", {
+  }, "Record a referral from ", account.AccountName, window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "." : " and continue to SimplePractice.")), /*#__PURE__*/React.createElement("button", {
     onClick: () => setRecordingReferral(false),
     className: "text-navy-700/45 hover:text-navy-900 text-xl leading-none"
   }, "×")), /*#__PURE__*/React.createElement("label", {
@@ -6103,7 +7012,7 @@ function AccountDetail({
     className: "mt-4 rounded-lg bg-skyblue-50 border border-skyblue-100 px-4 py-3 text-sm text-navy-700/70"
   }, /*#__PURE__*/React.createElement("strong", {
     className: "text-navy-900"
-  }, "No patient information is stored in BDD CRM."), " Enter all client details only after SimplePractice opens."), /*#__PURE__*/React.createElement("div", {
+  }, "No patient information is stored in BDD CRM."), window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "" : " Enter all client details only after SimplePractice opens."), /*#__PURE__*/React.createElement("div", {
     className: "flex justify-end gap-2 mt-5"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setRecordingReferral(false),
@@ -6112,7 +7021,9 @@ function AccountDetail({
     onClick: recordReferral,
     disabled: !referralDate || referralRate === '' || !Number.isFinite(Number(referralRate)) || Number(referralRate) < 0,
     className: "bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
-  }, "Record & Open SimplePractice")))), /*#__PURE__*/React.createElement(ActivityLogCard, {
+  }, window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "Record Referral" : "Record & Open SimplePractice")))), /*#__PURE__*/React.createElement("div", {
+    className: "account-detail-activity-map-grid"
+  }, /*#__PURE__*/React.createElement(ActivityLogCard, {
     activities: accountActivities,
     loggingActivity: loggingActivity,
     setLoggingActivity: setLoggingActivity,
@@ -6162,13 +7073,13 @@ function AccountDetail({
     target: "_blank",
     rel: "noopener noreferrer",
     className: "flex-1 text-center py-2.5 text-teal-600 hover:bg-skyblue-100/30 transition font-medium"
-  }, "Open in Apple Maps"))), /*#__PURE__*/React.createElement("div", {
+  }, "Open in Apple Maps")))), /*#__PURE__*/React.createElement("div", {
     className: "account-connections-card bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-1"
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
-  }, "Connections"), !addingConnection && /*#__PURE__*/React.createElement("button", {
+    className: "desktop-section-heading font-display text-lg text-navy-900"
+  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "↗"), "Connections"), !addingConnection && /*#__PURE__*/React.createElement("button", {
     onClick: () => setAddingConnection(true),
     className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
   }, "+ Add connection")), /*#__PURE__*/React.createElement("p", {
@@ -6207,12 +7118,12 @@ function AccountDetail({
     onClick: () => removeConnection(c.ConnectionId),
     className: "text-navy-700/40 hover:text-red-500"
   }, "Remove"))))), /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+    className: "account-detail-email-card bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-1"
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
-  }, "Emails"), emailThreads !== null && /*#__PURE__*/React.createElement("button", {
+    className: "desktop-section-heading font-display text-lg text-navy-900"
+  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "✉"), "Emails"), emailThreads !== null && /*#__PURE__*/React.createElement("button", {
     onClick: loadEmails,
     disabled: emailsLoading,
     className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
@@ -6250,12 +7161,12 @@ function AccountDetail({
   }, t.from, t.messageCount > 1 ? ` · ${t.messageCount} messages` : ''), t.snippet && /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/60 mt-1"
   }, t.snippet, "…"))))), /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
+    className: "account-detail-meetings-card bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-1"
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-lg text-navy-900"
-  }, "Meetings"), /*#__PURE__*/React.createElement("button", {
+    className: "desktop-section-heading font-display text-lg text-navy-900"
+  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "◷"), "Meetings"), /*#__PURE__*/React.createElement("button", {
     onClick: loadMeetings,
     disabled: meetingsLoading,
     className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
@@ -6935,8 +7846,10 @@ function AccountRow({
 }) {
   return /*#__PURE__*/React.createElement("button", {
     onClick: () => onSelect(account),
-    className: `w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: `account-list-row w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "account-list-row-copy"
+  }, /*#__PURE__*/React.createElement("p", {
     className: "font-medium text-navy-900"
   }, account.AccountName), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/50"
@@ -6954,7 +7867,10 @@ function AccountRow({
     status: account.Status
   }), /*#__PURE__*/React.createElement("span", {
     className: `inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stageColor(account.RelationshipStage)}`
-  }, account.RelationshipStage || 'Target')));
+  }, account.RelationshipStage || 'Target'), /*#__PURE__*/React.createElement("span", {
+    className: "account-list-row-chevron",
+    "aria-hidden": "true"
+  }, "›")));
 }
 
 // ---------------------------------------------------------------------
@@ -7090,11 +8006,11 @@ function TableView({
   }, "Export CSV"))), /*#__PURE__*/React.createElement("div", {
     className: "home-referral-table-wrap"
   }, /*#__PURE__*/React.createElement("table", {
-    className: "home-referral-table"
+    className: "home-referral-table account-list-table"
   }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, columns.map(col => /*#__PURE__*/React.createElement("th", {
     key: col.key,
     onClick: () => toggleSort(col.key),
-    className: "cursor-pointer hover:text-navy-900 whitespace-nowrap select-none"
+    className: `cursor-pointer hover:text-navy-900 whitespace-nowrap select-none ${sortCol === col.key ? 'account-list-sort-active' : ''}`
   }, col.label, " ", sortCol === col.key ? sortDir === 'asc' ? '▲' : '▼' : '')))), /*#__PURE__*/React.createElement("tbody", null, sorted.map(a => {
     const propensity = computeOverallFeesOpportunity(a);
     const cmsNum = getCmsOverallNumber(a.CMSRating);
@@ -7151,7 +8067,7 @@ function PipelineView({
   const [activeReferrersExpanded, setActiveReferrersExpanded] = useState(false);
   const [mobileExpandedStages, setMobileExpandedStages] = useState([]);
   const isMobilePipeline = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
-  const pipelineGridStyle = { gridTemplateColumns: `${targetExpanded ? 'minmax(0, 1fr)' : '72px'} repeat(3, minmax(0, 1fr)) ${activeReferrersExpanded ? 'minmax(0, 1fr)' : '72px'}` };
+  const pipelineGridStyle = { gridTemplateColumns: `${targetExpanded ? 'minmax(0, 1fr)' : '168px'} repeat(3, minmax(0, 1fr)) ${activeReferrersExpanded ? 'minmax(0, 1fr)' : '168px'}` };
   const columns = useMemo(() => {
     const byStage = {};
     stages.forEach(s => byStage[s] = []);
@@ -7206,7 +8122,21 @@ function PipelineView({
 
   if (isMobilePipeline) {
     const toggleMobileStage = stage => {
+      const isExpanding = !mobileExpandedStages.includes(stage);
       setMobileExpandedStages(prev => prev.includes(stage) ? prev.filter(s => s !== stage) : [...prev, stage]);
+      if (isExpanding) {
+        // Wait for the accordion body to render, then bring the selected stage
+        // to the top of the mobile workspace so the details get maximum room.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const section = Array.from(document.querySelectorAll('.pipeline-mobile-section-v3'))
+            .find(el => el.dataset.pipelineStage === stage);
+          if (!section) return;
+          const topbar = document.querySelector('.saas-topbar');
+          const topbarBottom = topbar ? topbar.getBoundingClientRect().bottom : 0;
+          const targetY = window.scrollY + section.getBoundingClientRect().top - topbarBottom - 8;
+          window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+        }));
+      }
     };
     const regionOptions = ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'];
 
@@ -7227,7 +8157,8 @@ function PipelineView({
       const isActiveReferrer = stage === 'Active Referrer';
       return /*#__PURE__*/React.createElement("section", {
         key: stage,
-        className: "pipeline-mobile-section-v3"
+        className: "pipeline-mobile-section-v3",
+        "data-pipeline-stage": stage
       }, /*#__PURE__*/React.createElement("button", {
         type: "button",
         className: `pipeline-mobile-toggle-v3 ${pipelineHeaderColor(stage)}`,
@@ -7333,7 +8264,7 @@ function PipelineView({
     }, /*#__PURE__*/React.createElement("div", {
       className: "flex items-center justify-between gap-1 w-full"
     }, /*#__PURE__*/React.createElement("span", {
-      className: isCollapsedEdge ? "text-[10px] tracking-tight" : ""
+      className: isCollapsedEdge ? "tracking-tight" : ""
     }, stage === 'Active Referrer' ? "Active Referrer" : "Target"), /*#__PURE__*/React.createElement("span", {
       className: "ml-auto flex items-center gap-1.5"
     }, /*#__PURE__*/React.createElement("span", {
@@ -7368,9 +8299,9 @@ function PipelineView({
     return /*#__PURE__*/React.createElement("button", {
       key: a.AccountId,
       onClick: () => onSelect(a),
-      className: `w-full text-left bg-white border border-skyblue-100 rounded-lg p-2.5 hover:border-teal-500 hover:shadow-sm transition ${attentionBorder} ${opportunityLift}`
+      className: `w-full text-left bg-white border border-skyblue-100 rounded-lg p-2.5 hover:border-teal-500 hover:shadow-sm transition ${isActiveReferrer ? 'active-referrer-card-v2' : ''} ${attentionBorder} ${opportunityLift}`
     }, /*#__PURE__*/React.createElement("p", {
-      className: "font-display text-sm text-navy-900 mb-1.5 leading-tight"
+      className: `font-display text-sm text-navy-900 mb-1.5 leading-tight ${isActiveReferrer ? 'active-referrer-name-v2' : ''}`
     }, a.AccountName), !isActiveReferrer && /*#__PURE__*/React.createElement("div", {
       className: "flex items-center gap-1.5 flex-wrap mb-1.5"
     }, /*#__PURE__*/React.createElement(PropensityBadge, {
@@ -7379,24 +8310,13 @@ function PipelineView({
     }), a.BedCount && /*#__PURE__*/React.createElement("span", {
       className: "text-xs text-navy-700/60 whitespace-nowrap"
     }, a.BedCount, " beds")), isActiveReferrer && /*#__PURE__*/React.createElement("div", {
-      className: "mb-1.5"
-    }, /*#__PURE__*/React.createElement("p", {
-      className: "text-xs text-navy-700/65 whitespace-nowrap"
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "font-semibold text-navy-900"
-    }, "Referrals"), /*#__PURE__*/React.createElement("span", {
-      className: "ml-5"
-    }, "30d: "), /*#__PURE__*/React.createElement("span", {
-      className: "font-semibold text-navy-900"
-    }, referralStats.last30), "  │  90d: ", /*#__PURE__*/React.createElement("span", {
-      className: "font-semibold text-navy-900"
-    }, referralStats.last90), "  │  YTD: ", /*#__PURE__*/React.createElement("span", {
-      className: "font-semibold text-navy-900"
-    }, referralStats.ytd)), a.BedCount && /*#__PURE__*/React.createElement("p", {
-      className: "text-xs text-navy-700/50"
-    }, a.BedCount, " beds")), a.NextAction && /*#__PURE__*/React.createElement("p", {
+      className: "active-referrer-stats-v2"
+    }, [[referralStats.last30, '30d'], [referralStats.last90, '90d'], [referralStats.ytd, 'YTD']].map(([value, label]) => /*#__PURE__*/React.createElement("div", {
+      key: label,
+      className: "active-referrer-stat-v2"
+    }, /*#__PURE__*/React.createElement("strong", null, value), /*#__PURE__*/React.createElement("span", null, label)))), a.NextAction && !isActiveReferrer && /*#__PURE__*/React.createElement("p", {
       className: "text-xs font-medium text-navy-900 leading-snug mb-1"
-    }, a.NextAction), a.NextFollowUp && /*#__PURE__*/React.createElement("div", {
+    }, a.NextAction), a.NextFollowUp && !isActiveReferrer && /*#__PURE__*/React.createElement("div", {
       className: "mb-1"
     }, /*#__PURE__*/React.createElement(FollowUpBadge, {
       nextFollowUp: a.NextFollowUp
@@ -7598,9 +8518,6 @@ function AccountList({
       /*#__PURE__*/React.createElement("label", {
         className: "mobile-accounts-region"
       },
-        /*#__PURE__*/React.createElement("span", {
-          className: "mobile-accounts-region-label"
-        }, "Region"),
         /*#__PURE__*/React.createElement("select", {
           value: region,
           onChange: e => setRegion(e.target.value),
@@ -7656,7 +8573,7 @@ function AccountList({
   }
 
   return /*#__PURE__*/React.createElement("div", {
-    className: `bdd-account-list ${initialViewMode === 'pipeline' ? 'pipeline-account-list' : ''} max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8`
+    className: `bdd-account-list ${initialViewMode === 'pipeline' ? 'pipeline-account-list' : 'account-list-desktop'} max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8`
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-6 flex-wrap gap-3"
   }, /*#__PURE__*/React.createElement("div", {
@@ -7711,10 +8628,13 @@ function AccountList({
     onClick: onSignOut,
     className: "w-full text-left px-3 py-2 rounded-lg text-sm text-navy-700 hover:bg-skyblue-100/50 hover:text-navy-900 transition"
   }, "Sign out")))))), topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100 p-5 mb-6"
+    className: "account-list-upcoming-card bg-white rounded-xl border border-skyblue-100 p-5 mb-6"
   }, /*#__PURE__*/React.createElement("h2", {
-    className: "font-display text-base text-navy-900 mb-3"
-  }, "Upcoming Meetings"), /*#__PURE__*/React.createElement("div", {
+    className: "account-list-section-heading font-display text-base text-navy-900 mb-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "account-list-section-icon",
+    "aria-hidden": "true"
+  }, "◷"), "Upcoming Meetings"), /*#__PURE__*/React.createElement("div", {
     className: "space-y-1"
   }, topUpcomingMeetings.map((item, i) => {
     const inner = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
@@ -7740,7 +8660,7 @@ function AccountList({
       className: rowClass
     }, inner);
   }))), /*#__PURE__*/React.createElement("div", {
-    className: "account-region-view-row flex items-center gap-4 mb-4 flex-wrap"
+    className: "account-region-view-row account-list-toolbar-top flex items-center gap-4 mb-4 flex-wrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "region-segmented flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit flex-wrap"
   }, ['All Regions', 'Cape Cod', 'South Shore', 'South Coast', 'Southeast', 'South Central'].map(r => /*#__PURE__*/React.createElement("button", {
@@ -7759,13 +8679,16 @@ function AccountList({
     key: r,
     value: r
   }, r)))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
+    className: "account-list-view-toggle flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
   }, ['list', 'table', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, mode)))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 mb-5 flex-nowrap"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "account-list-view-icon",
+    "aria-hidden": "true"
+  }, mode === 'list' ? '☷' : mode === 'table' ? '▦' : '⌖'), /*#__PURE__*/React.createElement("span", null, mode))))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
+    className: "account-list-filter-row flex items-center gap-3 mb-5 flex-nowrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: `account-status-toggle flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ${initialViewMode === 'pipeline' ? 'pipeline-status-toggle' : ''}`
   }, ['All', 'Prospect', 'Customer', 'Follow-up'].map(s => /*#__PURE__*/React.createElement("button", {
@@ -7802,7 +8725,7 @@ function AccountList({
     region: region,
     setRegion: setRegion
   }) : viewMode === 'table' ? filtered.length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100"
+    className: "account-list-empty-card bg-white rounded-xl border border-skyblue-100"
   }, /*#__PURE__*/React.createElement(EmptyState, {
     message: "No accounts match yet",
     hint: "Add one to get started."
@@ -7813,7 +8736,7 @@ function AccountList({
     accounts: filtered,
     onSelect: onSelect
   }) : /*#__PURE__*/React.createElement(React.Fragment, null, filtered.length === 0 && /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100"
+    className: "account-list-empty-card bg-white rounded-xl border border-skyblue-100"
   }, /*#__PURE__*/React.createElement(EmptyState, {
     message: "No accounts match yet",
     hint: "Add one to get started."
@@ -7821,7 +8744,7 @@ function AccountList({
     matches: crossRegionMatches,
     setRegion: setRegion
   }), filter === 'Follow-up' ? followUpSorted.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100"
+    className: "account-list-group-card bg-white rounded-xl border border-skyblue-100"
   }, followUpSorted.map(a => /*#__PURE__*/React.createElement(AccountRow, {
     key: a.AccountId,
     account: a,
@@ -7834,17 +8757,20 @@ function AccountList({
   }) => /*#__PURE__*/React.createElement("div", {
     key: town
   }, /*#__PURE__*/React.createElement("h3", {
-    className: "text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1"
-  }, town, " ", /*#__PURE__*/React.createElement("span", {
+    className: "account-list-town-heading text-xs font-semibold uppercase tracking-wide text-navy-700/40 mb-2 px-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "account-list-town-icon",
+    "aria-hidden": "true"
+  }, "⌖"), town, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", townAccounts.length, ")")), /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100"
+    className: "account-list-group-card bg-white rounded-xl border border-skyblue-100"
   }, townAccounts.map(a => /*#__PURE__*/React.createElement(AccountRow, {
     key: a.AccountId,
     account: a,
     onSelect: onSelect
   })))))) : sortedFlat.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "bg-white rounded-xl border border-skyblue-100"
+    className: "account-list-group-card bg-white rounded-xl border border-skyblue-100"
   }, sortedFlat.map(a => /*#__PURE__*/React.createElement(AccountRow, {
     key: a.AccountId,
     account: a,
@@ -7961,7 +8887,7 @@ function TodayQuickLog({account,onClose,onSaved,onFullLog}) {
     /*#__PURE__*/React.createElement("div",{className:"today-quick-sheet",role:"dialog",'aria-modal':"true",'aria-label':`Log activity for ${account.AccountName}`},
       /*#__PURE__*/React.createElement("div",{className:"today-quick-head"},
         /*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{className:"today-quick-title"},"Log activity"),/*#__PURE__*/React.createElement("div",{className:"today-quick-sub"},account.AccountName)),
-        /*#__PURE__*/React.createElement("button",{type:"button",className:"today-quick-close",onClick:onClose,'aria-label':"Close"},"×")
+        /*#__PURE__*/React.createElement("button",{type:"button",className:"today-quick-close",onClick:onClose,'aria-label':"Close"},"Close")
       ),
       /*#__PURE__*/React.createElement("div",{className:"today-quick-grid"},
         /*#__PURE__*/React.createElement("label",{className:"today-quick-field"},/*#__PURE__*/React.createElement("span",{className:"today-quick-label"},"Activity"),/*#__PURE__*/React.createElement("select",{className:"today-quick-input",value:type,onChange:e=>setType(e.target.value)},ACTIVITY_TYPES.map(t=>/*#__PURE__*/React.createElement("option",{key:t,value:t},t)))),
@@ -8042,7 +8968,7 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
     !needsNow.length&&!comingUp.length&&!suggested.length&&/*#__PURE__*/React.createElement("div",{className:"today-empty"},"Your action queue is clear."),
     pickerOpen&&/*#__PURE__*/React.createElement("div",{className:"today-quick-backdrop",onMouseDown:e=>{if(e.target===e.currentTarget)setPickerOpen(false);}},
       /*#__PURE__*/React.createElement("div",{className:"today-quick-sheet"},
-        /*#__PURE__*/React.createElement("div",{className:"today-quick-head"},/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{className:"today-quick-title"},"Log activity"),/*#__PURE__*/React.createElement("div",{className:"today-quick-sub"},"Choose a facility")),/*#__PURE__*/React.createElement("button",{type:"button",className:"today-quick-close",onClick:()=>setPickerOpen(false)},"×")),
+        /*#__PURE__*/React.createElement("div",{className:"today-quick-head"},/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{className:"today-quick-title"},"Log activity"),/*#__PURE__*/React.createElement("div",{className:"today-quick-sub"},"Choose a facility")),/*#__PURE__*/React.createElement("button",{type:"button",className:"today-quick-close",onClick:()=>setPickerOpen(false)},"Close")),
         /*#__PURE__*/React.createElement("input",{autoFocus:true,className:"today-quick-input",value:pickerQuery,onChange:e=>setPickerQuery(e.target.value),placeholder:"Search facility, town, or region"}),
         /*#__PURE__*/React.createElement("div",{className:"mt-3 border border-skyblue-100 rounded-xl overflow-hidden"},pickerResults.map(a=>/*#__PURE__*/React.createElement("button",{type:"button",key:a.AccountId,className:"w-full text-left px-3 py-3 border-b last:border-b-0 border-skyblue-100 hover:bg-skyblue-50",onClick:()=>{setPickerOpen(false);setQuickAccount(a);}},/*#__PURE__*/React.createElement("div",{className:"text-sm font-semibold text-navy-900"},a.AccountName),/*#__PURE__*/React.createElement("div",{className:"text-xs text-navy-700/45"},[getTown(a.Address),a.Region].filter(Boolean).join(" · ")))))
       )
@@ -8052,7 +8978,7 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
 }
 
 
-function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccounts }) {
+function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccounts, onPipeline }) {
   const [homeView, setHomeView] = useState('dashboard');
   const [referralSortCol, setReferralSortCol] = useState('ReferralDate');
   const [referralSortDir, setReferralSortDir] = useState('desc');
@@ -8238,7 +9164,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       /*#__PURE__*/React.createElement('div', { className:'home-eyebrow' }, 'BDD CRM'),
       /*#__PURE__*/React.createElement('h1', { className:'home-title' }, 'Revenue & Referral Performance'),
       /*#__PURE__*/React.createElement('p', { className:'home-subtitle' }, 'Revenue momentum, referral trends, and the relationships driving growth.')
-    ), /*#__PURE__*/React.createElement('div', { className:'home-view-toggle', role:'group', 'aria-label':'Home view' },
+    ), /*#__PURE__*/React.createElement('div', { className:'home-view-toggle', role:'group', 'aria-label':'Analytics view' },
       /*#__PURE__*/React.createElement('button', {
         type:'button',
         className: homeView === 'dashboard' ? 'active' : '',
@@ -8360,7 +9286,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
     ),
 
     /*#__PURE__*/React.createElement('div', { className:'home-grid' },
-      /*#__PURE__*/React.createElement('section',{className:'home-card'},
+      /*#__PURE__*/React.createElement('section',{className:'home-card home-top-referral-sources'},
         /*#__PURE__*/React.createElement('div',{className:'home-card-head'}, /*#__PURE__*/React.createElement('div',null,
           /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Top Referral Sources'),
           /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Ranked by YTD revenue')
@@ -8434,7 +9360,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
             /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Business Development Momentum'),
             /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'How the referral-source pipeline is translating into active business')
           ),
-          /*#__PURE__*/React.createElement('button',{className:'home-link',onClick:onAccounts},'View pipeline →')
+          /*#__PURE__*/React.createElement('button',{className:'home-link',onClick:onPipeline},'View pipeline →')
         ),
         /*#__PURE__*/React.createElement('div',{className:'home-referral-summary'},
           [
@@ -8516,6 +9442,12 @@ function SaaSIcon({ name }) {
       /*#__PURE__*/React.createElement('path', { key: 'a', d: 'M3 11.5 12 4l9 7.5' }),
       /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M5.5 10.5V20h13v-9.5M9.5 20v-6h5v6' })
     ],
+    analytics: [
+      /*#__PURE__*/React.createElement('path', { key: 'a', d: 'M4 20V10' }),
+      /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M10 20V4' }),
+      /*#__PURE__*/React.createElement('path', { key: 'c', d: 'M16 20v-7' }),
+      /*#__PURE__*/React.createElement('path', { key: 'd', d: 'M22 20V7' })
+    ],
     today: [
       /*#__PURE__*/React.createElement('rect', { key: 'a', x: 3, y: 4.5, width: 18, height: 16, rx: 2 }),
       /*#__PURE__*/React.createElement('path', { key: 'b', d: 'M8 2.5v4M16 2.5v4M3 9h18' }),
@@ -8582,7 +9514,7 @@ function SaaSMiniCalendar() {
   );
 }
 
-function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onMap, onCreate, onSignOut, detailAccount, onDetailStageChange, searchData, onSelectSearchAccount, onNewReferral, onQuickActivitySaved, onFullActivityLog }) {
+function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onMap, onCreate, onSignOut, detailAccount, onDetailStageChange, searchData, onSelectSearchAccount, onNewReferral, onQuickActivitySaved, onFullActivityLog, includeTestData, onIncludeTestDataChange, startPage, onStartPageChange, preferenceRegion, onPreferenceRegionChange, lastSyncedAt, onRefreshData }) {
   useEffect(() => {
     document.body.classList.add('saas-enabled');
     return () => document.body.classList.remove('saas-enabled');
@@ -8590,6 +9522,16 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   const displayName = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
   const [globalSearch, setGlobalSearch] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [preferencesRefreshing, setPreferencesRefreshing] = useState(false);
+  const closeMobileSearch = () => {
+    setShowMobileSearch(false);
+    setGlobalSearch('');
+  };
+  const runAfterClosingMobileSearch = action => {
+    closeMobileSearch();
+    if (typeof action === 'function') action();
+  };
   const [showActivityPicker, setShowActivityPicker] = useState(false);
   const [activityPickerQuery, setActivityPickerQuery] = useState('');
   const [quickActivityAccount, setQuickActivityAccount] = useState(null);
@@ -8602,6 +9544,18 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
     return local.toISOString().slice(0, 10);
   });
+  const todayLocalDate = () => {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  };
+  const closeReferralModal = () => {
+    setShowReferralModal(false);
+    setReferralAccountId('');
+    setReferralAccountQuery('');
+    setGlobalReferralRate('');
+    setGlobalReferralDate(todayLocalDate());
+  };
   const allAccounts = (searchData && searchData.accounts) || [];
   const activityPickerResults = useMemo(() => {
     const q = activityPickerQuery.trim().toLowerCase();
@@ -8624,11 +9578,11 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     const activities = (searchData && searchData.activities) || [];
     const matchedIds = new Set();
     allAccounts.forEach(a => {
-      const hay = [a.AccountName, a.Town, a.Region, a.RelationshipStage, a.Status, a.Chain].filter(Boolean).join(' ').toLowerCase();
+      const hay = [a.AccountName, getTown(a.Address), a.Region, a.RelationshipStage, a.Status, a.Chain].filter(Boolean).join(' ').toLowerCase();
       if (hay.includes(q)) matchedIds.add(a.AccountId);
     });
     contacts.forEach(c => {
-      const hay = [c.FirstName, c.LastName, c.Name, c.Role, c.Email, c.Phone].filter(Boolean).join(' ').toLowerCase();
+      const hay = [c.ContactName, c.Role, c.RoleCategory, c.Email, c.Phone, c.PreferredContact, c.Notes].filter(Boolean).join(' ').toLowerCase();
       if (hay.includes(q)) matchedIds.add(c.AccountId);
     });
     activities.forEach(a => {
@@ -8640,17 +9594,32 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   const referralAccountOptions = useMemo(() => {
     const q = referralAccountQuery.trim().toLowerCase();
     if (!q) return [];
-    return allAccounts.filter(a => [a.AccountName, a.Town, a.Region, a.ChainAffiliation, a.Status, a.RelationshipStage].filter(Boolean).join(' ').toLowerCase().includes(q))
+    return allAccounts.filter(a => [a.AccountName, getTown(a.Address), a.Region, a.Chain, a.ChainAffiliation, a.Status, a.RelationshipStage].filter(Boolean).join(' ').toLowerCase().includes(q))
       .sort((a,b) => String(a.AccountName || '').localeCompare(String(b.AccountName || '')))
       .slice(0, 8);
   }, [allAccounts, referralAccountQuery]);
   const selectedReferralAccount = useMemo(() => allAccounts.find(a => a.AccountId === referralAccountId) || null, [allAccounts, referralAccountId]);
   const [sidebarTheme, setSidebarTheme] = useState(() => localStorage.getItem('bdd_crm_sidebar_theme') === 'dark' ? 'dark' : 'light');
+  const applySidebarTheme = next => {
+    const safeTheme = next === 'dark' ? 'dark' : 'light';
+    localStorage.setItem('bdd_crm_sidebar_theme', safeTheme);
+    setSidebarTheme(safeTheme);
+  };
   const toggleSidebarTheme = () => setSidebarTheme(current => {
     const next = current === 'dark' ? 'light' : 'dark';
     localStorage.setItem('bdd_crm_sidebar_theme', next);
     return next;
   });
+  const runPreferencesRefresh = async () => {
+    if (!onRefreshData || preferencesRefreshing) return;
+    setPreferencesRefreshing(true);
+    try {
+      await onRefreshData();
+    } finally {
+      setPreferencesRefreshing(false);
+    }
+  };
+  const lastSyncedLabel = lastSyncedAt && !isNaN(new Date(lastSyncedAt).getTime()) ? new Date(lastSyncedAt).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : 'Not synced yet';
   return /*#__PURE__*/React.createElement(React.Fragment, null,
     /*#__PURE__*/React.createElement('aside', { className: `saas-chrome ${sidebarTheme === 'dark' ? 'dark' : ''}` },
       /*#__PURE__*/React.createElement('div', { className: 'saas-brand' },
@@ -8662,11 +9631,11 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       ),
       /*#__PURE__*/React.createElement('nav', { className: 'saas-nav' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label' }, 'Workspace'),
-        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onHome, className: `saas-nav-btn ${activeView === 'home' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'home' }), /*#__PURE__*/React.createElement('span', null, 'Home')),
-        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onToday, className: `saas-nav-btn ${activeView === 'today' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'today' }), /*#__PURE__*/React.createElement('span', null, 'Today')),
-        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onPipeline, className: `saas-nav-btn ${activeView === 'pipeline' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'pipeline' }), /*#__PURE__*/React.createElement('span', null, 'Pipeline')),
-        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onAccounts, className: `saas-nav-btn ${activeView === 'accounts' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'accounts' }), /*#__PURE__*/React.createElement('span', null, 'Accounts')),
-        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onMap, className: `saas-nav-btn saas-mobile-map-nav ${activeView === 'map' ? 'active' : ''}`, 'aria-label': 'Map', title: 'Map' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'map' }), /*#__PURE__*/React.createElement('span', null, 'Map')),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => runAfterClosingMobileSearch(onToday), className: `saas-nav-btn ${activeView === 'today' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'today' }), /*#__PURE__*/React.createElement('span', null, 'Today')),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => runAfterClosingMobileSearch(onAccounts), className: `saas-nav-btn ${activeView === 'accounts' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'accounts' }), /*#__PURE__*/React.createElement('span', null, 'Accounts')),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => runAfterClosingMobileSearch(onPipeline), className: `saas-nav-btn ${activeView === 'pipeline' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'pipeline' }), /*#__PURE__*/React.createElement('span', null, 'Pipeline')),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => runAfterClosingMobileSearch(onHome), className: `saas-nav-btn ${activeView === 'home' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'analytics' }), /*#__PURE__*/React.createElement('span', null, 'Analytics')),
+        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => runAfterClosingMobileSearch(onMap), className: `saas-nav-btn saas-mobile-map-nav ${activeView === 'map' ? 'active' : ''}`, 'aria-label': 'Map', title: 'Map' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'map' }), /*#__PURE__*/React.createElement('span', null, 'Map')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => { setGlobalSearch(''); setShowMobileSearch(true); }, className: 'saas-nav-btn saas-mobile-search-nav', 'aria-label': 'Search CRM', title: 'Search CRM' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'search' }), /*#__PURE__*/React.createElement('span', null, 'Search')),
         /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label mt-2' }, 'Tools'),
         [['SimplePractice','https://secure.simplepractice.com/'],['BDD Calendar','http://calendar.google.com/'],['BDD Email','http://gmail.com/']].map(([label, href]) => /*#__PURE__*/React.createElement('a', { key: label, href, target: '_blank', rel: 'noopener noreferrer', className: 'saas-nav-btn' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'external' }), /*#__PURE__*/React.createElement('span', null, label)))
@@ -8678,7 +9647,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           /*#__PURE__*/React.createElement('span', null, sidebarTheme === 'dark' ? 'Light sidebar' : 'Dark sidebar')
         ),
         /*#__PURE__*/React.createElement('div', { className: 'saas-profile' },
-          /*#__PURE__*/React.createElement('div', { className: 'saas-avatar' }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))),
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-avatar', onClick:()=>setShowPreferences(true), title:'Preferences', 'aria-label':'Open preferences' }, getInitials(sessionStorage.getItem('bdd_crm_user_name'), sessionStorage.getItem('bdd_crm_user_email'))),
           /*#__PURE__*/React.createElement('div', { className: 'saas-profile-copy' },
             /*#__PURE__*/React.createElement('div', { className: 'saas-profile-name', title: displayName }, displayName),
             /*#__PURE__*/React.createElement('button', { type: 'button', className: 'saas-signout', onClick: onSignOut }, 'Sign out')
@@ -8690,7 +9659,10 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       /*#__PURE__*/React.createElement('div', { className: 'min-w-0' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-page-kicker' }, activeView === 'today' ? 'Work queue' : activeView === 'home' ? 'Overview' : 'Business development'),
         /*#__PURE__*/React.createElement('div', { className: 'flex items-center gap-3 flex-wrap min-w-0' },
-          /*#__PURE__*/React.createElement('div', { className: 'saas-page-title min-w-0' }, pageTitle || 'BDD CRM'),
+          /*#__PURE__*/React.createElement('div', { className: 'saas-page-title min-w-0' },
+            /*#__PURE__*/React.createElement('span', { className:'saas-page-title-desktop' }, pageTitle || 'BDD CRM'),
+            /*#__PURE__*/React.createElement('span', { className:'saas-page-title-mobile' }, activeView === 'home' ? 'Analytics' : (pageTitle || 'BDD CRM'))
+          ),
           detailAccount && (() => {
             const opportunity = computeOverallFeesOpportunity(detailAccount);
             const stageNeedsWhiteArrow = ['Target', 'Active Referrer'].includes(detailAccount.RelationshipStage || 'Target');
@@ -8721,6 +9693,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           type:'button',
           className:'saas-mobile-referral',
           onClick:() => {
+            closeMobileSearch();
             if (detailAccount && detailAccount.AccountId) {
               setReferralAccountId(detailAccount.AccountId);
               setReferralAccountQuery(detailAccount.AccountName || 'Unnamed account');
@@ -8729,13 +9702,14 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
               setReferralAccountQuery('');
             }
             setGlobalReferralRate('');
+            setGlobalReferralDate(todayLocalDate());
             setShowReferralModal(true);
           }
         }, '+ Referral'),
         /*#__PURE__*/React.createElement('button', {
           type:'button',
           className:'saas-mobile-activity',
-          onClick:openMobileActivity
+          onClick:() => runAfterClosingMobileSearch(openMobileActivity)
         }, '+ Activity')
       ),
       /*#__PURE__*/React.createElement('div', { className: 'saas-top-actions' },
@@ -8745,7 +9719,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           globalSearch.trim() && /*#__PURE__*/React.createElement('div', { className: 'saas-search-results' },
             globalSearchResults.length ? globalSearchResults.map(a => /*#__PURE__*/React.createElement('button', { key:a.AccountId, type:'button', className:'saas-search-result', onClick:() => { setGlobalSearch(''); onSelectSearchAccount && onSelectSearchAccount(a); } },
               /*#__PURE__*/React.createElement('strong', null, a.AccountName || 'Unnamed account'),
-              /*#__PURE__*/React.createElement('span', null, [a.Region, a.Town, a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
+              /*#__PURE__*/React.createElement('span', null, [a.Region, getTown(a.Address), a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
             )) : /*#__PURE__*/React.createElement('div', { className:'px-3 py-3 text-xs text-slate-500' }, 'No matching accounts')
           )
         ),
@@ -8753,6 +9727,58 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onCreate, className: 'saas-primary' }, '+ New Account')
       )
     ),
+    showPreferences && /*#__PURE__*/React.createElement('div', {
+      className:'saas-modal-backdrop',
+      onClick:e => { if (e.target === e.currentTarget) setShowPreferences(false); }
+    }, /*#__PURE__*/React.createElement('div', {
+      className:'saas-modal saas-preferences-modal',
+      role:'dialog',
+      'aria-modal':'true',
+      'aria-labelledby':'saas-preferences-title'
+    }, /*#__PURE__*/React.createElement('h3', {
+      id:'saas-preferences-title'
+    }, 'Preferences'), /*#__PURE__*/React.createElement('p', null, 'Choose which records appear throughout the CRM.'), /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-row'
+    }, /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-copy'
+    }, /*#__PURE__*/React.createElement('strong', null, 'Include test data'), /*#__PURE__*/React.createElement('span', null, 'Show accounts and referral activity recorded by Test User.')), /*#__PURE__*/React.createElement('button', {
+      type:'button',
+      role:'switch',
+      'aria-checked':!!includeTestData,
+      'aria-label':'Include test data',
+      className:`saas-switch ${includeTestData ? 'on' : ''}`,
+      onClick:()=>onIncludeTestDataChange && onIncludeTestDataChange(!includeTestData)
+    })), /*#__PURE__*/React.createElement('div', {
+      className:'saas-preferences-grid'
+    }, /*#__PURE__*/React.createElement('label', null, 'Default region', /*#__PURE__*/React.createElement('select', {
+      value:preferenceRegion || 'Cape Cod',
+      onChange:e=>onPreferenceRegionChange && onPreferenceRegionChange(e.target.value)
+    }, ['All Regions','Cape Cod','South Shore','South Coast','Southeast','South Central'].map(option => /*#__PURE__*/React.createElement('option', { key:option, value:option }, option)))), /*#__PURE__*/React.createElement('label', null, 'Start page', /*#__PURE__*/React.createElement('select', {
+      value:startPage || 'today',
+      onChange:e=>onStartPageChange && onStartPageChange(e.target.value)
+    }, [['today','Today'],['list','Accounts'],['pipeline','Pipeline'],['home','Analytics']].map(([value,label]) => /*#__PURE__*/React.createElement('option', { key:value, value }, label)))), /*#__PURE__*/React.createElement('label', null, 'Sidebar theme', /*#__PURE__*/React.createElement('select', {
+      value:sidebarTheme,
+      onChange:e=>applySidebarTheme(e.target.value)
+    }, /*#__PURE__*/React.createElement('option', { value:'light' }, 'Light'), /*#__PURE__*/React.createElement('option', { value:'dark' }, 'Dark')))), /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-sync'
+    }, /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-sync-copy'
+    }, /*#__PURE__*/React.createElement('strong', null, 'CRM data'), /*#__PURE__*/React.createElement('span', null, 'Last synced: ', lastSyncedLabel)), /*#__PURE__*/React.createElement('button', {
+      type:'button',
+      className:'saas-preference-refresh',
+      disabled:preferencesRefreshing,
+      onClick:runPreferencesRefresh
+    }, preferencesRefreshing ? 'Refreshing…' : 'Refresh now')), /*#__PURE__*/React.createElement('div', {
+      className:'saas-modal-actions'
+    }, /*#__PURE__*/React.createElement('button', {
+      type:'button',
+      className:'saas-preference-signout',
+      onClick:()=>{ setShowPreferences(false); onSignOut && onSignOut(); }
+    }, 'Sign out'), /*#__PURE__*/React.createElement('button', {
+      type:'button',
+      className:'saas-primary',
+      onClick:()=>setShowPreferences(false)
+    }, 'Done')))),
     showActivityPicker && /*#__PURE__*/React.createElement('div', {
       className:'today-quick-backdrop saas-global-activity-backdrop',
       onMouseDown:e => { if (e.target === e.currentTarget) setShowActivityPicker(false); }
@@ -8767,7 +9793,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           className:'today-quick-close',
           onClick:()=>setShowActivityPicker(false),
           'aria-label':'Close'
-        }, '×')
+        }, 'Close')
       ),
       /*#__PURE__*/React.createElement('input', {
         autoFocus:true,
@@ -8799,11 +9825,11 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         onFullActivityLog && onFullActivityLog(account);
       }
     }),
-    showMobileSearch && /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-backdrop', onClick:e => { if (e.target === e.currentTarget) setShowMobileSearch(false); } },
+    showMobileSearch && /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-backdrop', onClick:e => { if (e.target === e.currentTarget) closeMobileSearch(); } },
       /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-panel' },
         /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-head' },
           /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-title' }, 'Search CRM'),
-          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-mobile-search-close', onClick:()=>setShowMobileSearch(false), 'aria-label':'Close search' }, '×')
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-mobile-search-close', onClick:closeMobileSearch, 'aria-label':'Close search' }, 'Close')
         ),
         /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-input-wrap' },
           /*#__PURE__*/React.createElement(SaaSIcon, { name:'search' }),
@@ -8812,19 +9838,19 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-results' },
           globalSearch.trim() ? (globalSearchResults.length ? globalSearchResults.map(a => /*#__PURE__*/React.createElement('button', { key:a.AccountId, type:'button', className:'saas-mobile-search-result', onClick:() => { setGlobalSearch(''); setShowMobileSearch(false); onSelectSearchAccount && onSelectSearchAccount(a); } },
             /*#__PURE__*/React.createElement('strong', null, a.AccountName || 'Unnamed account'),
-            /*#__PURE__*/React.createElement('span', null, [a.Region, a.Town, a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
+            /*#__PURE__*/React.createElement('span', null, [a.Region, getTown(a.Address), a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
           )) : /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-empty' }, 'No matching accounts')) : /*#__PURE__*/React.createElement('div', { className:'saas-mobile-search-empty' }, 'Start typing to search the CRM')
         )
       )
     ),
-    showReferralModal && /*#__PURE__*/React.createElement('div', { className:'saas-modal-backdrop', onClick:e => { if (e.target === e.currentTarget) setShowReferralModal(false); } },
+    showReferralModal && /*#__PURE__*/React.createElement('div', { className:'saas-modal-backdrop', onClick:e => { if (e.target === e.currentTarget) closeReferralModal(); } },
       /*#__PURE__*/React.createElement('div', { className:'saas-modal' },
         /*#__PURE__*/React.createElement('div', { className:'flex items-start justify-between gap-4' },
           /*#__PURE__*/React.createElement('div', null,
             /*#__PURE__*/React.createElement('h3', null, 'Record Referral'),
             /*#__PURE__*/React.createElement('p', null, 'Choose the facility associated with this referral. No patient information is stored in BDD CRM.')
           ),
-          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:()=>setShowReferralModal(false) }, 'Close')
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:closeReferralModal }, 'Close')
         ),
         /*#__PURE__*/React.createElement('label', null, 'Associated account'),
         /*#__PURE__*/React.createElement('div', { className:'relative' },
@@ -8843,14 +9869,14 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
               onClick:()=>{ setReferralAccountId(a.AccountId); setReferralAccountQuery(a.AccountName || 'Unnamed account'); }
             },
               /*#__PURE__*/React.createElement('strong', null, a.AccountName || 'Unnamed account'),
-              /*#__PURE__*/React.createElement('span', null, [a.Region, a.Town, a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
+              /*#__PURE__*/React.createElement('span', null, [a.Region, getTown(a.Address), a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
             )) : /*#__PURE__*/React.createElement('div', { className:'px-3 py-3 text-xs text-slate-500' }, 'No matching accounts')
           )
         ),
         selectedReferralAccount && /*#__PURE__*/React.createElement('div', { className:'mt-2 flex items-center justify-between rounded-lg border border-teal-100 bg-teal-50 px-3 py-2' },
           /*#__PURE__*/React.createElement('div', null,
             /*#__PURE__*/React.createElement('div', { className:'text-xs font-semibold text-teal-800' }, 'Selected account'),
-            /*#__PURE__*/React.createElement('div', { className:'text-xs text-teal-700 mt-0.5' }, `${selectedReferralAccount.AccountName || 'Unnamed account'}${selectedReferralAccount.Town ? ` · ${selectedReferralAccount.Town}` : ''}`)
+            /*#__PURE__*/React.createElement('div', { className:'text-xs text-teal-700 mt-0.5' }, `${selectedReferralAccount.AccountName || 'Unnamed account'}${getTown(selectedReferralAccount.Address) ? ` · ${getTown(selectedReferralAccount.Address)}` : ''}`)
           ),
           /*#__PURE__*/React.createElement('button', { type:'button', className:'text-xs font-semibold text-teal-700 hover:text-teal-900', onClick:()=>{ setReferralAccountId(''); setReferralAccountQuery(''); } }, 'Change')
         ),
@@ -8862,8 +9888,8 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           /*#__PURE__*/React.createElement('input', { type:'number', min:'0', step:'0.01', inputMode:'decimal', value:globalReferralRate, onChange:e=>setGlobalReferralRate(e.target.value), placeholder:'450', style:{paddingLeft:'28px'} })
         ),
         /*#__PURE__*/React.createElement('div', { className:'saas-modal-actions' },
-          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:()=>setShowReferralModal(false) }, 'Cancel'),
-          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-referral-btn', disabled:!referralAccountId || !globalReferralDate || globalReferralRate === '' || !Number.isFinite(Number(globalReferralRate)) || Number(globalReferralRate) < 0, onClick:() => { const rate = Number(globalReferralRate); if (!referralAccountId || !globalReferralDate || !Number.isFinite(rate) || rate < 0) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate, rate); setShowReferralModal(false); setReferralAccountId(''); setReferralAccountQuery(''); setGlobalReferralRate(''); } }, 'Record & Open SimplePractice')
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:closeReferralModal }, 'Cancel'),
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-referral-btn', disabled:!referralAccountId || !globalReferralDate || globalReferralRate === '' || !Number.isFinite(Number(globalReferralRate)) || Number(globalReferralRate) < 0, onClick:() => { const rate = Number(globalReferralRate); if (!referralAccountId || !globalReferralDate || !Number.isFinite(rate) || rate < 0) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate, rate); closeReferralModal(); } }, window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? 'Record Referral' : 'Record & Open SimplePractice')
         )
       )
     )
@@ -8878,9 +9904,18 @@ function App() {
   const [data, setData] = useState(() => startupCache || emptyCrmData_());
   const [loading, setLoading] = useState(() => !startupCache);
   const [loadError, setLoadError] = useState(null);
-  const [view, setView] = useState('home'); // 'home' | 'today' | 'list' | 'detail' | 'create'
+  const [startPage, setStartPage] = useState(() => {
+    const saved = localStorage.getItem('bdd_crm_start_page');
+    return ['today','list','pipeline','home'].includes(saved) ? saved : 'today';
+  });
+  const [view, setView] = useState(() => {
+    const saved = localStorage.getItem('bdd_crm_start_page');
+    return ['today','list','pipeline','home'].includes(saved) ? saved : 'today';
+  }); // 'home' | 'today' | 'list' | 'detail' | 'create'
   const [selectedId, setSelectedId] = useState(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [includeTestData, setIncludeTestData] = useState(() => localStorage.getItem('bdd_crm_include_test_data') !== 'false');
+  const [lastSyncedAt, setLastSyncedAt] = useState(() => localStorage.getItem('bdd_crm_last_synced_at') || '');
   // Remembers the last region selected across sessions (localStorage
   // persists even after closing the browser, unlike sessionStorage).
   const [region, setRegion] = useState(() => localStorage.getItem('bdd_crm_region') || 'Cape Cod'); // 'All Regions' | 'Cape Cod' | 'South Shore' | 'South Coast' — lives here (not in AccountList) so it survives navigating to an account and back
@@ -8888,6 +9923,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem('bdd_crm_region', region);
   }, [region]);
+  useEffect(() => {
+    localStorage.setItem('bdd_crm_include_test_data', includeTestData ? 'true' : 'false');
+  }, [includeTestData]);
+  useEffect(() => {
+    localStorage.setItem('bdd_crm_start_page', startPage);
+  }, [startPage]);
+  const visibleAccounts = useMemo(() => includeTestData ? data.accounts : data.accounts.filter(account => String(account.ReferralSource || '').trim().toLowerCase() !== 'test user'), [data.accounts, includeTestData]);
+  const visibleReferralActivity = useMemo(() => includeTestData ? (data.referralActivity || []) : (data.referralActivity || []).filter(activity => String(activity.RecordedBy || '').trim().toLowerCase() !== 'test user'), [data.referralActivity, includeTestData]);
   // One place for optimistic UI changes. Every local mutation also updates
   // the browser cache, so a reload while a save is in flight still shows the
   // user's latest edit instead of snapping back to stale data.
@@ -8922,6 +9965,9 @@ function App() {
       };
       setData(nextData);
       writeCrmCache_(nextData);
+      const syncedAt = new Date().toISOString();
+      setLastSyncedAt(syncedAt);
+      localStorage.setItem('bdd_crm_last_synced_at', syncedAt);
       setLoadError(null);
     } catch (err) {
       console.error(err);
@@ -9000,7 +10046,7 @@ function App() {
   // Autocomplete pools: curated defaults + whatever's already in the Sheet.
   const roleOptions = useMemo(() => uniqueSorted([...ROLE_DEFAULTS, ...data.contacts.map(c => c.Role), ...data.connections.map(c => c.Role)]), [data.contacts, data.connections]);
   const relationshipOptions = useMemo(() => uniqueSorted([...RELATIONSHIP_DEFAULTS, ...data.connections.map(c => c.Relationship)]), [data.connections]);
-  const referralSourceOptions = useMemo(() => uniqueSorted([...REFERRAL_SOURCE_DEFAULTS, ...data.accounts.map(a => a.ReferralSource)]), [data.accounts]);
+  const referralSourceOptions = useMemo(() => uniqueSorted([...REFERRAL_SOURCE_DEFAULTS, ...visibleAccounts.map(a => a.ReferralSource)]), [visibleAccounts]);
   if (!unlocked) return /*#__PURE__*/React.createElement(React.Fragment, null,
     /*#__PURE__*/React.createElement(Gate, {
       onUnlock: () => setUnlocked(true)
@@ -9033,12 +10079,13 @@ function App() {
       className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
     }, "Try again"));
   }
-  const selectedAccount = data.accounts.find(a => a.AccountId === selectedId);
+  const selectedAccount = visibleAccounts.find(a => a.AccountId === selectedId);
   const handleGlobalReferral = (accountId, referralDate, rate) => {
     if (!accountId || !referralDate || !Number.isFinite(Number(rate)) || Number(rate) < 0) return;
     const account = data.accounts.find(a => a.AccountId === accountId);
     if (!account) return;
-    const simplePracticeWindow = window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
+    const isMobileReferral = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+    const simplePracticeWindow = isMobileReferral ? null : window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
     const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
     const localReferral = { ReferralActivityId:tempId, AccountId:accountId, ReferralDate:referralDate, Rate:Number(rate), RecordedBy:recordedBy };
@@ -9047,7 +10094,7 @@ function App() {
       referralActivity:[...(d.referralActivity || []), localReferral],
       accounts:d.accounts.map(a => a.AccountId === accountId && (a.RelationshipStage || 'Target') !== 'Active Referrer' ? { ...a, RelationshipStage:'Active Referrer', Status:'Customer' } : a)
     }));
-    window.__crmShowToast && window.__crmShowToast('Referral recorded — opening SimplePractice');
+    window.__crmShowToast && window.__crmShowToast(isMobileReferral ? 'Referral recorded' : 'Referral recorded — opening SimplePractice');
     apiPost('createReferralActivity', { data:{ AccountId:accountId, ReferralDate:referralDate, Rate:Number(rate), RecordedBy:recordedBy } }).then(response => {
       if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
       const savedId = response.result && response.result.ReferralActivityId;
@@ -9059,7 +10106,7 @@ function App() {
       window.__crmShowToast && window.__crmShowToast('Referral save failed — restoring server data');
       refreshAccount(accountId);
     });
-    if (!simplePracticeWindow) window.__crmShowToast && window.__crmShowToast('Referral recorded — allow pop-ups to open SimplePractice');
+    if (!isMobileReferral && !simplePracticeWindow) window.__crmShowToast && window.__crmShowToast('Referral recorded — allow pop-ups to open SimplePractice');
   };
   const chromeProps = pageTitle => ({
     activeView: view === 'home' ? 'home' : view === 'today' ? 'today' : view === 'pipeline' ? 'pipeline' : view === 'map' ? 'map' : 'accounts',
@@ -9071,7 +10118,15 @@ function App() {
     onMap: () => setView('map'),
     onCreate: () => setView('create'),
     onSignOut: signOut,
-    searchData: { accounts:data.accounts, contacts:data.contacts, activities:data.activities },
+    searchData: { accounts:visibleAccounts, contacts:data.contacts, activities:data.activities },
+    includeTestData,
+    onIncludeTestDataChange: setIncludeTestData,
+    startPage,
+    onStartPageChange: setStartPage,
+    preferenceRegion: region,
+    onPreferenceRegionChange: setRegion,
+    lastSyncedAt,
+    onRefreshData: () => refresh(),
     onSelectSearchAccount: a => { setSelectedId(a.AccountId); setView('detail'); },
     onNewReferral: handleGlobalReferral,
     onQuickActivitySaved: (account, payload) => {
@@ -9095,15 +10150,16 @@ function App() {
     }
   });
   if (view === 'home') {
-    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Home')), /*#__PURE__*/React.createElement(HomeDashboard, {
-      accounts: data.accounts,
-      referralActivity: data.referralActivity || [],
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Analytics')), /*#__PURE__*/React.createElement(HomeDashboard, {
+      accounts: visibleAccounts,
+      referralActivity: visibleReferralActivity,
       onSelect: a => {
         setSelectedId(a.AccountId);
         setView('detail');
       },
       onToday: () => setView('today'),
-      onAccounts: () => setView('list')
+      onAccounts: () => setView('list'),
+      onPipeline: () => setView('pipeline')
     }), /*#__PURE__*/React.createElement(Toast, null));
   }
   if (view === 'create') {
@@ -9204,7 +10260,7 @@ function App() {
     return /*#__PURE__*/React.createElement(React.Fragment, null,
       /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Map')),
       /*#__PURE__*/React.createElement(MobileMapView, {
-        accounts: data.accounts,
+        accounts: visibleAccounts,
         onSelect: a => {
           setSelectedId(a.AccountId);
           setView('detail');
@@ -9222,7 +10278,7 @@ function App() {
       contacts: data.contacts,
       connections: data.connections,
       activities: data.activities,
-      referralActivity: data.referralActivity || [],
+      referralActivity: visibleReferralActivity,
       onBack: () => setView('list'),
       onRefresh: refresh,
       onRefreshAccount: refreshAccount,
@@ -9234,7 +10290,7 @@ function App() {
   }
   if (view === 'today') {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Today')), /*#__PURE__*/React.createElement(TodayDashboard, {
-      accounts: data.accounts,
+      accounts: visibleAccounts,
       contacts: data.contacts,
       connections: data.connections,
       onSelect: a => {
@@ -9270,11 +10326,11 @@ function App() {
   }
   if (view === 'pipeline') {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Pipeline')), /*#__PURE__*/React.createElement(AccountList, {
-      accounts: data.accounts,
+      accounts: visibleAccounts,
       contacts: data.contacts,
       connections: data.connections,
       activities: data.activities,
-      referralActivity: data.referralActivity || [],
+      referralActivity: visibleReferralActivity,
       onSelect: a => {
         setSelectedId(a.AccountId);
         setView('detail');
@@ -9288,11 +10344,11 @@ function App() {
     }), /*#__PURE__*/React.createElement(Toast, null));
   }
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Accounts')), /*#__PURE__*/React.createElement(AccountList, {
-    accounts: data.accounts,
+    accounts: visibleAccounts,
     contacts: data.contacts,
     connections: data.connections,
     activities: data.activities,
-    referralActivity: data.referralActivity || [],
+    referralActivity: visibleReferralActivity,
     onSelect: a => {
       setSelectedId(a.AccountId);
       setView('detail');
