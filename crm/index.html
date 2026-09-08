@@ -6,7 +6,14 @@
 <title>Bayside Dysphagia Diagnostics — CRM</title>
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
 <link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#081e3d" />
+<meta name="theme-color" content="#ffffff" />
+<script>
+try {
+  var initialCrmTheme = localStorage.getItem('bdd_crm_sidebar_theme') === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.crmTheme = initialCrmTheme;
+  document.querySelector('meta[name="theme-color"]').content = initialCrmTheme === 'dark' ? '#081e3d' : '#ffffff';
+} catch (e) {}
+</script>
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -172,6 +179,11 @@
   .saas-switch.on:after { transform:translateX(18px); }
   .saas-switch:focus-visible { outline:2px solid #1b7f77; outline-offset:2px; }
   @media (max-width:480px) { .saas-preferences-grid { grid-template-columns:1fr; } }
+  @media (max-width:640px) {
+    html, body { background:#fff !important; overscroll-behavior-y:none; }
+    html[data-crm-theme="dark"], html[data-crm-theme="dark"] body { background:#081e3d !important; }
+    body.saas-enabled #root { min-height:100vh; min-height:100dvh; background:var(--saas-canvas) !important; }
+  }
   @media (max-width: 980px) { .saas-global-search { width:220px; min-width:160px; } }
 
   body.saas-enabled #root > div:not(.saas-chrome):not(.saas-topbar) { margin-left: var(--saas-sidebar) !important; padding-top: calc(var(--saas-topbar) + 28px) !important; max-width: none !important; }
@@ -9600,6 +9612,25 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   }, [allAccounts, referralAccountQuery]);
   const selectedReferralAccount = useMemo(() => allAccounts.find(a => a.AccountId === referralAccountId) || null, [allAccounts, referralAccountId]);
   const [sidebarTheme, setSidebarTheme] = useState(() => localStorage.getItem('bdd_crm_sidebar_theme') === 'dark' ? 'dark' : 'light');
+  const [showTools, setShowTools] = useState(() => localStorage.getItem('bdd_crm_show_tools') !== 'false');
+  useEffect(() => {
+    document.documentElement.dataset.crmTheme = sidebarTheme;
+    let themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (!themeMeta) {
+      themeMeta = document.createElement('meta');
+      themeMeta.name = 'theme-color';
+      document.head.appendChild(themeMeta);
+    }
+    themeMeta.content = sidebarTheme === 'dark' ? '#081e3d' : '#ffffff';
+    return () => {
+      delete document.documentElement.dataset.crmTheme;
+    };
+  }, [sidebarTheme]);
+  const updateShowTools = next => {
+    const enabled = !!next;
+    localStorage.setItem('bdd_crm_show_tools', enabled ? 'true' : 'false');
+    setShowTools(enabled);
+  };
   const applySidebarTheme = next => {
     const safeTheme = next === 'dark' ? 'dark' : 'light';
     localStorage.setItem('bdd_crm_sidebar_theme', safeTheme);
@@ -9637,8 +9668,10 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => runAfterClosingMobileSearch(onHome), className: `saas-nav-btn ${activeView === 'home' ? 'active' : ''}` }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'analytics' }), /*#__PURE__*/React.createElement('span', null, 'Analytics')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => runAfterClosingMobileSearch(onMap), className: `saas-nav-btn saas-mobile-map-nav ${activeView === 'map' ? 'active' : ''}`, 'aria-label': 'Map', title: 'Map' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'map' }), /*#__PURE__*/React.createElement('span', null, 'Map')),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: () => { setGlobalSearch(''); setShowMobileSearch(true); }, className: 'saas-nav-btn saas-mobile-search-nav', 'aria-label': 'Search CRM', title: 'Search CRM' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'search' }), /*#__PURE__*/React.createElement('span', null, 'Search')),
-        /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label mt-2' }, 'Tools'),
-        [['SimplePractice','https://secure.simplepractice.com/'],['BDD Calendar','http://calendar.google.com/'],['BDD Email','http://gmail.com/']].map(([label, href]) => /*#__PURE__*/React.createElement('a', { key: label, href, target: '_blank', rel: 'noopener noreferrer', className: 'saas-nav-btn' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'external' }), /*#__PURE__*/React.createElement('span', null, label)))
+        showTools && /*#__PURE__*/React.createElement(React.Fragment, null,
+          /*#__PURE__*/React.createElement('div', { className: 'saas-nav-label mt-2' }, 'Tools'),
+          [['SimplePractice','https://secure.simplepractice.com/'],['BDD Calendar','http://calendar.google.com/'],['BDD Email','http://gmail.com/']].map(([label, href]) => /*#__PURE__*/React.createElement('a', { key: label, href, target: '_blank', rel: 'noopener noreferrer', className: 'saas-nav-btn' }, /*#__PURE__*/React.createElement(SaaSIcon, { name: 'external' }), /*#__PURE__*/React.createElement('span', null, label)))
+        )
       ),
       /*#__PURE__*/React.createElement(SaaSMiniCalendar, null),
       /*#__PURE__*/React.createElement('div', { className: 'saas-side-bottom' },
@@ -9748,6 +9781,17 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       'aria-label':'Include test data',
       className:`saas-switch ${includeTestData ? 'on' : ''}`,
       onClick:()=>onIncludeTestDataChange && onIncludeTestDataChange(!includeTestData)
+    })), /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-row'
+    }, /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-copy'
+    }, /*#__PURE__*/React.createElement('strong', null, 'Show tools'), /*#__PURE__*/React.createElement('span', null, 'Display external shortcuts in the left navigation.')), /*#__PURE__*/React.createElement('button', {
+      type:'button',
+      role:'switch',
+      'aria-checked':showTools,
+      'aria-label':'Show tools',
+      className:`saas-switch ${showTools ? 'on' : ''}`,
+      onClick:()=>updateShowTools(!showTools)
     })), /*#__PURE__*/React.createElement('div', {
       className:'saas-preferences-grid'
     }, /*#__PURE__*/React.createElement('label', null, 'Default region', /*#__PURE__*/React.createElement('select', {
