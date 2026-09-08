@@ -180,14 +180,28 @@ try {
   .saas-switch:focus-visible { outline:2px solid #1b7f77; outline-offset:2px; }
   @media (max-width:480px) { .saas-preferences-grid { grid-template-columns:1fr; } }
   @media (max-width:640px) {
-    html { --crm-browser-bg:#fff; background:var(--crm-browser-bg) !important; }
+    html { --crm-browser-bg:#fff; min-height:100%; background-color:var(--crm-browser-bg) !important; background-image:linear-gradient(var(--crm-browser-bg),var(--crm-browser-bg)) !important; }
     html[data-crm-theme="dark"] { --crm-browser-bg:#081e3d; }
-    body { position:relative; min-height:100%; background:transparent !important; overscroll-behavior-y:none; isolation:isolate; }
+    body { position:relative; min-height:100%; background-color:var(--crm-browser-bg) !important; background-image:linear-gradient(var(--crm-browser-bg),var(--crm-browser-bg)) !important; overscroll-behavior-y:none; isolation:isolate; }
     body:before {
       content:'';
       position:fixed;
-      inset:-100lvh 0;
-      z-index:-1;
+      left:0;
+      right:0;
+      top:-200px;
+      height:200px;
+      z-index:2147483646;
+      pointer-events:none;
+      background:var(--crm-browser-bg);
+    }
+    body:after {
+      content:'';
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:-200px;
+      height:200px;
+      z-index:2147483646;
       pointer-events:none;
       background:var(--crm-browser-bg);
     }
