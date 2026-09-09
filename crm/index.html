@@ -172,7 +172,9 @@ try {
   .saas-preference-sync-copy span { display:block; margin-top:3px; color:#718096; font-size:11.5px; }
   .saas-preference-refresh { flex:0 0 auto; border:1px solid #d5e2e8; border-radius:9px; padding:7px 10px; background:#f4f8f9; color:#276e69; font-size:11.5px; font-weight:650; cursor:pointer; }
   .saas-preference-refresh:disabled { cursor:wait; opacity:.6; }
-  .saas-preference-signout { margin-right:auto; border:0; padding:7px 2px; background:transparent; color:#b54747; font-size:12px; font-weight:650; cursor:pointer; }
+  .saas-preference-signout { margin-right:auto; min-height:36px; border:1px solid #d96b6b; border-radius:9px; padding:0 12px; background:#fff; color:#b42318; font-size:12px; font-weight:700; cursor:pointer; }
+  .saas-preference-signout:hover { background:#fff5f4; border-color:#c74747; }
+  .saas-preferences-build { margin-left:auto; color:#98a2b3; font-size:10.5px; font-weight:600; }
   .saas-preferences-modal { position:relative; }
   .saas-preferences-close { position:absolute; top:15px; right:16px; border:0; border-radius:8px; padding:6px 8px; background:#f3f6f8; color:#526174; font-size:11.5px; font-weight:650; cursor:pointer; }
   .saas-preferences-close:hover { background:#e8eef2; color:#132d4f; }
@@ -182,6 +184,40 @@ try {
   .saas-switch.on:after { transform:translateX(18px); }
   .saas-switch:focus-visible { outline:2px solid #1b7f77; outline-offset:2px; }
   @media (max-width:480px) { .saas-preferences-grid { grid-template-columns:1fr; } }
+  @media (max-width:640px) {
+    body.saas-enabled .saas-preferences-modal {
+      max-height:none !important;
+      overflow:hidden !important;
+      padding:16px !important;
+    }
+    body.saas-enabled .saas-preferences-modal .saas-preference-row {
+      margin-top:12px;
+      padding:11px 12px;
+    }
+    body.saas-enabled .saas-preferences-modal .saas-preference-mobile-hide {
+      display:none !important;
+    }
+    body.saas-enabled .saas-preferences-modal .saas-preferences-grid {
+      gap:8px;
+      margin-top:12px;
+    }
+    body.saas-enabled .saas-preferences-modal .saas-preferences-grid select {
+      min-height:40px !important;
+      margin-top:4px;
+    }
+    body.saas-enabled .saas-preferences-modal .saas-preference-sync {
+      margin-top:10px;
+      padding:10px 12px;
+    }
+    body.saas-enabled .saas-preferences-modal .saas-modal-actions {
+      align-items:center;
+      justify-content:space-between;
+      margin-top:12px;
+    }
+    body.saas-enabled .saas-preferences-modal .saas-preference-signout {
+      min-height:36px !important;
+    }
+  }
   @media (max-width:640px) {
     html { --crm-browser-bg:#fff; min-height:100%; background-color:var(--crm-browser-bg) !important; }
     html[data-crm-theme="dark"] { --crm-browser-bg:#081e3d; }
@@ -5472,6 +5508,7 @@ const {
   useCallback,
   useRef
 } = React;
+const CRM_BUILD_NUMBER = '61';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -11391,7 +11428,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       className:'saas-preference-row'
     }, /*#__PURE__*/React.createElement('div', {
       className:'saas-preference-copy'
-    }, /*#__PURE__*/React.createElement('strong', null, 'Include test data'), /*#__PURE__*/React.createElement('span', null, 'Show accounts and referral activity recorded by Test User.')), /*#__PURE__*/React.createElement('button', {
+    }, /*#__PURE__*/React.createElement('strong', null, 'Include test data'), /*#__PURE__*/React.createElement('span', { className:'saas-preference-mobile-hide' }, 'Show accounts and referral activity recorded by Test User throughout the CRM.')), /*#__PURE__*/React.createElement('button', {
       type:'button',
       role:'switch',
       'aria-checked':!!includeTestData,
@@ -11446,7 +11483,9 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       type:'button',
       className:'saas-preference-signout',
       onClick:()=>{ setShowPreferences(false); onSignOut && onSignOut(); }
-    }, 'Sign out')))),
+    }, 'Sign out'), /*#__PURE__*/React.createElement('span', {
+      className:'saas-preferences-build'
+    }, `Build ${CRM_BUILD_NUMBER}`)))),
     showActivityPicker && /*#__PURE__*/React.createElement('div', {
       className:'today-quick-backdrop saas-global-activity-backdrop',
       onMouseDown:e => { if (e.target === e.currentTarget) setShowActivityPicker(false); }
