@@ -5153,6 +5153,17 @@ try {
       -webkit-overflow-scrolling:touch;
       background:var(--saas-canvas) !important;
     }
+
+    /* Accounts and Pipeline historically positioned themselves beside the
+       mobile rail with margin-left. The fixed viewport shell now owns that
+       offset, so retaining both creates a second 56px navy gutter. */
+    body.saas-enabled #root > div.bdd-account-list.mobile-accounts-page,
+    body.saas-enabled #root > div.bdd-account-list.pipeline-account-list {
+      margin-left:0 !important;
+      margin-right:0 !important;
+      width:auto !important;
+      max-width:none !important;
+    }
   }
 </style>
 <style id="bdd-account-detail-people-icons">
@@ -5555,7 +5566,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '64';
+const CRM_BUILD_NUMBER = '65';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
