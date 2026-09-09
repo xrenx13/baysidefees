@@ -5105,6 +5105,56 @@ try {
     body.saas-enabled .bdd-home .home-kpis > .home-kpi:nth-child(6) { grid-column:1; grid-row:3; }
   }
 </style>
+<style id="bdd-mobile-safari-viewport-lock">
+  @media (max-width:640px) {
+    /* Keep Safari's document canvas stationary. Each active CRM page scrolls
+       inside it, so rubber-band movement cannot expose page content behind
+       the browser chrome. */
+    html:has(body.saas-enabled),
+    html:has(body.saas-enabled) body.saas-enabled {
+      width:100% !important;
+      height:100% !important;
+      min-height:100% !important;
+      overflow:hidden !important;
+      overscroll-behavior:none !important;
+    }
+
+    body.saas-enabled #root {
+      position:fixed !important;
+      inset:0 !important;
+      width:100% !important;
+      height:100vh !important;
+      height:100dvh !important;
+      min-height:0 !important;
+      overflow:hidden !important;
+      background:var(--crm-browser-bg) !important;
+    }
+
+    body.saas-enabled #root > .bdd-home,
+    body.saas-enabled #root > .today-page,
+    body.saas-enabled #root > .bdd-account-list,
+    body.saas-enabled #root > .account-detail-page,
+    body.saas-enabled #root > .mobile-workspace-page,
+    body.saas-enabled #root > .mobile-map-page {
+      position:absolute !important;
+      top:0 !important;
+      right:0 !important;
+      bottom:0 !important;
+      left:56px !important;
+      box-sizing:border-box !important;
+      width:auto !important;
+      height:auto !important;
+      min-height:0 !important;
+      margin:0 !important;
+      overflow-x:hidden !important;
+      overflow-y:auto !important;
+      overscroll-behavior-y:contain !important;
+      touch-action:pan-y pinch-zoom !important;
+      -webkit-overflow-scrolling:touch;
+      background:var(--saas-canvas) !important;
+    }
+  }
+</style>
 <style id="bdd-account-detail-people-icons">
   @media (min-width:641px) {
     body.saas-enabled .desktop-section-icon-contact,
@@ -5505,7 +5555,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '63';
+const CRM_BUILD_NUMBER = '64';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
