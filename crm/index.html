@@ -184,6 +184,7 @@ try {
   .saas-switch.on:after { transform:translateX(18px); }
   .saas-switch:focus-visible { outline:2px solid #1b7f77; outline-offset:2px; }
   @media (max-width:480px) { .saas-preferences-grid { grid-template-columns:1fr; } }
+  #crm-browser-underlay { display:none; }
   @media (max-width:640px) {
     body.saas-enabled .saas-preferences-modal {
       max-height:none !important;
@@ -193,6 +194,9 @@ try {
     body.saas-enabled .saas-preferences-modal .saas-preference-row {
       margin-top:12px;
       padding:11px 12px;
+    }
+    body.saas-enabled .saas-preferences-modal > .saas-preference-row:first-of-type {
+      margin-top:22px;
     }
     body.saas-enabled .saas-preferences-modal .saas-preference-mobile-hide {
       display:none !important;
@@ -222,29 +226,21 @@ try {
     html { --crm-browser-bg:#fff; min-height:100%; background-color:var(--crm-browser-bg) !important; }
     html[data-crm-theme="dark"] { --crm-browser-bg:#081e3d; }
     body { position:relative; min-height:100%; background-color:var(--crm-browser-bg) !important; overscroll-behavior-y:none; isolation:isolate; }
-    body:before {
-      content:'';
+    body:before,
+    body:after { display:none !important; }
+    #crm-browser-underlay {
+      display:block;
       position:fixed;
       left:0;
       right:0;
-      top:-200px;
-      height:200px;
-      z-index:2147483646;
+      top:-100vh;
+      bottom:-100vh;
+      z-index:0;
       pointer-events:none;
       background:var(--crm-browser-bg);
     }
-    body:after {
-      content:'';
-      position:fixed;
-      left:0;
-      right:0;
-      bottom:-200px;
-      height:200px;
-      z-index:2147483646;
-      pointer-events:none;
-      background:var(--crm-browser-bg);
-    }
-    body.saas-enabled #root { position:relative; z-index:0; min-height:100vh; min-height:100dvh; background:var(--saas-canvas) !important; }
+    body #root { position:relative; z-index:1; }
+    body.saas-enabled #root { position:relative; z-index:1; min-height:100vh; min-height:100dvh; background:var(--saas-canvas) !important; }
   }
   @media (max-width: 980px) { .saas-global-search { width:220px; min-width:160px; } }
 
@@ -5498,6 +5494,7 @@ try {
 </style>
 </head>
 <body class="bg-navy-50 text-navy-900">
+<div id="crm-browser-underlay" aria-hidden="true"></div>
 <div id="root"></div>
 
 <script>
@@ -5508,7 +5505,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '61';
+const CRM_BUILD_NUMBER = '63';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
