@@ -723,6 +723,20 @@ try {
         grid-template-columns:minmax(0,1fr) minmax(0,1fr) 360px;
         gap:24px;
       }
+      body.saas-enabled.today-side-rail-hidden .today-layout {
+        grid-template-columns:minmax(0,1fr);
+      }
+      body.saas-enabled.today-side-rail-hidden .today-side-rail {
+        display:none;
+      }
+      body.saas-enabled.today-side-rail-hidden .today-summary {
+        grid-template-columns:repeat(3,minmax(0,1fr));
+      }
+      body.saas-enabled.today-side-rail-hidden .today-page > .today-summary,
+      body.saas-enabled.today-side-rail-hidden .today-page > .today-layout,
+      body.saas-enabled.today-side-rail-hidden .today-page > .today-empty {
+        max-width:none;
+      }
     }
     .today-main-column,.today-side-rail { min-width:0; }
     .today-side-rail { position:sticky; top:calc(var(--saas-topbar) + 18px); }
@@ -4927,7 +4941,8 @@ try {
 <style id="bdd-mobile-profile-safe-area">
 @media (max-width:640px){
   body.saas-enabled .saas-show-tools-preference,
-  body.saas-enabled .saas-show-calendar-preference{
+  body.saas-enabled .saas-show-calendar-preference,
+  body.saas-enabled .saas-today-sidebar-preference{
     display:none !important;
   }
   body.saas-enabled .saas-side-bottom,
@@ -5566,7 +5581,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '65';
+const CRM_BUILD_NUMBER = '66';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -11313,6 +11328,11 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   const [sidebarTheme, setSidebarTheme] = useState(() => localStorage.getItem('bdd_crm_sidebar_theme') === 'dark' ? 'dark' : 'light');
   const [showTools, setShowTools] = useState(() => localStorage.getItem('bdd_crm_show_tools') !== 'false');
   const [showCalendar, setShowCalendar] = useState(() => localStorage.getItem('bdd_crm_show_calendar') !== 'false');
+  const [showTodaySidebar, setShowTodaySidebar] = useState(() => localStorage.getItem('bdd_crm_show_today_sidebar') !== 'false');
+  useEffect(() => {
+    document.body.classList.toggle('today-side-rail-hidden', !showTodaySidebar);
+    return () => document.body.classList.remove('today-side-rail-hidden');
+  }, [showTodaySidebar]);
   useEffect(() => {
     document.documentElement.dataset.crmTheme = sidebarTheme;
     const browserBackground = sidebarTheme === 'dark' ? '#081e3d' : '#ffffff';
@@ -11337,6 +11357,11 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     const enabled = !!next;
     localStorage.setItem('bdd_crm_show_calendar', enabled ? 'true' : 'false');
     setShowCalendar(enabled);
+  };
+  const updateShowTodaySidebar = next => {
+    const enabled = !!next;
+    localStorage.setItem('bdd_crm_show_today_sidebar', enabled ? 'true' : 'false');
+    setShowTodaySidebar(enabled);
   };
   const applySidebarTheme = next => {
     const safeTheme = next === 'dark' ? 'dark' : 'light';
@@ -11515,6 +11540,17 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       'aria-label':'Show calendar',
       className:`saas-switch ${showCalendar ? 'on' : ''}`,
       onClick:()=>updateShowCalendar(!showCalendar)
+    })), /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-row saas-today-sidebar-preference'
+    }, /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-copy'
+    }, /*#__PURE__*/React.createElement('strong', null, 'Show Today sidebar'), /*#__PURE__*/React.createElement('span', null, 'Display Quick Log Activity and Suggested Outreach beside the desktop work queue.')), /*#__PURE__*/React.createElement('button', {
+      type:'button',
+      role:'switch',
+      'aria-checked':showTodaySidebar,
+      'aria-label':'Show Today sidebar',
+      className:`saas-switch ${showTodaySidebar ? 'on' : ''}`,
+      onClick:()=>updateShowTodaySidebar(!showTodaySidebar)
     })), /*#__PURE__*/React.createElement('div', {
       className:'saas-preferences-grid'
     }, /*#__PURE__*/React.createElement('label', null, 'Default region', /*#__PURE__*/React.createElement('select', {
