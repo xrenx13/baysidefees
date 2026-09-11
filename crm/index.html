@@ -5647,7 +5647,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '79';
+const CRM_BUILD_NUMBER = '82';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -6238,6 +6238,13 @@ function formatShortDate(date) {
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric'
+  });
+}
+
+function formatShortTime(date) {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit'
   });
 }
 
@@ -6968,15 +6975,21 @@ function AccountForm({
         if (!place) return;
         const googleRating = place.rating ? `${place.rating} (${place.user_ratings_total || 0} reviews)` : '';
         setForm(f => {
-          const nextAddress = f.Address || place.formatted_address || '';
+          // Picking a suggestion is a deliberate, explicit action -- it
+          // should fully replace these derived fields with the newly
+          // selected place's data, not just fill them in once and then
+          // ignore every subsequent selection because they're no longer
+          // blank. Falls back to '' only when THIS place itself doesn't
+          // have that data point (e.g. no listed website).
+          const nextAddress = place.formatted_address || '';
           const inferredRegion = !initial ? inferCrmRegionFromAddress(nextAddress) : '';
           return {
             ...f,
             AccountName: place.name || f.AccountName,
             Address: nextAddress,
-            Phone: f.Phone || place.formatted_phone_number || '',
-            Website: f.Website || place.website || '',
-            Rating: f.Rating || googleRating,
+            Phone: place.formatted_phone_number || '',
+            Website: place.website || '',
+            Rating: googleRating,
             Region: inferredRegion || f.Region
           };
         });
@@ -10367,39 +10380,7 @@ function AccountList({
     type: "button",
     onClick: onSignOut,
     className: "w-full text-left px-3 py-2 rounded-lg text-sm text-navy-700 hover:bg-skyblue-100/50 hover:text-navy-900 transition"
-  }, "Sign out")))))), initialViewMode !== 'pipeline' && topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "account-list-upcoming-card bg-white rounded-xl border border-skyblue-100 p-5 mb-6"
-  }, /*#__PURE__*/React.createElement("h2", {
-    className: "account-list-section-heading font-display text-base text-navy-900 mb-3"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "account-list-section-icon",
-    "aria-hidden": "true"
-  }, "◷"), "Upcoming Meetings"), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-1"
-  }, topUpcomingMeetings.map((item, i) => {
-    const inner = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
-      className: "text-sm font-medium text-navy-900"
-    }, item.accountName), /*#__PURE__*/React.createElement("p", {
-      className: "text-xs text-navy-700/60"
-    }, item.source === 'calendar' ? '📅 ' : '📝 ', item.title.length > 60 ? item.title.slice(0, 60) + '…' : item.title)), /*#__PURE__*/React.createElement("p", {
-      className: "text-xs text-teal-600 shrink-0"
-    }, formatShortDate(item.date)));
-    const rowClass = "w-full text-left flex items-start justify-between gap-3 hover:bg-skyblue-100/30 -mx-2 px-2 py-1.5 rounded-lg transition";
-    return item.source === 'calendar' ? /*#__PURE__*/React.createElement("a", {
-      key: i,
-      href: item.url,
-      target: "_blank",
-      rel: "noopener noreferrer",
-      className: rowClass
-    }, inner) : /*#__PURE__*/React.createElement("button", {
-      key: i,
-      onClick: () => {
-        const account = accounts.find(a => a.AccountId === item.accountId);
-        if (account) onSelect(account);
-      },
-      className: rowClass
-    }, inner);
-  }))), /*#__PURE__*/React.createElement("div", {
+  }, "Sign out")))))), /*#__PURE__*/React.createElement("div", {
     className: "account-region-view-row account-list-toolbar-top flex items-center gap-4 mb-4 flex-wrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "region-segmented flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 w-fit flex-wrap"
@@ -10450,15 +10431,7 @@ function AccountList({
     value: sortBy,
     onChange: e => setSortBy(e.target.value),
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))), distinctChains.length > 0 && /*#__PURE__*/React.createElement("label", {
-    className: "text-xs text-navy-700/50 flex items-center gap-1.5"
-  }, "Chain", /*#__PURE__*/React.createElement("select", {
-    value: chainFilter,
-    onChange: e => setChainFilter(e.target.value),
-    className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "All Chains"), distinctChains.map(c => /*#__PURE__*/React.createElement("option", {
-    key: c
-  }, c)))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
+  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
     accounts: filtered,
     contacts: contacts,
     connections: connections,
@@ -10715,7 +10688,7 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
     topUpcomingMeetings.length>0&&/*#__PURE__*/React.createElement("div",{className:"account-list-upcoming-card today-upcoming-card bg-white rounded-xl border border-skyblue-100 p-5 mb-6"},
       /*#__PURE__*/React.createElement("h2",{className:"account-list-section-heading font-display text-base text-navy-900 mb-3"},/*#__PURE__*/React.createElement("span",{className:"account-list-section-icon","aria-hidden":"true"},"◷"),"Upcoming Meetings"),
       /*#__PURE__*/React.createElement("div",{className:"space-y-1"},topUpcomingMeetings.map((item,i)=>{
-        const inner=/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("p",{className:"text-sm font-medium text-navy-900"},item.accountName),/*#__PURE__*/React.createElement("p",{className:"text-xs text-navy-700/60"},"📅 ",item.title.length>60?item.title.slice(0,60)+'…':item.title)),/*#__PURE__*/React.createElement("p",{className:"text-xs text-teal-600 shrink-0"},formatShortDate(item.date)));
+        const inner=/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("p",{className:"text-sm font-medium text-navy-900"},item.accountName),/*#__PURE__*/React.createElement("p",{className:"text-xs text-navy-700/60"},"📅 ",item.title.length>60?item.title.slice(0,60)+'…':item.title)),/*#__PURE__*/React.createElement("div",{className:"text-right shrink-0"},/*#__PURE__*/React.createElement("p",{className:"text-xs text-teal-600"},formatShortDate(item.date)),/*#__PURE__*/React.createElement("p",{className:"text-xs text-navy-700/50"},formatShortTime(item.date))));
         const rowClass="w-full text-left flex items-start justify-between gap-3 hover:bg-skyblue-100/30 -mx-2 px-2 py-1.5 rounded-lg transition";
         return item.url?/*#__PURE__*/React.createElement("a",{key:i,href:item.url,target:"_blank",rel:"noopener noreferrer",className:rowClass},inner):/*#__PURE__*/React.createElement("button",{key:i,type:"button",className:rowClass,onClick:()=>{const account=accounts.find(a=>a.AccountId===item.accountId);if(account)onSelect(account);}},inner);
       }))
