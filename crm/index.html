@@ -136,6 +136,10 @@ try {
   body.saas-enabled #root > div .account-detail-page { padding-top:52px !important; }
   .saas-page-kicker { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:#a0a8b5; margin-bottom:2px; }
   .saas-page-title { font-size:18px; line-height:1.2; font-weight:680; color:var(--saas-ink); letter-spacing:-.025em; max-width:54vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .saas-page-heading { display:flex; align-items:center; gap:11px; min-width:0; }
+  .saas-history-back { width:34px; height:34px; flex:0 0 34px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #dbe5ed; border-radius:9px; background:#fff; color:#43556d; font-size:20px; line-height:1; cursor:pointer; box-shadow:0 1px 3px rgba(8,30,61,.04); }
+  .saas-history-back:hover { border-color:#c7d5df; background:#f7fafb; color:#0b1f3a; }
+  .saas-history-back:focus-visible { outline:2px solid #1b7f77; outline-offset:2px; }
   .saas-page-title-mobile { display:none; }
   .saas-top-actions { display:flex; align-items:center; gap:8px; }
   .saas-primary { white-space:nowrap; border:1px solid #0b1f3a; background:#0b1f3a; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; box-shadow:0 1px 2px rgba(15,23,42,.08); transition:.15s; }
@@ -186,6 +190,8 @@ try {
   @media (max-width:480px) { .saas-preferences-grid { grid-template-columns:1fr; } }
   #crm-browser-underlay { display:none; }
   @media (max-width:640px) {
+    body.saas-enabled .saas-page-heading { gap:7px; }
+    body.saas-enabled .saas-history-back { width:30px; height:30px; flex-basis:30px; border-radius:8px; font-size:18px; }
     body.saas-enabled .saas-preferences-modal {
       max-height:none !important;
       overflow:hidden !important;
@@ -309,7 +315,7 @@ try {
   body.saas-enabled [class*='overflow-x-auto'] .sticky { backdrop-filter: blur(8px); }
 
   /* Desktop Pipeline visual refresh inspired by the mobile accordion treatment.
-     Preserve the existing board structure and Target / Active Referrer collapse controls. */
+     Preserve the existing board structure and Target / Active Contract collapse controls. */
   @media (min-width: 641px) {
     body.saas-enabled .pipeline-board {
       padding-top: 4px;
@@ -433,7 +439,7 @@ try {
       transition:width .18s ease, min-width .18s ease;
     }
 
-    /* Active Referrer account cards only. Keep the existing stage header unchanged. */
+    /* Active Contract account cards only. Keep the existing stage header unchanged. */
     body.saas-enabled .pipeline-stage-active-referrer > .sticky + div > button.active-referrer-card-v2 {
       position:relative;
       padding:17px 16px 15px !important;
@@ -4569,6 +4575,7 @@ try {
     max-width:1240px;
   }
   body.saas-enabled .account-list-desktop .account-list-upcoming-card,
+  body.saas-enabled .today-page .today-upcoming-card,
   body.saas-enabled .account-list-desktop .account-list-group-card,
   body.saas-enabled .account-list-desktop .home-table-card{
     border-color:#dbe5ed !important;
@@ -4576,7 +4583,8 @@ try {
     box-shadow:0 2px 8px rgba(8,30,61,.035) !important;
     overflow:hidden;
   }
-  body.saas-enabled .account-list-desktop .account-list-section-heading{
+  body.saas-enabled .account-list-desktop .account-list-section-heading,
+  body.saas-enabled .today-page .today-upcoming-card .account-list-section-heading{
     display:flex;
     align-items:center;
     gap:10px;
@@ -4584,7 +4592,8 @@ try {
     border-bottom:1px solid #e8eef3;
     letter-spacing:-.015em;
   }
-  body.saas-enabled .account-list-desktop .account-list-section-icon{
+  body.saas-enabled .account-list-desktop .account-list-section-icon,
+  body.saas-enabled .today-page .today-upcoming-card .account-list-section-icon{
     display:inline-flex;
     width:29px;
     height:29px;
@@ -5568,6 +5577,63 @@ try {
   @media (max-width:640px) { .analytics-action-center { display:none !important; } }
   @media (min-width:641px) and (max-width:1180px) { .analytics-action-grid { grid-template-columns:1fr; }.analytics-action-side { grid-template-columns:1fr 1fr; } }
 </style>
+<style id="bdd-desktop-activity-analytics">
+  @media (min-width:641px) {
+    body.saas-enabled .analytics-activity-view { display:flex; flex-direction:column; gap:16px; }
+    body.saas-enabled .analytics-activity-toolbar { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:16px 18px; }
+    body.saas-enabled .analytics-activity-toolbar-copy { min-width:240px; flex:1; }
+    body.saas-enabled .analytics-activity-controls { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; }
+    body.saas-enabled .analytics-activity-control { display:flex; flex-direction:column; gap:5px; color:#667085; font-size:10px; font-weight:750; letter-spacing:.04em; text-transform:uppercase; }
+    body.saas-enabled .analytics-activity-control select { min-width:150px; height:36px; border:1px solid #dbe5ed; border-radius:9px; padding:0 32px 0 10px; background:#fff; color:#17324d; font-size:12px; font-weight:650; text-transform:none; letter-spacing:0; }
+    body.saas-enabled .analytics-period-toggle { display:inline-flex; padding:3px; border:1px solid #dbe5ed; border-radius:9px; background:#f7fafc; }
+    body.saas-enabled .analytics-period-toggle button { min-height:28px; border:0; border-radius:6px; padding:0 11px; background:transparent; color:#667085; font-size:11px; font-weight:750; cursor:pointer; }
+    body.saas-enabled .analytics-period-toggle button.active { background:#0b1f3a; color:#fff; }
+    body.saas-enabled .analytics-activity-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    body.saas-enabled .analytics-activity-kpi { padding:16px 17px; background:#fff; border:1px solid #dbe5ed; border-radius:13px; }
+    body.saas-enabled .analytics-activity-kpi strong { display:block; color:#15233b; font-size:25px; line-height:1; letter-spacing:-.035em; }
+    body.saas-enabled .analytics-activity-kpi span { display:block; margin-top:7px; color:#7a8493; font-size:11px; font-weight:650; }
+    body.saas-enabled .analytics-activity-grid { display:block; width:100%; }
+    body.saas-enabled .analytics-region-list { display:flex; flex-direction:column; gap:13px; }
+    body.saas-enabled .analytics-region-row { display:grid; grid-template-columns:minmax(0,1fr) 46px; gap:8px; align-items:center; }
+    body.saas-enabled .analytics-region-name { color:#334155; font-size:12px; font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    body.saas-enabled .analytics-region-count { color:#536278; font-size:12px; font-weight:750; text-align:right; font-variant-numeric:tabular-nums; }
+    body.saas-enabled .analytics-region-track { grid-column:1/-1; height:7px; border-radius:999px; background:#edf3f5; overflow:hidden; }
+    body.saas-enabled .analytics-region-fill { height:100%; border-radius:999px; background:#16847b; }
+    body.saas-enabled .analytics-activity-table-card { padding:0; overflow:hidden; }
+    body.saas-enabled .analytics-activity-clickable-row:hover { background:#f7fbfc; }
+    body.saas-enabled .analytics-activity-count-button { min-width:28px; border-radius:6px; padding:3px 6px; color:#11756f; font-weight:750; text-decoration:underline; text-underline-offset:2px; }
+    body.saas-enabled .analytics-activity-count-button:hover { background:#e8f5f3; }
+    body.saas-enabled .analytics-activity-last-button { color:#455b78; text-align:left; }
+    body.saas-enabled .analytics-activity-last-button:hover { color:#11756f; text-decoration:underline; }
+    body.saas-enabled .analytics-activity-table-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:17px 18px 14px; border-bottom:1px solid #e8eef3; background:#fbfcfd; }
+    body.saas-enabled .analytics-activity-table-wrap { overflow-x:auto; }
+    body.saas-enabled .analytics-activity-table { width:100%; border-collapse:collapse; font-size:12px; }
+    body.saas-enabled .analytics-activity-table th { padding:10px 9px; background:#f7fafc; border-bottom:1px solid #dfe7ed; color:#7a8798; font-size:9px; font-weight:800; letter-spacing:.045em; text-align:center; text-transform:uppercase; white-space:nowrap; }
+    body.saas-enabled .analytics-activity-table th:first-child,
+    body.saas-enabled .analytics-activity-table th:nth-child(2) { text-align:left; }
+    body.saas-enabled .analytics-activity-table td { padding:12px 9px; border-bottom:1px solid #edf2f5; color:#536278; text-align:center; white-space:nowrap; }
+    body.saas-enabled .analytics-activity-table td:first-child,
+    body.saas-enabled .analytics-activity-table td:nth-child(2) { text-align:left; }
+    body.saas-enabled .analytics-activity-table tbody tr:hover { background:#fbfdfe; }
+    body.saas-enabled .analytics-activity-facility { max-width:260px; border:0; padding:0; background:transparent; color:#0f766e; font-size:12px; font-weight:750; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
+    body.saas-enabled .analytics-activity-total { color:#15233b !important; font-weight:800; }
+    body.saas-enabled .analytics-activity-zero { color:#c2cad4 !important; }
+    body.saas-enabled .analytics-activity-last { text-align:left !important; color:#7b899b !important; }
+    body.saas-enabled .analytics-activity-stage { display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; font-size:10px; font-weight:750; white-space:nowrap; }
+    body.saas-enabled .analytics-activity-empty { padding:34px 18px; text-align:center; color:#8a96a7; font-size:13px; }
+  }
+  @media (max-width:640px) {
+    body.saas-enabled .analytics-activity-view { display:none !important; }
+    body.saas-enabled .bdd-home .home-dashboard-content { display:flex !important; }
+  }
+</style>
+<style id="bdd-mobile-header-title-only">
+  @media (max-width:640px) {
+    body.saas-enabled .saas-page-kicker { display:none !important; }
+    body.saas-enabled .saas-page-heading,
+    body.saas-enabled .saas-page-heading > div { align-items:center; }
+  }
+</style>
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="crm-browser-underlay" aria-hidden="true"></div>
@@ -5581,7 +5647,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '66';
+const CRM_BUILD_NUMBER = '78';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -5768,11 +5834,57 @@ const VILLAGE_TO_TOWN = {
 const KNOWN_TOWNS = ['Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth', 'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth', 'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate', 'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth', 'New Bedford', 'Fall River', 'Dartmouth', 'Fairhaven', 'Somerset', 'Swansea', 'Westport', 'Acushnet', 'Taunton', 'Raynham', 'Middleborough', 'Middleboro', 'Easton', 'North Easton', 'Norton', 'Dighton', 'North Dighton', 'Bridgewater', 'East Bridgewater', 'West Bridgewater', 'Carver', 'Lakeville', 'Halifax', 'Rehoboth', 'Berkley', 'Dedham', 'Westwood', 'Norwood', 'Walpole', 'Foxborough', 'Mansfield', 'Needham', 'Canton', 'Stoughton', 'Wrentham', 'Sharon', 'Medfield', 'Norfolk', 'Franklin', 'Millis', 'Plainville'];
 
 // --- v2 additions: Relationship Stage / Contact Role / Activity logging ---
-const RELATIONSHIP_STAGES = ['Target', 'Contacted', 'Connected', 'Referral Discussion', 'Active Referrer', 'Not a fit'];
+const RELATIONSHIP_STAGES = ['Target', 'Contacted', 'Connected', 'Contract Discussion', 'Active Contract', 'Not a fit'];
 const CONTACT_ROLE_CATEGORIES = ['Clinical Champion', 'SLP', 'Director of Rehab', 'Rehab Director', 'Administrator', 'DON', 'Medical Director', 'Admissions', 'Case Management', 'Regional/Central Decision Maker', 'Referral Coordinator', 'Other'];
 const DECISION_MAKER_ROLE_CATEGORIES = ['Administrator', 'DON', 'Regional/Central Decision Maker'];
 const ACTIVITY_TYPES = ['Call', 'Voicemail', 'Visit', 'Email', 'Text', 'Meeting', 'Referral', 'Other'];
-const ACTIVITY_RESULTS = ['No answer', 'Voicemail', 'Receptionist', 'Spoke with SLP', 'Spoke with Director of Rehab', 'Spoke with Administrator', 'Interested', 'Wants information', 'Referral opportunity', 'Follow-up requested', 'Not interested', 'Wrong contact', 'Other'];
+const ACTIVITY_RESULTS = ['No answer', 'Left message', 'Voicemail', 'Receptionist', 'Connected', 'Spoke with SLP', 'Spoke with Director of Rehab', 'Spoke with Administrator', 'Meeting completed', 'Interested', 'Sent information', 'Wants information', 'Referral opportunity', 'Discussed referrals', 'Follow-up requested', 'Not interested', 'Wrong contact', 'Other'];
+const ACTIVITY_TEMPLATES = [
+  { label:'Left voicemail', type:'Voicemail', result:'Left message', next:'Follow up' },
+  { label:'Sent email', type:'Email', result:'Sent information', next:'Follow up' },
+  { label:'Reached contact', type:'Call', result:'Connected', next:'Follow up' },
+  { label:'Completed visit', type:'Visit', result:'Meeting completed', next:'Follow up' },
+  { label:'Discussed referrals', type:'Meeting', result:'Discussed referrals', next:'Follow up on referral opportunity' }
+];
+
+// Forward-only relationship-stage automation. Never downgrade or override
+// terminal states; ambiguous outcomes remain at their current stage.
+function stageAfterActivity(currentStage, result) {
+  const stage = currentStage || 'Target';
+  if (stage === 'Active Contract' || stage === 'Not a fit') return stage;
+  const connectedResults = ['Connected', 'Spoke with SLP', 'Spoke with Director of Rehab', 'Spoke with Administrator', 'Meeting completed', 'Interested'];
+  const referralResults = ['Referral opportunity', 'Discussed referrals'];
+  if (referralResults.includes(result) && ['Target','Contacted','Connected'].includes(stage)) return 'Contract Discussion';
+  if (connectedResults.includes(result) && ['Target','Contacted'].includes(stage)) return 'Connected';
+  if (stage === 'Target') return 'Contacted';
+  return stage;
+}
+
+function normalizeDuplicateText(value) {
+  return String(value || '').toLowerCase().replace(/&/g,' and ').replace(/\b(the|inc|llc|corp|corporation)\b/g,' ').replace(/[^a-z0-9]/g,'');
+}
+function duplicateSimilarity(a,b) {
+  const x=normalizeDuplicateText(a),y=normalizeDuplicateText(b);
+  if(!x||!y)return 0;
+  if(x===y)return 1;
+  if(x.length>=8&&y.length>=8&&(x.includes(y)||y.includes(x)))return Math.min(x.length,y.length)/Math.max(x.length,y.length);
+  const previous=Array.from({length:y.length+1},(_,i)=>i);
+  for(let i=1;i<=x.length;i++){
+    let diagonal=previous[0];previous[0]=i;
+    for(let j=1;j<=y.length;j++){
+      const above=previous[j],cost=x[i-1]===y[j-1]?0:1;
+      previous[j]=Math.min(previous[j]+1,previous[j-1]+1,diagonal+cost);diagonal=above;
+    }
+  }
+  return 1-previous[y.length]/Math.max(x.length,y.length);
+}
+function findPotentialDuplicateAccount(candidate,accounts) {
+  const candidateAddress=normalizeDuplicateText(candidate.Address);
+  return (accounts||[]).find(existing=>existing.AccountId!==candidate.AccountId&&(
+    (candidateAddress&&candidateAddress===normalizeDuplicateText(existing.Address))||
+    duplicateSimilarity(candidate.AccountName,existing.AccountName)>=0.86
+  ));
+}
 
 function daysSince(dateStr) {
   if (!dateStr) return null;
@@ -5816,8 +5928,8 @@ function stageColor(stage) {
     'Target': 'bg-navy-900 text-white',
     'Contacted': 'bg-amber-100 text-amber-800',
     'Connected': 'bg-amber-300 text-amber-900',
-    'Referral Discussion': 'bg-teal-50 text-teal-700',
-    'Active Referrer': 'bg-teal-500 text-white',
+    'Contract Discussion': 'bg-teal-50 text-teal-700',
+    'Active Contract': 'bg-teal-500 text-white',
     'Not a fit': 'bg-navy-100 text-navy-700/40'
   };
   const normalizedStage = String(stage || 'Target').trim();
@@ -6977,7 +7089,7 @@ function AccountForm({
     onChange: set('RelationshipStage'),
     className: `appearance-none mt-1 w-full border border-skyblue-300 rounded-lg px-3 py-2 pr-9 font-semibold bg-[right_0.75rem_center] bg-no-repeat ${stageColor(form.RelationshipStage)}`,
     style: {
-      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${['Target','Active Referrer'].includes(form.RelationshipStage || 'Target') ? '%23ffffff' : '%23081e3d'}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${['Target','Active Contract'].includes(form.RelationshipStage || 'Target') ? '%23ffffff' : '%23081e3d'}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
       backgroundSize: '10px'
     }
   }, RELATIONSHIP_STAGES.map(s => /*#__PURE__*/React.createElement("option", {
@@ -7243,50 +7355,25 @@ function ContactForm({
     Role: '',
     Phone: '',
     Email: '',
-    PreferredContact: 'Email',
     RoleCategory: '',
     Notes: ''
   });
-  // Once editing an existing contact, or once the user manually picks a
-  // Preferred Contact value, stop auto-guessing it.
-  const [preferredTouched, setPreferredTouched] = useState(!!initial);
   const set = k => e => setForm({
     ...form,
     [k]: e.target.value
   });
   const setPhone = e => {
     const val = formatPhoneInput(e.target.value);
-    setForm(f => {
-      const next = {
-        ...f,
-        Phone: val
-      };
-      if (!preferredTouched && val && !f.Email) next.PreferredContact = 'Phone';
-      return next;
-    });
+    setForm(f => ({ ...f, Phone: val }));
   };
   const setEmail = e => {
     const val = e.target.value;
-    setForm(f => {
-      const next = {
-        ...f,
-        Email: val
-      };
-      if (!preferredTouched && val && !f.Phone) next.PreferredContact = 'Email';
-      return next;
-    });
+    setForm(f => ({ ...f, Email: val }));
   };
   const blurEmail = () => setForm(f => ({
     ...f,
     Email: normalizeEmailInput(f.Email)
   }));
-  const setPreferred = e => {
-    setPreferredTouched(true);
-    setForm({
-      ...form,
-      PreferredContact: e.target.value
-    });
-  };
   return /*#__PURE__*/React.createElement("div", {
     className: "bg-skyblue-100/40 rounded-lg p-4 mb-3"
   }, /*#__PURE__*/React.createElement("div", {
@@ -7295,41 +7382,37 @@ function ContactForm({
     value: form.ContactName,
     onChange: set('ContactName'),
     placeholder: "Name",
-    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
+    className: "sm:col-span-2 border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
   }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
     value: form.Role,
     onChange: set('Role'),
     list: "contact-role-options",
-    placeholder: "Role / title",
+    placeholder: "Job title",
     className: "w-full border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
   }), /*#__PURE__*/React.createElement(Suggestions, {
     id: "contact-role-options",
     options: roleOptions
-  })), /*#__PURE__*/React.createElement("select", {
-    value: form.RoleCategory || '',
-    onChange: set('RoleCategory'),
-    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Role category (for header)"), CONTACT_ROLE_CATEGORIES.map(c => /*#__PURE__*/React.createElement("option", {
-    key: c,
-    value: c
-  }, c))), /*#__PURE__*/React.createElement("input", {
+  })), /*#__PURE__*/React.createElement("input", {
     value: form.Phone,
     onChange: setPhone,
     placeholder: "Phone",
     className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
-  }), /*#__PURE__*/React.createElement("input", {
+  }), /*#__PURE__*/React.createElement("select", {
+    value: form.RoleCategory || '',
+    onChange: set('RoleCategory'),
+    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white",
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Role category"), CONTACT_ROLE_CATEGORIES.map(c => /*#__PURE__*/React.createElement("option", {
+    key: c,
+    value: c
+  }, c))), /*#__PURE__*/React.createElement("input", {
     value: form.Email,
     onChange: setEmail,
     onBlur: blurEmail,
-    placeholder: "Email",
+    placeholder: "Email address",
     className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
-  }), /*#__PURE__*/React.createElement("select", {
-    value: form.PreferredContact,
-    onChange: setPreferred,
-    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Email"), /*#__PURE__*/React.createElement("option", null, "Phone"), /*#__PURE__*/React.createElement("option", null, "Text")), /*#__PURE__*/React.createElement("textarea", {
+  }), /*#__PURE__*/React.createElement("textarea", {
     value: form.Notes || '',
     onChange: set('Notes'),
     placeholder: "Contact notes — e.g. personal details, preferences, relationship context",
@@ -7362,47 +7445,24 @@ function ConnectionForm({
     Role: '',
     Phone: '',
     Email: '',
-    PreferredContact: 'Email',
     Relationship: ''
   });
-  const [preferredTouched, setPreferredTouched] = useState(!!initial);
   const set = k => e => setForm({
     ...form,
     [k]: e.target.value
   });
   const setPhone = e => {
     const val = formatPhoneInput(e.target.value);
-    setForm(f => {
-      const next = {
-        ...f,
-        Phone: val
-      };
-      if (!preferredTouched && val && !f.Email) next.PreferredContact = 'Phone';
-      return next;
-    });
+    setForm(f => ({ ...f, Phone: val }));
   };
   const setEmail = e => {
     const val = e.target.value;
-    setForm(f => {
-      const next = {
-        ...f,
-        Email: val
-      };
-      if (!preferredTouched && val && !f.Phone) next.PreferredContact = 'Email';
-      return next;
-    });
+    setForm(f => ({ ...f, Email: val }));
   };
   const blurEmail = () => setForm(f => ({
     ...f,
     Email: normalizeEmailInput(f.Email)
   }));
-  const setPreferred = e => {
-    setPreferredTouched(true);
-    setForm({
-      ...form,
-      PreferredContact: e.target.value
-    });
-  };
   return /*#__PURE__*/React.createElement("div", {
     className: "bg-skyblue-100/40 rounded-lg p-4 mb-3"
   }, /*#__PURE__*/React.createElement("div", {
@@ -7416,7 +7476,7 @@ function ConnectionForm({
     value: form.Role,
     onChange: set('Role'),
     list: "connection-role-options",
-    placeholder: "Role / title",
+    placeholder: "Job title",
     className: "w-full border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
   }), /*#__PURE__*/React.createElement(Suggestions, {
     id: "connection-role-options",
@@ -7430,13 +7490,9 @@ function ConnectionForm({
     value: form.Email,
     onChange: setEmail,
     onBlur: blurEmail,
-    placeholder: "Email",
+    placeholder: "Email address",
     className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm"
-  }), /*#__PURE__*/React.createElement("select", {
-    value: form.PreferredContact,
-    onChange: setPreferred,
-    className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Email"), /*#__PURE__*/React.createElement("option", null, "Phone"), /*#__PURE__*/React.createElement("option", null, "Text")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
     value: form.Relationship,
     onChange: set('Relationship'),
     list: "connection-relationship-options",
@@ -7615,7 +7671,12 @@ function ActivityLogCard({
     className: "bg-skyblue-100/40 rounded-lg p-4 mb-4"
   }, /*#__PURE__*/React.createElement("div", {
     className: "grid sm:grid-cols-2 gap-3 mb-3"
-  }, /*#__PURE__*/React.createElement("select", {
+  }, /*#__PURE__*/React.createElement("div", { className:"sm:col-span-2 flex flex-wrap gap-2 mb-1" }, ACTIVITY_TEMPLATES.map(template => /*#__PURE__*/React.createElement("button", {
+    key:template.label,
+    type:"button",
+    onClick:()=>{ setActivityType(template.type); setActivityResult(template.result); setActivityNextAction(template.next); },
+    className:"border border-skyblue-300 rounded-full px-3 py-1 text-xs font-medium text-navy-700 hover:bg-skyblue-100/60 transition"
+  }, template.label))), /*#__PURE__*/React.createElement("select", {
     value: activityType,
     onChange: e => setActivityType(e.target.value),
     className: "border border-skyblue-300 rounded-lg px-3 py-2 text-sm bg-white"
@@ -7664,7 +7725,7 @@ function ActivityLogCard({
     className: "text-navy-700/40 text-sm"
   }, "Loading…"), activities !== null && activities.length === 0 && !loggingActivity && /*#__PURE__*/React.createElement("p", {
     className: "text-navy-700/40 text-sm"
-  }, "No activity logged yet."), activities !== null && activities.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, "No activity yet. Log the first outreach to begin this account’s relationship history."), activities !== null && activities.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "divide-y divide-skyblue-100"
   }, activities.map(a => editingActivityId === a.ActivityId ? /*#__PURE__*/React.createElement("div", {
     key: a.ActivityId,
@@ -7970,7 +8031,7 @@ function AccountDetail({
     const patch = {
       ...form,
       AccountId: account.AccountId,
-      ...(form.RelationshipStage === 'Active Referrer' ? {
+      ...(form.RelationshipStage === 'Active Contract' ? {
         Status: 'Customer',
         DateConverted: account.DateConverted || new Date().toISOString()
       } : {})
@@ -7987,7 +8048,7 @@ function AccountDetail({
   const updateStage = newStage => {
     const stagePatch = {
       RelationshipStage: newStage,
-      ...(newStage === 'Active Referrer' ? {
+      ...(newStage === 'Active Contract' ? {
         Status: 'Customer',
         DateConverted: account.DateConverted || new Date().toISOString()
       } : {})
@@ -7999,7 +8060,7 @@ function AccountDetail({
     window.__crmShowToast && window.__crmShowToast('Updating…');
     persistInBackground(apiPost('updateAccount', {
       data: { AccountId: account.AccountId, ...stagePatch }
-    }), newStage === 'Active Referrer' ? 'Active Referrer · Customer' : 'Stage updated');
+    }), newStage === 'Active Contract' ? 'Active Contract · Customer' : 'Stage updated');
   };
   const revertToProspect = () => {
     onLocalData(d => ({
@@ -8029,6 +8090,12 @@ function AccountDetail({
   };
   const saveContact = form => {
     const isNew = !form.ContactId;
+    const normalizedEmail=String(form.Email||'').trim().toLowerCase();
+    const duplicate=normalizedEmail&&contacts.find(c=>c.ContactId!==form.ContactId&&String(c.Email||'').trim().toLowerCase()===normalizedEmail);
+    if(duplicate){
+      const duplicateAccount=duplicate.AccountId===account.AccountId?account.AccountName:'another account';
+      if(!window.confirm(`${duplicate.ContactName||'A contact'} at ${duplicateAccount} already uses ${form.Email}. Save this contact anyway?`))return;
+    }
     const tempId = isNew ? `temp-${Date.now()}-${Math.random().toString(36).slice(2)}` : form.ContactId;
     const localContact = { ...form, ContactId: tempId, AccountId: account.AccountId };
     setAddingContact(false);
@@ -8081,8 +8148,7 @@ function AccountDetail({
       ContactId: tempId,
       AccountId: account.AccountId,
       ContactName: suggestion.name || suggestion.email,
-      Email: suggestion.email,
-      PreferredContact: 'Email'
+      Email: suggestion.email
     };
     setSuggestedContacts(prev => (prev || []).filter(s => s.email !== suggestion.email));
     onLocalData(d => ({ ...d, contacts: [...d.contacts, localContact] }));
@@ -8232,7 +8298,7 @@ function AccountDetail({
         // action/follow-up is entered, replace it; otherwise clear the old one.
         patch.NextAction = payload.NextAction || '';
         patch.NextFollowUp = payload.NextActionDue || '';
-        if (!a.RelationshipStage || a.RelationshipStage === 'Target' || a.RelationshipStage === 'Researched') patch.RelationshipStage = 'Contacted';
+        patch.RelationshipStage = stageAfterActivity(a.RelationshipStage, payload.ActivityResult);
         return { ...a, ...patch };
       })
     }));
@@ -8244,6 +8310,16 @@ function AccountDetail({
           ...d,
           activities: d.activities.map(a => a.ActivityId === tempId ? { ...a, ActivityId: response.result.ActivityId } : a)
         }));
+      }
+      const automaticStage = stageAfterActivity(account.RelationshipStage, payload.ActivityResult);
+      if (automaticStage !== (account.RelationshipStage || 'Target')) {
+        apiPost('updateAccount', { data:{ AccountId:account.AccountId, RelationshipStage:automaticStage } }).then(stageResponse => {
+          if (!stageResponse || stageResponse.success === false) throw new Error(stageResponse?.error || 'Stage update failed');
+        }).catch(stageError => {
+          console.error('Automatic stage update failed:', stageError);
+          window.__crmShowToast && window.__crmShowToast('Activity logged — stage update needs retry');
+          onRefreshAccount(account.AccountId);
+        });
       }
       window.__crmShowToast && window.__crmShowToast('Activity logged');
     }).catch(err => {
@@ -8272,8 +8348,8 @@ function AccountDetail({
     onLocalData(d => ({
       ...d,
       referralActivity: [...(d.referralActivity || []), localReferral],
-      accounts: d.accounts.map(a => a.AccountId === account.AccountId && (a.RelationshipStage || 'Target') !== 'Active Referrer'
-        ? { ...a, RelationshipStage: 'Active Referrer', Status: 'Customer' }
+      accounts: d.accounts.map(a => a.AccountId === account.AccountId && (a.RelationshipStage || 'Target') !== 'Active Contract'
+        ? { ...a, RelationshipStage: 'Active Contract', Status: 'Customer' }
         : a)
     }));
     window.__crmShowToast && window.__crmShowToast(isMobileReferral ? 'Referral recorded' : 'Referral recorded — opening SimplePractice');
@@ -8382,7 +8458,7 @@ function AccountDetail({
     ref: detailPageRef,
     className: "account-detail-page max-w-7xl mx-auto px-4 sm:px-6 py-8"
   }, /*#__PURE__*/React.createElement("div", {
-    className: `account-detail-workspace ${!editingAccount ? `account-detail-layout-grid ${(account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') ? 'has-referral' : 'no-referral'}` : ''}`
+    className: `account-detail-workspace ${!editingAccount ? `account-detail-layout-grid ${(account.RelationshipStage === 'Active Contract' || account.Status === 'Customer') ? 'has-referral' : 'no-referral'}` : ''}`
   }, editingAccount ? /*#__PURE__*/React.createElement(AccountForm, {
     initial: account,
     onSave: saveAccount,
@@ -8399,7 +8475,7 @@ function AccountDetail({
           className: `mobile-detail-stage-select appearance-none ${stageColor(account.RelationshipStage)}`,
           "aria-label": "Change relationship stage",
           style: {
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${['Target','Active Referrer'].includes(account.RelationshipStage || 'Target') ? '%23ffffff' : '%23081e3d'}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${['Target','Active Contract'].includes(account.RelationshipStage || 'Target') ? '%23ffffff' : '%23081e3d'}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`
           }
         }, RELATIONSHIP_STAGES.map(stage => /*#__PURE__*/React.createElement("option", { key: stage, value: stage }, stage)))
       ),
@@ -8413,7 +8489,7 @@ function AccountDetail({
         account.ChainAffiliation && /*#__PURE__*/React.createElement("div", { className: "mobile-detail-row" }, /*#__PURE__*/React.createElement("span", { className: "mobile-detail-icon" }, "↗"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-label" }, "Chain"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-value" }, account.ChainAffiliation)),
         account.BedCount && /*#__PURE__*/React.createElement("div", { className: "mobile-detail-row" }, /*#__PURE__*/React.createElement("span", { className: "mobile-detail-icon" }, "▰"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-label" }, "Beds"), /*#__PURE__*/React.createElement("span", { className: "mobile-detail-value" }, account.BedCount))
       ),
-      (account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("section", { className: "mobile-detail-card mobile-referral-summary" },
+      (account.RelationshipStage === 'Active Contract' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("section", { className: "mobile-detail-card mobile-referral-summary" },
         /*#__PURE__*/React.createElement("h2", null, "Referral Activity"),
         /*#__PURE__*/React.createElement("div", { className: "mobile-referral-metrics" },
           /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Total Referrals"), /*#__PURE__*/React.createElement("strong", null, String(accountReferralActivity.length))),
@@ -8433,7 +8509,7 @@ function AccountDetail({
       ),
       /*#__PURE__*/React.createElement("section", { className: "mobile-detail-card mobile-recent-summary" },
         /*#__PURE__*/React.createElement("div", { className: "mobile-card-heading" }, /*#__PURE__*/React.createElement("h2", null, "Latest Activity"), accountActivities.length > 1 && /*#__PURE__*/React.createElement("button", { type: "button", className: "mobile-view-all", onClick: () => setMobileActivitiesExpanded(value => !value), "aria-expanded": mobileActivitiesExpanded }, mobileActivitiesExpanded ? "Show Less" : `View All (${accountActivities.length})`)),
-        accountActivities.length === 0 ? /*#__PURE__*/React.createElement("p", { className: "mobile-empty" }, "No activity yet") : /*#__PURE__*/React.createElement("div", { className: "mobile-latest-activity-list" },
+        accountActivities.length === 0 ? /*#__PURE__*/React.createElement("p", { className: "mobile-empty" }, "No activity yet — use + Activity above to record the first outreach.") : /*#__PURE__*/React.createElement("div", { className: "mobile-latest-activity-list" },
           accountActivities.slice(0, mobileActivitiesExpanded ? accountActivities.length : 1).map(a => {
             const date = a.Timestamp ? new Date(a.Timestamp) : null;
             const title = a.ActivityResult ? `${a.ActivityType || 'Activity'} — ${a.ActivityResult}` : (a.ActivityType || 'Activity logged');
@@ -8544,7 +8620,7 @@ function AccountDetail({
     className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
   }, addingSuggestionEmail === s.email ? 'Adding…' : '+ Add')))), suggestionsError && /*#__PURE__*/React.createElement("p", {
     className: "text-red-500 text-sm mt-2"
-  }, suggestionsError))))), (account.RelationshipStage === 'Active Referrer' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("div", {
+  }, suggestionsError))))), (account.RelationshipStage === 'Active Contract' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("div", {
     id: "account-referral-activity-card",
     className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
@@ -8831,8 +8907,8 @@ const NEW_MAP_STAGE_HEX = {
   'Target': '#081e3d',
   'Contacted': '#fde68a',
   'Connected': '#fbbf24',
-  'Referral Discussion': '#ccfbf1',
-  'Active Referrer': '#14b8a6',
+  'Contract Discussion': '#ccfbf1',
+  'Active Contract': '#14b8a6',
   'Not a fit': '#cbd5e1'
 };
 
@@ -9700,8 +9776,8 @@ function PipelineView({
       'Target': 'bg-navy-900 text-white',
       'Contacted': 'bg-amber-100 text-amber-800',
       'Connected': 'bg-amber-300 text-amber-900',
-      'Referral Discussion': 'bg-teal-50 text-teal-700',
-      'Active Referrer': 'bg-teal-500 text-white'
+      'Contract Discussion': 'bg-teal-50 text-teal-700',
+      'Active Contract': 'bg-teal-500 text-white'
     };
     return colors[stage] || stageColor(stage);
   };
@@ -9761,7 +9837,7 @@ function PipelineView({
       className: "pipeline-mobile-list-v3"
     }, stages.map(stage => {
       const expanded = mobileExpandedStages.includes(stage);
-      const isActiveReferrer = stage === 'Active Referrer';
+      const isActiveReferrer = stage === 'Active Contract';
       return /*#__PURE__*/React.createElement("section", {
         key: stage,
         className: "pipeline-mobile-section-v3",
@@ -9802,12 +9878,7 @@ function PipelineView({
           className: "pipeline-mobile-account-name-v3"
         }, a.AccountName), /*#__PURE__*/React.createElement("p", {
           className: "pipeline-mobile-account-location-v3"
-        }, [a.Region, getTown(a.Address), a.BedCount ? `${a.BedCount} beds` : null].filter(Boolean).join(' · ')), !isActiveReferrer && /*#__PURE__*/React.createElement("div", {
-          className: "pipeline-mobile-account-meta-v3"
-        }, /*#__PURE__*/React.createElement(PropensityBadge, {
-          account: a,
-          compact: true
-        })), isActiveReferrer ? /*#__PURE__*/React.createElement("div", {
+        }, [a.Region, getTown(a.Address), a.BedCount ? `${a.BedCount} beds` : null].filter(Boolean).join(' · ')), isActiveReferrer ? /*#__PURE__*/React.createElement("div", {
           className: "pipeline-mobile-action-v3 referrals"
         }, /*#__PURE__*/React.createElement("span", {
           className: "pipeline-mobile-action-label-v3"
@@ -9866,23 +9937,23 @@ function PipelineView({
     style: pipelineGridStyle
   }, stages.map(stage => {
     const isCollapsedTarget = stage === 'Target' && !targetExpanded && !isMobilePipeline;
-    const isCollapsedActiveReferrers = stage === 'Active Referrer' && !activeReferrersExpanded && !isMobilePipeline;
+    const isCollapsedActiveReferrers = stage === 'Active Contract' && !activeReferrersExpanded && !isMobilePipeline;
     const isCollapsedEdge = isCollapsedTarget || isCollapsedActiveReferrers;
     return /*#__PURE__*/React.createElement("div", {
       key: stage,
       className: `pipeline-stage pipeline-stage-${stage.toLowerCase().replace(/[^a-z0-9]+/g,'-')} min-w-0`
-    }, (stage === 'Target' || stage === 'Active Referrer') ? /*#__PURE__*/React.createElement("div", {
+    }, (stage === 'Target' || stage === 'Active Contract') ? /*#__PURE__*/React.createElement("div", {
       className: "sticky top-0 z-20"
     }, /*#__PURE__*/React.createElement("button", {
       type: "button",
       onClick: () => { if (isMobilePipeline) return; stage === 'Target' ? setTargetExpanded(v => !v) : setActiveReferrersExpanded(v => !v); },
-      title: stage === 'Target' ? (targetExpanded ? "Collapse Targets" : "Expand Targets") : (activeReferrersExpanded ? "Collapse Active Referrer" : "Expand Active Referrer"),
+      title: stage === 'Target' ? (targetExpanded ? "Collapse Targets" : "Expand Targets") : (activeReferrersExpanded ? "Collapse Active Contract" : "Expand Active Contract"),
       className: `w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm transition hover:opacity-90 ${isCollapsedEdge ? 'min-h-[49px] flex items-center' : ''} ${pipelineHeaderColor(stage)}`
     }, /*#__PURE__*/React.createElement("div", {
       className: "flex items-center justify-between gap-1 w-full"
     }, /*#__PURE__*/React.createElement("span", {
       className: isCollapsedEdge ? "tracking-tight" : ""
-    }, stage === 'Active Referrer' ? "Active Referrer" : "Target"), /*#__PURE__*/React.createElement("span", {
+    }, stage === 'Active Contract' ? "Active Contract" : "Target"), /*#__PURE__*/React.createElement("span", {
       className: "ml-auto flex items-center gap-1.5"
     }, /*#__PURE__*/React.createElement("span", {
       className: "opacity-80"
@@ -9907,7 +9978,7 @@ function PipelineView({
     const days = daysSince(a.LastContactDate);
     const stale = days === null || days > 14;
     const followUp = followUpStatus(a.NextFollowUp);
-    const isActiveReferrer = stage === 'Active Referrer';
+    const isActiveReferrer = stage === 'Active Contract';
     const opportunity = isActiveReferrer ? null : computeOverallFeesOpportunity(a);
     const highOpportunity = opportunity && (opportunity.label === 'High' || opportunity.label === 'Very High');
     const referralStats = referralStatsByAccount[a.AccountId] || { last30: 0, last90: 0, ytd: 0 };
@@ -9925,12 +9996,7 @@ function PipelineView({
       className:`pipeline-today-card-name ${isActiveReferrer ? 'active-referrer-name-v2' : ''}`
     }, a.AccountName), /*#__PURE__*/React.createElement("p", {
       className:"pipeline-today-card-meta"
-    }, [a.Region, getTown(a.Address), a.BedCount ? `${a.BedCount} beds` : null].filter(Boolean).join(' · '))), !isActiveReferrer && /*#__PURE__*/React.createElement("div", {
-      className:"pipeline-today-card-badges"
-    }, /*#__PURE__*/React.createElement(PropensityBadge, {
-      account:a,
-      compact:true
-    }))), isActiveReferrer ? /*#__PURE__*/React.createElement("div", {
+    }, [a.Region, getTown(a.Address), a.BedCount ? `${a.BedCount} beds` : null].filter(Boolean).join(' · ')))), isActiveReferrer ? /*#__PURE__*/React.createElement("div", {
       className:"pipeline-today-card-action pipeline-today-card-referrals"
     }, /*#__PURE__*/React.createElement("span", {
       className:"pipeline-today-card-action-label"
@@ -9969,11 +10035,51 @@ function AccountList({
   initialViewMode = 'list'
 }) {
   const [filter, setFilter] = useState('All');
-  const [viewMode, setViewMode] = useState(initialViewMode); // 'list' | 'table' | 'map' | 'pipeline'
-  useEffect(() => { setViewMode(initialViewMode); }, [initialViewMode]);
+  const [viewMode, setViewMode] = useState(() => {
+    if (initialViewMode === 'pipeline') return 'pipeline';
+    const saved = sessionStorage.getItem('bdd_crm_accounts_view');
+    return ['list','table','map'].includes(saved) ? saved : 'list';
+  }); // 'list' | 'table' | 'map' | 'pipeline'
+  useEffect(() => {
+    if (initialViewMode === 'pipeline') {
+      setViewMode('pipeline');
+      return;
+    }
+    const saved = sessionStorage.getItem('bdd_crm_accounts_view');
+    setViewMode(['list','table','map'].includes(saved) ? saved : 'list');
+  }, [initialViewMode]);
+  useEffect(() => {
+    if (initialViewMode !== 'pipeline' && ['list','table','map'].includes(viewMode)) {
+      sessionStorage.setItem('bdd_crm_accounts_view', viewMode);
+    }
+  }, [initialViewMode, viewMode]);
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
   const [chainFilter, setChainFilter] = useState('All Chains');
+  const [savedViews, setSavedViews] = useState(() => {
+    try { const parsed=JSON.parse(localStorage.getItem('bdd_crm_saved_account_views')||'[]'); return Array.isArray(parsed)?parsed:[]; } catch (_) { return []; }
+  });
+  const [activeSavedView, setActiveSavedView] = useState('');
+  const persistSavedViews = views => { setSavedViews(views); localStorage.setItem('bdd_crm_saved_account_views',JSON.stringify(views)); };
+  const saveCurrentView = () => {
+    const name=window.prompt('Name this account view:');
+    if(!name||!name.trim())return;
+    const view={name:name.trim(),region,filter,chainFilter,sortBy,query,viewMode};
+    const next=[...savedViews.filter(v=>v.name.toLowerCase()!==view.name.toLowerCase()),view].sort((a,b)=>a.name.localeCompare(b.name));
+    persistSavedViews(next);setActiveSavedView(view.name);
+    window.__crmShowToast&&window.__crmShowToast('Account view saved');
+  };
+  const applySavedView = name => {
+    setActiveSavedView(name);
+    const view=savedViews.find(v=>v.name===name);if(!view)return;
+    setRegion(view.region||'All Regions');setFilter(view.filter||'All');setChainFilter(view.chainFilter||'All Chains');setSortBy(view.sortBy||'Name');setQuery(view.query||'');
+    if(['list','table','map'].includes(view.viewMode))setViewMode(view.viewMode);
+  };
+  const deleteSavedView = () => {
+    if(!activeSavedView)return;
+    persistSavedViews(savedViews.filter(v=>v.name!==activeSavedView));setActiveSavedView('');
+    window.__crmShowToast&&window.__crmShowToast('Saved view removed');
+  };
   const matchesQuery = a => {
     if (!query.trim()) return true;
     const q = query.toLowerCase();
@@ -10000,6 +10106,10 @@ function AccountList({
   // mount. null = still loading.
   const [calendarMeetings, setCalendarMeetings] = useState(null);
   useEffect(() => {
+    if (initialViewMode === 'pipeline') {
+      setCalendarMeetings([]);
+      return;
+    }
     let cancelled = false;
     apiPost('getTopUpcomingMeetings', {}).then(response => {
       if (cancelled) return;
@@ -10008,7 +10118,7 @@ function AccountList({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialViewMode]);
 
   // Combines note-detected upcoming activity with calendar-matched meetings
   // into one list, soonest first, capped at 3, for the summary at the top
@@ -10257,7 +10367,7 @@ function AccountList({
     type: "button",
     onClick: onSignOut,
     className: "w-full text-left px-3 py-2 rounded-lg text-sm text-navy-700 hover:bg-skyblue-100/50 hover:text-navy-900 transition"
-  }, "Sign out")))))), topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, "Sign out")))))), initialViewMode !== 'pipeline' && topUpcomingMeetings.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "account-list-upcoming-card bg-white rounded-xl border border-skyblue-100 p-5 mb-6"
   }, /*#__PURE__*/React.createElement("h2", {
     className: "account-list-section-heading font-display text-base text-navy-900 mb-3"
@@ -10319,7 +10429,12 @@ function AccountList({
     "aria-hidden": "true"
   }, mode === 'list' ? '☷' : mode === 'table' ? '▦' : '⌖'), /*#__PURE__*/React.createElement("span", null, mode))))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
     className: "account-list-filter-row flex items-center gap-3 mb-5 flex-nowrap"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", { className:"flex items-center gap-2 shrink-0" },
+    /*#__PURE__*/React.createElement("select", { value:activeSavedView,onChange:e=>applySavedView(e.target.value),className:"border border-skyblue-300 rounded-lg px-2 py-1.5 text-sm bg-white",'aria-label':"Saved account views" },
+      /*#__PURE__*/React.createElement("option",{value:""},"Saved views"),savedViews.map(v=>/*#__PURE__*/React.createElement("option",{key:v.name,value:v.name},v.name))),
+    /*#__PURE__*/React.createElement("button",{type:"button",onClick:saveCurrentView,className:"border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm font-medium text-navy-700 hover:bg-skyblue-100/50"},"Save view"),
+    activeSavedView&&/*#__PURE__*/React.createElement("button",{type:"button",onClick:deleteSavedView,className:"text-xs font-semibold text-red-500",title:"Delete selected saved view"},"Remove")
+  ), /*#__PURE__*/React.createElement("div", {
     className: `account-status-toggle flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ${initialViewMode === 'pipeline' ? 'pipeline-status-toggle' : ''}`
   }, ['All', 'Prospect', 'Customer', 'Follow-up'].map(s => /*#__PURE__*/React.createElement("button", {
     key: s,
@@ -10448,7 +10563,7 @@ function TodayActionCard({
         /*#__PURE__*/React.createElement("select",{
           value:account.RelationshipStage||'Target',onChange:e=>onStageChange(account,e.target.value),
           className:`appearance-none cursor-pointer border-none inline-flex items-center px-2 py-0.5 pr-6 rounded-full text-xs font-semibold bg-[right_0.35rem_center] bg-no-repeat ${stageColor(account.RelationshipStage)}`,
-          style:{backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${['Target','Active Referrer'].includes(account.RelationshipStage||'Target')?'%23ffffff':'%23081e3d'}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,backgroundSize:"10px"}
+          style:{backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='${['Target','Active Contract'].includes(account.RelationshipStage||'Target')?'%23ffffff':'%23081e3d'}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,backgroundSize:"10px"}
         },RELATIONSHIP_STAGES.map(s=>/*#__PURE__*/React.createElement("option",{key:s,value:s},s)))
       )
     ),
@@ -10493,7 +10608,7 @@ function TodaySection({title,copy,accounts,contacts,connections,urgency,whyFn,on
   );
 }
 
-function TodayQuickLog({account,onClose,onSaved,onFullLog}) {
+function TodayQuickLog({account,onClose,onSaved,onFullLog,nextAccount,onNextAccount}) {
   const [type,setType]=useState('Call');
   const [result,setResult]=useState('');
   const [details,setDetails]=useState('');
@@ -10502,7 +10617,8 @@ function TodayQuickLog({account,onClose,onSaved,onFullLog}) {
   const [saving,setSaving]=useState(false);
   const today=todayDateString();
   const plus=n=>{const [y,m,d]=today.split('-').map(Number);const x=new Date(y,m-1,d+n);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;};
-  const save=()=>{
+  const applyTemplate=template=>{setType(template.type);setResult(template.result);setNextAction(template.next);};
+  const save=(continueToNext=false)=>{
     if(!account||saving)return;
     setSaving(true);
     const payload={AccountId:account.AccountId,ActivityType:type,ActivityResult:result,Details:details,NextAction:nextAction,NextActionDue:due};
@@ -10510,7 +10626,7 @@ function TodayQuickLog({account,onClose,onSaved,onFullLog}) {
       if(!r||r.success===false)throw new Error(r?.error||'Save failed');
       onSaved(account,payload);
       window.__crmShowToast&&window.__crmShowToast('Activity logged');
-      onClose();
+      if(continueToNext&&nextAccount&&onNextAccount)onNextAccount(nextAccount);else onClose();
     }).catch(e=>{console.error(e);window.__crmShowToast&&window.__crmShowToast('Could not log activity');setSaving(false);});
   };
   return /*#__PURE__*/React.createElement("div",{className:"today-quick-backdrop",onMouseDown:e=>{if(e.target===e.currentTarget)onClose();}},
@@ -10520,8 +10636,9 @@ function TodayQuickLog({account,onClose,onSaved,onFullLog}) {
         /*#__PURE__*/React.createElement("button",{type:"button",className:"today-quick-close mobile-modal-close",onClick:onClose,'aria-label':"Close"},"Close")
       ),
       /*#__PURE__*/React.createElement("div",{className:"today-quick-grid"},
+        /*#__PURE__*/React.createElement("div",{className:"today-quick-field full"},/*#__PURE__*/React.createElement("span",{className:"today-quick-label"},"Quick templates"),/*#__PURE__*/React.createElement("div",{className:"today-followup-chips"},ACTIVITY_TEMPLATES.map(template=>/*#__PURE__*/React.createElement("button",{type:"button",key:template.label,className:"today-followup-chip",onClick:()=>applyTemplate(template)},template.label)))),
         /*#__PURE__*/React.createElement("label",{className:"today-quick-field"},/*#__PURE__*/React.createElement("span",{className:"today-quick-label"},"Activity"),/*#__PURE__*/React.createElement("select",{className:"today-quick-input",value:type,onChange:e=>setType(e.target.value)},ACTIVITY_TYPES.map(t=>/*#__PURE__*/React.createElement("option",{key:t,value:t},t)))),
-        /*#__PURE__*/React.createElement("label",{className:"today-quick-field"},/*#__PURE__*/React.createElement("span",{className:"today-quick-label"},"Outcome"),/*#__PURE__*/React.createElement("select",{className:"today-quick-input",value:result,onChange:e=>setResult(e.target.value)},/*#__PURE__*/React.createElement("option",{value:""},"Select outcome"),["Connected","Left message","Sent info","No answer","Follow-up needed"].map(x=>/*#__PURE__*/React.createElement("option",{key:x,value:x},x)))),
+        /*#__PURE__*/React.createElement("label",{className:"today-quick-field"},/*#__PURE__*/React.createElement("span",{className:"today-quick-label"},"Outcome"),/*#__PURE__*/React.createElement("select",{className:"today-quick-input",value:result,onChange:e=>setResult(e.target.value)},/*#__PURE__*/React.createElement("option",{value:""},"Select outcome"),ACTIVITY_RESULTS.map(x=>/*#__PURE__*/React.createElement("option",{key:x,value:x},x)))),
         /*#__PURE__*/React.createElement("label",{className:"today-quick-field full"},/*#__PURE__*/React.createElement("span",{className:"today-quick-label"},"Notes"),/*#__PURE__*/React.createElement("textarea",{className:"today-quick-input",value:details,onChange:e=>setDetails(e.target.value),placeholder:"Add a quick note…"})),
         /*#__PURE__*/React.createElement("label",{className:"today-quick-field full"},/*#__PURE__*/React.createElement("span",{className:"today-quick-label"},"Next action"),/*#__PURE__*/React.createElement("input",{className:"today-quick-input",value:nextAction,onChange:e=>setNextAction(e.target.value),placeholder:"What should happen next?"})),
         /*#__PURE__*/React.createElement("div",{className:"today-quick-field full"},
@@ -10530,7 +10647,8 @@ function TodayQuickLog({account,onClose,onSaved,onFullLog}) {
           /*#__PURE__*/React.createElement("input",{type:"date",className:"today-quick-input",value:due,onChange:e=>setDue(e.target.value)})
         )
       ),
-      /*#__PURE__*/React.createElement("button",{type:"button",className:"today-quick-save",disabled:saving,onClick:save},saving?"Saving…":"Save activity"),
+      /*#__PURE__*/React.createElement("button",{type:"button",className:"today-quick-save",disabled:saving,onClick:()=>save(false)},saving?"Saving…":"Save activity"),
+      nextAccount&&/*#__PURE__*/React.createElement("button",{type:"button",className:"w-full mt-2 border border-teal-500 text-teal-700 rounded-lg px-4 py-2 text-sm font-semibold",disabled:saving,onClick:()=>save(true)},`Save & log next: ${nextAccount.AccountName}`),
       /*#__PURE__*/React.createElement("button",{type:"button",className:"w-full mt-3 text-xs font-semibold text-navy-700/55",onClick:()=>{onClose();onFullLog(account);}},"Open full activity form")
     )
   );
@@ -10542,6 +10660,17 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
   const [pickerOpen,setPickerOpen]=useState(false);
   const [pickerQuery,setPickerQuery]=useState('');
   const [completedLocal,setCompletedLocal]=useState(0);
+  const [calendarMeetings,setCalendarMeetings]=useState(null);
+  useEffect(()=>{
+    let cancelled=false;
+    apiPost('getTopUpcomingMeetings',{}).then(response=>{
+      if(!cancelled)setCalendarMeetings(response&&response.success?response.result:[]);
+    }).catch(()=>{if(!cancelled)setCalendarMeetings([]);});
+    return()=>{cancelled=true;};
+  },[]);
+  const topUpcomingMeetings=useMemo(()=>(calendarMeetings||[]).map(m=>({
+    source:'calendar',accountId:m.accountId,accountName:m.accountName,date:new Date(m.date),title:m.title,url:m.url
+  })).filter(m=>!Number.isNaN(m.date.getTime())).sort((a,b)=>a.date-b.date).slice(0,3),[calendarMeetings]);
   const datePlusDays=days=>{const [y,m,d]=today.split('-').map(Number);const dt=new Date(y,m-1,d+days);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;};
   const updateStage=(account,newStage)=>{if(newStage&&newStage!==(account.RelationshipStage||'Target'))onUpdateAccount(account,{RelationshipStage:newStage},'Relationship stage updated');};
   const reschedule=(account,choice)=>{
@@ -10568,10 +10697,13 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
     onUpdateAccount(account,{
       LastContactDate:new Date().toISOString(),LastContactType:payload.ActivityType||'',LastContactResult:payload.ActivityResult||'',
       NextAction:payload.NextAction||'',NextFollowUp:payload.NextActionDue||'',
-      RelationshipStage:(!account.RelationshipStage||['Target','Researched'].includes(account.RelationshipStage))?'Contacted':account.RelationshipStage
+      RelationshipStage:stageAfterActivity(account.RelationshipStage,payload.ActivityResult)
     },'Activity saved');
   };
   const pickerResults=accounts.filter(a=>!pickerQuery||[a.AccountName,getTown(a.Address),a.Region].filter(Boolean).join(' ').toLowerCase().includes(pickerQuery.toLowerCase())).slice(0,8);
+  const workflowQueue=[...needsNow,...comingUp,...suggested].filter((a,index,list)=>list.findIndex(x=>x.AccountId===a.AccountId)===index);
+  const quickAccountIndex=quickAccount?workflowQueue.findIndex(a=>a.AccountId===quickAccount.AccountId):-1;
+  const nextQuickAccount=quickAccountIndex>=0?workflowQueue[quickAccountIndex+1]||null:null;
   const common={contacts,connections,onSelect,onQuickLog:setQuickAccount,onReschedule:reschedule,onStageChange:updateStage};
 
   return /*#__PURE__*/React.createElement("main",{className:"today-page"},
@@ -10579,6 +10711,14 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
       /*#__PURE__*/React.createElement("div",{className:`today-summary-item ${needsNow.length?'urgent':''}`},/*#__PURE__*/React.createElement("div",{className:"today-summary-number"},needsNow.length),/*#__PURE__*/React.createElement("div",{className:"today-summary-label"},"Need action now")),
       /*#__PURE__*/React.createElement("div",{className:"today-summary-item"},/*#__PURE__*/React.createElement("div",{className:"today-summary-number"},comingUp.length),/*#__PURE__*/React.createElement("div",{className:"today-summary-label"},"Coming up")),
       /*#__PURE__*/React.createElement("div",{className:"today-summary-item"},/*#__PURE__*/React.createElement("div",{className:"today-summary-number"},completedLocal),/*#__PURE__*/React.createElement("div",{className:"today-summary-label"},"Logged this session"))
+    ),
+    topUpcomingMeetings.length>0&&/*#__PURE__*/React.createElement("div",{className:"account-list-upcoming-card today-upcoming-card bg-white rounded-xl border border-skyblue-100 p-5 mb-6"},
+      /*#__PURE__*/React.createElement("h2",{className:"account-list-section-heading font-display text-base text-navy-900 mb-3"},/*#__PURE__*/React.createElement("span",{className:"account-list-section-icon","aria-hidden":"true"},"◷"),"Upcoming Meetings"),
+      /*#__PURE__*/React.createElement("div",{className:"space-y-1"},topUpcomingMeetings.map((item,i)=>{
+        const inner=/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("p",{className:"text-sm font-medium text-navy-900"},item.accountName),/*#__PURE__*/React.createElement("p",{className:"text-xs text-navy-700/60"},"📅 ",item.title.length>60?item.title.slice(0,60)+'…':item.title)),/*#__PURE__*/React.createElement("p",{className:"text-xs text-teal-600 shrink-0"},formatShortDate(item.date)));
+        const rowClass="w-full text-left flex items-start justify-between gap-3 hover:bg-skyblue-100/30 -mx-2 px-2 py-1.5 rounded-lg transition";
+        return item.url?/*#__PURE__*/React.createElement("a",{key:i,href:item.url,target:"_blank",rel:"noopener noreferrer",className:rowClass},inner):/*#__PURE__*/React.createElement("button",{key:i,type:"button",className:rowClass,onClick:()=>{const account=accounts.find(a=>a.AccountId===item.accountId);if(account)onSelect(account);}},inner);
+      }))
     ),
     /*#__PURE__*/React.createElement("div",{className:"today-layout"},
       /*#__PURE__*/React.createElement("div",{className:"today-main-column"},
@@ -10603,13 +10743,102 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
         /*#__PURE__*/React.createElement("div",{className:"mt-3 border border-skyblue-100 rounded-xl overflow-hidden"},pickerResults.map(a=>/*#__PURE__*/React.createElement("button",{type:"button",key:a.AccountId,className:"w-full text-left px-3 py-3 border-b last:border-b-0 border-skyblue-100 hover:bg-skyblue-50",onClick:()=>{setPickerOpen(false);setQuickAccount(a);}},/*#__PURE__*/React.createElement("div",{className:"text-sm font-semibold text-navy-900"},a.AccountName),/*#__PURE__*/React.createElement("div",{className:"text-xs text-navy-700/45"},[getTown(a.Address),a.Region].filter(Boolean).join(" · ")))))
       )
     ),
-    quickAccount&&/*#__PURE__*/React.createElement(TodayQuickLog,{account:quickAccount,onClose:()=>setQuickAccount(null),onSaved:quickSaved,onFullLog:onLog})
+    quickAccount&&/*#__PURE__*/React.createElement(TodayQuickLog,{account:quickAccount,onClose:()=>setQuickAccount(null),onSaved:quickSaved,onFullLog:onLog,nextAccount:nextQuickAccount,onNextAccount:setQuickAccount})
   );
 }
 
 
-function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccounts, onPipeline }) {
-  const [homeView, setHomeView] = useState('dashboard');
+function ActivityAnalyticsView({ accounts, activities, onSelect }) {
+  const [periodMode,setPeriodMode]=useState('week');
+  const [regionFilter,setRegionFilter]=useState('All Regions');
+  const [typeFilter,setTypeFilter]=useState('All Activity');
+  const [activityDrilldown,setActivityDrilldown]=useState(null);
+  const accountMap=useMemo(()=>Object.fromEntries((accounts||[]).map(a=>[a.AccountId,a])),[accounts]);
+  const regions=useMemo(()=>['All Regions',...Array.from(new Set((accounts||[]).map(a=>a.Region).filter(Boolean))).sort()],[accounts]);
+  const activityTypes=useMemo(()=>['All Activity',...Array.from(new Set((activities||[]).map(a=>a.ActivityType).filter(Boolean))).sort()],[activities]);
+  const model=useMemo(()=>{
+    const now=new Date();
+    const startOfPeriod=(date,mode)=>{
+      const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+      if(mode==='month')return new Date(d.getFullYear(),d.getMonth(),1);
+      d.setDate(d.getDate()-((d.getDay()+6)%7));
+      return d;
+    };
+    const shiftPeriod=(date,amount,mode)=>mode==='month'?new Date(date.getFullYear(),date.getMonth()+amount,1):new Date(date.getFullYear(),date.getMonth(),date.getDate()+amount*7);
+    const currentStart=startOfPeriod(now,periodMode);
+    const periods=[];
+    for(let offset=-7;offset<=0;offset++){
+      const start=shiftPeriod(currentStart,offset,periodMode),end=shiftPeriod(start,1,periodMode);
+      periods.push({key:start.toISOString().slice(0,10),start,end,label:periodMode==='month'?start.toLocaleDateString(undefined,{month:'short',year:'2-digit'}):start.toLocaleDateString(undefined,{month:'short',day:'numeric'})});
+    }
+    const normalized=(activities||[]).map((a,index)=>{
+      const raw=a.Timestamp||a.ActivityDate||a.Date||a.CreatedAt;
+      const date=raw?new Date(raw):null;
+      return {...a,_date:date,_key:a.ActivityId||`${a.AccountId}-${raw||index}`,_account:accountMap[a.AccountId]||null};
+    }).filter(a=>a._date&&!Number.isNaN(a._date.getTime())&&a._date>=periods[0].start&&a._date<=now)
+      .filter(a=>regionFilter==='All Regions'||a._account?.Region===regionFilter)
+      .filter(a=>typeFilter==='All Activity'||a.ActivityType===typeFilter);
+    const grouped={};
+    normalized.forEach(a=>{
+      const id=a.AccountId||'unknown';
+      if(!grouped[id])grouped[id]={id,account:a._account,name:a._account?.AccountName||'Unknown facility',region:a._account?.Region||'Unknown',counts:Object.fromEntries(periods.map(p=>[p.key,0])),total:0,latest:null};
+      const period=periods.find(p=>a._date>=p.start&&a._date<p.end);
+      if(period)grouped[id].counts[period.key]++;
+      grouped[id].total++;
+      if(!grouped[id].latest||a._date>grouped[id].latest._date)grouped[id].latest=a;
+    });
+    const rows=Object.values(grouped).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
+    const eligibleAccounts=(accounts||[]).filter(a=>regionFilter==='All Regions'||a.Region===regionFilter);
+    const currentKey=periods[periods.length-1].key,previousKey=periods[periods.length-2].key;
+    const current=rows.reduce((sum,row)=>sum+row.counts[currentKey],0),previous=rows.reduce((sum,row)=>sum+row.counts[previousKey],0);
+    return {periods,rows,normalized,total:normalized.length,activeFacilities:rows.length,inactiveFacilities:Math.max(0,eligibleAccounts.length-rows.length),current,previous};
+  },[accounts,activities,accountMap,periodMode,regionFilter,typeFilter]);
+  const periodLabel=periodMode==='week'?'Last 8 weeks':'Last 8 months';
+  const currentChange=model.previous?Math.round(((model.current-model.previous)/model.previous)*100):null;
+  const openActivityDrilldown=(row,period=null)=>{
+    const items=model.normalized.filter(a=>a.AccountId===row.id&&(!period||(a._date>=period.start&&a._date<period.end))).sort((a,b)=>b._date-a._date);
+    setActivityDrilldown({row,period,items});
+  };
+  return /*#__PURE__*/React.createElement('div',{className:'analytics-activity-view'},
+    /*#__PURE__*/React.createElement('section',{className:'home-card analytics-activity-toolbar'},
+      /*#__PURE__*/React.createElement('div',{className:'analytics-activity-toolbar-copy'},/*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Relationship Activity'),/*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Outreach volume by facility and region across the most recent eight periods.')),
+      /*#__PURE__*/React.createElement('div',{className:'analytics-activity-controls'},
+        /*#__PURE__*/React.createElement('label',{className:'analytics-activity-control'},'Group by',/*#__PURE__*/React.createElement('span',{className:'analytics-period-toggle'},/*#__PURE__*/React.createElement('button',{type:'button',className:periodMode==='week'?'active':'',onClick:()=>setPeriodMode('week')},'Week'),/*#__PURE__*/React.createElement('button',{type:'button',className:periodMode==='month'?'active':'',onClick:()=>setPeriodMode('month')},'Month'))),
+        /*#__PURE__*/React.createElement('label',{className:'analytics-activity-control'},'Region',/*#__PURE__*/React.createElement('select',{value:regionFilter,onChange:e=>setRegionFilter(e.target.value)},regions.map(r=>/*#__PURE__*/React.createElement('option',{key:r,value:r},r)))),
+        /*#__PURE__*/React.createElement('label',{className:'analytics-activity-control'},'Activity type',/*#__PURE__*/React.createElement('select',{value:typeFilter,onChange:e=>setTypeFilter(e.target.value)},activityTypes.map(t=>/*#__PURE__*/React.createElement('option',{key:t,value:t},t))))
+      )
+    ),
+    /*#__PURE__*/React.createElement('div',{className:'analytics-activity-kpis'},[[model.total,'Activities · '+periodLabel],[model.activeFacilities,'Facilities reached'],[model.inactiveFacilities,'Facilities with no activity'],[model.current,currentChange===null?'Current period':'Current period · '+(currentChange>=0?'↑ ':'↓ ')+Math.abs(currentChange)+'% vs prior']].map(([value,label])=>/*#__PURE__*/React.createElement('div',{className:'analytics-activity-kpi',key:label},/*#__PURE__*/React.createElement('strong',null,value),/*#__PURE__*/React.createElement('span',null,label)))),
+    /*#__PURE__*/React.createElement('div',{className:'analytics-activity-grid'},
+      /*#__PURE__*/React.createElement('section',{className:'home-card analytics-activity-table-card'},
+        /*#__PURE__*/React.createElement('div',{className:'analytics-activity-table-head'},/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Facility Activity'),/*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Counts by '+periodMode+'; busiest facilities first.')),/*#__PURE__*/React.createElement('div',{className:'home-period'},model.rows.length+' facilit'+(model.rows.length===1?'y':'ies'))),
+        model.rows.length?/*#__PURE__*/React.createElement('div',{className:'analytics-activity-table-wrap'},/*#__PURE__*/React.createElement('table',{className:'analytics-activity-table'},
+          /*#__PURE__*/React.createElement('thead',null,/*#__PURE__*/React.createElement('tr',null,/*#__PURE__*/React.createElement('th',null,'Facility'),/*#__PURE__*/React.createElement('th',null,'Region'),/*#__PURE__*/React.createElement('th',null,'Stage'),model.periods.map(p=>/*#__PURE__*/React.createElement('th',{key:p.key},p.label)),/*#__PURE__*/React.createElement('th',null,'Total'),/*#__PURE__*/React.createElement('th',null,'Last activity'))),
+          /*#__PURE__*/React.createElement('tbody',null,model.rows.map(row=>/*#__PURE__*/React.createElement('tr',{key:row.id,className:'analytics-activity-clickable-row'},/*#__PURE__*/React.createElement('td',null,row.account?/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-facility',onClick:()=>onSelect(row.account),title:`Open ${row.name}`},row.name):row.name),/*#__PURE__*/React.createElement('td',null,row.region),/*#__PURE__*/React.createElement('td',null,row.account?/*#__PURE__*/React.createElement('span',{className:`analytics-activity-stage ${stageColor(row.account.RelationshipStage)}`},row.account.RelationshipStage||'Target'):'—'),model.periods.map(p=>/*#__PURE__*/React.createElement('td',{key:p.key,className:row.counts[p.key]?'':'analytics-activity-zero'},row.counts[p.key]?/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-count-button',onClick:()=>openActivityDrilldown(row,p),title:`View ${row.counts[p.key]} activities`},row.counts[p.key]):'—')),/*#__PURE__*/React.createElement('td',{className:'analytics-activity-total'},/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-count-button',onClick:()=>openActivityDrilldown(row),title:`View all ${row.total} activities`},row.total)),/*#__PURE__*/React.createElement('td',{className:'analytics-activity-last'},row.account&&row.latest?/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-last-button',onClick:()=>onSelect(row.account)},`${row.latest._date.toLocaleDateString(undefined,{month:'short',day:'numeric'})} · ${row.latest.ActivityType||'Activity'}`):'—'))))
+        )):/*#__PURE__*/React.createElement('div',{className:'analytics-activity-empty'},'No logged activity is available for this period and filter selection.')
+      )
+    ),
+    activityDrilldown&&/*#__PURE__*/React.createElement('div',{className:'home-month-modal-backdrop',onMouseDown:e=>{if(e.target===e.currentTarget)setActivityDrilldown(null);}},
+      /*#__PURE__*/React.createElement('div',{className:'home-month-modal',role:'dialog','aria-modal':'true','aria-label':'Filtered activity details'},
+        /*#__PURE__*/React.createElement('div',{className:'home-month-modal-head'},/*#__PURE__*/React.createElement('div',null,
+          /*#__PURE__*/React.createElement('div',{className:'home-month-modal-title'},activityDrilldown.row.name),
+          /*#__PURE__*/React.createElement('div',{className:'home-month-modal-copy'},activityDrilldown.period?`Activities for ${activityDrilldown.period.label}`:`All activities in ${periodLabel.toLowerCase()}`)
+        ),/*#__PURE__*/React.createElement('button',{type:'button',className:'home-month-modal-close mobile-modal-close',onClick:()=>setActivityDrilldown(null)},'Close')),
+        /*#__PURE__*/React.createElement('div',{className:'divide-y divide-skyblue-100'},activityDrilldown.items.map(a=>/*#__PURE__*/React.createElement('button',{type:'button',key:a._key,className:'w-full text-left py-3 hover:bg-skyblue-100/30',onClick:()=>activityDrilldown.row.account&&onSelect(activityDrilldown.row.account)},
+          /*#__PURE__*/React.createElement('div',{className:'flex justify-between gap-3'},/*#__PURE__*/React.createElement('strong',{className:'text-sm text-navy-900'},[a.ActivityType,a.ActivityResult].filter(Boolean).join(' — ')||'Activity'),/*#__PURE__*/React.createElement('span',{className:'text-xs text-navy-700/50'},a._date.toLocaleDateString())),
+          a.Details&&/*#__PURE__*/React.createElement('div',{className:'text-sm text-navy-700/70 mt-1'},a.Details)
+        )))
+      )
+    )
+  );
+}
+
+function HomeDashboard({ accounts, referralActivity, activities, onSelect, onToday, onAccounts, onPipeline }) {
+  const [homeView, setHomeView] = useState(() => {
+    const saved=sessionStorage.getItem('bdd_crm_analytics_view');
+    return ['dashboard','table','activity'].includes(saved)?saved:'dashboard';
+  });
+  useEffect(()=>sessionStorage.setItem('bdd_crm_analytics_view',homeView),[homeView]);
   const [referralSortCol, setReferralSortCol] = useState('ReferralDate');
   const [referralSortDir, setReferralSortDir] = useState('desc');
   const [selectedTrendMonth, setSelectedTrendMonth] = useState(null);
@@ -10642,8 +10871,8 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
     const prevMonthRevenue = prevMonth.reduce((sum, r) => sum + r._rate, 0);
     const avgRevenuePerReferral = ytd.length ? revenueYtd / ytd.length : 0;
     const revenueMtdChange = prevMonthRevenue > 0 ? ((revenueMtd - prevMonthRevenue) / prevMonthRevenue) * 100 : null;
-    const active = (accounts || []).filter(a => (a.RelationshipStage || '') === 'Active Referrer' || a.Status === 'Customer');
-    const pipelineStages = ['Contacted', 'Connected', 'Referral Discussion'];
+    const active = (accounts || []).filter(a => (a.RelationshipStage || '') === 'Active Contract' || a.Status === 'Customer');
+    const pipelineStages = ['Contacted', 'Connected', 'Contract Discussion'];
     const pipelineAccounts = (accounts || []).filter(a => pipelineStages.includes(a.RelationshipStage || 'Target'));
     const accountMap = Object.fromEntries((accounts || []).map(a => [a.AccountId, a]));
     const sourceStats = {};
@@ -10677,7 +10906,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       const m = months.find(x => x.year === r._date.getFullYear() && x.month === r._date.getMonth());
       if (m) { m.count++; m.revenue += r._rate; }
     });
-    const stageCounts = ['Target','Contacted','Connected','Referral Discussion','Active Referrer'].map(stage => ({
+    const stageCounts = ['Target','Contacted','Connected','Contract Discussion','Active Contract'].map(stage => ({
       stage,
       count:(accounts || []).filter(a => (a.RelationshipStage || 'Target') === stage).length
     }));
@@ -10722,9 +10951,9 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
       if (daysLate) {
         overdue.push(account);
         priorities.push({ account, score:400 + daysLate, tone:'overdue', label:`${daysLate}d overdue`, reason:account.NextAction || 'Complete the scheduled follow-up' });
-      } else if ((account.RelationshipStage || '') === 'Active Referrer' && (referralAge === null || referralAge >= 90)) {
+      } else if ((account.RelationshipStage || '') === 'Active Contract' && (referralAge === null || referralAge >= 90)) {
         priorities.push({ account, score:300 + (referralAge || 180), tone:'quiet', label:referralAge === null ? 'No referrals' : `${referralAge}d quiet`, reason:'Reconnect before this referral relationship cools further' });
-      } else if (isHigh && (account.RelationshipStage || 'Target') !== 'Active Referrer' && (contactAge === null || contactAge >= 21)) {
+      } else if (isHigh && (account.RelationshipStage || 'Target') !== 'Active Contract' && (contactAge === null || contactAge >= 21)) {
         highOpportunity.push(account);
         priorities.push({ account, score:200 + (contactAge || 120), tone:'opportunity', label:`${opportunity.label} opportunity`, reason:account.NextAction || (contactAge === null ? 'Start outreach with this high-fit account' : `Re-engage after ${contactAge} days without contact`) });
       }
@@ -10847,8 +11076,15 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
         type:'button',
         className: homeView === 'table' ? 'active' : '',
         onClick:()=>setHomeView('table')
-      }, /*#__PURE__*/React.createElement('span',{className:'account-list-view-icon','aria-hidden':'true'},'▦'), /*#__PURE__*/React.createElement('span',null,'Table'))
+      }, /*#__PURE__*/React.createElement('span',{className:'account-list-view-icon','aria-hidden':'true'},'▦'), /*#__PURE__*/React.createElement('span',null,'Table')),
+      /*#__PURE__*/React.createElement('button', {
+        type:'button',
+        className: homeView === 'activity' ? 'active' : '',
+        onClick:()=>setHomeView('activity')
+      }, /*#__PURE__*/React.createElement('span',{className:'account-list-view-icon','aria-hidden':'true'},'☑'), /*#__PURE__*/React.createElement('span',null,'Activity'))
     )),
+
+    homeView === 'activity' ? /*#__PURE__*/React.createElement(ActivityAnalyticsView,{accounts,activities,onSelect}) : null,
 
     homeView === 'table' ? /*#__PURE__*/React.createElement('section',{className:'home-card home-table-card analytics-table-view'},
       /*#__PURE__*/React.createElement('div',{className:'home-card-head'},
@@ -10881,7 +11117,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
               sortedReferralTransactions.map((r,idx) => {
                 const account = analytics.accountMap[r.AccountId];
                 const key = r.ReferralActivityId || `${r.AccountId}-${r.ReferralDate}-${idx}`;
-                return /*#__PURE__*/React.createElement('tr',{key},
+                return /*#__PURE__*/React.createElement('tr',{key,className:account?'cursor-pointer':'',onClick:()=>account&&onSelect(account),tabIndex:account?0:undefined,onKeyDown:e=>{if(account&&(e.key==='Enter'||e.key===' ')){e.preventDefault();onSelect(account);}}},
                   /*#__PURE__*/React.createElement('td',{className:'home-referral-date'},r._date.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})),
                   /*#__PURE__*/React.createElement('td',null,
                     account ? /*#__PURE__*/React.createElement('button',{className:'home-referral-facility',onClick:()=>onSelect(account)},account.AccountName || 'Unnamed account')
@@ -10911,7 +11147,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
         ['Revenue · YTD',formatCurrency(analytics.revenueYtd),`${analytics.ytd} referrals year to date`],
         ['Referrals · 30d',analytics.last30,`${analytics.last90} in the last 90 days`],
         ['Avg. Revenue / Referral',formatCurrency(analytics.avgRevenuePerReferral),'Based on recorded YTD referral rates'],
-        ['Active Referrers',analytics.activeCount,`${analytics.newActive90} began referring in the last 90 days`]
+        ['Active Contracts',analytics.activeCount,`${analytics.newActive90} began referring in the last 90 days`]
       ].map(([label,value,note]) => /*#__PURE__*/React.createElement('div',{className:'home-kpi',key:label},
         /*#__PURE__*/React.createElement('div',{className:'home-kpi-label'},label),
         /*#__PURE__*/React.createElement('div',{className:'home-kpi-value'},value),
@@ -11026,7 +11262,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
               /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'YTD'),
               /*#__PURE__*/React.createElement('div',{className:'home-source-num'},'$ YTD')
             ),
-            analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row',key:x.id},
+            analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-row cursor-pointer',key:x.id,onClick:()=>onSelect(x.account)},
               /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
               /*#__PURE__*/React.createElement('div',{className:'home-source-num'},x.mtd),
               /*#__PURE__*/React.createElement('div',{className:'home-source-num'},formatCurrency(x.revenueMtd)),
@@ -11035,7 +11271,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
             ))
           ),
           /*#__PURE__*/React.createElement('div',{className:'home-source-mobile'},
-            analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-card',key:`mobile-${x.id}`},
+            analytics.topSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-card cursor-pointer',key:`mobile-${x.id}`,onClick:()=>onSelect(x.account)},
               /*#__PURE__*/React.createElement('button',{className:'home-source-mobile-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
               /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-grid'},
                 /*#__PURE__*/React.createElement('div',{className:'home-source-mobile-stat'},
@@ -11066,7 +11302,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
           /*#__PURE__*/React.createElement('div',{className:'home-card-copy'}, analytics.revenueMixSources.length ? `Top 5 sources generate ${analytics.top5Share}% of YTD revenue` : 'Revenue concentration by referral source')
         )),
         analytics.revenueMixSources.length ? /*#__PURE__*/React.createElement('div',{className:'home-revenue-mix'},
-          analytics.revenueMixSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-mix-row',key:x.id},
+          analytics.revenueMixSources.map(x => /*#__PURE__*/React.createElement('div',{className:'home-mix-row cursor-pointer',key:x.id,onClick:()=>onSelect(x.account)},
             /*#__PURE__*/React.createElement('div',{className:'home-mix-top'},
               /*#__PURE__*/React.createElement('button',{className:'home-source-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
               /*#__PURE__*/React.createElement('strong',null,formatCurrency(x.revenueYtd))
@@ -11090,9 +11326,9 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
         ),
         /*#__PURE__*/React.createElement('div',{className:'home-referral-summary'},
           [
-            ['Active Referrers',analytics.activeCount],
+            ['Active Contracts',analytics.activeCount],
             ['New Referrers · 90d',analytics.newActive90],
-            ['Referral Discussion',analytics.stageCounts.find(s=>s.stage==='Referral Discussion')?.count || 0],
+            ['Contract Discussion',analytics.stageCounts.find(s=>s.stage==='Contract Discussion')?.count || 0],
             ['Connected',analytics.stageCounts.find(s=>s.stage==='Connected')?.count || 0]
           ].map(([label,value]) => /*#__PURE__*/React.createElement('div',{className:'home-referral-stat',key:label},
             /*#__PURE__*/React.createElement('strong',null,value),
@@ -11113,7 +11349,7 @@ function HomeDashboard({ accounts, referralActivity, onSelect, onToday, onAccoun
           /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Needs Attention'),
           /*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Active referrers quiet for 90+ days')
         )),
-        analytics.needsAttention.length ? analytics.needsAttention.map(x => /*#__PURE__*/React.createElement('div',{className:'home-attention-row',key:x.account.AccountId},
+        analytics.needsAttention.length ? analytics.needsAttention.map(x => /*#__PURE__*/React.createElement('div',{className:'home-attention-row cursor-pointer',key:x.account.AccountId,onClick:()=>onSelect(x.account)},
           /*#__PURE__*/React.createElement('div',{className:'home-attention-main'},
             /*#__PURE__*/React.createElement('button',{className:'home-attention-name',onClick:()=>onSelect(x.account)},x.account.AccountName || 'Unnamed account'),
             /*#__PURE__*/React.createElement('div',{className:'home-attention-meta'},fmtLast(x.latest))
@@ -11240,7 +11476,7 @@ function SaaSMiniCalendar() {
   );
 }
 
-function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onMap, onCreate, onSignOut, detailAccount, onDetailStageChange, searchData, onSelectSearchAccount, onNewReferral, onQuickActivitySaved, onFullActivityLog, includeTestData, onIncludeTestDataChange, startPage, onStartPageChange, preferenceRegion, onPreferenceRegionChange, lastSyncedAt, onRefreshData }) {
+function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipeline, onMap, onCreate, onBack, canGoBack, onSignOut, detailAccount, onDetailStageChange, searchData, onSelectSearchAccount, onNewReferral, onQuickActivitySaved, onFullActivityLog, includeTestData, onIncludeTestDataChange, startPage, onStartPageChange, preferenceRegion, onPreferenceRegionChange, lastSyncedAt, onRefreshData }) {
   useEffect(() => {
     document.body.classList.add('saas-enabled');
     return () => document.body.classList.remove('saas-enabled');
@@ -11421,7 +11657,9 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       )
     ),
     /*#__PURE__*/React.createElement('header', { className: `saas-topbar${detailAccount ? ' saas-detail-topbar' : ''}` },
-      /*#__PURE__*/React.createElement('div', { className: 'min-w-0' },
+      /*#__PURE__*/React.createElement('div', { className: 'saas-page-heading min-w-0' },
+        canGoBack && /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-history-back', onClick:onBack, title:'Go back', 'aria-label':'Go back to previous CRM view' }, '‹'),
+        /*#__PURE__*/React.createElement('div', { className:'min-w-0' },
         /*#__PURE__*/React.createElement('div', { className: 'saas-page-kicker' }, activeView === 'today' ? 'Work queue' : activeView === 'home' ? 'Overview' : 'Business development'),
         /*#__PURE__*/React.createElement('div', { className: 'flex items-center gap-3 flex-wrap min-w-0' },
           /*#__PURE__*/React.createElement('div', { className: 'saas-page-title min-w-0' },
@@ -11430,7 +11668,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           ),
           detailAccount && (() => {
             const opportunity = computeOverallFeesOpportunity(detailAccount);
-            const stageNeedsWhiteArrow = ['Target', 'Active Referrer'].includes(detailAccount.RelationshipStage || 'Target');
+            const stageNeedsWhiteArrow = ['Target', 'Active Contract'].includes(detailAccount.RelationshipStage || 'Target');
             const arrowStroke = stageNeedsWhiteArrow ? '%23ffffff' : '%23081e3d';
             return /*#__PURE__*/React.createElement('div', { className: 'saas-detail-header-meta flex items-center gap-2 flex-wrap' },
               opportunity && /*#__PURE__*/React.createElement('span', {
@@ -11451,7 +11689,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
               }, RELATIONSHIP_STAGES.map(stage => /*#__PURE__*/React.createElement('option', { key: stage, value: stage }, stage)))
             );
           })()
-        )
+        ))
       ),
       /*#__PURE__*/React.createElement('div', { className:'saas-mobile-header-actions' },
         /*#__PURE__*/React.createElement('button', {
@@ -11488,7 +11726,22 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
             )) : /*#__PURE__*/React.createElement('div', { className:'px-3 py-3 text-xs text-slate-500' }, 'No matching accounts')
           )
         ),
-        /*#__PURE__*/React.createElement('button', { type:'button', onClick:() => setShowReferralModal(true), className:'saas-referral-btn' }, '+ New Referral'),
+        /*#__PURE__*/React.createElement('button', {
+          type:'button',
+          className:'saas-referral-btn',
+          onClick:() => {
+            if (detailAccount && detailAccount.AccountId) {
+              setReferralAccountId(detailAccount.AccountId);
+              setReferralAccountQuery(detailAccount.AccountName || 'Unnamed account');
+            } else {
+              setReferralAccountId('');
+              setReferralAccountQuery('');
+            }
+            setGlobalReferralRate('');
+            setGlobalReferralDate(todayLocalDate());
+            setShowReferralModal(true);
+          }
+        }, '+ New Referral'),
         /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onCreate, className: 'saas-primary' }, '+ New Account')
       )
     ),
@@ -11709,11 +11962,44 @@ function App() {
     const saved = localStorage.getItem('bdd_crm_start_page');
     return ['today','list','pipeline','home'].includes(saved) ? saved : 'today';
   });
-  const [view, setView] = useState(() => {
+  const [view, setViewState] = useState(() => {
     const saved = localStorage.getItem('bdd_crm_start_page');
     return ['today','list','pipeline','home'].includes(saved) ? saved : 'today';
   }); // 'home' | 'today' | 'list' | 'detail' | 'create'
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedIdState] = useState(null);
+  const selectedIdRef=useRef(null);
+  const historyDepthRef=useRef(0);
+  const [canGoBack,setCanGoBack]=useState(false);
+  const setSelectedId=useCallback(next=>{
+    const value=typeof next==='function'?next(selectedIdRef.current):next;
+    selectedIdRef.current=value;
+    setSelectedIdState(value);
+  },[]);
+  const setView=useCallback(next=>{
+    const value=typeof next==='function'?next(view):next;
+    const depth=historyDepthRef.current+1;
+    window.history.pushState({bddCrm:true,view:value,selectedId:selectedIdRef.current,depth},'',window.location.href);
+    historyDepthRef.current=depth;
+    setCanGoBack(true);
+    setViewState(value);
+  },[view]);
+  const goBack=useCallback(()=>{
+    if(historyDepthRef.current>0)window.history.back();
+  },[]);
+  useEffect(()=>{
+    window.history.replaceState({bddCrm:true,view,selectedId:selectedIdRef.current,depth:0},'',window.location.href);
+    const handlePop=event=>{
+      const state=event.state;
+      if(!state||!state.bddCrm)return;
+      historyDepthRef.current=Math.max(0,Number(state.depth)||0);
+      setCanGoBack(historyDepthRef.current>0);
+      selectedIdRef.current=state.selectedId||null;
+      setSelectedIdState(state.selectedId||null);
+      setViewState(state.view||'today');
+    };
+    window.addEventListener('popstate',handlePop);
+    return()=>window.removeEventListener('popstate',handlePop);
+  },[]);
   const [signingOut, setSigningOut] = useState(false);
   const [includeTestData, setIncludeTestData] = useState(() => localStorage.getItem('bdd_crm_include_test_data') !== 'false');
   const [lastSyncedAt, setLastSyncedAt] = useState(() => localStorage.getItem('bdd_crm_last_synced_at') || '');
@@ -11893,7 +12179,7 @@ function App() {
     updateDataLocal(d => ({
       ...d,
       referralActivity:[...(d.referralActivity || []), localReferral],
-      accounts:d.accounts.map(a => a.AccountId === accountId && (a.RelationshipStage || 'Target') !== 'Active Referrer' ? { ...a, RelationshipStage:'Active Referrer', Status:'Customer' } : a)
+      accounts:d.accounts.map(a => a.AccountId === accountId && (a.RelationshipStage || 'Target') !== 'Active Contract' ? { ...a, RelationshipStage:'Active Contract', Status:'Customer' } : a)
     }));
     window.__crmShowToast && window.__crmShowToast(isMobileReferral ? 'Referral recorded' : 'Referral recorded — opening SimplePractice');
     apiPost('createReferralActivity', { data:{ AccountId:accountId, ReferralDate:referralDate, Rate:Number(rate), RecordedBy:recordedBy } }).then(response => {
@@ -11918,6 +12204,8 @@ function App() {
     onPipeline: () => setView('pipeline'),
     onMap: () => setView('map'),
     onCreate: () => setView('create'),
+    onBack: goBack,
+    canGoBack,
     onSignOut: signOut,
     searchData: { accounts:visibleAccounts, contacts:data.contacts, activities:data.activities },
     includeTestData,
@@ -11931,6 +12219,8 @@ function App() {
     onSelectSearchAccount: a => { setSelectedId(a.AccountId); setView('detail'); },
     onNewReferral: handleGlobalReferral,
     onQuickActivitySaved: (account, payload) => {
+      const automaticStage = stageAfterActivity(account.RelationshipStage, payload.ActivityResult);
+      const shouldAdvanceStage = automaticStage !== (account.RelationshipStage || 'Target');
       updateDataLocal(d => ({
         ...d,
         accounts: d.accounts.map(a => a.AccountId === account.AccountId ? {
@@ -11940,9 +12230,18 @@ function App() {
           LastContactResult: payload.ActivityResult || '',
           NextAction: payload.NextAction || '',
           NextFollowUp: payload.NextActionDue || '',
-          RelationshipStage: (!a.RelationshipStage || ['Target','Researched'].includes(a.RelationshipStage)) ? 'Contacted' : a.RelationshipStage
+          RelationshipStage: stageAfterActivity(a.RelationshipStage, payload.ActivityResult)
         } : a)
       }));
+      if (shouldAdvanceStage) {
+        apiPost('updateAccount', { data:{ AccountId:account.AccountId, RelationshipStage:automaticStage } }).then(response => {
+          if (!response || response.success === false) throw new Error(response?.error || 'Stage update failed');
+        }).catch(error => {
+          console.error('Automatic stage update failed:', error);
+          window.__crmShowToast && window.__crmShowToast('Activity logged — stage update needs retry');
+          refreshAccount(account.AccountId);
+        });
+      }
     },
     onFullActivityLog: account => {
       setSelectedId(account.AccountId);
@@ -11954,6 +12253,7 @@ function App() {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Analytics')), /*#__PURE__*/React.createElement(HomeDashboard, {
       accounts: visibleAccounts,
       referralActivity: visibleReferralActivity,
+      activities: data.activities,
       onSelect: a => {
         setSelectedId(a.AccountId);
         setView('detail');
@@ -11968,6 +12268,8 @@ function App() {
       className: "mobile-workspace-page max-w-4xl mx-auto px-4 sm:px-6 py-8"
     }, /*#__PURE__*/React.createElement(AccountForm, {
       onSave: form => {
+        const duplicate=findPotentialDuplicateAccount(form,data.accounts);
+        if(duplicate&&!window.confirm(`“${duplicate.AccountName}” has a similar name or matching address. Create “${form.AccountName}” anyway?`))return;
         // New accounts use the same optimistic-save pattern as activities
         // and account edits. Add a temporary local record and return to the
         // list immediately instead of waiting for Apps Script + a full CRM
@@ -12037,7 +12339,7 @@ function App() {
     if (!selectedAccount || !newStage || newStage === (selectedAccount.RelationshipStage || 'Target')) return;
     const stagePatch = {
       RelationshipStage: newStage,
-      ...(newStage === 'Active Referrer' ? {
+      ...(newStage === 'Active Contract' ? {
         Status: 'Customer',
         DateConverted: selectedAccount.DateConverted || new Date().toISOString()
       } : {})
@@ -12049,7 +12351,7 @@ function App() {
     window.__crmShowToast && window.__crmShowToast('Updating…');
     apiPost('updateAccount', { data: { AccountId: selectedAccount.AccountId, ...stagePatch } }).then(response => {
       if (response && response.success === false) throw new Error(response.error || 'Save failed');
-      window.__crmShowToast && window.__crmShowToast(newStage === 'Active Referrer' ? 'Active Referrer · Customer' : 'Stage updated');
+      window.__crmShowToast && window.__crmShowToast(newStage === 'Active Contract' ? 'Active Contract · Customer' : 'Stage updated');
     }).catch(err => {
       console.error(err);
       window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
@@ -12080,7 +12382,7 @@ function App() {
       connections: data.connections,
       activities: data.activities,
       referralActivity: visibleReferralActivity,
-      onBack: () => setView('list'),
+      onBack: goBack,
       onRefresh: refresh,
       onRefreshAccount: refreshAccount,
       onLocalData: updateDataLocal,
