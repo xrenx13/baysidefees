@@ -5721,7 +5721,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '99';
+const CRM_BUILD_NUMBER = '100';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -11974,6 +11974,11 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
             )) : /*#__PURE__*/React.createElement('div', { className:'px-3 py-3 text-xs text-slate-500' }, 'No matching accounts')
           )
         ),
+        pageTitle === 'Accounts' && /*#__PURE__*/React.createElement('button', {
+          type:'button',
+          onClick:onCreate,
+          className:'saas-primary'
+        }, '+ Add New Account'),
         /*#__PURE__*/React.createElement('button', {
           type:'button',
           className:'saas-referral-btn',
@@ -11990,7 +11995,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
             setShowReferralModal(true);
           }
         }, '+ New Referral'),
-        /*#__PURE__*/React.createElement('button', { type: 'button', onClick: onCreate, className: 'saas-primary' }, '+ New Account')
+        /*#__PURE__*/React.createElement('button', { type:'button', onClick:openMobileActivity, className:'saas-primary' }, '+ New Activity')
       )
     ),
     showPreferences && /*#__PURE__*/React.createElement('div', {
