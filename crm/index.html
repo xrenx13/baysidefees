@@ -157,6 +157,9 @@ try {
   .saas-global-search input { width:100%; height:34px; border:1px solid var(--saas-line); border-radius:9px; background:#fff; padding:0 34px 0 12px; font-size:12px; color:#0f172a; outline:none; transition:.15s; }
   .saas-global-search input:focus { border-color:#94a3b8; box-shadow:0 0 0 3px rgba(148,163,184,.12); }
   .saas-global-search-icon { position:absolute; right:11px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none; }
+  .saas-global-search-clear { position:absolute; right:7px; top:50%; transform:translateY(-50%); width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:7px; background:transparent; color:#7b8797; font-size:18px; line-height:1; cursor:pointer; }
+  .saas-global-search-clear:hover { background:#eef3f6; color:#0b1f3a; }
+  .saas-global-search-clear:focus-visible { outline:2px solid #1b7f77; outline-offset:1px; }
   .saas-search-results { position:absolute; right:0; top:40px; width:min(420px, 80vw); max-height:340px; overflow:auto; background:#fff; border:1px solid var(--saas-line); border-radius:12px; box-shadow:0 14px 35px rgba(15,23,42,.14); padding:6px; z-index:1200; }
   .saas-search-result { width:100%; text-align:left; border:0; background:transparent; padding:9px 10px; border-radius:8px; cursor:pointer; }
   .saas-search-result:hover { background:#f8fafc; }
@@ -5718,7 +5721,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '97';
+const CRM_BUILD_NUMBER = '99';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -11699,6 +11702,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   }, []);
   const displayName = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
   const [globalSearch, setGlobalSearch] = useState('');
+  const globalSearchRef = useRef(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferencesRefreshing, setPreferencesRefreshing] = useState(false);
@@ -11710,6 +11714,14 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     closeMobileSearch();
     if (typeof action === 'function') action();
   };
+  useEffect(() => {
+    const clearSearchOutside = event => {
+      if (event.target.closest && event.target.closest('.saas-mobile-search-panel')) return;
+      if (globalSearchRef.current && !globalSearchRef.current.contains(event.target)) setGlobalSearch('');
+    };
+    document.addEventListener('pointerdown', clearSearchOutside);
+    return () => document.removeEventListener('pointerdown', clearSearchOutside);
+  }, []);
   const [showActivityPicker, setShowActivityPicker] = useState(false);
   const [activityPickerQuery, setActivityPickerQuery] = useState('');
   const [quickActivityAccount, setQuickActivityAccount] = useState(null);
@@ -11761,20 +11773,33 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     if (!q) return [];
     const contacts = (searchData && searchData.contacts) || [];
     const activities = (searchData && searchData.activities) || [];
-    const matchedIds = new Set();
+    const matchScores = new Map();
+    const addMatch = (accountId, score) => {
+      if (!accountId) return;
+      matchScores.set(accountId, Math.min(matchScores.get(accountId) ?? Infinity, score));
+    };
     allAccounts.forEach(a => {
-      const hay = [a.AccountName, getTown(a.Address), a.Region, a.RelationshipStage, a.Status, a.Chain].filter(Boolean).join(' ').toLowerCase();
-      if (hay.includes(q)) matchedIds.add(a.AccountId);
+      const name = String(a.AccountName || '').toLowerCase();
+      const accountMeta = [a.Address, getTown(a.Address), a.Region, a.RelationshipStage, a.Status, a.Chain, a.ChainAffiliation]
+        .filter(Boolean).join(' ').toLowerCase();
+      if (name === q) addMatch(a.AccountId, 0);
+      else if (name.startsWith(q)) addMatch(a.AccountId, 1);
+      else if (name.split(/\s+/).some(word => word.startsWith(q))) addMatch(a.AccountId, 2);
+      else if (name.includes(q)) addMatch(a.AccountId, 3);
+      else if (accountMeta.includes(q)) addMatch(a.AccountId, 4);
     });
     contacts.forEach(c => {
       const hay = [c.ContactName, c.Role, c.RoleCategory, c.Email, c.Phone, c.PreferredContact, c.Notes].filter(Boolean).join(' ').toLowerCase();
-      if (hay.includes(q)) matchedIds.add(c.AccountId);
+      if (hay.includes(q)) addMatch(c.AccountId, 5);
     });
     activities.forEach(a => {
       const hay = [a.ActivityType, a.ActivityResult, a.Details].filter(Boolean).join(' ').toLowerCase();
-      if (hay.includes(q)) matchedIds.add(a.AccountId);
+      if (hay.includes(q)) addMatch(a.AccountId, 6);
     });
-    return allAccounts.filter(a => matchedIds.has(a.AccountId)).slice(0, 8);
+    return allAccounts.filter(a => matchScores.has(a.AccountId)).sort((a, b) =>
+      matchScores.get(a.AccountId) - matchScores.get(b.AccountId) ||
+      String(a.AccountName || '').localeCompare(String(b.AccountName || ''))
+    );
   }, [globalSearch, searchData]);
   const referralAccountOptions = useMemo(() => {
     const q = referralAccountQuery.trim().toLowerCase();
@@ -11939,9 +11964,9 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         }, '+ Activity')
       ),
       /*#__PURE__*/React.createElement('div', { className: 'saas-top-actions' },
-        /*#__PURE__*/React.createElement('div', { className: 'saas-global-search' },
+        /*#__PURE__*/React.createElement('div', { className: 'saas-global-search', ref:globalSearchRef },
           /*#__PURE__*/React.createElement('input', { value: globalSearch, onChange: e => setGlobalSearch(e.target.value), placeholder: 'Search accounts, contacts, activities…', 'aria-label': 'Search CRM' }),
-          /*#__PURE__*/React.createElement('span', { className: 'saas-global-search-icon' }, '⌕'),
+          globalSearch ? /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-global-search-clear', onClick:() => setGlobalSearch(''), 'aria-label':'Clear search', title:'Clear search' }, '×') : /*#__PURE__*/React.createElement('span', { className: 'saas-global-search-icon' }, '⌕'),
           globalSearch.trim() && /*#__PURE__*/React.createElement('div', { className: 'saas-search-results' },
             globalSearchResults.length ? globalSearchResults.map(a => /*#__PURE__*/React.createElement('button', { key:a.AccountId, type:'button', className:'saas-search-result', onClick:() => { setGlobalSearch(''); onSelectSearchAccount && onSelectSearchAccount(a); } },
               /*#__PURE__*/React.createElement('strong', null, a.AccountName || 'Unnamed account'),
