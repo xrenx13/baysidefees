@@ -4723,11 +4723,11 @@ try {
     background-repeat:no-repeat;
     background-size:17px 17px;
   }
-  body.saas-enabled .account-list-desktop .account-list-row > div:last-child{
+  body.saas-enabled .account-list-desktop .account-list-row-open > div:last-child{
     gap:7px !important;
     padding-left:18px;
   }
-  body.saas-enabled .account-list-desktop .account-list-row > div:last-child > span:not(.account-list-row-chevron){
+  body.saas-enabled .account-list-desktop .account-list-row-open > div:last-child > span:not(.account-list-row-chevron){
     min-height:26px;
     padding:4px 10px !important;
     align-items:center;
@@ -4735,7 +4735,7 @@ try {
     font-size:11px !important;
     line-height:1.1;
   }
-  body.saas-enabled .account-list-desktop .account-list-row > div:last-child > span[class*="bg-red-50"]{
+  body.saas-enabled .account-list-desktop .account-list-row-open > div:last-child > span[class*="bg-red-50"]{
     border-color:#f2c9c9;
     box-shadow:inset 3px 0 0 #dc6666;
   }
@@ -4756,6 +4756,56 @@ try {
     background:#eaf3f4;
     color:#28736d;
   }
+  @media (min-width:641px) {
+    body.saas-enabled .account-list-desktop .account-list-filter-row > .account-status-toggle { order:1; }
+    body.saas-enabled .account-list-desktop .account-list-filter-row > .account-sort-controls { order:2; margin-left:0 !important; }
+    body.saas-enabled .account-list-desktop .account-list-filter-row > .account-saved-view-controls { order:3; margin-left:auto; }
+  }
+  body.saas-enabled .account-list-desktop .account-list-row.quick-action-card { position:relative; display:flex; align-items:center; padding:0 !important; }
+  body.saas-enabled .account-list-desktop .account-list-row-open { flex:1 1 auto; width:auto; min-width:0; min-height:76px; padding:13px 10px 13px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px; text-align:left; background:transparent; border:0; cursor:pointer; }
+  .account-quick-actions-desktop { position:absolute; right:16px; top:50%; z-index:3; display:flex; align-items:center; gap:5px; padding:5px; border:1px solid #dbe5ed; border-radius:10px; background:rgba(255,255,255,.98); box-shadow:0 5px 16px rgba(8,30,61,.1); opacity:0; visibility:hidden; transform:translateY(-50%) translateX(5px); transition:opacity .15s ease,transform .15s ease,visibility .15s ease; }
+  .quick-action-card:hover .account-quick-actions-desktop, .quick-action-card:focus-within .account-quick-actions-desktop { opacity:1; visibility:visible; transform:translateY(-50%) translateX(0); }
+  .account-quick-action { min-height:30px; display:inline-flex; align-items:center; justify-content:center; gap:4px; border:0; border-radius:7px; padding:0 8px; background:#f2f7f8; color:#285f5b; font-size:10.5px; font-weight:750; line-height:1; text-decoration:none; cursor:pointer; white-space:nowrap; }
+  .account-quick-action:hover { background:#dff0ee; color:#0f766e; }
+  .account-quick-action.primary { background:#0b1f3a; color:#fff; }
+  .account-quick-action.primary:hover { background:#173557; }
+  .account-quick-menu { position:absolute; top:10px; right:10px; z-index:5; }
+  .account-quick-menu > summary { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:1px solid #dbe5ed; border-radius:8px; background:#fff; color:#526174; font-size:17px; font-weight:800; line-height:1; cursor:pointer; list-style:none; box-shadow:0 2px 7px rgba(8,30,61,.06); }
+  .account-quick-menu > summary::-webkit-details-marker { display:none; }
+  .account-quick-menu-panel { position:absolute; top:36px; right:0; width:176px; padding:6px; border:1px solid #dbe5ed; border-radius:11px; background:#fff; box-shadow:0 12px 28px rgba(8,30,61,.16); }
+  .account-quick-menu-panel .account-quick-action { width:100%; min-height:38px; justify-content:flex-start; padding:0 11px; background:#fff; color:#18324f; font-size:12px; }
+  .account-quick-menu-panel .account-quick-action:hover { background:#f0f7f7; color:#0f766e; }
+  .account-quick-menu-desktop { position:relative; top:auto; right:auto; z-index:8; flex:0 0 auto; margin-right:13px; }
+  .account-quick-menu-desktop > summary { background:#f5f9fa; }
+  .account-quick-menu-desktop[open] > summary { border-color:#8fc4bf; background:#e9f6f4; color:#0f766e; }
+  .account-quick-menu-desktop .account-quick-menu-panel { top:37px; right:0; z-index:103; }
+  body.saas-enabled .account-list-desktop .account-list-row:has(.account-quick-menu-desktop[open]) { position:relative; z-index:102; }
+  body.saas-enabled .account-list-desktop .account-list-group-card:has(.account-quick-menu-desktop[open]) { position:relative; z-index:100; overflow:visible !important; }
+  body.saas-enabled .account-list-desktop .account-list-group-card:has(.account-quick-menu-desktop[open]) .account-quick-menu-desktop:not([open]) { visibility:hidden; }
+  .account-action-worklist { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 0 16px; padding:11px 14px; border:1px solid #b9dcd8; border-left:4px solid #16847c; border-radius:11px; background:#f1faf9; color:#18324f; }
+  .account-action-worklist strong { display:block; font-size:12px; font-weight:800; }
+  .account-action-worklist span { display:block; margin-top:2px; color:#6f8092; font-size:10.5px; }
+  .account-action-worklist button { flex:0 0 auto; min-height:31px; border:1px solid #c8dcdf; border-radius:8px; padding:0 10px; background:#fff; color:#276e69; font-size:10.5px; font-weight:750; cursor:pointer; }
+  .analytics-action-workflows { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-top:11px; }
+  .analytics-workflow-button { min-height:30px; display:inline-flex; align-items:center; gap:7px; border:1px solid #cfe1e3; border-radius:999px; padding:0 10px; background:#fff; color:#31546a; font-size:10px; font-weight:700; cursor:pointer; }
+  .analytics-workflow-button:hover { border-color:#74b8b1; background:#edf8f7; color:#0f766e; }
+  .analytics-workflow-button strong { color:#0b1f3a; font-size:11px; }
+  button.analytics-signal { width:100%; border:0; text-align:left; cursor:pointer; }
+  button.analytics-signal:hover { background:#f1f8f8; }
+  .analytics-referral-delete { min-height:30px; border:1px solid #efb8b3; border-radius:8px; padding:0 10px; background:#fff; color:#b42318; font-size:10.5px; font-weight:750; cursor:pointer; }
+  .analytics-referral-delete:hover { border-color:#d96b63; background:#fff4f2; }
+  @media (max-width:640px) {
+    body.saas-enabled .mobile-accounts-list { overflow:visible !important; }
+    body.saas-enabled .mobile-account-card.quick-action-card { padding:0 !important; cursor:default; }
+    body.saas-enabled .mobile-account-card.quick-action-card:first-child { border-radius:12px 12px 0 0; }
+    body.saas-enabled .mobile-account-card.quick-action-card:last-child { border-radius:0 0 12px 12px; }
+    body.saas-enabled .mobile-account-card.quick-action-card:has(.account-quick-menu[open]) { z-index:20; }
+    body.saas-enabled .mobile-account-card-open { width:100%; padding:14px 76px 14px 13px; border:0; background:transparent; text-align:left; cursor:pointer; }
+    body.saas-enabled .mobile-account-card .mobile-account-chevron { position:absolute; right:48px; top:14px; display:inline-flex; }
+    .account-quick-actions-desktop { display:none !important; }
+    .account-quick-menu-desktop { display:none !important; }
+  }
+  @media (min-width:641px) { .account-quick-menu:not(.account-quick-menu-desktop) { display:none; } }
   body.saas-enabled .account-list-desktop .account-list-empty-card{
     border-color:#dbe5ed !important;
     border-radius:15px !important;
@@ -5573,7 +5623,7 @@ try {
     .analytics-priority-pill.overdue { background:#fff0f0; color:#bd2929; }.analytics-priority-pill.quiet { background:#fff7dc; color:#996800; }
     .analytics-priority-arrow { color:#9eabb9; font-size:18px; }.analytics-priority-empty { padding:22px 5px; color:#8793a3; font-size:11px; }
     .analytics-inline-link { color:#11766f; font-size:9px; font-weight:700; white-space:nowrap; }
-    .analytics-stage-list { display:grid; gap:8px; }.analytics-stage-top { display:flex; justify-content:space-between; gap:8px; color:#657287; font-size:9px; }.analytics-stage-top strong { color:#10233f; }
+    .analytics-stage-list { display:grid; gap:5px; }.analytics-stage-row { width:100%; border:0; border-radius:7px; padding:4px; background:transparent; text-align:left; cursor:pointer; }.analytics-stage-row:hover { background:#f1f8f8; }.analytics-stage-top { display:flex; justify-content:space-between; gap:8px; color:#657287; font-size:9px; }.analytics-stage-top strong { color:#10233f; }
     .analytics-stage-track { height:5px; overflow:hidden; border-radius:999px; background:#edf2f5; }.analytics-stage-progress { height:100%; border-radius:inherit; background:#9fb2c2; }
     .analytics-stage-progress.stage-contacted { background:#e1b050; }.analytics-stage-progress.stage-connected { background:#d49b0b; }.analytics-stage-progress.stage-referral-discussion { background:#65aaa6; }.analytics-stage-progress.stage-active-referrer { background:#157f78; }
     .analytics-concentration-number { color:#081e3d; font-size:34px; line-height:1; font-weight:780; letter-spacing:-.04em; }
@@ -5661,7 +5711,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '89';
+const CRM_BUILD_NUMBER = '96';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7735,6 +7785,7 @@ function ActivityLogCard({
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-navy-700/70 text-xs"
   }, "Next action due"), /*#__PURE__*/React.createElement("input", {
+    id: "activity-next-action-due",
     type: "date",
     value: activityNextActionDue,
     onChange: e => setActivityNextActionDue(e.target.value),
@@ -7948,7 +7999,9 @@ function AccountDetail({
   const [loggingActivity, setLoggingActivity] = useState(false);
   useEffect(() => {
     if (sessionStorage.getItem('bdd_crm_open_activity_form') === 'true') {
+      const focusFollowUp = sessionStorage.getItem('bdd_crm_focus_followup') === 'true';
       sessionStorage.removeItem('bdd_crm_open_activity_form');
+      sessionStorage.removeItem('bdd_crm_focus_followup');
       setLoggingActivity(true);
       // Today -> Log should land directly on this account's Activity Log card,
       // rather than at the top of the account detail page. Wait for the
@@ -7959,6 +8012,7 @@ function AccountDetail({
             behavior: 'smooth',
             block: 'start'
           });
+          if (focusFollowUp) document.getElementById('activity-next-action-due')?.focus();
         });
       });
     }
@@ -7997,6 +8051,13 @@ function AccountDetail({
   const accountReferralActivity = (referralActivity || [])
     .filter(r => r.AccountId === account.AccountId)
     .sort((a, b) => String(b.ReferralDate || '').localeCompare(String(a.ReferralDate || '')));
+  useEffect(() => {
+    if (sessionStorage.getItem('bdd_crm_open_referral_form') !== 'true') return;
+    sessionStorage.removeItem('bdd_crm_open_referral_form');
+    const previousRate = accountReferralActivity.find(r => r.Rate !== '' && r.Rate != null && Number.isFinite(Number(r.Rate)));
+    setReferralRate(String(previousRate ? Number(previousRate.Rate) : 450));
+    setRecordingReferral(true);
+  }, [account.AccountId]);
   const referralDateAtMidnight_ = value => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`) : null;
   const referralCountSince_ = days => {
     const cutoff = new Date();
@@ -9549,13 +9610,48 @@ function MobileMapView({ accounts, onSelect, region, setRegion }) {
 // Single account row — shared between the town-grouped view (sort: Name)
 // and the flat sorted view (sort: Propensity / CMS Rating).
 // ---------------------------------------------------------------------
+function AccountQuickActions({ account, contacts = [], onSelect, mobile = false }) {
+  const people = contacts.filter(c => c.AccountId === account.AccountId);
+  const phone = people.find(p => p.Phone)?.Phone || account.Phone || '';
+  const email = people.find(p => p.Email)?.Email || '';
+  const directions = account.Address ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(account.Address)}` : '';
+  const openMode = (mode, event) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    if (mode === 'activity' || mode === 'followup') sessionStorage.setItem('bdd_crm_open_activity_form', 'true');
+    if (mode === 'followup') sessionStorage.setItem('bdd_crm_focus_followup', 'true');
+    if (mode === 'referral') sessionStorage.setItem('bdd_crm_open_referral_form', 'true');
+    onSelect(account);
+  };
+  const actions = /*#__PURE__*/React.createElement(React.Fragment, null,
+    /*#__PURE__*/React.createElement('button', { type:'button', className:'account-quick-action primary', onClick:e=>openMode('activity',e) }, 'Log activity'),
+    /*#__PURE__*/React.createElement('button', { type:'button', className:'account-quick-action', onClick:e=>openMode('followup',e) }, 'Follow-up'),
+    /*#__PURE__*/React.createElement('button', { type:'button', className:'account-quick-action', onClick:e=>openMode('referral',e) }, 'Referral'),
+    phone && /*#__PURE__*/React.createElement('a', { className:'account-quick-action', href:`tel:${phone}`, onClick:e=>e.stopPropagation() }, 'Call'),
+    email && /*#__PURE__*/React.createElement('a', { className:'account-quick-action', href:`mailto:${email}`, onClick:e=>e.stopPropagation() }, 'Email'),
+    directions && /*#__PURE__*/React.createElement('a', { className:'account-quick-action', href:directions, target:'_blank', rel:'noopener noreferrer', onClick:e=>e.stopPropagation() }, 'Directions')
+  );
+  if (mobile) return /*#__PURE__*/React.createElement('details', { className:'account-quick-menu', onClick:e=>e.stopPropagation() },
+    /*#__PURE__*/React.createElement('summary', { 'aria-label':`Quick actions for ${account.AccountName||'account'}` }, '⋯'),
+    /*#__PURE__*/React.createElement('div', { className:'account-quick-menu-panel' }, actions)
+  );
+  return /*#__PURE__*/React.createElement('details', { className:'account-quick-menu account-quick-menu-desktop', onClick:e=>e.stopPropagation() },
+    /*#__PURE__*/React.createElement('summary', { 'aria-label':`Quick actions for ${account.AccountName||'account'}`, title:'Quick actions' }, '⋯'),
+    /*#__PURE__*/React.createElement('div', { className:'account-quick-menu-panel' }, actions)
+  );
+}
+
 function AccountRow({
   account,
-  onSelect
+  onSelect,
+  contacts
 }) {
-  return /*#__PURE__*/React.createElement("button", {
+  return /*#__PURE__*/React.createElement("div", {
+    className: `account-list-row quick-action-card w-full text-left transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+  }, /*#__PURE__*/React.createElement("button", {
+    type:"button",
     onClick: () => onSelect(account),
-    className: `account-list-row w-full text-left px-5 py-4 flex items-center justify-between hover:bg-skyblue-100/30 hover:shadow-sm transition border-l-[3px] border-b border-b-skyblue-100 last:border-b-0 ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+    className:"account-list-row-open"
   }, /*#__PURE__*/React.createElement("div", {
     className: "account-list-row-copy"
   }, /*#__PURE__*/React.createElement("p", {
@@ -9579,7 +9675,7 @@ function AccountRow({
   }, account.RelationshipStage || 'Target'), /*#__PURE__*/React.createElement("span", {
     className: "account-list-row-chevron",
     "aria-hidden": "true"
-  }, "›")));
+  }, "›"))), /*#__PURE__*/React.createElement(AccountQuickActions, { account, contacts, onSelect }));
 }
 
 // ---------------------------------------------------------------------
@@ -9591,8 +9687,10 @@ function TableView({
   accounts,
   onSelect
 }) {
-  const [sortCol, setSortCol] = useState('AccountName');
-  const [sortDir, setSortDir] = useState('asc');
+  const restoredSortRef=useRef((()=>{try{return JSON.parse(sessionStorage.getItem('bdd_crm_accounts_table_sort')||'{}')||{};}catch(_){return {};}})());
+  const [sortCol, setSortCol] = useState(()=>restoredSortRef.current.sortCol||'AccountName');
+  const [sortDir, setSortDir] = useState(()=>restoredSortRef.current.sortDir==='desc'?'desc':'asc');
+  useEffect(()=>sessionStorage.setItem('bdd_crm_accounts_table_sort',JSON.stringify({sortCol,sortDir})),[sortCol,sortDir]);
   const toggleSort = col => {
     if (sortCol === col) {
       setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -9772,9 +9870,11 @@ function PipelineView({
   setRegion
 }) {
   const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a fit');
-  const [targetExpanded, setTargetExpanded] = useState(false);
-  const [activeReferrersExpanded, setActiveReferrersExpanded] = useState(false);
-  const [mobileExpandedStages, setMobileExpandedStages] = useState([]);
+  const restoredPipelineRef=useRef((()=>{try{return JSON.parse(sessionStorage.getItem('bdd_crm_pipeline_layout')||'{}')||{};}catch(_){return {};}})());
+  const [targetExpanded, setTargetExpanded] = useState(()=>!!restoredPipelineRef.current.targetExpanded);
+  const [activeReferrersExpanded, setActiveReferrersExpanded] = useState(()=>!!restoredPipelineRef.current.activeReferrersExpanded);
+  const [mobileExpandedStages, setMobileExpandedStages] = useState(()=>Array.isArray(restoredPipelineRef.current.mobileExpandedStages)?restoredPipelineRef.current.mobileExpandedStages:[]);
+  useEffect(()=>sessionStorage.setItem('bdd_crm_pipeline_layout',JSON.stringify({targetExpanded,activeReferrersExpanded,mobileExpandedStages})),[targetExpanded,activeReferrersExpanded,mobileExpandedStages]);
   const isMobilePipeline = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   const pipelineGridStyle = { gridTemplateColumns: `${targetExpanded ? 'minmax(0, 1fr)' : '168px'} repeat(3, minmax(0, 1fr)) ${activeReferrersExpanded ? 'minmax(0, 1fr)' : '168px'}` };
   const columns = useMemo(() => {
@@ -10060,9 +10160,14 @@ function AccountList({
   setRegion,
   initialViewMode = 'list'
 }) {
-  const [filter, setFilter] = useState('All');
+  const uiStateKey = initialViewMode === 'pipeline' ? 'bdd_crm_pipeline_ui_state' : 'bdd_crm_accounts_ui_state';
+  const restoredUiRef = useRef((() => {
+    try { return JSON.parse(sessionStorage.getItem(uiStateKey) || '{}') || {}; } catch (_) { return {}; }
+  })());
+  const [filter, setFilter] = useState(() => restoredUiRef.current.filter || 'All');
   const [viewMode, setViewMode] = useState(() => {
     if (initialViewMode === 'pipeline') return 'pipeline';
+    if (['list','table','map'].includes(restoredUiRef.current.viewMode)) return restoredUiRef.current.viewMode;
     const saved = sessionStorage.getItem('bdd_crm_accounts_view');
     return ['list','table','map'].includes(saved) ? saved : 'list';
   }); // 'list' | 'table' | 'map' | 'pipeline'
@@ -10079,13 +10184,29 @@ function AccountList({
       sessionStorage.setItem('bdd_crm_accounts_view', viewMode);
     }
   }, [initialViewMode, viewMode]);
-  const [query, setQuery] = useState('');
-  const [sortBy, setSortBy] = useState('Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
-  const [chainFilter, setChainFilter] = useState('All Chains');
+  const [query, setQuery] = useState(() => restoredUiRef.current.query || '');
+  const [sortBy, setSortBy] = useState(() => restoredUiRef.current.sortBy || 'Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
+  const [chainFilter, setChainFilter] = useState(() => restoredUiRef.current.chainFilter || 'All Chains');
+  const [actionFilter, setActionFilter] = useState(() => restoredUiRef.current.actionFilter || '');
+  const [actionLabel, setActionLabel] = useState(() => restoredUiRef.current.actionLabel || '');
   const [savedViews, setSavedViews] = useState(() => {
     try { const parsed=JSON.parse(localStorage.getItem('bdd_crm_saved_account_views')||'[]'); return Array.isArray(parsed)?parsed:[]; } catch (_) { return []; }
   });
-  const [activeSavedView, setActiveSavedView] = useState('');
+  const [activeSavedView, setActiveSavedView] = useState(() => restoredUiRef.current.activeSavedView || '');
+  useEffect(() => {
+    const state = { filter, viewMode, query, sortBy, chainFilter, region, activeSavedView, actionFilter, actionLabel, scrollY: window.scrollY };
+    sessionStorage.setItem(uiStateKey, JSON.stringify(state));
+  }, [uiStateKey, filter, viewMode, query, sortBy, chainFilter, region, activeSavedView, actionFilter, actionLabel]);
+  useEffect(() => {
+    const saved = restoredUiRef.current;
+    if (saved.region && saved.region !== region) setRegion(saved.region);
+    const y = Number(saved.scrollY) || 0;
+    if (y > 0) requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, y)));
+  }, [uiStateKey]);
+  const selectAccountFromList = account => {
+    sessionStorage.setItem(uiStateKey, JSON.stringify({ filter, viewMode, query, sortBy, chainFilter, region, activeSavedView, actionFilter, actionLabel, scrollY: window.scrollY }));
+    onSelect(account);
+  };
   const persistSavedViews = views => { setSavedViews(views); localStorage.setItem('bdd_crm_saved_account_views',JSON.stringify(views)); };
   const saveCurrentView = () => {
     const name=window.prompt('Name this account view:');
@@ -10098,7 +10219,7 @@ function AccountList({
   const applySavedView = name => {
     setActiveSavedView(name);
     const view=savedViews.find(v=>v.name===name);if(!view)return;
-    setRegion(view.region||'All Regions');setFilter(view.filter||'All');setChainFilter(view.chainFilter||'All Chains');setSortBy(view.sortBy||'Name');setQuery(view.query||'');
+    setRegion(view.region||'All Regions');setFilter(view.filter||'All');setChainFilter(view.chainFilter||'All Chains');setSortBy(view.sortBy||'Name');setQuery(view.query||'');setActionFilter('');setActionLabel('');
     if(['list','table','map'].includes(view.viewMode))setViewMode(view.viewMode);
   };
   const deleteSavedView = () => {
@@ -10167,12 +10288,37 @@ function AccountList({
     const set = new Set(regionAccounts.map(a => (a.ChainAffiliation || '').trim()).filter(Boolean));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [regionAccounts]);
+  const latestReferralByAccount = useMemo(() => {
+    const latest = {};
+    (referralActivity || []).forEach(r => {
+      const time = r.ReferralDate ? new Date(r.ReferralDate).getTime() : NaN;
+      if (!r.AccountId || Number.isNaN(time)) return;
+      latest[r.AccountId] = Math.max(latest[r.AccountId] || 0, time);
+    });
+    return latest;
+  }, [referralActivity]);
+  const matchesActionFilter = a => {
+    if (!actionFilter) return true;
+    if (actionFilter === 'overdue') return followUpStatus(a.NextFollowUp) === 'overdue';
+    if (actionFilter === 'no-next-step') return ['Contacted','Connected','Contract Discussion'].includes(a.RelationshipStage || 'Target') && !String(a.NextAction || '').trim() && !String(a.NextFollowUp || '').trim();
+    if (actionFilter === 'stale-targets') {
+      const opportunity = computeOverallFeesOpportunity(a);
+      const age = daysSince(a.LastContactDate);
+      return (a.RelationshipStage || 'Target') === 'Target' && opportunity && ['High','Very High'].includes(opportunity.label) && (age === null || age >= 30);
+    }
+    if (actionFilter === 'quiet-active') {
+      const latest = latestReferralByAccount[a.AccountId] || 0;
+      return (a.RelationshipStage || '') === 'Active Contract' && (!latest || Date.now() - latest >= 90 * 86400000);
+    }
+    if (actionFilter.startsWith('stage:')) return (a.RelationshipStage || 'Target') === actionFilter.slice(6);
+    return true;
+  };
   const filtered = useMemo(() => regionAccounts.filter(a => {
     const matchesFilter = filter === 'All' ? true : filter === 'Follow-up' ? hasFollowUp(a) : a.Status === filter;
     const matchesChain = chainFilter === 'All Chains' || (a.ChainAffiliation || '').trim() === chainFilter;
-    return matchesFilter && matchesChain && matchesQuery(a);
+    return matchesFilter && matchesChain && matchesQuery(a) && matchesActionFilter(a);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [regionAccounts, filter, chainFilter, query, contacts, connections, activities]);
+  }), [regionAccounts, filter, chainFilter, query, contacts, connections, activities, actionFilter, latestReferralByAccount]);
 
   // When a search turns up nothing in the current region, check whether it
   // would match elsewhere — surfaced as a hint rather than silently
@@ -10270,7 +10416,7 @@ function AccountList({
     return list;
   }, [filtered, sortBy]);
   const isMobileAccounts = initialViewMode !== 'pipeline' && typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
-  const mobileAccounts = useMemo(() => [...regionAccounts].sort((a, b) => String(a.AccountName || '').localeCompare(String(b.AccountName || ''))), [regionAccounts]);
+  const mobileAccounts = useMemo(() => regionAccounts.filter(matchesActionFilter).sort((a, b) => String(a.AccountName || '').localeCompare(String(b.AccountName || ''))), [regionAccounts, actionFilter, latestReferralByAccount]);
 
   if (isMobileAccounts) {
     return /*#__PURE__*/React.createElement("div", {
@@ -10293,6 +10439,10 @@ function AccountList({
       /*#__PURE__*/React.createElement("div", {
         className: "mobile-accounts-summary"
       }, `${mobileAccounts.length} account${mobileAccounts.length === 1 ? '' : 's'}`),
+      actionFilter && /*#__PURE__*/React.createElement("div", { className:"account-action-worklist" },
+        /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, actionLabel || 'Analytics worklist'), /*#__PURE__*/React.createElement("span", null, `${filtered.length} matching account${filtered.length === 1 ? '' : 's'}`)),
+        /*#__PURE__*/React.createElement("button", { type:"button", onClick:()=>{setActionFilter('');setActionLabel('');} }, "Clear")
+      ),
       mobileAccounts.length === 0 ? /*#__PURE__*/React.createElement("div", {
         className: "mobile-accounts-empty"
       }, "No accounts in this region.") : /*#__PURE__*/React.createElement("div", {
@@ -10303,11 +10453,13 @@ function AccountList({
         const opportunity = computeOverallFeesOpportunity(a);
         const highOpportunity = opportunity && (opportunity.label === 'High' || opportunity.label === 'Very High');
         const attentionClass = follow === 'overdue' ? 'urgent' : follow === 'today' ? 'due-today' : highOpportunity ? 'opportunity' : '';
-        return /*#__PURE__*/React.createElement("button", {
+        return /*#__PURE__*/React.createElement("div", {
           key: a.AccountId,
+          className: `mobile-account-card quick-action-card ${attentionClass}`
+        }, /*#__PURE__*/React.createElement("button", {
           type: "button",
-          onClick: () => onSelect(a),
-          className: `mobile-account-card ${attentionClass}`
+          onClick: () => selectAccountFromList(a),
+          className: "mobile-account-card-open"
         },
           /*#__PURE__*/React.createElement("div", {
             className: "mobile-account-card-main"
@@ -10333,7 +10485,7 @@ function AccountList({
             className: "mobile-account-chevron",
             "aria-hidden": "true"
           }, "›")
-        );
+        ), /*#__PURE__*/React.createElement(AccountQuickActions, { account:a, contacts, onSelect:selectAccountFromList, mobile:true }));
       }))
     ));
   }
@@ -10423,7 +10575,7 @@ function AccountList({
     "aria-hidden": "true"
   }, mode === 'list' ? '☷' : mode === 'table' ? '▦' : '⌖'), /*#__PURE__*/React.createElement("span", null, mode))))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
     className: "account-list-filter-row flex items-center gap-3 mb-5 flex-nowrap"
-  }, /*#__PURE__*/React.createElement("div", { className:"flex items-center gap-2 shrink-0" },
+  }, /*#__PURE__*/React.createElement("div", { className:"account-saved-view-controls flex items-center gap-2 shrink-0" },
     /*#__PURE__*/React.createElement("select", { value:activeSavedView,onChange:e=>applySavedView(e.target.value),className:"border border-skyblue-300 rounded-lg px-2 py-1.5 text-sm bg-white",'aria-label':"Saved account views" },
       /*#__PURE__*/React.createElement("option",{value:""},"Saved views"),savedViews.map(v=>/*#__PURE__*/React.createElement("option",{key:v.name,value:v.name},v.name))),
     /*#__PURE__*/React.createElement("button",{type:"button",onClick:saveCurrentView,className:"border border-skyblue-300 rounded-lg px-3 py-1.5 text-sm font-medium text-navy-700 hover:bg-skyblue-100/50"},"Save view"),
@@ -10437,22 +10589,25 @@ function AccountList({
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
   }, "(", counts[s], ")")))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 flex-nowrap ml-3 shrink-0"
+    className: "account-sort-controls flex items-center gap-3 flex-nowrap ml-3 shrink-0"
   }, /*#__PURE__*/React.createElement("label", {
     className: "text-xs text-navy-700/50 flex items-center gap-1.5"
   }, "Sort by", /*#__PURE__*/React.createElement("select", {
     value: sortBy,
     onChange: e => setSortBy(e.target.value),
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))))), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
+  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))))), actionFilter && /*#__PURE__*/React.createElement("div", { className:"account-action-worklist" },
+    /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, actionLabel || 'Analytics worklist'), /*#__PURE__*/React.createElement("span", null, `${filtered.length} matching account${filtered.length === 1 ? '' : 's'}`)),
+    /*#__PURE__*/React.createElement("button", { type:"button", onClick:()=>{setActionFilter('');setActionLabel('');} }, "Clear worklist")
+  ), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
     accounts: filtered,
     contacts: contacts,
     connections: connections,
-    onSelect: onSelect
+    onSelect: selectAccountFromList
   }) : viewMode === 'pipeline' ? /*#__PURE__*/React.createElement(PipelineView, {
     accounts: filtered,
     referralActivity: referralActivity,
-    onSelect: onSelect,
+    onSelect: selectAccountFromList,
     region: region,
     setRegion: setRegion
   }) : viewMode === 'table' ? filtered.length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
@@ -10465,7 +10620,7 @@ function AccountList({
     setRegion: setRegion
   })) : /*#__PURE__*/React.createElement(TableView, {
     accounts: filtered,
-    onSelect: onSelect
+    onSelect: selectAccountFromList
   }) : /*#__PURE__*/React.createElement(React.Fragment, null, filtered.length === 0 && /*#__PURE__*/React.createElement("div", {
     className: "account-list-empty-card bg-white rounded-xl border border-skyblue-100"
   }, /*#__PURE__*/React.createElement(EmptyState, {
@@ -10479,7 +10634,8 @@ function AccountList({
   }, followUpSorted.map(a => /*#__PURE__*/React.createElement(AccountRow, {
     key: a.AccountId,
     account: a,
-    onSelect: onSelect
+    onSelect: selectAccountFromList,
+    contacts: contacts
   }))) : sortBy === 'Name' ? /*#__PURE__*/React.createElement("div", {
     className: "space-y-6"
   }, groups.map(({
@@ -10499,13 +10655,15 @@ function AccountList({
   }, townAccounts.map(a => /*#__PURE__*/React.createElement(AccountRow, {
     key: a.AccountId,
     account: a,
-    onSelect: onSelect
+    onSelect: selectAccountFromList,
+    contacts: contacts
   })))))) : sortedFlat.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "account-list-group-card bg-white rounded-xl border border-skyblue-100"
   }, sortedFlat.map(a => /*#__PURE__*/React.createElement(AccountRow, {
     key: a.AccountId,
     account: a,
-    onSelect: onSelect
+    onSelect: selectAccountFromList,
+    contacts: contacts
   })))));
 }
 
@@ -10641,6 +10799,10 @@ function TodayQuickLog({account,onClose,onSaved,onFullLog,nextAccount,onNextAcco
 }
 
 function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAccount,onBack}) {
+  useEffect(()=>{
+    const y=Number(sessionStorage.getItem('bdd_crm_today_scroll_y'))||0;
+    if(y>0)requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,y)));
+  },[]);
   const today=todayDateString();
   const [quickAccount,setQuickAccount]=useState(null);
   const [pickerOpen,setPickerOpen]=useState(false);
@@ -10701,9 +10863,10 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
     topUpcomingMeetings.length>0&&/*#__PURE__*/React.createElement("div",{className:"account-list-upcoming-card today-upcoming-card bg-white rounded-xl border border-skyblue-100 p-5 mb-6"},
       /*#__PURE__*/React.createElement("h2",{className:"account-list-section-heading font-display text-base text-navy-900 mb-3"},/*#__PURE__*/React.createElement("span",{className:"account-list-section-icon","aria-hidden":"true"},"◷"),"Upcoming Meetings"),
       /*#__PURE__*/React.createElement("div",{className:"space-y-1"},topUpcomingMeetings.map((item,i)=>{
+        const account=accounts.find(a=>a.AccountId===item.accountId)||accounts.find(a=>String(a.AccountName||'').trim().toLowerCase()===String(item.accountName||'').trim().toLowerCase());
         const inner=/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("p",{className:"text-sm font-medium text-navy-900"},item.accountName),/*#__PURE__*/React.createElement("p",{className:"text-xs text-navy-700/60"},"📅 ",item.title.length>60?item.title.slice(0,60)+'…':item.title)),/*#__PURE__*/React.createElement("div",{className:"text-right shrink-0"},/*#__PURE__*/React.createElement("p",{className:"text-xs text-teal-600"},formatShortDate(item.date)),/*#__PURE__*/React.createElement("p",{className:"text-xs text-navy-700/50"},formatShortTime(item.date))));
         const rowClass="w-full text-left flex items-start justify-between gap-3 hover:bg-skyblue-100/30 -mx-2 px-2 py-1.5 rounded-lg transition";
-        return item.url?/*#__PURE__*/React.createElement("a",{key:i,href:item.url,target:"_blank",rel:"noopener noreferrer",className:rowClass},inner):/*#__PURE__*/React.createElement("button",{key:i,type:"button",className:rowClass,onClick:()=>{const account=accounts.find(a=>a.AccountId===item.accountId);if(account)onSelect(account);}},inner);
+        return account?/*#__PURE__*/React.createElement("button",{key:i,type:"button",className:rowClass,onClick:()=>onSelect(account),title:`Open ${account.AccountName}`},inner):/*#__PURE__*/React.createElement("div",{key:i,className:rowClass},inner);
       }))
     ),
     /*#__PURE__*/React.createElement("div",{className:"today-layout"},
@@ -10735,10 +10898,12 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
 
 
 function ActivityAnalyticsView({ accounts, activities, onSelect }) {
-  const [periodMode,setPeriodMode]=useState('week');
-  const [regionFilter,setRegionFilter]=useState('All Regions');
-  const [typeFilter,setTypeFilter]=useState('All Activity');
+  const restoredAnalyticsRef=useRef((()=>{try{return JSON.parse(sessionStorage.getItem('bdd_crm_activity_analytics_state')||'{}')||{};}catch(_){return {};}})());
+  const [periodMode,setPeriodMode]=useState(()=>['week','month'].includes(restoredAnalyticsRef.current.periodMode)?restoredAnalyticsRef.current.periodMode:'week');
+  const [regionFilter,setRegionFilter]=useState(()=>restoredAnalyticsRef.current.regionFilter||'All Regions');
+  const [typeFilter,setTypeFilter]=useState(()=>restoredAnalyticsRef.current.typeFilter||'All Activity');
   const [activityDrilldown,setActivityDrilldown]=useState(null);
+  useEffect(()=>sessionStorage.setItem('bdd_crm_activity_analytics_state',JSON.stringify({periodMode,regionFilter,typeFilter})),[periodMode,regionFilter,typeFilter]);
   const accountMap=useMemo(()=>Object.fromEntries((accounts||[]).map(a=>[a.AccountId,a])),[accounts]);
   const regions=useMemo(()=>['All Regions',...Array.from(new Set((accounts||[]).map(a=>a.Region).filter(Boolean))).sort()],[accounts]);
   const activityTypes=useMemo(()=>['All Activity',...Array.from(new Set((activities||[]).map(a=>a.ActivityType).filter(Boolean))).sort()],[activities]);
@@ -10820,12 +10985,16 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
   );
 }
 
-function HomeDashboard({ accounts, referralActivity, activities, onSelect, onToday, onAccounts, onPipeline }) {
+function HomeDashboard({ accounts, referralActivity, activities, onSelect, onToday, onAccounts, onPipeline, onDeleteReferral }) {
   const [homeView, setHomeView] = useState(() => {
     const saved=sessionStorage.getItem('bdd_crm_analytics_view');
     return ['dashboard','table','activity'].includes(saved)?saved:'dashboard';
   });
   useEffect(()=>sessionStorage.setItem('bdd_crm_analytics_view',homeView),[homeView]);
+  useEffect(()=>{
+    const y=Number(sessionStorage.getItem('bdd_crm_home_scroll_y'))||0;
+    if(y>0)requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,y)));
+  },[]);
   const [referralSortCol, setReferralSortCol] = useState('ReferralDate');
   const [referralSortDir, setReferralSortDir] = useState('desc');
   const [selectedTrendMonth, setSelectedTrendMonth] = useState(null);
@@ -10925,6 +11094,9 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
     const momentumPct = previous ? Math.round(((recent - previous) / previous) * 100) : null;
     const overdue = [];
     const highOpportunity = [];
+    const noNextStep = [];
+    const staleTargets = [];
+    const quietActive = [];
     const priorities = [];
     (accounts || []).forEach(account => {
       const followRaw = String(account.NextFollowUp || '').slice(0,10);
@@ -10935,6 +11107,9 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
       const contactAge = daysSince(account.LastContactDate);
       const latestReferral = analytics.transactions.find(r => r.AccountId === account.AccountId)?._date || null;
       const referralAge = latestReferral ? Math.floor((today - latestReferral) / dayMs) : null;
+      if (['Contacted','Connected','Contract Discussion'].includes(account.RelationshipStage || 'Target') && !String(account.NextAction || '').trim() && !String(account.NextFollowUp || '').trim()) noNextStep.push(account);
+      if ((account.RelationshipStage || 'Target') === 'Target' && isHigh && (contactAge === null || contactAge >= 30)) staleTargets.push(account);
+      if ((account.RelationshipStage || '') === 'Active Contract' && (referralAge === null || referralAge >= 90)) quietActive.push(account);
       if (daysLate) {
         overdue.push(account);
         priorities.push({ account, score:400 + daysLate, tone:'overdue', label:`${daysLate}d overdue`, reason:account.NextAction || 'Complete the scheduled follow-up' });
@@ -10953,9 +11128,23 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
       priorities:priorities.sort((a,b)=>b.score-a.score).slice(0,5),
       overdueCount:overdue.length,
       highOpportunityCount:highOpportunity.length,
+      noNextStepCount:noNextStep.length,
+      staleTargetCount:staleTargets.length,
+      quietActiveCount:quietActive.length,
       recent, previous, momentumPct, topSource, topSourceShare, pipelineTotal
     };
   }, [accounts, analytics]);
+
+  const openAccountWorklist = (actionFilter, actionLabel) => {
+    let previous={};
+    try { previous=JSON.parse(sessionStorage.getItem('bdd_crm_accounts_ui_state')||'{}')||{}; } catch (_) {}
+    sessionStorage.setItem('bdd_crm_accounts_ui_state',JSON.stringify({
+      ...previous,
+      region:'All Regions',filter:'All',chainFilter:'All Chains',query:'',sortBy:'Name',viewMode:'list',
+      activeSavedView:'',actionFilter,actionLabel,scrollY:0
+    }));
+    onAccounts();
+  };
 
   const referralColumns = [
     { key:'ReferralDate', label:'Referral Date' },
@@ -10963,7 +11152,8 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
     { key:'Town', label:'Town' },
     { key:'Region', label:'Region' },
     { key:'Rate', label:'Rate' },
-    { key:'RecordedBy', label:'Recorded By' }
+    { key:'RecordedBy', label:'Recorded By' },
+    { key:'Actions', label:'' }
   ];
 
   const toggleReferralSort = col => {
@@ -11095,8 +11285,8 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
               /*#__PURE__*/React.createElement('tr',null,
                 referralColumns.map(col => /*#__PURE__*/React.createElement('th',{
                   key:col.key,
-                  onClick:()=>toggleReferralSort(col.key),
-                  className:`cursor-pointer hover:text-navy-900 select-none ${referralSortCol === col.key ? 'account-list-sort-active' : ''}`
+                  onClick:()=>col.key!=='Actions'&&toggleReferralSort(col.key),
+                  className:`${col.key!=='Actions'?'cursor-pointer hover:text-navy-900 select-none':''} ${referralSortCol === col.key ? 'account-list-sort-active' : ''}`
                 },col.label,' ',referralSortCol === col.key ? referralSortDir === 'asc' ? '▲' : '▼' : ''))
               )
             ),
@@ -11113,7 +11303,8 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
                   /*#__PURE__*/React.createElement('td',null,getTown(account?.Address || '') || account?.Town || '—'),
                   /*#__PURE__*/React.createElement('td',null,account?.Region || '—'),
                   /*#__PURE__*/React.createElement('td',{className:'home-referral-rate'},r.Rate === '' || r.Rate == null ? '—' : formatCurrency(r._rate)),
-                  /*#__PURE__*/React.createElement('td',null,r.RecordedBy || '—')
+                  /*#__PURE__*/React.createElement('td',null,r.RecordedBy || '—'),
+                  /*#__PURE__*/React.createElement('td',{className:'text-right'},/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-referral-delete',onClick:e=>{e.stopPropagation();onDeleteReferral&&onDeleteReferral(r);},disabled:!r.ReferralActivityId},'Delete'))
                 );
               })
             )
@@ -11147,7 +11338,13 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
         /*#__PURE__*/React.createElement('div',null,
           /*#__PURE__*/React.createElement('div',{className:'analytics-action-eyebrow'},'Decision support'),
           /*#__PURE__*/React.createElement('div',{className:'analytics-action-title'},'What to do next'),
-          /*#__PURE__*/React.createElement('div',{className:'analytics-action-copy'},'A live worklist built from follow-up commitments, account opportunity, and referral momentum.')
+          /*#__PURE__*/React.createElement('div',{className:'analytics-action-copy'},'A live worklist built from follow-up commitments, account opportunity, and referral momentum.'),
+          /*#__PURE__*/React.createElement('div',{className:'analytics-action-workflows'},
+            /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-workflow-button',onClick:()=>openAccountWorklist('overdue','Overdue follow-ups')},/*#__PURE__*/React.createElement('strong',null,decisionSupport.overdueCount),' Overdue'),
+            /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-workflow-button',onClick:()=>openAccountWorklist('no-next-step','Pipeline accounts without a next step')},/*#__PURE__*/React.createElement('strong',null,decisionSupport.noNextStepCount),' No next step'),
+            /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-workflow-button',onClick:()=>openAccountWorklist('stale-targets','High-opportunity targets needing outreach')},/*#__PURE__*/React.createElement('strong',null,decisionSupport.staleTargetCount),' Stale targets'),
+            /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-workflow-button',onClick:()=>openAccountWorklist('quiet-active','Active Contracts without a recent referral')},/*#__PURE__*/React.createElement('strong',null,decisionSupport.quietActiveCount),' Quiet contracts')
+          )
         ),
         /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-action-open',onClick:onToday},'Open Today',' →')
       ),
@@ -11173,7 +11370,7 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
               /*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('h3',null,'Pipeline health'),/*#__PURE__*/React.createElement('p',null,'Distribution across relationship stages')),
               /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-inline-link',onClick:onPipeline},'View pipeline')
             ),
-            /*#__PURE__*/React.createElement('div',{className:'analytics-stage-list'},analytics.stageCounts.map(stage => /*#__PURE__*/React.createElement('div',{className:'analytics-stage-row',key:stage.stage},
+            /*#__PURE__*/React.createElement('div',{className:'analytics-stage-list'},analytics.stageCounts.map(stage => /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-stage-row',key:stage.stage,onClick:()=>openAccountWorklist(`stage:${stage.stage}`,`${stage.stage} accounts`)},
               /*#__PURE__*/React.createElement('div',{className:'analytics-stage-top'},/*#__PURE__*/React.createElement('span',null,stage.stage),/*#__PURE__*/React.createElement('strong',null,stage.count)),
               /*#__PURE__*/React.createElement('div',{className:'analytics-stage-track'},/*#__PURE__*/React.createElement('div',{className:`analytics-stage-progress stage-${stage.stage.toLowerCase().replace(/[^a-z0-9]+/g,'-')}`,style:{width:`${Math.max(stage.count ? 5 : 0,(stage.count/decisionSupport.pipelineTotal)*100)}%`}}))
             )))
@@ -11189,9 +11386,9 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
         )
       ),
       /*#__PURE__*/React.createElement('div',{className:'analytics-signal-strip'},
-        /*#__PURE__*/React.createElement('div',{className:'analytics-signal'},/*#__PURE__*/React.createElement('span',{className:'analytics-signal-icon momentum'},'↗'),/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('strong',null,decisionSupport.momentumPct === null ? decisionSupport.recent : `${decisionSupport.momentumPct >= 0 ? '+' : ''}${decisionSupport.momentumPct}%`),/*#__PURE__*/React.createElement('span',null,decisionSupport.momentumPct === null ? 'referrals in the last 30 days' : '30-day referral momentum vs prior period'))),
-        /*#__PURE__*/React.createElement('div',{className:'analytics-signal'},/*#__PURE__*/React.createElement('span',{className:'analytics-signal-icon overdue'},'!'),/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('strong',null,decisionSupport.overdueCount),/*#__PURE__*/React.createElement('span',null,'overdue follow-up commitments'))),
-        /*#__PURE__*/React.createElement('div',{className:'analytics-signal'},/*#__PURE__*/React.createElement('span',{className:'analytics-signal-icon opportunity'},'◆'),/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('strong',null,decisionSupport.highOpportunityCount),/*#__PURE__*/React.createElement('span',null,'high-opportunity accounts needing outreach')))
+        /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-signal',onClick:()=>setHomeView('table')},/*#__PURE__*/React.createElement('span',{className:'analytics-signal-icon momentum'},'↗'),/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('strong',null,decisionSupport.momentumPct === null ? decisionSupport.recent : `${decisionSupport.momentumPct >= 0 ? '+' : ''}${decisionSupport.momentumPct}%`),/*#__PURE__*/React.createElement('span',null,decisionSupport.momentumPct === null ? 'View recorded referrals' : 'View referral transactions'))),
+        /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-signal',onClick:()=>openAccountWorklist('overdue','Overdue follow-ups')},/*#__PURE__*/React.createElement('span',{className:'analytics-signal-icon overdue'},'!'),/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('strong',null,decisionSupport.overdueCount),/*#__PURE__*/React.createElement('span',null,'open overdue follow-up worklist'))),
+        /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-signal',onClick:()=>openAccountWorklist('stale-targets','High-opportunity targets needing outreach')},/*#__PURE__*/React.createElement('span',{className:'analytics-signal-icon opportunity'},'◆'),/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('strong',null,decisionSupport.staleTargetCount),/*#__PURE__*/React.createElement('span',null,'open high-opportunity outreach list')))
       )
     ),
 
@@ -12218,6 +12415,20 @@ function App() {
       refreshAccount(accountId);
     });
   };
+  const handleDeleteReferral = referral => {
+    const referralId = referral && referral.ReferralActivityId;
+    if (!referralId || !window.confirm('Delete this referral transaction? This cannot be undone.')) return;
+    updateDataLocal(d => ({ ...d, referralActivity:(d.referralActivity || []).filter(r => r.ReferralActivityId !== referralId) }));
+    window.__crmShowToast && window.__crmShowToast('Deleting referral…');
+    apiPost('deleteReferralActivity', { referralActivityId:referralId }).then(response => {
+      if (!response || response.success === false) throw new Error(response?.error || 'Delete failed');
+      window.__crmShowToast && window.__crmShowToast('Referral deleted');
+    }).catch(err => {
+      console.error('Delete referral failed:', err);
+      window.__crmShowToast && window.__crmShowToast('Delete failed — restoring server data');
+      if (referral.AccountId) refreshAccount(referral.AccountId); else refresh();
+    });
+  };
   const chromeProps = pageTitle => ({
     activeView: view === 'home' ? 'home' : view === 'today' ? 'today' : view === 'pipeline' ? 'pipeline' : view === 'map' ? 'map' : 'accounts',
     pageTitle,
@@ -12278,12 +12489,14 @@ function App() {
       referralActivity: visibleReferralActivity,
       activities: data.activities,
       onSelect: a => {
+        sessionStorage.setItem('bdd_crm_home_scroll_y', String(window.scrollY));
         setSelectedId(a.AccountId);
         setView('detail');
       },
       onToday: () => setView('today'),
       onAccounts: () => setView('list'),
-      onPipeline: () => setView('pipeline')
+      onPipeline: () => setView('pipeline'),
+      onDeleteReferral: handleDeleteReferral
     }), /*#__PURE__*/React.createElement(Toast, null));
   }
   if (view === 'create') {
@@ -12420,10 +12633,12 @@ function App() {
       contacts: data.contacts,
       connections: data.connections,
       onSelect: a => {
+        sessionStorage.setItem('bdd_crm_today_scroll_y', String(window.scrollY));
         setSelectedId(a.AccountId);
         setView('detail');
       },
       onLog: a => {
+        sessionStorage.setItem('bdd_crm_today_scroll_y', String(window.scrollY));
         setSelectedId(a.AccountId);
         sessionStorage.setItem('bdd_crm_open_activity_form', 'true');
         setView('detail');
