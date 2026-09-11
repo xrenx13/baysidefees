@@ -5647,7 +5647,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '82';
+const CRM_BUILD_NUMBER = '84';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -5838,13 +5838,13 @@ const RELATIONSHIP_STAGES = ['Target', 'Contacted', 'Connected', 'Contract Discu
 const CONTACT_ROLE_CATEGORIES = ['Clinical Champion', 'SLP', 'Director of Rehab', 'Rehab Director', 'Administrator', 'DON', 'Medical Director', 'Admissions', 'Case Management', 'Regional/Central Decision Maker', 'Referral Coordinator', 'Other'];
 const DECISION_MAKER_ROLE_CATEGORIES = ['Administrator', 'DON', 'Regional/Central Decision Maker'];
 const ACTIVITY_TYPES = ['Call', 'Voicemail', 'Visit', 'Email', 'Text', 'Meeting', 'Referral', 'Other'];
-const ACTIVITY_RESULTS = ['No answer', 'Left message', 'Voicemail', 'Receptionist', 'Connected', 'Spoke with SLP', 'Spoke with Director of Rehab', 'Spoke with Administrator', 'Meeting completed', 'Interested', 'Sent information', 'Wants information', 'Referral opportunity', 'Discussed referrals', 'Follow-up requested', 'Not interested', 'Wrong contact', 'Other'];
+const ACTIVITY_RESULTS = ['No answer', 'Left message', 'Voicemail', 'Receptionist', 'Connected', 'Spoke with SLP', 'Spoke with Director of Rehab', 'Spoke with Administrator', 'Meeting completed', 'Interested', 'Sent information', 'Wants information', 'Referral opportunity', 'Discussed Contract', 'Follow-up requested', 'Not interested', 'Wrong contact', 'Other'];
 const ACTIVITY_TEMPLATES = [
   { label:'Left voicemail', type:'Voicemail', result:'Left message', next:'Follow up' },
   { label:'Sent email', type:'Email', result:'Sent information', next:'Follow up' },
   { label:'Reached contact', type:'Call', result:'Connected', next:'Follow up' },
   { label:'Completed visit', type:'Visit', result:'Meeting completed', next:'Follow up' },
-  { label:'Discussed referrals', type:'Meeting', result:'Discussed referrals', next:'Follow up on referral opportunity' }
+  { label:'Discussed Contract', type:'Meeting', result:'Discussed Contract', next:'Follow up on contract' }
 ];
 
 // Forward-only relationship-stage automation. Never downgrade or override
@@ -5853,7 +5853,7 @@ function stageAfterActivity(currentStage, result) {
   const stage = currentStage || 'Target';
   if (stage === 'Active Contract' || stage === 'Not a fit') return stage;
   const connectedResults = ['Connected', 'Spoke with SLP', 'Spoke with Director of Rehab', 'Spoke with Administrator', 'Meeting completed', 'Interested'];
-  const referralResults = ['Referral opportunity', 'Discussed referrals'];
+  const referralResults = ['Referral opportunity', 'Discussed Contract', 'Discussed referrals'];
   if (referralResults.includes(result) && ['Target','Contacted','Connected'].includes(stage)) return 'Contract Discussion';
   if (connectedResults.includes(result) && ['Target','Contacted'].includes(stage)) return 'Connected';
   if (stage === 'Target') return 'Contacted';
@@ -8345,8 +8345,6 @@ function AccountDetail({
   const recordReferral = () => {
     const numericRate = Number(referralRate);
     if (!referralDate || referralRate === '' || !Number.isFinite(numericRate) || numericRate < 0) return;
-    const isMobileReferral = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
-    const simplePracticeWindow = isMobileReferral ? null : window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
     const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
     const localReferral = {
@@ -8365,7 +8363,7 @@ function AccountDetail({
         ? { ...a, RelationshipStage: 'Active Contract', Status: 'Customer' }
         : a)
     }));
-    window.__crmShowToast && window.__crmShowToast(isMobileReferral ? 'Referral recorded' : 'Referral recorded — opening SimplePractice');
+    window.__crmShowToast && window.__crmShowToast('Referral recorded');
     apiPost('createReferralActivity', { data: {
       AccountId: account.AccountId,
       ReferralDate: referralDate,
@@ -8387,9 +8385,6 @@ function AccountDetail({
       window.__crmShowToast && window.__crmShowToast('Referral save failed — restoring server data');
       onRefreshAccount(account.AccountId);
     });
-    if (!isMobileReferral && !simplePracticeWindow) {
-      window.__crmShowToast && window.__crmShowToast('Referral recorded — allow pop-ups to open SimplePractice');
-    }
   };
 
   const startEditActivity = act => {
@@ -8643,7 +8638,11 @@ function AccountDetail({
   }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "↗"), "Referral Activity"), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/55 mt-1"
   }, "Track referral activity from this facility. No patient information is stored in BDD CRM.")), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setRecordingReferral(true),
+    onClick: () => {
+      const previousRate=accountReferralActivity.find(r=>r.Rate!==''&&r.Rate!=null&&Number.isFinite(Number(r.Rate)));
+      setReferralRate(String(previousRate ? Number(previousRate.Rate) : 450));
+      setRecordingReferral(true);
+    },
     className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
   }, "+ Record Referral")), /*#__PURE__*/React.createElement("div", {
     className: "grid grid-cols-2 md:grid-cols-3 gap-3 mb-5"
@@ -8686,7 +8685,7 @@ function AccountDetail({
     className: "mobile-modal-title font-display text-xl text-navy-900"
   }, "Record Referral"), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/55 mt-1"
-  }, "Record a referral from ", account.AccountName, window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "." : " and continue to SimplePractice.")), /*#__PURE__*/React.createElement("button", {
+  }, "Record a referral from ", account.AccountName, window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "." : ".")), /*#__PURE__*/React.createElement("button", {
     onClick: () => setRecordingReferral(false),
     className: "mobile-modal-close text-navy-700/45 hover:text-navy-900 text-xl leading-none"
   }, "Close")), /*#__PURE__*/React.createElement("label", {
@@ -8709,7 +8708,7 @@ function AccountDetail({
     className: "mt-4 rounded-lg bg-skyblue-50 border border-skyblue-100 px-4 py-3 text-sm text-navy-700/70"
   }, /*#__PURE__*/React.createElement("strong", {
     className: "text-navy-900"
-  }, "No patient information is stored in BDD CRM."), window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "" : " Enter all client details only after SimplePractice opens."), /*#__PURE__*/React.createElement("div", {
+  }, "No patient information is stored in BDD CRM."), window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "" : " No patient details are stored here."), /*#__PURE__*/React.createElement("div", {
     className: "flex justify-end gap-2 mt-5"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setRecordingReferral(false),
@@ -8718,7 +8717,7 @@ function AccountDetail({
     onClick: recordReferral,
     disabled: !referralDate || referralRate === '' || !Number.isFinite(Number(referralRate)) || Number(referralRate) < 0,
     className: "bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
-  }, window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "Record Referral" : "Record & Open SimplePractice")))), /*#__PURE__*/React.createElement("div", {
+  }, window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? "Record Referral" : "Record Referral")))), /*#__PURE__*/React.createElement("div", {
     className: "account-detail-activity-map-grid"
   }, /*#__PURE__*/React.createElement(ActivityLogCard, {
     activities: accountActivities,
@@ -11473,7 +11472,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [referralAccountId, setReferralAccountId] = useState('');
   const [referralAccountQuery, setReferralAccountQuery] = useState('');
-  const [globalReferralRate, setGlobalReferralRate] = useState('');
+  const [globalReferralRate, setGlobalReferralRate] = useState('450');
   const [globalReferralDate, setGlobalReferralDate] = useState(() => {
     const now = new Date();
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
@@ -11488,10 +11487,17 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     setShowReferralModal(false);
     setReferralAccountId('');
     setReferralAccountQuery('');
-    setGlobalReferralRate('');
+    setGlobalReferralRate('450');
     setGlobalReferralDate(todayLocalDate());
   };
   const allAccounts = (searchData && searchData.accounts) || [];
+  const allReferralActivity = (searchData && searchData.referralActivity) || [];
+  const defaultReferralRate = accountId => {
+    const previous=[...allReferralActivity].filter(r=>r.AccountId===accountId&&r.Rate!==''&&r.Rate!=null&&Number.isFinite(Number(r.Rate)))
+      .sort((a,b)=>String(b.ReferralDate||'').localeCompare(String(a.ReferralDate||'')))[0];
+    return String(previous ? Number(previous.Rate) : 450);
+  };
+  useEffect(()=>{ if(referralAccountId)setGlobalReferralRate(defaultReferralRate(referralAccountId)); },[referralAccountId,allReferralActivity]);
   const activityPickerResults = useMemo(() => {
     const q = activityPickerQuery.trim().toLowerCase();
     return allAccounts.filter(a => !q || [a.AccountName, getTown(a.Address), a.Region]
@@ -11677,7 +11683,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
               setReferralAccountId('');
               setReferralAccountQuery('');
             }
-            setGlobalReferralRate('');
+            setGlobalReferralRate(detailAccount&&detailAccount.AccountId?defaultReferralRate(detailAccount.AccountId):'450');
             setGlobalReferralDate(todayLocalDate());
             setShowReferralModal(true);
           }
@@ -11710,7 +11716,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
               setReferralAccountId('');
               setReferralAccountQuery('');
             }
-            setGlobalReferralRate('');
+            setGlobalReferralRate(detailAccount&&detailAccount.AccountId?defaultReferralRate(detailAccount.AccountId):'450');
             setGlobalReferralDate(todayLocalDate());
             setShowReferralModal(true);
           }
@@ -11883,7 +11889,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         /*#__PURE__*/React.createElement('div', { className:'relative' },
           /*#__PURE__*/React.createElement('input', {
             value:referralAccountQuery,
-            onChange:e=>{ setReferralAccountQuery(e.target.value); setReferralAccountId(''); },
+            onChange:e=>{ setReferralAccountQuery(e.target.value); setReferralAccountId(''); setGlobalReferralRate('450'); },
             placeholder:'Search accounts by facility name, town, region…',
             autoComplete:'off',
             'aria-label':'Search for associated account'
@@ -11893,7 +11899,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
               key:a.AccountId,
               type:'button',
               className:'saas-search-result',
-              onClick:()=>{ setReferralAccountId(a.AccountId); setReferralAccountQuery(a.AccountName || 'Unnamed account'); }
+              onClick:()=>{ setReferralAccountId(a.AccountId); setReferralAccountQuery(a.AccountName || 'Unnamed account'); setGlobalReferralRate(defaultReferralRate(a.AccountId)); }
             },
               /*#__PURE__*/React.createElement('strong', null, a.AccountName || 'Unnamed account'),
               /*#__PURE__*/React.createElement('span', null, [a.Region, getTown(a.Address), a.RelationshipStage || 'Target'].filter(Boolean).join(' · '))
@@ -11905,7 +11911,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
             /*#__PURE__*/React.createElement('div', { className:'text-xs font-semibold text-teal-800' }, 'Selected account'),
             /*#__PURE__*/React.createElement('div', { className:'text-xs text-teal-700 mt-0.5' }, `${selectedReferralAccount.AccountName || 'Unnamed account'}${getTown(selectedReferralAccount.Address) ? ` · ${getTown(selectedReferralAccount.Address)}` : ''}`)
           ),
-          /*#__PURE__*/React.createElement('button', { type:'button', className:'text-xs font-semibold text-teal-700 hover:text-teal-900', onClick:()=>{ setReferralAccountId(''); setReferralAccountQuery(''); } }, 'Change')
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'text-xs font-semibold text-teal-700 hover:text-teal-900', onClick:()=>{ setReferralAccountId(''); setReferralAccountQuery(''); setGlobalReferralRate('450'); } }, 'Change')
         ),
         /*#__PURE__*/React.createElement('label', null, 'Referral date'),
         /*#__PURE__*/React.createElement('input', { type:'date', value:globalReferralDate, onChange:e=>setGlobalReferralDate(e.target.value) }),
@@ -11916,7 +11922,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         ),
         /*#__PURE__*/React.createElement('div', { className:'saas-modal-actions' },
           /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:closeReferralModal }, 'Cancel'),
-          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-referral-btn', disabled:!referralAccountId || !globalReferralDate || globalReferralRate === '' || !Number.isFinite(Number(globalReferralRate)) || Number(globalReferralRate) < 0, onClick:() => { const rate = Number(globalReferralRate); if (!referralAccountId || !globalReferralDate || !Number.isFinite(rate) || rate < 0) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate, rate); closeReferralModal(); } }, window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? 'Record Referral' : 'Record & Open SimplePractice')
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-referral-btn', disabled:!referralAccountId || !globalReferralDate || globalReferralRate === '' || !Number.isFinite(Number(globalReferralRate)) || Number(globalReferralRate) < 0, onClick:() => { const rate = Number(globalReferralRate); if (!referralAccountId || !globalReferralDate || !Number.isFinite(rate) || rate < 0) return; onNewReferral && onNewReferral(referralAccountId, globalReferralDate, rate); closeReferralModal(); } }, 'Record Referral')
         )
       )
     )
@@ -12144,8 +12150,6 @@ function App() {
     if (!accountId || !referralDate || !Number.isFinite(Number(rate)) || Number(rate) < 0) return;
     const account = data.accounts.find(a => a.AccountId === accountId);
     if (!account) return;
-    const isMobileReferral = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
-    const simplePracticeWindow = isMobileReferral ? null : window.open('https://secure.simplepractice.com/', '_blank', 'noopener,noreferrer');
     const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
     const localReferral = { ReferralActivityId:tempId, AccountId:accountId, ReferralDate:referralDate, Rate:Number(rate), RecordedBy:recordedBy };
@@ -12154,7 +12158,9 @@ function App() {
       referralActivity:[...(d.referralActivity || []), localReferral],
       accounts:d.accounts.map(a => a.AccountId === accountId && (a.RelationshipStage || 'Target') !== 'Active Contract' ? { ...a, RelationshipStage:'Active Contract', Status:'Customer' } : a)
     }));
-    window.__crmShowToast && window.__crmShowToast(isMobileReferral ? 'Referral recorded' : 'Referral recorded — opening SimplePractice');
+    setSelectedId(accountId);
+    setView('detail');
+    window.__crmShowToast && window.__crmShowToast('Referral recorded');
     apiPost('createReferralActivity', { data:{ AccountId:accountId, ReferralDate:referralDate, Rate:Number(rate), RecordedBy:recordedBy } }).then(response => {
       if (!response || response.success === false) throw new Error((response && response.error) || 'Save failed');
       const savedId = response.result && response.result.ReferralActivityId;
@@ -12166,7 +12172,6 @@ function App() {
       window.__crmShowToast && window.__crmShowToast('Referral save failed — restoring server data');
       refreshAccount(accountId);
     });
-    if (!isMobileReferral && !simplePracticeWindow) window.__crmShowToast && window.__crmShowToast('Referral recorded — allow pop-ups to open SimplePractice');
   };
   const chromeProps = pageTitle => ({
     activeView: view === 'home' ? 'home' : view === 'today' ? 'today' : view === 'pipeline' ? 'pipeline' : view === 'map' ? 'map' : 'accounts',
@@ -12180,7 +12185,7 @@ function App() {
     onBack: goBack,
     canGoBack,
     onSignOut: signOut,
-    searchData: { accounts:visibleAccounts, contacts:data.contacts, activities:data.activities },
+    searchData: { accounts:visibleAccounts, contacts:data.contacts, activities:data.activities, referralActivity:visibleReferralActivity },
     includeTestData,
     onIncludeTestDataChange: setIncludeTestData,
     startPage,
