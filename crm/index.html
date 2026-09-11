@@ -5786,7 +5786,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '110';
+const CRM_BUILD_NUMBER = '111';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -12549,6 +12549,9 @@ function App() {
     // Sign out locally first so a slow Apps Script response never makes the
     // button look unresponsive. The server-side logout finishes in the
     // background, just like our optimistic save flows.
+    // Capture the token before clearing sessionStorage so the backend can
+    // revoke this exact session instead of receiving an empty token.
+    const sessionToken = getSessionToken();
     setSigningOut(true);
 
     sessionStorage.removeItem('bdd_crm_unlocked');
@@ -12559,7 +12562,7 @@ function App() {
     setData(emptyCrmData_());
     setUnlocked(false);
 
-    apiPost('logout', {}).catch(err => {
+    apiPost('logout', { token: sessionToken }).catch(err => {
       console.warn('Background logout request failed:', err);
       // Local credentials are already cleared, so the user is still signed
       // out on this device even if Google's logout request fails.
