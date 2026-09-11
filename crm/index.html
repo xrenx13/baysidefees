@@ -165,6 +165,7 @@ try {
   .saas-search-result:hover { background:#f8fafc; }
   .saas-search-result strong { display:block; font-size:12px; color:#0f172a; }
   .saas-search-result span { display:block; margin-top:2px; font-size:11px; color:#64748b; }
+  .stage-contract-discussion { background:#cdebe7 !important; color:#0b5f59 !important; }
   .saas-referral-btn { border:1px solid #0f766e; background:#0f766e; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; transition:.15s; white-space:nowrap; }
   .saas-referral-btn:hover { background:#0c5f58; border-color:#0c5f58; }
   .saas-modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.36); display:flex; align-items:center; justify-content:center; padding:20px; z-index:2000; }
@@ -5721,7 +5722,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '100';
+const CRM_BUILD_NUMBER = '102';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -6002,7 +6003,7 @@ function stageColor(stage) {
     'Target': 'bg-navy-900 text-white',
     'Contacted': 'bg-amber-100 text-amber-800',
     'Connected': 'bg-amber-300 text-amber-900',
-    'Contract Discussion': 'bg-teal-50 text-teal-700',
+    'Contract Discussion': 'stage-contract-discussion',
     'Active Contract': 'bg-teal-500 text-white',
     'Not a fit': 'bg-navy-100 text-navy-700/40'
   };
@@ -9004,7 +9005,7 @@ const NEW_MAP_STAGE_HEX = {
   'Target': '#081e3d',
   'Contacted': '#fde68a',
   'Connected': '#fbbf24',
-  'Contract Discussion': '#ccfbf1',
+  'Contract Discussion': '#cdebe7',
   'Active Contract': '#14b8a6',
   'Not a fit': '#cbd5e1'
 };
@@ -9912,7 +9913,7 @@ function PipelineView({
       'Target': 'bg-navy-900 text-white',
       'Contacted': 'bg-amber-100 text-amber-800',
       'Connected': 'bg-amber-300 text-amber-900',
-      'Contract Discussion': 'bg-teal-50 text-teal-700',
+      'Contract Discussion': 'stage-contract-discussion',
       'Active Contract': 'bg-teal-500 text-white'
     };
     return colors[stage] || stageColor(stage);
@@ -10104,7 +10105,7 @@ function PipelineView({
       className: "flex items-center justify-between gap-2"
     }, /*#__PURE__*/React.createElement("span", null, stage), /*#__PURE__*/React.createElement("span", {
       className: "opacity-80"
-    }, columns[stage].length)), /*#__PURE__*/React.createElement("div", {
+    }, columns[stage].length)), stage !== 'Contract Discussion' && /*#__PURE__*/React.createElement("div", {
       className: "mt-0.5 text-[10px] font-medium opacity-75"
     }, highOpportunityCount(stage), " high opportunity")), !isCollapsedEdge && /*#__PURE__*/React.createElement("div", {
     className: "bg-skyblue-100/30 rounded-b-lg py-2 min-h-[120px] space-y-2"
