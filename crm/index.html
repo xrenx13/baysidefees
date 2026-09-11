@@ -5698,6 +5698,13 @@ try {
     body.saas-enabled .saas-page-heading > div { align-items:center; }
   }
 </style>
+<style id="bdd-analytics-desktop-hero-spacing">
+  @media (min-width:641px) {
+    body.saas-enabled #root > .bdd-home {
+      padding-top:calc(var(--saas-topbar) + 14px) !important;
+    }
+  }
+</style>
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="crm-browser-underlay" aria-hidden="true"></div>
@@ -5711,7 +5718,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '96';
+const CRM_BUILD_NUMBER = '97';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -11240,7 +11247,6 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
 
   return /*#__PURE__*/React.createElement('main', { className:'bdd-home' }, /*#__PURE__*/React.createElement('div', { className:'home-shell' },
     /*#__PURE__*/React.createElement('div', { className:'home-hero' }, /*#__PURE__*/React.createElement('div', null,
-      /*#__PURE__*/React.createElement('div', { className:'home-eyebrow' }, 'BDD CRM'),
       /*#__PURE__*/React.createElement('h1', { className:'home-title' }, 'Revenue & Referral Performance'),
       /*#__PURE__*/React.createElement('p', { className:'home-subtitle' }, 'Revenue momentum, referral trends, and the relationships driving growth.')
     ), /*#__PURE__*/React.createElement('div', { className:'home-view-toggle', role:'group', 'aria-label':'Analytics view' },
