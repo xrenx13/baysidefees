@@ -5647,7 +5647,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '84';
+const CRM_BUILD_NUMBER = '85';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -6967,7 +6967,7 @@ function AccountForm({
         componentRestrictions: {
           country: 'us'
         },
-        fields: ['name', 'formatted_address', 'formatted_phone_number', 'website', 'rating', 'user_ratings_total']
+        fields: ['name', 'formatted_address', 'formatted_phone_number', 'international_phone_number', 'website', 'rating', 'user_ratings_total']
       });
       setPlacesReady(true);
       listener = autocomplete.addListener('place_changed', () => {
@@ -6987,7 +6987,7 @@ function AccountForm({
             ...f,
             AccountName: place.name || f.AccountName,
             Address: nextAddress,
-            Phone: place.formatted_phone_number || '',
+            Phone: formatPhoneInput(place.formatted_phone_number || place.international_phone_number || ''),
             Website: place.website || '',
             Rating: googleRating,
             Region: inferredRegion || f.Region
@@ -8702,7 +8702,7 @@ function AccountDetail({
   }, /*#__PURE__*/React.createElement("span", {
     className: "absolute left-3 top-2 text-navy-700/55"
   }, "$"), /*#__PURE__*/React.createElement("input", {
-    type: "number", min: "0", step: "0.01", inputMode: "decimal", value: referralRate, onChange: e => setReferralRate(e.target.value), placeholder: "450",
+    type: "text", inputMode: "decimal", value: referralRate, onChange: e => setReferralRate(e.target.value.replace(/[^\d.]/g,'').replace(/(\..*)\./g,'$1')), placeholder: "450",
     className: "w-full rounded-lg border border-skyblue-200 pl-7 pr-3 py-2 text-navy-900 focus:outline-none focus:ring-2 focus:ring-teal-400"
   })), /*#__PURE__*/React.createElement("div", {
     className: "mt-4 rounded-lg bg-skyblue-50 border border-skyblue-100 px-4 py-3 text-sm text-navy-700/70"
@@ -11918,7 +11918,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
         /*#__PURE__*/React.createElement('label', null, 'Rate'),
         /*#__PURE__*/React.createElement('div', { className:'relative' },
           /*#__PURE__*/React.createElement('span', { className:'absolute left-3 top-2.5 text-slate-500' }, '$'),
-          /*#__PURE__*/React.createElement('input', { type:'number', min:'0', step:'0.01', inputMode:'decimal', value:globalReferralRate, onChange:e=>setGlobalReferralRate(e.target.value), placeholder:'450', style:{paddingLeft:'28px'} })
+          /*#__PURE__*/React.createElement('input', { type:'text', inputMode:'decimal', value:globalReferralRate, onChange:e=>setGlobalReferralRate(e.target.value.replace(/[^\d.]/g,'').replace(/(\..*)\./g,'$1')), placeholder:'450', style:{paddingLeft:'28px'} })
         ),
         /*#__PURE__*/React.createElement('div', { className:'saas-modal-actions' },
           /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary', onClick:closeReferralModal }, 'Cancel'),
