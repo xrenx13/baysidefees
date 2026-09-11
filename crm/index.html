@@ -92,6 +92,12 @@ try {
   .saas-mini-cal-dow { text-align:center; font-size:8px; font-weight:700; color:#a0a8b5; padding-bottom:3px; }
   .saas-mini-cal-day { aspect-ratio:1; min-width:0; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:9px; color:#657084; }
   .saas-mini-cal-day.today { background:var(--saas-navy); color:#fff; font-weight:700; }
+  .saas-mini-cal-day.has-meeting { position:relative; }
+  a.saas-mini-cal-day.has-meeting { cursor:pointer; text-decoration:none; }
+  a.saas-mini-cal-day.has-meeting:hover { background:#e8f5f3; color:#0f6f69; }
+  a.saas-mini-cal-day.today.has-meeting:hover { background:var(--saas-navy); color:#fff; }
+  .saas-mini-cal-day.has-meeting::after { content:''; position:absolute; left:50%; bottom:1px; width:3px; height:3px; border-radius:50%; background:#0f8a80; transform:translateX(-50%); }
+  .saas-mini-cal-day.today.has-meeting::after { background:#fff; }
   .saas-mini-cal-day.empty { visibility:hidden; }
   .saas-side-bottom { margin-top:auto; padding:12px 10px 14px; border-top:1px solid var(--saas-line); }
   .saas-profile { display:flex; align-items:flex-start; gap:9px; padding:8px 9px; border-radius:10px; }
@@ -122,6 +128,7 @@ try {
   .saas-chrome.dark .saas-mini-cal-dow { color:#7189a6; }
   .saas-chrome.dark .saas-mini-cal-day { color:#b7c4d5; }
   .saas-chrome.dark .saas-mini-cal-day.today { background:#0f8a80; color:#fff; }
+  .saas-chrome.dark a.saas-mini-cal-day.has-meeting:hover { background:rgba(15,138,128,.22); color:#fff; }
   .saas-chrome.dark .saas-side-bottom { border-top-color:rgba(255,255,255,.10); }
   .saas-chrome.dark .saas-theme-toggle { color:#b7c4d5; }
   .saas-chrome.dark .saas-theme-toggle:hover { background:rgba(255,255,255,.07); color:#fff; }
@@ -178,7 +185,9 @@ try {
   .saas-preference-refresh:disabled { cursor:wait; opacity:.6; }
   .saas-preference-signout { margin-right:auto; min-height:36px; border:1px solid #d96b6b; border-radius:9px; padding:0 12px; background:#fff; color:#b42318; font-size:12px; font-weight:700; cursor:pointer; }
   .saas-preference-signout:hover { background:#fff5f4; border-color:#c74747; }
+  .saas-preferences-meta { display:flex; flex-direction:column; align-items:flex-end; gap:3px; margin-left:auto; text-align:right; }
   .saas-preferences-build { margin-left:auto; color:#98a2b3; font-size:10.5px; font-weight:600; }
+  .saas-preferences-made-with { color:#98a2b3; font-size:10px; font-weight:550; line-height:1.3; white-space:nowrap; }
   .saas-preferences-modal { position:relative; }
   .saas-preferences-close { position:absolute; top:15px; right:16px; border:0; border-radius:8px; padding:6px 8px; background:#f3f6f8; color:#526174; font-size:11.5px; font-weight:650; cursor:pointer; }
   .saas-preferences-close:hover { background:#e8eef2; color:#132d4f; }
@@ -5605,6 +5614,11 @@ try {
     body.saas-enabled .analytics-activity-count-button:hover { background:#e8f5f3; }
     body.saas-enabled .analytics-activity-last-button { color:#455b78; text-align:left; }
     body.saas-enabled .analytics-activity-last-button:hover { color:#11756f; text-decoration:underline; }
+    body.saas-enabled .analytics-activity-drilldown { width:min(720px,calc(100vw - 48px)); }
+    body.saas-enabled .analytics-activity-drilldown-body { padding:0 22px 20px; }
+    body.saas-enabled .analytics-activity-drilldown-row { padding:14px 4px; }
+    body.saas-enabled .analytics-activity-drilldown-close { box-sizing:border-box; width:auto; min-width:64px; height:36px; padding:0 13px; border:1px solid #dfe7ed; border-radius:9px; background:#fff; color:#4b5563; font-family:inherit; font-size:13px; font-weight:700; line-height:1; cursor:pointer; }
+    body.saas-enabled .analytics-activity-drilldown-close:hover { background:#f4f8fa; color:#15233b; }
     body.saas-enabled .analytics-activity-table-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:17px 18px 14px; border-bottom:1px solid #e8eef3; background:#fbfcfd; }
     body.saas-enabled .analytics-activity-table-wrap { overflow-x:auto; }
     body.saas-enabled .analytics-activity-table { width:100%; border-collapse:collapse; font-size:12px; }
@@ -5647,7 +5661,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '85';
+const CRM_BUILD_NUMBER = '89';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -10748,6 +10762,7 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
       const date=raw?new Date(raw):null;
       return {...a,_date:date,_key:a.ActivityId||`${a.AccountId}-${raw||index}`,_account:accountMap[a.AccountId]||null};
     }).filter(a=>a._date&&!Number.isNaN(a._date.getTime())&&a._date>=periods[0].start&&a._date<=now)
+      .filter(a=>a._account)
       .filter(a=>regionFilter==='All Regions'||a._account?.Region===regionFilter)
       .filter(a=>typeFilter==='All Activity'||a.ActivityType===typeFilter);
     const grouped={};
@@ -10791,12 +10806,12 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
       )
     ),
     activityDrilldown&&/*#__PURE__*/React.createElement('div',{className:'home-month-modal-backdrop',onMouseDown:e=>{if(e.target===e.currentTarget)setActivityDrilldown(null);}},
-      /*#__PURE__*/React.createElement('div',{className:'home-month-modal',role:'dialog','aria-modal':'true','aria-label':'Filtered activity details'},
+      /*#__PURE__*/React.createElement('div',{className:'home-month-modal analytics-activity-drilldown',role:'dialog','aria-modal':'true','aria-label':'Filtered activity details'},
         /*#__PURE__*/React.createElement('div',{className:'home-month-modal-head'},/*#__PURE__*/React.createElement('div',null,
           /*#__PURE__*/React.createElement('div',{className:'home-month-modal-title'},activityDrilldown.row.name),
           /*#__PURE__*/React.createElement('div',{className:'home-month-modal-copy'},activityDrilldown.period?`Activities for ${activityDrilldown.period.label}`:`All activities in ${periodLabel.toLowerCase()}`)
-        ),/*#__PURE__*/React.createElement('button',{type:'button',className:'home-month-modal-close mobile-modal-close',onClick:()=>setActivityDrilldown(null)},'Close')),
-        /*#__PURE__*/React.createElement('div',{className:'divide-y divide-skyblue-100'},activityDrilldown.items.map(a=>/*#__PURE__*/React.createElement('button',{type:'button',key:a._key,className:'w-full text-left py-3 hover:bg-skyblue-100/30',onClick:()=>activityDrilldown.row.account&&onSelect(activityDrilldown.row.account)},
+        ),/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-drilldown-close',onClick:()=>setActivityDrilldown(null)},'Close')),
+        /*#__PURE__*/React.createElement('div',{className:'analytics-activity-drilldown-body divide-y divide-skyblue-100'},activityDrilldown.items.map(a=>/*#__PURE__*/React.createElement('button',{type:'button',key:a._key,className:'analytics-activity-drilldown-row w-full text-left hover:bg-skyblue-100/30',onClick:()=>activityDrilldown.row.account&&onSelect(activityDrilldown.row.account)},
           /*#__PURE__*/React.createElement('div',{className:'flex justify-between gap-3'},/*#__PURE__*/React.createElement('strong',{className:'text-sm text-navy-900'},[a.ActivityType,a.ActivityResult].filter(Boolean).join(' — ')||'Activity'),/*#__PURE__*/React.createElement('span',{className:'text-xs text-navy-700/50'},a._date.toLocaleDateString())),
           a.Details&&/*#__PURE__*/React.createElement('div',{className:'text-sm text-navy-700/70 mt-1'},a.Details)
         )))
@@ -11421,9 +11436,26 @@ function SaaSIcon({ name }) {
   return /*#__PURE__*/React.createElement('span', { className: 'saas-nav-icon' }, /*#__PURE__*/React.createElement('svg', common, ...(paths[name] || paths.accounts)));
 }
 
+let sidebarMeetingsCache = null;
+let sidebarMeetingsPromise = null;
 function SaaSMiniCalendar() {
   const today = new Date();
   const [monthDate, setMonthDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const [meetingDates,setMeetingDates]=useState(()=>sidebarMeetingsCache||new Set());
+  useEffect(()=>{
+    let cancelled=false;
+    if(sidebarMeetingsCache){setMeetingDates(sidebarMeetingsCache);return()=>{cancelled=true;};}
+    if(!sidebarMeetingsPromise)sidebarMeetingsPromise=apiPost('getTopUpcomingMeetings',{}).then(response=>{
+      const dates=new Set();
+      if(response&&response.success)(response.result||[]).forEach(meeting=>{
+        const date=new Date(meeting.date||meeting.start);
+        if(!Number.isNaN(date.getTime()))dates.add(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`);
+      });
+      sidebarMeetingsCache=dates;return dates;
+    }).catch(()=>new Set()).finally(()=>{sidebarMeetingsPromise=null;});
+    sidebarMeetingsPromise.then(dates=>{if(!cancelled)setMeetingDates(dates);});
+    return()=>{cancelled=true;};
+  },[]);
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
@@ -11443,7 +11475,16 @@ function SaaSMiniCalendar() {
     ),
     /*#__PURE__*/React.createElement('div', { className:'saas-mini-cal-grid' },
       ['S','M','T','W','T','F','S'].map((d,i)=>/*#__PURE__*/React.createElement('div',{className:'saas-mini-cal-dow',key:`dow-${i}`},d)),
-      cells.map((day,i)=>/*#__PURE__*/React.createElement('div',{key:`day-${i}`,className:`saas-mini-cal-day ${day == null ? 'empty' : ''} ${day && isCurrentMonth && day === today.getDate() ? 'today' : ''}`},day || ''))
+      cells.map((day,i)=>{
+        const dateKey=day?`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`:'';
+        const hasMeeting=day&&meetingDates.has(dateKey);
+        const className=`saas-mini-cal-day ${day == null ? 'empty' : ''} ${day && isCurrentMonth && day === today.getDate() ? 'today' : ''} ${hasMeeting?'has-meeting':''}`;
+        if(hasMeeting){
+          const dateLabel=new Date(year,month,day).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});
+          return /*#__PURE__*/React.createElement('a',{key:`day-${i}`,href:`https://calendar.google.com/calendar/u/0/r/day/${year}/${month+1}/${day}`,target:'_blank',rel:'noopener noreferrer',className,'aria-label':`Open ${dateLabel} in Google Calendar`,title:'Open day in Google Calendar'},day);
+        }
+        return /*#__PURE__*/React.createElement('div',{key:`day-${i}`,className},day || '');
+      })
     )
   );
 }
@@ -11809,9 +11850,13 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       type:'button',
       className:'saas-preference-signout',
       onClick:()=>{ setShowPreferences(false); onSignOut && onSignOut(); }
-    }, 'Sign out'), /*#__PURE__*/React.createElement('span', {
+    }, 'Sign out'), /*#__PURE__*/React.createElement('div', {
+      className:'saas-preferences-meta'
+    }, /*#__PURE__*/React.createElement('span', {
       className:'saas-preferences-build'
-    }, `Build ${CRM_BUILD_NUMBER}`)))),
+    }, `Build ${CRM_BUILD_NUMBER}`), /*#__PURE__*/React.createElement('span', {
+      className:'saas-preferences-made-with'
+    }, 'Built with ❤️ in Dennis & Norwell'))))),
     showActivityPicker && /*#__PURE__*/React.createElement('div', {
       className:'today-quick-backdrop saas-global-activity-backdrop',
       onMouseDown:e => { if (e.target === e.currentTarget) setShowActivityPicker(false); }
