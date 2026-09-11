@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>Bayside Dysphagia Diagnostics — CRM</title>
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
 <link rel="manifest" href="manifest.json" />
@@ -165,6 +168,7 @@ try {
   .saas-search-result:hover { background:#f8fafc; }
   .saas-search-result strong { display:block; font-size:12px; color:#0f172a; }
   .saas-search-result span { display:block; margin-top:2px; font-size:11px; color:#64748b; }
+  .stage-contacted { background:#fde9a9 !important; color:#8a4608 !important; }
   .stage-contract-discussion { background:#cdebe7 !important; color:#0b5f59 !important; }
   .saas-referral-btn { border:1px solid #0f766e; background:#0f766e; color:#fff; border-radius:9px; padding:8px 12px; font-size:12px; line-height:1; font-weight:650; cursor:pointer; transition:.15s; white-space:nowrap; }
   .saas-referral-btn:hover { background:#0c5f58; border-color:#0c5f58; }
@@ -4653,8 +4657,22 @@ try {
   }
   body.saas-enabled .account-list-desktop .account-list-view-toggle button{
     display:inline-flex;
+    flex:1 1 0;
     align-items:center;
+    justify-content:center;
     gap:6px;
+  }
+  body.saas-enabled .account-list-desktop .account-list-view-toggle,
+  body.saas-enabled .account-list-desktop .account-saved-view-controls{
+    width:236px;
+    max-width:100%;
+  }
+  body.saas-enabled .account-list-desktop .account-saved-view-controls select{
+    flex:1 1 auto;
+    min-width:0;
+  }
+  body.saas-enabled .account-list-desktop .account-saved-view-controls button{
+    flex:0 0 auto;
   }
   body.saas-enabled .account-list-desktop .account-list-view-icon{
     font-size:14px;
@@ -5709,6 +5727,52 @@ try {
     }
   }
 </style>
+<style id="bdd-chain-intelligence">
+  @media (min-width:641px) {
+    body.saas-enabled .account-list-desktop .account-list-view-toggle,
+    body.saas-enabled .account-list-desktop .account-saved-view-controls { width:316px; }
+  }
+  .account-chain-view { display:grid; gap:14px; }
+  .account-chain-group { overflow:hidden; border:1px solid #dbe5ed; border-radius:15px; background:#fff; box-shadow:0 2px 8px rgba(8,30,61,.035); }
+  .account-chain-summary { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 18px; cursor:pointer; list-style:none; }
+  .account-chain-summary::-webkit-details-marker { display:none; }
+  .account-chain-summary:hover { background:#f8fbfc; }
+  .account-chain-title { min-width:0; }
+  .account-chain-title strong { display:block; color:#10213c; font-size:16px; letter-spacing:-.015em; }
+  .account-chain-title span { display:block; margin-top:3px; color:#7c899c; font-size:12px; }
+  .account-chain-overview { display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:flex-end; }
+  .account-chain-penetration { color:#0f766e; font-size:12px; font-weight:750; white-space:nowrap; }
+  .account-chain-chevron { color:#8290a3; font-size:20px; line-height:1; transition:transform .15s ease; }
+  .account-chain-group[open] .account-chain-chevron { transform:rotate(180deg); }
+  .account-chain-stage-strip { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .account-chain-stage-count { display:inline-flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px; font-size:10px; font-weight:750; white-space:nowrap; }
+  .account-chain-body { border-top:1px solid #e6edf2; padding:14px 18px 16px; background:#fbfcfd; }
+  .account-chain-best { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:12px; padding:11px 12px; border:1px solid #cfe5e2; border-radius:10px; background:#f0f8f7; }
+  .account-chain-best span { color:#718096; font-size:11px; font-weight:750; letter-spacing:.045em; text-transform:uppercase; }
+  .account-chain-best button { border:0; padding:0; background:transparent; color:#0f766e; font-size:12px; font-weight:750; text-align:right; cursor:pointer; }
+  .account-chain-best button:hover { text-decoration:underline; }
+  .account-chain-facilities { overflow:hidden; border:1px solid #e1e9ef; border-radius:11px; background:#fff; }
+  .account-chain-facility { width:100%; display:grid; grid-template-columns:minmax(220px,1.7fr) minmax(150px,1fr) auto minmax(170px,1fr); align-items:center; gap:14px; padding:12px 14px; border:0; border-bottom:1px solid #e9eff3; background:#fff; color:#172640; text-align:left; cursor:pointer; }
+  .account-chain-facility:last-child { border-bottom:0; }
+  .account-chain-facility:hover { background:#f7fafb; }
+  .account-chain-facility strong { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+  .account-chain-facility-meta, .account-chain-facility-action { color:#7b899b; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .account-chain-unassigned { padding:12px 16px; border:1px dashed #d6e1e8; border-radius:12px; color:#8491a3; font-size:12px; text-align:center; }
+  .account-related-chain-card { margin-bottom:24px; padding:20px 22px; border:1px solid #dbe5ed; border-radius:15px; background:#fff; box-shadow:0 2px 8px rgba(8,30,61,.035); }
+  .account-related-chain-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding-bottom:12px; border-bottom:1px solid #e7edf2; }
+  .account-related-chain-head h2 { margin:0; color:#0b1f3a; font-size:17px; font-weight:750; letter-spacing:-.015em; }
+  .account-related-chain-head p { margin:4px 0 0; color:#8190a3; font-size:12px; }
+  .account-related-chain-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:13px; }
+  .account-related-chain-item { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; padding:11px 12px; border:1px solid #e0e9ef; border-radius:10px; background:#fbfcfd; text-align:left; cursor:pointer; }
+  .account-related-chain-item:hover { border-color:#bdd8d5; background:#f2f8f7; }
+  .account-related-chain-copy { min-width:0; }
+  .account-related-chain-copy strong { display:block; overflow:hidden; color:#172640; font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+  .account-related-chain-copy span { display:block; margin-top:3px; color:#8290a3; font-size:11px; }
+  @media (max-width:640px) {
+    .account-related-chain-card { margin:0 0 10px; padding:16px; border-radius:14px; }
+    .account-related-chain-list { grid-template-columns:1fr; }
+  }
+</style>
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="crm-browser-underlay" aria-hidden="true"></div>
@@ -5722,7 +5786,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '102';
+const CRM_BUILD_NUMBER = '110';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -6001,7 +6065,7 @@ function DistanceLinks({
 function stageColor(stage) {
   const map = {
     'Target': 'bg-navy-900 text-white',
-    'Contacted': 'bg-amber-100 text-amber-800',
+    'Contacted': 'stage-contacted',
     'Connected': 'bg-amber-300 text-amber-900',
     'Contract Discussion': 'stage-contract-discussion',
     'Active Contract': 'bg-teal-500 text-white',
@@ -7891,6 +7955,7 @@ function ActivityLogCard({
 
 function AccountDetail({
   account,
+  accounts,
   contacts,
   connections,
   activities,
@@ -7901,7 +7966,8 @@ function AccountDetail({
   onLocalData,
   roleOptions,
   relationshipOptions,
-  referralSourceOptions
+  referralSourceOptions,
+  onSelectAccount
 }) {
   const detailPageRef = useRef(null);
 
@@ -8051,6 +8117,21 @@ function AccountDetail({
 
   const accountContacts = contacts.filter(c => c.AccountId === account.AccountId);
   const accountConnections = connections.filter(c => c.AccountId === account.AccountId);
+  const accountChainName = String(account.ChainAffiliation || '').trim();
+  const relatedChainAccounts = accountChainName ? (accounts || []).filter(candidate =>
+    candidate.AccountId !== account.AccountId && String(candidate.ChainAffiliation || '').trim() === accountChainName
+  ) : [];
+  const fullChainAccounts = accountChainName ? [account, ...relatedChainAccounts] : [];
+  const chainActiveCount = fullChainAccounts.filter(candidate => (candidate.RelationshipStage || 'Target') === 'Active Contract').length;
+  const chainOpportunityRank = candidate => {
+    const opportunity = computeOverallFeesOpportunity(candidate);
+    return opportunity ? ({ 'Very High':4, 'High':3, 'Medium':2, 'Low':1 }[opportunity.label] || 0) : 0;
+  };
+  const bestRelatedChainAccount = [...relatedChainAccounts].filter(candidate => !['Active Contract','Not a fit'].includes(candidate.RelationshipStage || 'Target')).sort((a,b) => {
+    const stageA = RELATIONSHIP_STAGES.indexOf(a.RelationshipStage || 'Target');
+    const stageB = RELATIONSHIP_STAGES.indexOf(b.RelationshipStage || 'Target');
+    return stageB - stageA || chainOpportunityRank(b) - chainOpportunityRank(a) || (Number(b.BedCount) || 0) - (Number(a.BedCount) || 0) || String(a.AccountName || '').localeCompare(String(b.AccountName || ''));
+  })[0] || null;
   // Derived from the app-level activities list (kept fresh by
   // onRefreshAccount) rather than a separate local fetch -- this used to
   // be its own loadActivities() call fired alongside onRefreshAccount on
@@ -8714,7 +8795,22 @@ function AccountDetail({
     className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
   }, addingSuggestionEmail === s.email ? 'Adding…' : '+ Add')))), suggestionsError && /*#__PURE__*/React.createElement("p", {
     className: "text-red-500 text-sm mt-2"
-  }, suggestionsError))))), (account.RelationshipStage === 'Active Contract' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("div", {
+  }, suggestionsError))))), relatedChainAccounts.length > 0 && /*#__PURE__*/React.createElement('section', { className:'account-related-chain-card' },
+    /*#__PURE__*/React.createElement('div', { className:'account-related-chain-head' },
+      /*#__PURE__*/React.createElement('div', null,
+        /*#__PURE__*/React.createElement('h2', null, accountChainName),
+        /*#__PURE__*/React.createElement('p', null, `${chainActiveCount} of ${fullChainAccounts.length} facilities active · ${relatedChainAccounts.length} related facilit${relatedChainAccounts.length === 1 ? 'y' : 'ies'}`)
+      ),
+      bestRelatedChainAccount && /*#__PURE__*/React.createElement('button', { type:'button', className:'text-sm font-semibold text-teal-600 hover:text-teal-700', onClick:()=>onSelectAccount && onSelectAccount(bestRelatedChainAccount) }, `Best next: ${bestRelatedChainAccount.AccountName}`)
+    ),
+    /*#__PURE__*/React.createElement('div', { className:'account-related-chain-list' }, relatedChainAccounts.map(candidate => /*#__PURE__*/React.createElement('button', { key:candidate.AccountId, type:'button', className:'account-related-chain-item', onClick:()=>onSelectAccount && onSelectAccount(candidate) },
+      /*#__PURE__*/React.createElement('span', { className:'account-related-chain-copy' },
+        /*#__PURE__*/React.createElement('strong', null, candidate.AccountName || 'Unnamed account'),
+        /*#__PURE__*/React.createElement('span', null, [getTown(candidate.Address), candidate.Region, candidate.BedCount ? `${candidate.BedCount} beds` : null].filter(Boolean).join(' · '))
+      ),
+      /*#__PURE__*/React.createElement('span', { className:`account-chain-stage-count ${stageColor(candidate.RelationshipStage)}` }, candidate.RelationshipStage || 'Target')
+    )))
+  ), (account.RelationshipStage === 'Active Contract' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("div", {
     id: "account-referral-activity-card",
     className: "bg-white rounded-xl border border-skyblue-100 p-6 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
@@ -9003,7 +9099,7 @@ function AccountDetail({
 // ---------------------------------------------------------------------
 const NEW_MAP_STAGE_HEX = {
   'Target': '#081e3d',
-  'Contacted': '#fde68a',
+  'Contacted': '#fde9a9',
   'Connected': '#fbbf24',
   'Contract Discussion': '#cdebe7',
   'Active Contract': '#14b8a6',
@@ -9671,9 +9767,9 @@ function AccountRow({
     className: "text-sm text-navy-700/50"
   }, account.Address || account.Phone || '—'), account.Rating && /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-amber-600 mt-0.5"
-  }, "★ ", account.Rating), account.BedCount && /*#__PURE__*/React.createElement("p", {
+  }, "★ ", account.Rating), (account.BedCount || account.ChainAffiliation) && /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40 mt-0.5"
-  }, account.BedCount, " beds")), /*#__PURE__*/React.createElement("div", {
+  }, [account.BedCount ? `${account.BedCount} beds` : null, account.ChainAffiliation].filter(Boolean).join(' | '))), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-2"
   }, /*#__PURE__*/React.createElement(PropensityBadge, {
     account: account
@@ -9911,7 +10007,7 @@ function PipelineView({
   const pipelineHeaderColor = stage => {
     const colors = {
       'Target': 'bg-navy-900 text-white',
-      'Contacted': 'bg-amber-100 text-amber-800',
+      'Contacted': 'stage-contacted',
       'Connected': 'bg-amber-300 text-amber-900',
       'Contract Discussion': 'stage-contract-discussion',
       'Active Contract': 'bg-teal-500 text-white'
@@ -10157,6 +10253,75 @@ function PipelineView({
   }))));
 }
 
+function ChainView({ accounts, onSelect }) {
+  const stageRank = stage => {
+    const index = RELATIONSHIP_STAGES.indexOf(stage || 'Target');
+    return index < 0 ? 0 : index;
+  };
+  const opportunityRank = account => {
+    const opportunity = computeOverallFeesOpportunity(account);
+    return opportunity ? ({ 'Very High':4, 'High':3, 'Medium':2, 'Low':1 }[opportunity.label] || 0) : 0;
+  };
+  const chooseBestNext = facilities => facilities
+    .filter(account => !['Active Contract','Not a fit'].includes(account.RelationshipStage || 'Target'))
+    .sort((a, b) =>
+      stageRank(b.RelationshipStage) - stageRank(a.RelationshipStage) ||
+      opportunityRank(b) - opportunityRank(a) ||
+      (Number(b.BedCount) || 0) - (Number(a.BedCount) || 0) ||
+      String(a.AccountName || '').localeCompare(String(b.AccountName || ''))
+    )[0] || null;
+  const model = useMemo(() => {
+    const grouped = new Map();
+    accounts.forEach(account => {
+      const chain = String(account.ChainAffiliation || '').trim();
+      if (!chain) return;
+      if (!grouped.has(chain)) grouped.set(chain, []);
+      grouped.get(chain).push(account);
+    });
+    const groups = [...grouped.entries()].map(([name, facilities]) => {
+      const stages = {};
+      RELATIONSHIP_STAGES.forEach(stage => stages[stage] = 0);
+      facilities.forEach(account => stages[account.RelationshipStage || 'Target'] = (stages[account.RelationshipStage || 'Target'] || 0) + 1);
+      const active = stages['Active Contract'] || 0;
+      const beds = facilities.reduce((sum, account) => sum + (Number(account.BedCount) || 0), 0);
+      const regions = new Set(facilities.map(account => account.Region).filter(Boolean)).size;
+      const best = chooseBestNext(facilities);
+      facilities.sort((a, b) => stageRank(b.RelationshipStage) - stageRank(a.RelationshipStage) || String(a.AccountName || '').localeCompare(String(b.AccountName || '')));
+      return { name, facilities, stages, active, beds, regions, best };
+    }).filter(group => group.facilities.length > 1)
+      .sort((a, b) => b.active - a.active || b.facilities.length - a.facilities.length || a.name.localeCompare(b.name));
+    return { groups };
+  }, [accounts]);
+  if (!model.groups.length) return /*#__PURE__*/React.createElement('div', { className:'account-chain-unassigned' }, 'No multi-facility chains are available in the current account selection.');
+  return /*#__PURE__*/React.createElement('div', { className:'account-chain-view' },
+    model.groups.map((group, index) => /*#__PURE__*/React.createElement('details', { key:group.name, className:'account-chain-group', open:index === 0 },
+      /*#__PURE__*/React.createElement('summary', { className:'account-chain-summary' },
+        /*#__PURE__*/React.createElement('div', { className:'account-chain-title' },
+          /*#__PURE__*/React.createElement('strong', null, group.name),
+          /*#__PURE__*/React.createElement('span', null, `${group.facilities.length} facilit${group.facilities.length === 1 ? 'y' : 'ies'}${group.beds ? ` · ${group.beds.toLocaleString()} beds` : ''}${group.regions ? ` · ${group.regions} region${group.regions === 1 ? '' : 's'}` : ''}`)
+        ),
+        /*#__PURE__*/React.createElement('div', { className:'account-chain-overview' },
+          /*#__PURE__*/React.createElement('div', { className:'account-chain-stage-strip' }, RELATIONSHIP_STAGES.filter(stage => stage !== 'Not a fit' && group.stages[stage]).map(stage => /*#__PURE__*/React.createElement('span', { key:stage, className:`account-chain-stage-count ${stageColor(stage)}` }, `${group.stages[stage]} ${stage}`))),
+          /*#__PURE__*/React.createElement('span', { className:'account-chain-penetration' }, `${group.active} of ${group.facilities.length} active`),
+          /*#__PURE__*/React.createElement('span', { className:'account-chain-chevron', 'aria-hidden':'true' }, '⌄')
+        )
+      ),
+      /*#__PURE__*/React.createElement('div', { className:'account-chain-body' },
+        group.best && /*#__PURE__*/React.createElement('div', { className:'account-chain-best' },
+          /*#__PURE__*/React.createElement('span', null, 'Best next opportunity'),
+          /*#__PURE__*/React.createElement('button', { type:'button', onClick:()=>onSelect(group.best) }, `${group.best.AccountName} · ${group.best.RelationshipStage || 'Target'}`)
+        ),
+        /*#__PURE__*/React.createElement('div', { className:'account-chain-facilities' }, group.facilities.map(account => /*#__PURE__*/React.createElement('button', { key:account.AccountId, type:'button', className:'account-chain-facility', onClick:()=>onSelect(account) },
+          /*#__PURE__*/React.createElement('strong', null, account.AccountName || 'Unnamed account'),
+          /*#__PURE__*/React.createElement('span', { className:'account-chain-facility-meta' }, [getTown(account.Address), account.Region, account.BedCount ? `${account.BedCount} beds` : null].filter(Boolean).join(' · ')),
+          /*#__PURE__*/React.createElement('span', { className:`account-chain-stage-count ${stageColor(account.RelationshipStage)}` }, account.RelationshipStage || 'Target'),
+          /*#__PURE__*/React.createElement('span', { className:'account-chain-facility-action' }, account.NextAction || (account.NextFollowUp ? `Follow-up ${formatFollowUpDate(account.NextFollowUp)}` : 'No next action'))
+        )))
+      )
+    ))
+  );
+}
+
 function AccountList({
   accounts,
   contacts,
@@ -10196,7 +10361,7 @@ function AccountList({
     }
   }, [initialViewMode, viewMode]);
   const [query, setQuery] = useState(() => restoredUiRef.current.query || '');
-  const [sortBy, setSortBy] = useState(() => restoredUiRef.current.sortBy || 'Name'); // 'Name' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
+  const [sortBy, setSortBy] = useState(() => restoredUiRef.current.sortBy || 'Name'); // 'Name' | 'Chain' | 'Propensity' | 'CMS Rating' | 'Status' | 'Stage' | 'Activity'
   const [chainFilter, setChainFilter] = useState(() => restoredUiRef.current.chainFilter || 'All Chains');
   const [actionFilter, setActionFilter] = useState(() => restoredUiRef.current.actionFilter || '');
   const [actionLabel, setActionLabel] = useState(() => restoredUiRef.current.actionLabel || '');
@@ -10389,7 +10554,16 @@ function AccountList({
   const sortedFlat = useMemo(() => {
     if (sortBy === 'Name') return null;
     const list = [...filtered];
-    if (sortBy === 'Propensity') {
+    if (sortBy === 'Chain') {
+      list.sort((a, b) => {
+        const chainA = String(a.ChainAffiliation || '').trim();
+        const chainB = String(b.ChainAffiliation || '').trim();
+        if (!chainA && !chainB) return String(a.AccountName || '').localeCompare(String(b.AccountName || ''));
+        if (!chainA) return 1;
+        if (!chainB) return -1;
+        return chainA.localeCompare(chainB) || String(a.AccountName || '').localeCompare(String(b.AccountName || ''));
+      });
+    } else if (sortBy === 'Propensity') {
       const opportunityRank = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
       list.sort((a, b) => {
         const scoreA = computeOverallFeesOpportunity(a);
@@ -10577,14 +10751,14 @@ function AccountList({
     value: r
   }, r)))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
     className: "account-list-view-toggle flex gap-1 bg-white border border-skyblue-100 rounded-lg p-1 shrink-0 ml-auto"
-  }, ['list', 'table', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
+  }, ['list', 'table', 'chain', 'map'].map(mode => /*#__PURE__*/React.createElement("button", {
     key: mode,
     onClick: () => setViewMode(mode),
     className: `px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${viewMode === mode ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, /*#__PURE__*/React.createElement("span", {
     className: "account-list-view-icon",
     "aria-hidden": "true"
-  }, mode === 'list' ? '☷' : mode === 'table' ? '▦' : '⌖'), /*#__PURE__*/React.createElement("span", null, mode))))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
+  }, mode === 'list' ? '☷' : mode === 'table' ? '▦' : mode === 'map' ? '⌖' : '◫'), /*#__PURE__*/React.createElement("span", null, mode))))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
     className: "account-list-filter-row flex items-center gap-3 mb-5 flex-nowrap"
   }, /*#__PURE__*/React.createElement("div", { className:"account-saved-view-controls flex items-center gap-2 shrink-0" },
     /*#__PURE__*/React.createElement("select", { value:activeSavedView,onChange:e=>applySavedView(e.target.value),className:"border border-skyblue-300 rounded-lg px-2 py-1.5 text-sm bg-white",'aria-label':"Saved account views" },
@@ -10599,7 +10773,7 @@ function AccountList({
     className: `px-3 py-1.5 rounded-md text-sm font-medium transition ${filter === s ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
   }, s, " ", /*#__PURE__*/React.createElement("span", {
     className: "opacity-60"
-  }, "(", counts[s], ")")))), initialViewMode !== 'pipeline' && /*#__PURE__*/React.createElement("div", {
+  }, "(", counts[s], ")")))), initialViewMode !== 'pipeline' && viewMode !== 'chain' && /*#__PURE__*/React.createElement("div", {
     className: "account-sort-controls flex items-center gap-3 flex-nowrap ml-3 shrink-0"
   }, /*#__PURE__*/React.createElement("label", {
     className: "text-xs text-navy-700/50 flex items-center gap-1.5"
@@ -10607,7 +10781,7 @@ function AccountList({
     value: sortBy,
     onChange: e => setSortBy(e.target.value),
     className: "border border-skyblue-300 rounded-lg px-2 py-1 text-sm bg-white"
-  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))))), actionFilter && /*#__PURE__*/React.createElement("div", { className:"account-action-worklist" },
+  }, /*#__PURE__*/React.createElement("option", null, "Name"), /*#__PURE__*/React.createElement("option", null, "Chain"), /*#__PURE__*/React.createElement("option", null, "Propensity"), /*#__PURE__*/React.createElement("option", null, "CMS Rating"), /*#__PURE__*/React.createElement("option", null, "Status"), /*#__PURE__*/React.createElement("option", null, "Stage"), /*#__PURE__*/React.createElement("option", null, "Activity"))))), actionFilter && /*#__PURE__*/React.createElement("div", { className:"account-action-worklist" },
     /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, actionLabel || 'Analytics worklist'), /*#__PURE__*/React.createElement("span", null, `${filtered.length} matching account${filtered.length === 1 ? '' : 's'}`)),
     /*#__PURE__*/React.createElement("button", { type:"button", onClick:()=>{setActionFilter('');setActionLabel('');} }, "Clear worklist")
   ), viewMode === 'map' ? /*#__PURE__*/React.createElement(NewMapView, {
@@ -10621,6 +10795,9 @@ function AccountList({
     onSelect: selectAccountFromList,
     region: region,
     setRegion: setRegion
+  }) : viewMode === 'chain' ? /*#__PURE__*/React.createElement(ChainView, {
+    accounts:filtered,
+    onSelect:selectAccountFromList
   }) : viewMode === 'table' ? filtered.length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "account-list-empty-card bg-white rounded-xl border border-skyblue-100"
   }, /*#__PURE__*/React.createElement(EmptyState, {
@@ -10873,12 +11050,15 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
     ),
     topUpcomingMeetings.length>0&&/*#__PURE__*/React.createElement("div",{className:"account-list-upcoming-card today-upcoming-card bg-white rounded-xl border border-skyblue-100 p-5 mb-6"},
       /*#__PURE__*/React.createElement("h2",{className:"account-list-section-heading font-display text-base text-navy-900 mb-3"},/*#__PURE__*/React.createElement("span",{className:"account-list-section-icon","aria-hidden":"true"},"◷"),"Upcoming Meetings"),
-      /*#__PURE__*/React.createElement("div",{className:"space-y-1"},topUpcomingMeetings.map((item,i)=>{
+      /*#__PURE__*/React.createElement("div",{className:"space-y-1"},topUpcomingMeetings.slice(0,3).map((item,i)=>{
         const account=accounts.find(a=>a.AccountId===item.accountId)||accounts.find(a=>String(a.AccountName||'').trim().toLowerCase()===String(item.accountName||'').trim().toLowerCase());
         const inner=/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("p",{className:"text-sm font-medium text-navy-900"},item.accountName),/*#__PURE__*/React.createElement("p",{className:"text-xs text-navy-700/60"},"📅 ",item.title.length>60?item.title.slice(0,60)+'…':item.title)),/*#__PURE__*/React.createElement("div",{className:"text-right shrink-0"},/*#__PURE__*/React.createElement("p",{className:"text-xs text-teal-600"},formatShortDate(item.date)),/*#__PURE__*/React.createElement("p",{className:"text-xs text-navy-700/50"},formatShortTime(item.date))));
         const rowClass="w-full text-left flex items-start justify-between gap-3 hover:bg-skyblue-100/30 -mx-2 px-2 py-1.5 rounded-lg transition";
         return account?/*#__PURE__*/React.createElement("button",{key:i,type:"button",className:rowClass,onClick:()=>onSelect(account),title:`Open ${account.AccountName}`},inner):/*#__PURE__*/React.createElement("div",{key:i,className:rowClass},inner);
-      }))
+      })),
+      /*#__PURE__*/React.createElement("div",{className:"mt-3 pt-3 border-t border-skyblue-100"},
+        /*#__PURE__*/React.createElement("a",{href:"https://calendar.google.com/calendar/u/0/r",target:"_blank",rel:"noopener noreferrer",className:"inline-flex items-center text-sm font-semibold text-teal-700 hover:text-teal-800 transition"},"Go to my Calendar ↗")
+      )
     ),
     /*#__PURE__*/React.createElement("div",{className:"today-layout"},
       /*#__PURE__*/React.createElement("div",{className:"today-main-column"},
@@ -11979,7 +12159,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
           type:'button',
           onClick:onCreate,
           className:'saas-primary'
-        }, '+ Add New Account'),
+        }, '+ New Account'),
         /*#__PURE__*/React.createElement('button', {
           type:'button',
           className:'saas-referral-btn',
@@ -12651,6 +12831,7 @@ function App() {
   if (view === 'detail' && selectedAccount) {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, { ...chromeProps(selectedAccount.AccountName || 'Account'), detailAccount: selectedAccount, onDetailStageChange: updateSelectedAccountStage }), /*#__PURE__*/React.createElement(AccountDetail, {
       account: selectedAccount,
+      accounts: visibleAccounts,
       contacts: data.contacts,
       connections: data.connections,
       activities: data.activities,
@@ -12661,7 +12842,8 @@ function App() {
       onLocalData: updateDataLocal,
       roleOptions: roleOptions,
       relationshipOptions: relationshipOptions,
-      referralSourceOptions: referralSourceOptions
+      referralSourceOptions: referralSourceOptions,
+      onSelectAccount: relatedAccount => { setSelectedId(relatedAccount.AccountId); setView('detail'); }
     }), /*#__PURE__*/React.createElement(Toast, null));
   }
   if (view === 'today') {
