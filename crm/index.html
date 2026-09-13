@@ -317,6 +317,33 @@ try {
     min-height:36px !important;
     max-height:36px !important;
   }
+  .contract-celebration {
+    position:fixed; inset:0; z-index:12000; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; pointer-events:none; background:rgba(8,30,61,.18); backdrop-filter:blur(2px);
+    animation:contract-celebration-in .28s ease-out both;
+  }
+  .contract-celebration.is-leaving { animation:contract-celebration-out .5s ease-in both; }
+  .contract-celebration-message {
+    position:relative; z-index:2; width:min(560px,calc(100vw - 36px)); padding:30px 34px;
+    border:1px solid rgba(255,255,255,.8); border-radius:18px; background:#fff; color:#081e3d;
+    font-family:'Inter',sans-serif; font-size:clamp(22px,3vw,34px); line-height:1.25;
+    font-weight:800; text-align:center; box-shadow:0 24px 70px rgba(8,30,61,.28);
+    animation:contract-message-in .5s cubic-bezier(.2,.9,.25,1.15) both;
+  }
+  .contract-celebration-message span { display:block; margin-top:9px; color:#0f8278; font-size:.48em; letter-spacing:.08em; text-transform:uppercase; }
+  .contract-confetti {
+    position:absolute; top:-9vh; left:var(--x); width:var(--w); height:calc(var(--w) * 1.8);
+    border-radius:2px; background:var(--color); opacity:.95;
+    animation:contract-confetti-fall var(--duration) var(--delay) linear forwards;
+  }
+  @keyframes contract-celebration-in { from{opacity:0} to{opacity:1} }
+  @keyframes contract-celebration-out { from{opacity:1} to{opacity:0} }
+  @keyframes contract-message-in { from{opacity:0;transform:translateY(18px) scale(.92)} to{opacity:1;transform:none} }
+  @keyframes contract-confetti-fall { to{transform:translate3d(var(--drift),118vh,0) rotate(760deg)} }
+  @media (prefers-reduced-motion:reduce) {
+    .contract-celebration,.contract-celebration-message,.contract-confetti { animation:none !important; }
+    .contract-confetti { display:none; }
+  }
   body.saas-enabled .shadow-sm { box-shadow:0 1px 2px rgba(15,23,42,.04) !important; }
   body.saas-enabled .rounded-2xl { border-radius:14px !important; }
   body.saas-enabled .rounded-xl { border-radius:12px !important; }
@@ -5862,7 +5889,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '117';
+const CRM_BUILD_NUMBER = '119';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7026,6 +7053,43 @@ function Toast() {
     },
     className: "crm-toast"
   }, message);
+}
+
+function celebrateActiveContract() {
+  document.querySelector('.contract-celebration')?.remove();
+  const profileName = String(sessionStorage.getItem('bdd_crm_user_name') || '').trim();
+  const profileFirstName = profileName.split(/\s+/)[0] || '';
+  const overlay = document.createElement('div');
+  overlay.className = 'contract-celebration';
+  overlay.setAttribute('role', 'status');
+  overlay.setAttribute('aria-live', 'polite');
+
+  const message = document.createElement('div');
+  message.className = 'contract-celebration-message';
+  message.textContent = profileFirstName
+    ? `Congrats on closing this deal, ${profileFirstName}!`
+    : 'Congrats on closing this deal!';
+  const subline = document.createElement('span');
+  subline.textContent = 'Active Contract';
+  message.appendChild(subline);
+  overlay.appendChild(message);
+
+  const colors = ['#0f8278','#081e3d','#ffd54f','#f29f67','#68b7af','#ffffff'];
+  for (let i = 0; i < 84; i += 1) {
+    const piece = document.createElement('i');
+    piece.className = 'contract-confetti';
+    piece.setAttribute('aria-hidden', 'true');
+    piece.style.setProperty('--x', `${(i * 37) % 101}%`);
+    piece.style.setProperty('--w', `${5 + (i % 5)}px`);
+    piece.style.setProperty('--color', colors[i % colors.length]);
+    piece.style.setProperty('--duration', `${2.7 + (i % 7) * .22}s`);
+    piece.style.setProperty('--delay', `${(i % 11) * .07}s`);
+    piece.style.setProperty('--drift', `${((i * 19) % 180) - 90}px`);
+    overlay.appendChild(piece);
+  }
+  document.body.appendChild(overlay);
+  window.setTimeout(() => overlay.classList.add('is-leaving'), 4500);
+  window.setTimeout(() => overlay.remove(), 5000);
 }
 
 // Extracts the leading numeric CMS Overall rating out of the stored text
@@ -8399,10 +8463,11 @@ function AccountDetail({
   // user stare at Google's occasionally-slow web-app delivery path for every
   // edit. On a genuine save failure we refresh that account from the server
   // so the UI self-corrects rather than silently lying about what was saved.
-  const persistInBackground = (promise, successMessage) => {
+  const persistInBackground = (promise, successMessage, onSuccess) => {
     Promise.resolve(promise).then(response => {
       if (response && response.success === false) throw new Error(response.error || 'Save failed');
       if (successMessage) window.__crmShowToast && window.__crmShowToast(successMessage);
+      if (onSuccess) onSuccess(response);
     }).catch(err => {
       console.error(err);
       window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
@@ -8437,6 +8502,7 @@ function AccountDetail({
     persistInBackground(apiPost('updateAccount', { data: patch }), 'Account saved');
   };
   const updateStage = newStage => {
+    const shouldCelebrate = newStage === 'Active Contract' && (account.RelationshipStage || 'Target') !== 'Active Contract';
     const stagePatch = {
       RelationshipStage: newStage,
       ...(newStage === 'Active Contract' ? {
@@ -8451,7 +8517,7 @@ function AccountDetail({
     window.__crmShowToast && window.__crmShowToast('Updating…');
     persistInBackground(apiPost('updateAccount', {
       data: { AccountId: account.AccountId, ...stagePatch }
-    }), newStage === 'Active Contract' ? 'Active Contract · Customer' : 'Stage updated');
+    }), newStage === 'Active Contract' ? 'Active Contract · Customer' : 'Stage updated', shouldCelebrate ? celebrateActiveContract : null);
   };
   const revertToProspect = () => {
     onLocalData(d => ({
@@ -8743,6 +8809,7 @@ function AccountDetail({
         : a)
     }));
     window.__crmShowToast && window.__crmShowToast('Referral recorded');
+    const shouldCelebrate = (account.RelationshipStage || 'Target') !== 'Active Contract';
     apiPost('createReferralActivity', { data: {
       AccountId: account.AccountId,
       ReferralDate: referralDate,
@@ -8758,6 +8825,7 @@ function AccountDetail({
         }));
       }
       window.__crmShowToast && window.__crmShowToast('Referral activity saved');
+      if (shouldCelebrate) celebrateActiveContract();
     }).catch(err => {
       console.error(err);
       onLocalData(d => ({ ...d, referralActivity: (d.referralActivity || []).filter(r => r.ReferralActivityId !== tempId) }));
@@ -12817,6 +12885,7 @@ function App() {
     if (!accountId || !referralDate || !Number.isFinite(Number(rate)) || Number(rate) < 0) return;
     const account = data.accounts.find(a => a.AccountId === accountId);
     if (!account) return;
+    const shouldCelebrate = (account.RelationshipStage || 'Target') !== 'Active Contract';
     const tempId = `temp-referral-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const recordedBy = sessionStorage.getItem('bdd_crm_user_name') || sessionStorage.getItem('bdd_crm_user_email') || 'BDD User';
     const localReferral = { ReferralActivityId:tempId, AccountId:accountId, ReferralDate:referralDate, Rate:Number(rate), RecordedBy:recordedBy };
@@ -12835,6 +12904,7 @@ function App() {
       const savedId = response.result && response.result.ReferralActivityId;
       if (savedId) updateDataLocal(d => ({ ...d, referralActivity:(d.referralActivity || []).map(r => r.ReferralActivityId === tempId ? { ...r, ReferralActivityId:savedId } : r) }));
       window.__crmShowToast && window.__crmShowToast('Referral activity saved');
+      if (shouldCelebrate) celebrateActiveContract();
     }).catch(err => {
       console.error(err);
       updateDataLocal(d => ({ ...d, referralActivity:(d.referralActivity || []).filter(r => r.ReferralActivityId !== tempId) }));
@@ -13015,6 +13085,7 @@ function App() {
     apiPost('updateAccount', { data: { AccountId: selectedAccount.AccountId, ...stagePatch } }).then(response => {
       if (response && response.success === false) throw new Error(response.error || 'Save failed');
       window.__crmShowToast && window.__crmShowToast(newStage === 'Active Contract' ? 'Active Contract · Customer' : 'Stage updated');
+      if (newStage === 'Active Contract') celebrateActiveContract();
     }).catch(err => {
       console.error(err);
       window.__crmShowToast && window.__crmShowToast('Save failed — restoring server data');
