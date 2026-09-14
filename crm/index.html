@@ -5954,7 +5954,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '141';
+const CRM_BUILD_NUMBER = '149';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -6278,6 +6278,7 @@ function computeCadenceStatus(account) {
 // (computePropensityScore) when none of these have been assessed yet, so
 // a freshly-researched prospect still shows a sensible starting point.
 function computeOverallFeesOpportunity(account) {
+  account = account && typeof account === 'object' ? account : {};
   const scale = { 'Unknown': null, 'Low': 1, 'Medium': 2, 'High': 3, 'Very High': 4 };
   const accessScale = { 'None': 0, 'Cold': 1, 'Contacted': 2, 'Connected': 3, 'Champion': 4 };
   const cn = scale[account.ClinicalNeed];
@@ -6377,8 +6378,8 @@ function normalizeEmailInput(raw) {
   return String(raw || '').trim().toLowerCase();
 }
 function getTown(address) {
-  if (!address) return 'Unknown';
-  const lower = address.toLowerCase();
+  if (address == null || address === '') return 'Unknown';
+  const lower = String(address).toLowerCase();
   const allNames = [...Object.keys(VILLAGE_TO_TOWN).map(v => ({
     name: v,
     town: VILLAGE_TO_TOWN[v]
@@ -7174,13 +7175,14 @@ function getCmsOverallNumber(cmsRatingText) {
 // file), per your call that clinical need should dominate.
 // ---------------------------------------------------------------------
 function computePropensityScore(account) {
+  account = account && typeof account === 'object' ? account : {};
   const cmi = parseFloat(account.CaseMixIndex);
   if (isNaN(cmi)) return null; // not enough data to score meaningfully
 
   const beds = parseFloat(account.BedCount);
-  const programCount = (account.HighRiskPrograms || '').split(',').map(s => s.trim()).filter(Boolean).length;
+  const programCount = String(account.HighRiskPrograms || '').split(',').map(s => s.trim()).filter(Boolean).length;
   const ownerChange = account.RecentOwnershipChange === 'Yes';
-  const hasRehabProvider = !!(account.RehabProvider && account.RehabProvider.trim());
+  const hasRehabProvider = !!String(account.RehabProvider || '').trim();
   const cmiScore = Math.max(0, Math.min(1, (cmi - 1.0) / 0.8)) * 50;
   const programScore = Math.min(programCount * 7, 20);
   const bedScore = (!isNaN(beds) ? Math.min(beds / 250, 1) : 0) * 10;
@@ -11683,15 +11685,17 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
 
 
 function ActivityAnalyticsView({ accounts, activities, onSelect }) {
+  const safeAccounts=Array.isArray(accounts)?accounts.filter(a=>a&&typeof a==='object'):[];
+  const safeActivities=Array.isArray(activities)?activities.filter(a=>a&&typeof a==='object'):[];
   const restoredAnalyticsRef=useRef((()=>{try{return JSON.parse(sessionStorage.getItem('bdd_crm_activity_analytics_state')||'{}')||{};}catch(_){return {};}})());
   const [periodMode,setPeriodMode]=useState(()=>['week','month'].includes(restoredAnalyticsRef.current.periodMode)?restoredAnalyticsRef.current.periodMode:'week');
   const [regionFilter,setRegionFilter]=useState(()=>restoredAnalyticsRef.current.regionFilter||'All Regions');
   const [typeFilter,setTypeFilter]=useState(()=>restoredAnalyticsRef.current.typeFilter||'All Activity');
   const [activityDrilldown,setActivityDrilldown]=useState(null);
-  useEffect(()=>sessionStorage.setItem('bdd_crm_activity_analytics_state',JSON.stringify({periodMode,regionFilter,typeFilter})),[periodMode,regionFilter,typeFilter]);
-  const accountMap=useMemo(()=>Object.fromEntries((accounts||[]).map(a=>[a.AccountId,a])),[accounts]);
-  const regions=useMemo(()=>['All Regions',...Array.from(new Set((accounts||[]).map(a=>a.Region).filter(Boolean))).sort()],[accounts]);
-  const activityTypes=useMemo(()=>['All Activity',...Array.from(new Set((activities||[]).map(a=>a.ActivityType).filter(Boolean))).sort()],[activities]);
+  useEffect(()=>{try{sessionStorage.setItem('bdd_crm_activity_analytics_state',JSON.stringify({periodMode,regionFilter,typeFilter}));}catch(_){}} ,[periodMode,regionFilter,typeFilter]);
+  const accountMap=useMemo(()=>Object.fromEntries(safeAccounts.map(a=>[a.AccountId,a])),[safeAccounts]);
+  const regions=useMemo(()=>['All Regions',...Array.from(new Set(safeAccounts.map(a=>a.Region).filter(Boolean))).sort()],[safeAccounts]);
+  const activityTypes=useMemo(()=>['All Activity',...Array.from(new Set(safeActivities.map(a=>a.ActivityType).filter(Boolean))).sort()],[safeActivities]);
   const model=useMemo(()=>{
     const now=new Date();
     const startOfPeriod=(date,mode)=>{
@@ -11707,7 +11711,7 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
       const start=shiftPeriod(currentStart,offset,periodMode),end=shiftPeriod(start,1,periodMode);
       periods.push({key:start.toISOString().slice(0,10),start,end,label:periodMode==='month'?start.toLocaleDateString(undefined,{month:'short',year:'2-digit'}):start.toLocaleDateString(undefined,{month:'short',day:'numeric'})});
     }
-    const normalized=(activities||[]).map((a,index)=>{
+    const normalized=safeActivities.map((a,index)=>{
       const raw=a.Timestamp||a.ActivityDate||a.Date||a.CreatedAt;
       const date=raw?new Date(raw):null;
       return {...a,_date:date,_key:a.ActivityId||`${a.AccountId}-${raw||index}`,_account:accountMap[a.AccountId]||null};
@@ -11725,11 +11729,11 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
       if(!grouped[id].latest||a._date>grouped[id].latest._date)grouped[id].latest=a;
     });
     const rows=Object.values(grouped).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
-    const eligibleAccounts=(accounts||[]).filter(a=>regionFilter==='All Regions'||a.Region===regionFilter);
+    const eligibleAccounts=safeAccounts.filter(a=>regionFilter==='All Regions'||a.Region===regionFilter);
     const currentKey=periods[periods.length-1].key,previousKey=periods[periods.length-2].key;
     const current=rows.reduce((sum,row)=>sum+row.counts[currentKey],0),previous=rows.reduce((sum,row)=>sum+row.counts[previousKey],0);
     return {periods,rows,normalized,total:normalized.length,activeFacilities:rows.length,inactiveFacilities:Math.max(0,eligibleAccounts.length-rows.length),current,previous};
-  },[accounts,activities,accountMap,periodMode,regionFilter,typeFilter]);
+  },[safeAccounts,safeActivities,accountMap,periodMode,regionFilter,typeFilter]);
   const periodLabel=periodMode==='week'?'Last 8 weeks':'Last 8 months';
   const currentChange=model.previous?Math.round(((model.current-model.previous)/model.previous)*100):null;
   const openActivityDrilldown=(row,period=null)=>{
@@ -11770,12 +11774,114 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
   );
 }
 
-function HomeDashboard({ accounts, referralActivity, activities, onSelect, onToday, onAccounts, onPipeline, onDeleteReferral }) {
-  const [homeView, setHomeView] = useState(() => {
-    const saved=sessionStorage.getItem('bdd_crm_analytics_view');
-    return ['dashboard','table','activity'].includes(saved)?saved:'dashboard';
+function crmRenderFatalError(error, source) {
+  try {
+    const existing = document.getElementById('crm-fatal-error-overlay');
+    if (existing) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'crm-fatal-error-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#fff;color:#081e3d;padding:28px;font-family:Inter,system-ui,-apple-system,sans-serif;overflow:auto;';
+    const title = document.createElement('h2');
+    title.textContent = 'CRM render error';
+    title.style.cssText = 'margin:0 0 12px;font-size:22px;';
+    const msg = document.createElement('pre');
+    msg.textContent = (source ? source + '\n\n' : '') + String(error && error.message || error || 'Unknown error') + (error && error.stack ? '\n\n' + String(error.stack) : '');
+    msg.style.cssText = 'white-space:pre-wrap;word-break:break-word;background:#f7fafc;border:1px solid #dbe5ed;border-radius:10px;padding:14px;font-size:12px;line-height:1.45;';
+    const help = document.createElement('p');
+    help.textContent = 'Please send a screenshot of this message so the failing code path can be fixed directly.';
+    help.style.cssText = 'margin-top:14px;font-size:13px;color:#526174;';
+    overlay.append(title,msg,help);
+    document.body.appendChild(overlay);
+  } catch (_) {}
+}
+// Build 148: let React error boundaries handle render errors so the actual message/component path remains visible.
+window.addEventListener('unhandledrejection', event => crmRenderFatalError(event.reason, 'unhandledrejection'));
+
+class AppErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error:null, componentStack:'' }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { this.setState({componentStack:(info&&info.componentStack)||''}); console.error('CRM root render error:', error, info); }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return /*#__PURE__*/React.createElement('div',{style:{minHeight:'100vh',background:'#fff',color:'#081e3d',padding:'28px',fontFamily:'Inter,system-ui,-apple-system,sans-serif'}},
+      /*#__PURE__*/React.createElement('h2',{style:{margin:'0 0 12px',fontSize:'22px'}},'CRM render error'),
+      /*#__PURE__*/React.createElement('pre',{style:{whiteSpace:'pre-wrap',wordBreak:'break-word',background:'#f7fafc',border:'1px solid #dbe5ed',borderRadius:'10px',padding:'14px',fontSize:'12px',lineHeight:1.45}},String(this.state.error && this.state.error.message || this.state.error || 'Unknown render error') + (this.state.componentStack ? '\n\nComponent path:' + this.state.componentStack : '') + (this.state.error && this.state.error.stack ? '\n\nStack:' + this.state.error.stack : '')),
+      /*#__PURE__*/React.createElement('p',{style:{marginTop:'14px',fontSize:'13px',color:'#526174'}},'Please send a screenshot of this message so the failing code path can be fixed directly.')
+    );
+  }
+}
+
+class AnalyticsErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null, componentStack: '' };
+  }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) {
+    this.setState({componentStack:(info&&info.componentStack)||''});
+    console.error('Analytics render error:', error, info);
+  }
+  reset = () => {
+    try {
+      sessionStorage.removeItem('bdd_crm_analytics_view');
+      sessionStorage.removeItem('bdd_crm_activity_analytics_state');
+      sessionStorage.removeItem('bdd_crm_home_scroll_y');
+    } catch (_) {}
+    this.setState({ error: null, componentStack: '' });
+  };
+  render() {
+    if (!this.state.error) return this.props.children;
+    return /*#__PURE__*/React.createElement('main',{className:'bdd-home'},
+      /*#__PURE__*/React.createElement('div',{className:'home-shell'},
+        /*#__PURE__*/React.createElement('section',{className:'home-card',style:{padding:'24px'}},
+          /*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Analytics could not load'),
+          /*#__PURE__*/React.createElement('div',{className:'home-card-copy',style:{marginTop:'8px'}},String(this.state.error && this.state.error.message || 'Unexpected analytics error') + (this.state.componentStack ? '\n\nComponent path:' + this.state.componentStack : '')),
+          /*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-action-open',style:{marginTop:'16px'},onClick:this.reset},'Reset Analytics view')
+        )
+      )
+    );
+  }
+}
+
+function normalizeAnalyticsRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  const normalized = {};
+  Object.entries(record).forEach(([key, value]) => {
+    if (value == null) {
+      normalized[key] = value;
+    } else if (value instanceof Date) {
+      normalized[key] = value.toISOString();
+    } else if (typeof value === 'object') {
+      // Apps Script / Sheets can occasionally return structured cell values.
+      // Analytics only works with flat scalar fields, so collapse those values
+      // to display-safe text instead of handing an object to React as a child.
+      if (Array.isArray(value)) {
+        normalized[key] = value.map(item => item == null ? '' : (typeof item === 'object' ? JSON.stringify(item) : String(item))).join(', ');
+      } else if (Object.prototype.hasOwnProperty.call(value, 'value')) {
+        const scalar = value.value;
+        normalized[key] = scalar == null ? '' : (typeof scalar === 'object' ? JSON.stringify(scalar) : scalar);
+      } else {
+        try { normalized[key] = JSON.stringify(value); }
+        catch (_) { normalized[key] = String(value); }
+      }
+    } else {
+      normalized[key] = value;
+    }
   });
-  useEffect(()=>sessionStorage.setItem('bdd_crm_analytics_view',homeView),[homeView]);
+  return normalized;
+}
+
+function HomeDashboard({ accounts, referralActivity, activities, onSelect, onToday, onAccounts, onPipeline, onDeleteReferral }) {
+  const safeAccounts=Array.isArray(accounts)?accounts.map(normalizeAnalyticsRecord).filter(Boolean):[];
+  const safeReferralActivity=Array.isArray(referralActivity)?referralActivity.map(normalizeAnalyticsRecord).filter(Boolean):[];
+  const safeActivities=Array.isArray(activities)?activities.map(normalizeAnalyticsRecord).filter(Boolean):[];
+  const [homeView, setHomeView] = useState(() => {
+    try {
+      const saved=sessionStorage.getItem('bdd_crm_analytics_view');
+      return ['dashboard','table','activity'].includes(saved)?saved:'dashboard';
+    } catch (_) { return 'dashboard'; }
+  });
+  useEffect(()=>{try{sessionStorage.setItem('bdd_crm_analytics_view',homeView);}catch(_){}},[homeView]);
   useEffect(()=>{
     const y=Number(sessionStorage.getItem('bdd_crm_home_scroll_y'))||0;
     if(y>0)requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,y)));
@@ -11792,7 +11898,7 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
     const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const referrals = (referralActivity || []).map(r => ({
+    const referrals = safeReferralActivity.map(r => ({
       ...r,
       _date: r.ReferralDate ? new Date(r.ReferralDate) : null,
       _rate: Number.isFinite(Number(r.Rate)) ? Number(r.Rate) : 0
@@ -11812,10 +11918,10 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
     const prevMonthRevenue = prevMonth.reduce((sum, r) => sum + r._rate, 0);
     const avgRevenuePerReferral = ytd.length ? revenueYtd / ytd.length : 0;
     const revenueMtdChange = prevMonthRevenue > 0 ? ((revenueMtd - prevMonthRevenue) / prevMonthRevenue) * 100 : null;
-    const active = (accounts || []).filter(a => (a.RelationshipStage || '') === 'Active Contract' || a.Status === 'Customer');
+    const active = safeAccounts.filter(a => (a.RelationshipStage || '') === 'Active Contract' || a.Status === 'Customer');
     const pipelineStages = ['Contacted', 'Connected', 'Contract Discussion'];
-    const pipelineAccounts = (accounts || []).filter(a => pipelineStages.includes(a.RelationshipStage || 'Target'));
-    const accountMap = Object.fromEntries((accounts || []).map(a => [a.AccountId, a]));
+    const pipelineAccounts = safeAccounts.filter(a => pipelineStages.includes(a.RelationshipStage || 'Target'));
+    const accountMap = Object.fromEntries(safeAccounts.map(a => [a.AccountId, a]));
     const sourceStats = {};
     referrals.forEach(r => {
       if (!sourceStats[r.AccountId]) sourceStats[r.AccountId] = { mtd:0, last30:0, last90:0, ytd:0, revenueMtd:0, revenue30:0, revenue90:0, revenueYtd:0, latest:null, first:null };
@@ -11849,7 +11955,7 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
     });
     const stageCounts = ['Target','Contacted','Connected','Contract Discussion','Active Contract'].map(stage => ({
       stage,
-      count:(accounts || []).filter(a => (a.RelationshipStage || 'Target') === stage).length
+      count:safeAccounts.filter(a => (a.RelationshipStage || 'Target') === stage).length
     }));
     const transactions = [...referrals].sort((a,b) => b._date - a._date);
     return {
@@ -11859,7 +11965,7 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
       topSources, revenueMixSources, top5Share, maxSourceRevenue, needsAttention, newActive90,
       months, stageCounts, transactions, accountMap
     };
-  }, [accounts, referralActivity]);
+  }, [safeAccounts, safeReferralActivity]);
 
   const maxMonth = Math.max(1, ...analytics.months.map(m => m.revenue));
   const maxStage = Math.max(1, ...analytics.stageCounts.map(s => s.count));
@@ -11883,7 +11989,8 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
     const staleTargets = [];
     const quietActive = [];
     const priorities = [];
-    (accounts || []).forEach(account => {
+    safeAccounts.forEach(account => {
+      try {
       const followRaw = String(account.NextFollowUp || '').slice(0,10);
       const followDate = /^\d{4}-\d{2}-\d{2}$/.test(followRaw) ? new Date(`${followRaw}T00:00:00`) : null;
       const daysLate = followDate && followDate < today ? Math.max(1, Math.round((today - followDate) / dayMs)) : 0;
@@ -11904,6 +12011,9 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
         highOpportunity.push(account);
         priorities.push({ account, score:200 + (contactAge || 120), tone:'opportunity', label:`${opportunity.label} opportunity`, reason:account.NextAction || (contactAge === null ? 'Start outreach with this high-fit account' : `Re-engage after ${contactAge} days without contact`) });
       }
+      } catch (error) {
+        console.error('Analytics skipped malformed account', account && account.AccountId, error);
+      }
     });
     const ytdBySource = analytics.revenueMixSources;
     const topSource = ytdBySource[0] || null;
@@ -11918,16 +12028,16 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
       quietActiveCount:quietActive.length,
       recent, previous, momentumPct, topSource, topSourceShare, pipelineTotal
     };
-  }, [accounts, analytics]);
+  }, [safeAccounts, analytics]);
 
   const openAccountWorklist = (actionFilter, actionLabel) => {
     let previous={};
     try { previous=JSON.parse(sessionStorage.getItem('bdd_crm_accounts_ui_state')||'{}')||{}; } catch (_) {}
-    sessionStorage.setItem('bdd_crm_accounts_ui_state',JSON.stringify({
+    try { sessionStorage.setItem('bdd_crm_accounts_ui_state',JSON.stringify({
       ...previous,
       region:'All Regions',filter:'All',chainFilter:'All Chains',query:'',sortBy:'Name',viewMode:'list',
       activeSavedView:'',actionFilter,actionLabel,scrollY:0
-    }));
+    })); } catch (_) {}
     onAccounts();
   };
 
@@ -12045,7 +12155,7 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
       }, /*#__PURE__*/React.createElement('span',{className:'account-list-view-icon','aria-hidden':'true'},'☑'), /*#__PURE__*/React.createElement('span',null,'Activity'))
     )),
 
-    homeView === 'activity' ? /*#__PURE__*/React.createElement(ActivityAnalyticsView,{accounts,activities,onSelect}) : null,
+    homeView === 'activity' ? /*#__PURE__*/React.createElement(ActivityAnalyticsView,{accounts:safeAccounts,activities:safeActivities,onSelect}) : null,
 
     homeView === 'table' ? /*#__PURE__*/React.createElement('section',{className:'home-card home-table-card analytics-table-view'},
       /*#__PURE__*/React.createElement('div',{className:'home-card-head'},
@@ -13303,8 +13413,36 @@ function App() {
       setView('detail');
     }
   });
+  const completeFollowUp = useCallback(account => {
+    if (!account || !(account.NextAction || account.NextFollowUp)) return;
+    const completedAction = String(account.NextAction || 'Follow-up').trim();
+    const completedDue = String(account.NextFollowUp || '').slice(0,10);
+    const tempId = `temp-followup-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const now = new Date().toISOString();
+    const tempActivity = {
+      ActivityId:tempId, AccountId:account.AccountId, Timestamp:now, ActivityType:'Other',
+      ActivityResult:'Follow-up completed', Details:`Completed follow-up: ${completedAction}${completedDue ? ` (due ${completedDue})` : ''}`,
+      NextAction:'', NextActionDue:''
+    };
+    updateDataLocal(d => ({
+      ...d,
+      accounts:d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, NextAction:'', NextFollowUp:'' } : a),
+      activities:[...(d.activities || []), tempActivity]
+    }));
+    window.__crmShowToast && window.__crmShowToast('Completing follow-up…');
+    apiPost('completeFollowUp', { data:{ AccountId:account.AccountId, CompletedAction:completedAction, CompletedDue:completedDue } }).then(response => {
+      if (!response || response.success === false) throw new Error(response?.error || 'Complete failed');
+      if (response.result?.ActivityId) updateDataLocal(d => ({ ...d, activities:d.activities.map(a => a.ActivityId === tempId ? { ...a, ActivityId:response.result.ActivityId } : a) }));
+      window.__crmShowToast && window.__crmShowToast('Follow-up completed');
+    }).catch(err => {
+      console.error('Complete follow-up failed:', err);
+      window.__crmShowToast && window.__crmShowToast('Complete failed — restoring server data');
+      refreshAccount(account.AccountId);
+    });
+  }, [refreshAccount, updateDataLocal]);
+
   if (view === 'home') {
-    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Analytics')), /*#__PURE__*/React.createElement(HomeDashboard, {
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('Analytics')), /*#__PURE__*/React.createElement(AnalyticsErrorBoundary, null, /*#__PURE__*/React.createElement(HomeDashboard, {
       accounts: visibleAccounts,
       referralActivity: visibleReferralActivity,
       activities: data.activities,
@@ -13317,7 +13455,7 @@ function App() {
       onAccounts: () => setView('list'),
       onPipeline: () => setView('pipeline'),
       onDeleteReferral: handleDeleteReferral
-    }), /*#__PURE__*/React.createElement(Toast, null));
+    })), /*#__PURE__*/React.createElement(Toast, null));
   }
   if (view === 'create') {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SaaSChrome, chromeProps('New account')), /*#__PURE__*/React.createElement("div", {
@@ -13391,34 +13529,6 @@ function App() {
       referralSourceOptions: referralSourceOptions
     })), /*#__PURE__*/React.createElement(Toast, null));
   }
-  const completeFollowUp = useCallback(account => {
-    if (!account || !(account.NextAction || account.NextFollowUp)) return;
-    const completedAction = String(account.NextAction || 'Follow-up').trim();
-    const completedDue = String(account.NextFollowUp || '').slice(0,10);
-    const tempId = `temp-followup-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const now = new Date().toISOString();
-    const tempActivity = {
-      ActivityId:tempId, AccountId:account.AccountId, Timestamp:now, ActivityType:'Other',
-      ActivityResult:'Follow-up completed', Details:`Completed follow-up: ${completedAction}${completedDue ? ` (due ${completedDue})` : ''}`,
-      NextAction:'', NextActionDue:''
-    };
-    updateDataLocal(d => ({
-      ...d,
-      accounts:d.accounts.map(a => a.AccountId === account.AccountId ? { ...a, NextAction:'', NextFollowUp:'' } : a),
-      activities:[...(d.activities || []), tempActivity]
-    }));
-    window.__crmShowToast && window.__crmShowToast('Completing follow-up…');
-    apiPost('completeFollowUp', { data:{ AccountId:account.AccountId, CompletedAction:completedAction, CompletedDue:completedDue } }).then(response => {
-      if (!response || response.success === false) throw new Error(response?.error || 'Complete failed');
-      if (response.result?.ActivityId) updateDataLocal(d => ({ ...d, activities:d.activities.map(a => a.ActivityId === tempId ? { ...a, ActivityId:response.result.ActivityId } : a) }));
-      window.__crmShowToast && window.__crmShowToast('Follow-up completed');
-    }).catch(err => {
-      console.error('Complete follow-up failed:', err);
-      window.__crmShowToast && window.__crmShowToast('Complete failed — restoring server data');
-      refreshAccount(account.AccountId);
-    });
-  }, [refreshAccount, updateDataLocal]);
-
   const updateSelectedAccountStage = newStage => {
     if (!selectedAccount || !newStage || newStage === (selectedAccount.RelationshipStage || 'Target')) return;
     const stagePatch = {
@@ -13555,7 +13665,7 @@ function App() {
     initialViewMode: 'list'
   }), /*#__PURE__*/React.createElement(Toast, null));
 }
-ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
+ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(AppErrorBoundary, null, /*#__PURE__*/React.createElement(App, null)));
 </script>
 </body>
 </html>
