@@ -3834,7 +3834,11 @@ try {
     line-height: 1;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
-  body.saas-enabled .account-detail-main-card > h2 {
+  body.saas-enabled .account-detail-main-card > .account-detail-card-heading {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
     border-bottom: 1px solid #e8eef3;  /* from bdd-account-detail-desktop-mobile-language */
     padding-bottom: 12px;  /* from bdd-account-detail-desktop-mobile-language */
     margin-bottom: 15px !important;  /* from bdd-account-detail-desktop-mobile-language */
@@ -3917,23 +3921,19 @@ try {
   body.saas-enabled .account-detail-layout-grid {
     display: grid;  /* from bdd-account-detail-desktop-mobile-language */
     grid-template-columns: minmax(0,2fr) minmax(280px,1fr);  /* from bdd-account-detail-desktop-mobile-language */
-    gap: 1.5rem;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-auto-rows: 1px;
+    grid-auto-flow: row dense;
+    column-gap: 1.5rem;
+    row-gap: 0;
     align-items: start;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
   body.saas-enabled .account-detail-layout-grid.has-referral {
-    grid-template-areas: "main agreements"
-        "referral referral"
-        "activity contacts"
-        "email connections"
-        "meeting map";  /* from bdd-account-detail-desktop-mobile-language */
+    grid-template-areas: none;
   }
 
   body.saas-enabled .account-detail-layout-grid.no-referral {
-    grid-template-areas: "main contacts"
-        "activity connections"
-        "email map"
-        "meeting map";  /* from bdd-account-detail-desktop-mobile-language */
+    grid-template-areas: none;
   }
 
   body.saas-enabled .account-detail-layout-grid > .account-detail-top-grid {
@@ -3944,8 +3944,14 @@ try {
     display: contents !important;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
+  body.saas-enabled .account-detail-layout-grid :is(.account-detail-main-card,.agreements-rates-stack,.account-detail-contacts-card,#account-referral-activity-card,#activity-log-card,.account-connections-card,.account-detail-email-card,.account-detail-meetings-card,.account-detail-map-card) {
+    align-self: start !important;
+    height: max-content !important;
+  }
+
   body.saas-enabled .account-detail-layout-grid .account-detail-main-card {
-    grid-area: main;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-area: auto;
+    grid-column: 1;
     align-self:start !important;
     height:auto !important;
     width: auto !important;  /* from bdd-account-detail-desktop-mobile-language */
@@ -3954,14 +3960,17 @@ try {
   }
 
   body.saas-enabled .account-detail-layout-grid .account-detail-contacts-card {
-    grid-area: contacts;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-area: auto;
+    grid-column: 2;
+    align-self:start !important;
     width: auto !important;  /* from bdd-account-detail-desktop-mobile-language */
     min-width: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
     margin-bottom: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
   body.saas-enabled .account-detail-layout-grid .agreements-rates-stack {
-    grid-area: agreements;
+    grid-area: auto;
+    grid-column: 2;
     display:flex;
     flex-direction:column;
     gap:1.5rem;
@@ -4035,43 +4044,50 @@ try {
   }
 
   body.saas-enabled .account-detail-layout-grid #account-referral-activity-card {
-    grid-area: referral;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-area: auto;
+    grid-column: 1;
     width: auto !important;  /* from bdd-account-detail-desktop-mobile-language */
     min-width: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
     margin-bottom: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
   body.saas-enabled .account-detail-layout-grid #activity-log-card {
-    grid-area: activity;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-area: auto;
+    grid-column: 1;
     width: auto !important;  /* from bdd-account-detail-desktop-mobile-language */
     min-width: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
     margin-bottom: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
   body.saas-enabled .account-detail-layout-grid .account-connections-card {
-    grid-area: connections;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-area: auto;
+    grid-column: 2;
+    align-self:start !important;
     width: auto !important;  /* from bdd-account-detail-desktop-mobile-language */
     min-width: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
     margin-bottom: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
   body.saas-enabled .account-detail-layout-grid .account-detail-email-card {
-    grid-area: email;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-area: auto;
+    grid-column: 1;
     width: auto !important;  /* from bdd-account-detail-desktop-mobile-language */
     min-width: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
     margin-bottom: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
   body.saas-enabled .account-detail-layout-grid .account-detail-meetings-card {
-    grid-area: meeting;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-area: auto;
+    grid-column: 1;
     width: auto !important;  /* from bdd-account-detail-desktop-mobile-language */
     min-width: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
     margin-bottom: 0 !important;  /* from bdd-account-detail-desktop-mobile-language */
   }
 
   body.saas-enabled .account-detail-layout-grid .account-detail-map-card {
-    grid-area: map;  /* from bdd-account-detail-desktop-mobile-language */
-    align-self: stretch;  /* from bdd-account-detail-desktop-mobile-language */
+    grid-area: auto;
+    grid-column: 2;
+    align-self: start;
     display: flex;  /* from bdd-account-detail-desktop-mobile-language */
     flex-direction: column;  /* from bdd-account-detail-desktop-mobile-language */
     width: auto !important;  /* from bdd-account-detail-desktop-mobile-language */
@@ -5889,7 +5905,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '119';
+const CRM_BUILD_NUMBER = '125';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -8902,6 +8918,49 @@ function AccountDetail({
     activityCard?.classList.toggle('mobile-section-open', mobileDetailSection === 'activity');
   }, [mobileDetailSection, editingContactId, editingActivityId]);
 
+  // Keep the two desktop columns independent without removing cards from the
+  // document flow. Each card spans its measured height in a one-pixel grid,
+  // allowing the next card in that same column to sit directly beneath it.
+  useEffect(() => {
+    const workspace = detailPageRef.current?.querySelector('.account-detail-layout-grid');
+    if (!workspace || editingAccount || !window.ResizeObserver) return;
+    const selector = [
+      '.account-detail-main-card', '.agreements-rates-stack',
+      '.account-detail-contacts-card', '#account-referral-activity-card',
+      '#activity-log-card', '.account-connections-card',
+      '.account-detail-email-card', '.account-detail-meetings-card',
+      '.account-detail-map-card'
+    ].join(',');
+    let frame = 0;
+    const cards = () => [...workspace.querySelectorAll(selector)].filter(card => card.offsetParent !== null);
+    const layout = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const mobile = window.matchMedia('(max-width: 640px)').matches;
+        cards().forEach(card => {
+          if (mobile) {
+            card.style.removeProperty('grid-row-end');
+            return;
+          }
+          const span = Math.max(1, Math.ceil(card.scrollHeight + 24));
+          const nextValue = `span ${span}`;
+          if (card.style.gridRowEnd !== nextValue) card.style.gridRowEnd = nextValue;
+        });
+      });
+    };
+    const observer = new ResizeObserver(layout);
+    observer.observe(workspace);
+    cards().forEach(card => observer.observe(card));
+    window.addEventListener('resize', layout);
+    layout();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', layout);
+      cards().forEach(card => card.style.removeProperty('grid-row-end'));
+    };
+  }, [account.AccountId, editingAccount, accountContacts.length, accountConnections.length, accountReferralActivity.length, accountActivities.length, emailThreads, meetings]);
+
   const removeActivity = activityId => {
     if (!confirm("Delete this activity? This can't be undone.")) return;
     onLocalData(d => ({ ...d, activities: d.activities.filter(a => a.ActivityId !== activityId) }));
@@ -8989,9 +9048,14 @@ function AccountDetail({
     /*#__PURE__*/React.createElement("div", { className: "account-detail-top-grid mb-6" },
     /*#__PURE__*/React.createElement("div", {
     className: `account-detail-main-card bg-white rounded-xl border border-skyblue-100 p-6 border-l-[3px] ${account.Status === 'Customer' ? 'border-l-teal-500' : 'border-l-skyblue-500'}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "account-detail-card-heading"
   }, /*#__PURE__*/React.createElement("h2", {
     className: "desktop-section-heading font-display text-lg text-navy-900 mb-1"
-  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "◎"), "Account Details"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "◎"), "Account Details"), /*#__PURE__*/React.createElement("button", {
+    onClick: openAccountEditor,
+    className: "account-detail-edit-btn border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
+  }, "Edit")), /*#__PURE__*/React.createElement("div", {
     className: "account-detail-summary-row flex items-start justify-between flex-wrap gap-3"
   }, /*#__PURE__*/React.createElement("div", { className: "account-detail-snapshot min-w-0 flex-1" }, /*#__PURE__*/React.createElement(AccountSnapshot, {
     account: account,
@@ -9000,16 +9064,7 @@ function AccountDetail({
     daysSinceLastContact: daysSinceLastContact,
     nextActionOverdue: nextActionOverdue,
     onStageChange: updateStage
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "account-detail-actions flex gap-2"
-  }, account.Status === 'Customer' && /*#__PURE__*/React.createElement("button", {
-    onClick: revertToProspect,
-    disabled: busy,
-    className: "border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
-  }, "Revert to prospect"), /*#__PURE__*/React.createElement("button", {
-    onClick: openAccountEditor,
-    className: "account-detail-edit-btn border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
-  }, "Edit")))),
+  })))),
     (account.RelationshipStage === 'Active Contract' || account.Status === 'Customer') && /*#__PURE__*/React.createElement(AgreementsRatesCard, {
       account:account,
       fallbackRate:agreedReferralRate,
@@ -9095,13 +9150,7 @@ function AccountDetail({
     className: "desktop-section-heading font-display text-lg text-navy-900"
   }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "↗"), "Referral Activity"), /*#__PURE__*/React.createElement("p", {
     className: "text-sm text-navy-700/55 mt-1"
-  }, "Track referral activity from this facility. No patient information is stored in BDD CRM.")), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setReferralRate(String(agreedReferralRate !== '' ? agreedReferralRate : 450));
-      setRecordingReferral(true);
-    },
-    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
-  }, "+ Record Referral")), /*#__PURE__*/React.createElement("div", {
+  }, "Track referral activity from this facility. No patient information is stored in BDD CRM."))), /*#__PURE__*/React.createElement("div", {
     className: "grid grid-cols-2 md:grid-cols-3 gap-3 mb-5"
   }, [["Last Referral", lastReferral ? formatShortDate(referralDateAtMidnight_(lastReferral)) : "—"], ["30 Days", String(referralCountSince_(30))], ["90 Days", String(referralCountSince_(90))], ["YTD", String(referralYtd)], ["Revenue · 30d", formatCurrency(referralRevenueSince_(30))], ["Revenue · YTD", formatCurrency(referralRevenueYtd)]].map(([label, value]) => /*#__PURE__*/React.createElement("div", {
     key: label,
