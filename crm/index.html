@@ -199,6 +199,8 @@ try {
   .saas-preferences-modal { position:relative; }
   .saas-preferences-close { position:absolute; top:15px; right:16px; border:0; border-radius:8px; padding:6px 8px; background:#f3f6f8; color:#526174; font-size:11.5px; font-weight:650; cursor:pointer; }
   .saas-preferences-close:hover { background:#e8eef2; color:#132d4f; }
+  body.saas-enabled .saas-preferences-modal .saas-preferences-close { top:15px; right:16px; min-height:0; padding:6px 8px; border:1px solid #dbe3ec; border-radius:8px; background:#fff; color:#526174; font-size:11.5px; font-weight:650; box-shadow:none; }
+  body.saas-enabled .saas-preferences-modal .saas-preferences-close:hover { background:#f8fafc; color:#334155; border-color:#cbd5e1; }
   .saas-switch { position:relative; width:42px; height:24px; flex:0 0 42px; border:0; border-radius:999px; padding:0; background:#cbd5df; cursor:pointer; transition:background .18s ease; }
   .saas-switch:after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(8,30,61,.25); transition:transform .18s ease; }
   .saas-switch.on { background:#1b7f77; }
@@ -4025,6 +4027,16 @@ try {
   .contract-output-actions a,.contract-output-actions button { display:inline-flex; align-items:center; justify-content:center; min-height:38px; border-radius:9px; padding:0 13px; font-size:12px; font-weight:750; cursor:pointer; text-decoration:none; }
   .contract-output-primary { border:1px solid #0f8278; background:#0f8278; color:#fff; }
   .contract-output-secondary { border:1px solid #b9cbd6; background:#fff; color:#24445a; }
+  .contract-lifecycle { margin-top:12px; padding:12px; border:1px solid #dce7ed; border-radius:10px; background:#f8fbfc; }
+  .contract-lifecycle-status { display:flex; align-items:center; gap:7px; color:#24445a; font-size:12px; font-weight:800; }
+  .contract-lifecycle-dot { width:8px; height:8px; border-radius:999px; background:#d39b2a; flex:0 0 auto; }
+  .contract-lifecycle.sent .contract-lifecycle-dot { background:#2f78a5; }
+  .contract-lifecycle.signed .contract-lifecycle-dot { background:#2f8a57; }
+  .contract-lifecycle-meta { margin-top:4px; color:#6b7f8e; font-size:11px; line-height:1.4; }
+  .contract-lifecycle-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .contract-lifecycle-actions a,.contract-lifecycle-actions button,.signed-contract-upload-label { display:inline-flex; align-items:center; justify-content:center; min-height:34px; border:1px solid #b9cbd6; border-radius:8px; padding:0 11px; background:#fff; color:#24445a; font-size:11px; font-weight:750; cursor:pointer; text-decoration:none; }
+  .signed-contract-upload-label input { display:none; }
+  .contract-lifecycle-actions button:disabled,.signed-contract-upload-label.busy { opacity:.55; cursor:not-allowed; }
   @media (max-width:640px) { .contract-generator-grid { grid-template-columns:1fr; } .contract-generator-field.full { grid-column:auto; } }
   .agreements-label {
     display:block;
@@ -5954,7 +5966,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '149';
+const CRM_BUILD_NUMBER = '155';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -8198,8 +8210,12 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
   const [signatoryTitle, setSignatoryTitle] = useState('');
   const [facilityName, setFacilityName] = useState(account.AccountName || '');
   const [generatorRate, setGeneratorRate] = useState(storedRate === '' ? '' : String(storedRate));
-  const [alternateTemplateUrl, setAlternateTemplateUrl] = useState('');
   const [generatedContract, setGeneratedContract] = useState(null);
+  const [signedUploadBusy, setSignedUploadBusy] = useState(false);
+  const contractStatus = storedContract ? 'Signed' : String(account.ContractStatus || '').trim();
+  const draftPdfUrl = String(account.ContractDraftPdfUrl || '').trim();
+  const draftGoogleDocUrl = String(account.ContractDraftGoogleDocUrl || '').trim();
+  const contractSentDate = account.ContractSentDate || '';
 
   const accountContacts = contacts.filter(c => c.AccountId === account.AccountId);
 
@@ -8272,7 +8288,6 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
     setSignatoryTitle(preferred?.Role || preferred?.RoleCategory || '');
     setFacilityName(account.AccountName || '');
     setGeneratorRate(storedRate === '' ? '' : String(storedRate));
-    setAlternateTemplateUrl('');
     setGeneratedContract(null);
     setShowGenerator(true);
   };
@@ -8282,10 +8297,6 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
     if (!signatoryTitle.trim()) return window.__crmShowToast && window.__crmShowToast('Enter the signatory title');
     if (!facilityName.trim()) return window.__crmShowToast && window.__crmShowToast('Enter the facility name');
     if (generatorRate === '' || !Number.isFinite(rate) || rate < 0) return window.__crmShowToast && window.__crmShowToast('Enter a valid facility rate');
-    const overrideTemplate = alternateTemplateUrl.trim();
-    if (overrideTemplate && !/^https?:\/\//i.test(overrideTemplate) && !/^[a-zA-Z0-9_-]{20,}$/.test(overrideTemplate)) {
-      return window.__crmShowToast && window.__crmShowToast('Paste a valid Google Docs template link');
-    }
     setGeneratorBusy(true);
     setGeneratedContract(null);
     try {
@@ -8294,8 +8305,7 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
         FacilityName:facilityName.trim(),
         SignatoryName:signatoryName.trim(),
         SignatoryTitle:signatoryTitle.trim(),
-        Rate:rate,
-        AlternateTemplateGoogleDocUrl:overrideTemplate
+        Rate:rate
       }});
       const response = await Promise.race([
         request,
@@ -8305,7 +8315,7 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
       setGeneratedContract(response.result);
       setRateDraft(String(rate));
       setEditingRate(false);
-      onGeneratedRate && onGeneratedRate(rate);
+      onGeneratedRate && onGeneratedRate(rate, response.result);
       window.__crmShowToast && window.__crmShowToast('Contract ready in Google Docs');
     } catch (err) {
       console.error(err);
@@ -8314,6 +8324,56 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
       setGeneratorBusy(false);
     }
   };
+  const markContractSent = () => {
+    const sentAt = new Date().toISOString();
+    onSave({ ContractStatus:'Sent', ContractSentDate:sentAt }, 'Marked as sent for signature');
+    setShowGenerator(false);
+  };
+  const revertContractToDraft = () => {
+    onSave({ ContractStatus:'Draft', ContractSentDate:'' }, 'Agreement returned to draft');
+  };
+  const uploadSignedContract = async file => {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name || '')) {
+      window.__crmShowToast && window.__crmShowToast('Choose the signed PDF file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      window.__crmShowToast && window.__crmShowToast('Signed PDF must be 10 MB or smaller');
+      return;
+    }
+    setSignedUploadBusy(true);
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || '').split(',').pop() || '');
+        reader.onerror = () => reject(new Error('Could not read the selected PDF'));
+        reader.readAsDataURL(file);
+      });
+      const response = await apiPost('uploadSignedContract', { data:{
+        AccountId:account.AccountId,
+        FacilityName:account.AccountName || facilityName,
+        Filename:file.name,
+        PdfBase64:base64
+      }});
+      if (!response || response.success === false) throw new Error(response?.error || 'Signed contract upload failed');
+      const result = response.result || {};
+      onSave({
+        SignedContractUrl:result.signedContractUrl || '',
+        ContractAddedDate:result.contractAddedDate || new Date().toISOString(),
+        ContractStatus:'Signed',
+        ContractSentDate:contractSentDate || ''
+      }, 'Signed contract saved');
+      setContractDraft(result.signedContractUrl || '');
+      setEditingContract(false);
+    } catch (err) {
+      console.error(err);
+      window.__crmShowToast && window.__crmShowToast(err.message || 'Signed contract upload failed');
+    } finally {
+      setSignedUploadBusy(false);
+    }
+  };
+
   const downloadGenerated = (base64, filename, mimeType) => {
     if (!base64) return;
     const binary = atob(base64);
@@ -8348,13 +8408,30 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
         /*#__PURE__*/React.createElement('button', { type:'button', onClick:saveContract, className:'agreements-save' }, 'Save')
       ), storedContract && /*#__PURE__*/React.createElement('button', {
         type:'button', onClick:()=>{ setContractDraft(storedContract); setEditingContract(false); }, className:'agreements-text-action mt-2'
-      }, 'Cancel'), !storedContract && /*#__PURE__*/React.createElement('div', { className:'contract-generate-wrap' },
-        /*#__PURE__*/React.createElement('button', { type:'button', onClick:openGenerator, className:'contract-generate-btn' }, 'Generate Contract')
+      }, 'Cancel'), !storedContract && (contractStatus === 'Draft' || contractStatus === 'Sent') && /*#__PURE__*/React.createElement('div', { className:`contract-lifecycle ${contractStatus.toLowerCase()}` },
+        /*#__PURE__*/React.createElement('div', { className:'contract-lifecycle-status' }, /*#__PURE__*/React.createElement('span', { className:'contract-lifecycle-dot' }), contractStatus === 'Sent' ? 'Awaiting signature' : 'Draft agreement generated'),
+        contractStatus === 'Sent' && contractSentDate && /*#__PURE__*/React.createElement('div', { className:'contract-lifecycle-meta' }, `Marked sent ${new Date(contractSentDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`),
+        /*#__PURE__*/React.createElement('div', { className:'contract-lifecycle-actions' },
+          draftGoogleDocUrl && /*#__PURE__*/React.createElement('a', { href:draftGoogleDocUrl, target:'_blank', rel:'noopener noreferrer' }, 'Edit Draft'),
+          draftPdfUrl && /*#__PURE__*/React.createElement('a', { href:draftPdfUrl, target:'_blank', rel:'noopener noreferrer' }, 'Open PDF'),
+          /*#__PURE__*/React.createElement('a', { href:'https://app.opensignlabs.com/dashboard/35KBoSgoAK', target:'_blank', rel:'noopener noreferrer' }, 'Send eSignature'),
+          contractStatus !== 'Sent' && /*#__PURE__*/React.createElement('button', { type:'button', onClick:markContractSent }, 'Mark as Sent'),
+          contractStatus === 'Sent' && /*#__PURE__*/React.createElement('button', { type:'button', onClick:revertContractToDraft }, 'Revert to Draft'),
+          /*#__PURE__*/React.createElement('label', { className:`signed-contract-upload-label${signedUploadBusy ? ' busy' : ''}` }, signedUploadBusy ? 'Uploading…' : 'Upload Signed Contract',
+            /*#__PURE__*/React.createElement('input', { type:'file', accept:'application/pdf,.pdf', disabled:signedUploadBusy, onChange:e=>{ const file=e.target.files?.[0]; e.target.value=''; uploadSignedContract(file); } })
+          )
+        )
+      ), !storedContract && /*#__PURE__*/React.createElement('div', { className:'contract-generate-wrap' },
+        /*#__PURE__*/React.createElement('button', { type:'button', onClick:openGenerator, className:'contract-generate-btn' }, contractStatus ? 'Generate New Draft' : 'Generate Contract')
       )
     ) : /*#__PURE__*/React.createElement('div', null,
       /*#__PURE__*/React.createElement('div', { className:'agreements-link-row' },
         /*#__PURE__*/React.createElement('span', { className:'agreements-date' }, contractDateLabel),
         /*#__PURE__*/React.createElement('a', { href:storedContract, target:'_blank', rel:'noopener noreferrer', className:'agreements-link' }, 'Open Facility Agreement')
+      ),
+      /*#__PURE__*/React.createElement('div', { className:'contract-lifecycle signed' },
+        /*#__PURE__*/React.createElement('div', { className:'contract-lifecycle-status' }, /*#__PURE__*/React.createElement('span', { className:'contract-lifecycle-dot' }), 'Signed contract on file'),
+        /*#__PURE__*/React.createElement('div', { className:'contract-lifecycle-meta' }, contractDateLabel)
       ),
       /*#__PURE__*/React.createElement('div', { className:'agreements-inline-actions' },
         /*#__PURE__*/React.createElement('button', { type:'button', onClick:()=>setEditingContract(true), className:'agreements-text-action' }, 'Edit'),
@@ -8393,7 +8470,7 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
     /*#__PURE__*/React.createElement('div', { className:'contract-generator-header' },
       /*#__PURE__*/React.createElement('div', { className:'contract-generator-header-copy' },
         /*#__PURE__*/React.createElement('h3', { id:'contract-generator-title' }, generatedContract ? 'Contract generated' : 'Generate Contract'),
-        /*#__PURE__*/React.createElement('p', { className:'text-sm text-navy-700/60 mt-1' }, generatedContract ? 'Your editable Google Doc and PDF are ready.' : 'Confirm the facility, signatory, and agreed rate. The master template will not be changed.')
+        /*#__PURE__*/React.createElement('p', { className:'text-sm text-navy-700/60 mt-1' }, generatedContract ? 'Your editable Google Doc and PDF are ready.' : 'Confirm the facility, signatory, and agreed rate.')
       ),
       /*#__PURE__*/React.createElement('button', { type:'button', className:'saas-secondary mobile-modal-close', disabled:generatorBusy, onClick:()=>setShowGenerator(false), 'aria-label':'Close contract generator' }, 'Close')
     ),
@@ -8408,11 +8485,6 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
         /*#__PURE__*/React.createElement('label', { className:'contract-generator-field' }, /*#__PURE__*/React.createElement('span', null, 'Title'), /*#__PURE__*/React.createElement('input', { value:signatoryTitle, onChange:e=>{ setSignatoryTitle(e.target.value); setGeneratedContract(null); } })),
         /*#__PURE__*/React.createElement('label', { className:'contract-generator-field' }, /*#__PURE__*/React.createElement('span', null, storedRate === '' ? 'Facility rate (required)' : 'Facility rate'), /*#__PURE__*/React.createElement('input', { type:'text', inputMode:'decimal', value:generatorRate, onChange:e=>{ setGeneratorRate(e.target.value.replace(/[^\d.]/g,'').replace(/(\..*)\./g,'$1')); setGeneratedContract(null); }, placeholder:'475' }))
       ),
-      /*#__PURE__*/React.createElement('div', { className:'contract-template-choice' },
-        /*#__PURE__*/React.createElement('strong', null, alternateTemplateUrl.trim() ? 'Using alternate Google Docs template' : 'Template: Bayside Dysphagia Diagnostics - Mobile FEES Contract'),
-        /*#__PURE__*/React.createElement('small', null, 'Optional: paste a Google Docs template link to use for this contract only. The default template remains unchanged.'),
-        /*#__PURE__*/React.createElement('input', { type:'url', value:alternateTemplateUrl, placeholder:'Paste Google Docs template link', onChange:e=>{ setAlternateTemplateUrl(e.target.value); setGeneratedContract(null); }, 'aria-label':'Alternate Google Docs template link' })
-      ),
       generatedContract && /*#__PURE__*/React.createElement('div', { className:'contract-output-success' },
         /*#__PURE__*/React.createElement('strong', null, 'Contract generated successfully'),
         /*#__PURE__*/React.createElement('p', null, 'The editable Google Doc and PDF have been saved to Google Drive.'),
@@ -8420,6 +8492,8 @@ function AgreementsRatesCard({ account, contacts = [], fallbackRate, onSave, onG
           generatedContract.googleDocUrl && /*#__PURE__*/React.createElement('a', { href:generatedContract.googleDocUrl, target:'_blank', rel:'noopener noreferrer', className:'contract-output-primary' }, 'Edit in Google Docs'),
           generatedContract.pdfUrl && /*#__PURE__*/React.createElement('a', { href:generatedContract.pdfUrl, target:'_blank', rel:'noopener noreferrer', className:'contract-output-secondary' }, 'Open PDF'),
           (generatedContract.pdfDownloadUrl || generatedContract.pdfUrl) && /*#__PURE__*/React.createElement('a', { href:generatedContract.pdfDownloadUrl || generatedContract.pdfUrl, target:'_blank', rel:'noopener noreferrer', className:'contract-output-secondary', download:generatedContract.pdfFilename || undefined }, 'Download PDF')
+          , /*#__PURE__*/React.createElement('a', { href:'https://app.opensignlabs.com/dashboard/35KBoSgoAK', target:'_blank', rel:'noopener noreferrer', className:'contract-output-secondary' }, 'Send eSignature'),
+          /*#__PURE__*/React.createElement('button', { type:'button', className:'contract-output-secondary', onClick:markContractSent }, 'Mark as Sent')
         )
       ),
       /*#__PURE__*/React.createElement('div', { className:'saas-modal-actions' },
@@ -9240,7 +9314,7 @@ function AccountDetail({
         contacts:contacts,
         fallbackRate:agreedReferralRate,
         onSave:saveAgreementFields,
-        onGeneratedRate:rate=>onLocalData(d=>({ ...d, accounts:d.accounts.map(a=>a.AccountId===account.AccountId?{...a,ReferralRate:rate}:a) })),
+        onGeneratedRate:(rate,result)=>onLocalData(d=>({ ...d, accounts:d.accounts.map(a=>a.AccountId===account.AccountId?{...a,ReferralRate:rate,ContractStatus:'Draft',ContractSentDate:'',ContractDraftPdfUrl:result?.pdfUrl||'',ContractDraftGoogleDocUrl:result?.googleDocUrl||''}:a) })),
         mobile:true
       }),
       (account.RelationshipStage === 'Active Contract' || account.Status === 'Customer') && /*#__PURE__*/React.createElement("section", { className: "mobile-detail-card mobile-referral-summary" },
@@ -9307,7 +9381,7 @@ function AccountDetail({
       contacts:contacts,
       fallbackRate:agreedReferralRate,
       onSave:saveAgreementFields,
-      onGeneratedRate:rate=>onLocalData(d=>({ ...d, accounts:d.accounts.map(a=>a.AccountId===account.AccountId?{...a,ReferralRate:rate}:a) }))
+      onGeneratedRate:(rate,result)=>onLocalData(d=>({ ...d, accounts:d.accounts.map(a=>a.AccountId===account.AccountId?{...a,ReferralRate:rate,ContractStatus:'Draft',ContractSentDate:'',ContractDraftPdfUrl:result?.pdfUrl||'',ContractDraftGoogleDocUrl:result?.googleDocUrl||''}:a) }))
     }),
     /*#__PURE__*/React.createElement("div", {
     className: "account-detail-contacts-card bg-white rounded-xl border border-skyblue-100 p-6 h-full"
