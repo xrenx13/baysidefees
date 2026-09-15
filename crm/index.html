@@ -5966,7 +5966,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '156';
+const CRM_BUILD_NUMBER = '157';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -11868,8 +11868,9 @@ function crmRenderFatalError(error, source) {
     document.body.appendChild(overlay);
   } catch (_) {}
 }
-// Build 148: let React error boundaries handle render errors so the actual message/component path remains visible.
-window.addEventListener('unhandledrejection', event => crmRenderFatalError(event.reason, 'unhandledrejection'));
+// Build 157: React error boundaries are reserved for actual render failures.
+// Network/API promise rejections must not replace the entire CRM UI.
+// Session-expiration responses are handled centrally by apiGet/performApiPost_ via handleUnauthorized().
 
 class AppErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error:null, componentStack:'' }; }
