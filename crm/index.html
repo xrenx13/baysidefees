@@ -709,10 +709,12 @@ try {
     .today-person-role { margin-top:1px; font-size:11px; color:#8996a7; }
     .today-person-phone { font-size:13px; color:#0f766e; font-weight:700; text-decoration:none; }
     .today-card-foot { margin-top:10px; display:flex; justify-content:space-between; gap:12px; color:#8794a5; font-size:11px; }
-    .today-actions { display:grid; grid-template-columns:repeat(4,max-content); gap:7px; margin-top:12px; padding-top:12px; border-top:1px solid #edf2f5; }
+    .today-actions { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-top:12px; padding-top:12px; border-top:1px solid #edf2f5; }
     .today-action-btn,.today-action-link,.today-reschedule { min-height:36px; border-radius:8px; padding:0 13px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; text-decoration:none; }
     .today-action-link { background:#eaf7f5; color:#0f766e; }
     .today-action-btn { border:0; cursor:pointer; background:#0b1f3a; color:#fff; }
+    .today-action-complete { border:1px solid #16877e !important; background:#fff !important; color:#08766e !important; }
+    .today-action-complete:hover { background:#e8f5f3 !important; }
     .today-reschedule { border:1px solid #d9e3eb; background:#fff; color:#43556d; }
     .today-opportunity-why { margin-top:9px; font-size:12px; color:#64758a; }
     .today-empty { padding:26px; text-align:center; font-size:13px; color:#8491a3; }
@@ -755,7 +757,7 @@ try {
       .today-person { align-items:flex-start; }
       .today-card-foot { display:block; }
       .today-card-foot span { display:block; margin-top:3px; }
-      .today-actions { grid-template-columns:repeat(3,1fr); gap:7px; }
+      .today-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
       .today-action-btn,.today-action-link { min-height:44px; padding:0 8px; font-size:13px; }
       .today-reschedule { grid-column:1/-1; min-height:42px; width:100%; font-size:13px; }
       .today-mobile-log { display:flex; position:fixed; z-index:85; left:calc(var(--saas-sidebar-w, 0px) + 12px); right:12px; bottom:12px; min-height:50px; align-items:center; justify-content:center; border:0; border-radius:12px; background:#0b1f3a; color:#fff; font-size:14px; font-weight:800; box-shadow:0 8px 24px rgba(11,31,58,.22); }
@@ -5199,6 +5201,100 @@ try {
   }
 }
 </style>
+<style id="bdd-desktop-ui-consistency-pass">
+  @media (min-width:641px) {
+    body.saas-enabled :is(.desktop-section-heading,.home-card-title,.account-list-section-heading) {
+      font-family:inherit !important;
+      font-size:16px !important;
+      line-height:1.25 !important;
+      font-weight:800 !important;
+      letter-spacing:-.015em !important;
+      color:#15233b !important;
+    }
+    body.saas-enabled :is(.desktop-section-icon,.account-list-section-icon) {
+      box-sizing:border-box !important;
+      width:30px !important;
+      height:30px !important;
+      flex:0 0 30px !important;
+      border-radius:9px !important;
+    }
+    body.saas-enabled .desktop-form-action {
+      box-sizing:border-box !important;
+      min-height:40px !important;
+      padding:0 15px !important;
+      border-radius:9px !important;
+      display:inline-flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      font-size:13px !important;
+      font-weight:700 !important;
+      line-height:1 !important;
+    }
+    body.saas-enabled .desktop-form-secondary {
+      border:1px solid #dfe7ed !important;
+      background:#fff !important;
+      color:#4b5563 !important;
+    }
+    body.saas-enabled .desktop-form-secondary:hover { background:#f6f9fb !important; color:#15233b !important; }
+    body.saas-enabled .desktop-form-danger {
+      border:1px solid #efb4b0 !important;
+      background:#fff !important;
+      color:#b42318 !important;
+    }
+    body.saas-enabled .account-followup-actions { display:flex !important; flex-wrap:wrap !important; align-items:center !important; gap:7px !important; margin-top:10px !important; }
+    body.saas-enabled .account-followup-action,
+    body.saas-enabled .desktop-inline-action { box-sizing:border-box !important; min-height:38px !important; padding:0 13px !important; border-radius:9px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; font-size:12px !important; font-weight:750 !important; line-height:1 !important; white-space:nowrap !important; }
+    body.saas-enabled .account-followup-complete { border:1px solid #16877e !important; background:#fff !important; color:#08766e !important; }
+    body.saas-enabled .account-list-desktop :is(.account-list-view-toggle,.account-status-toggle,.account-saved-view-controls) { min-height:40px !important; align-items:stretch !important; }
+    body.saas-enabled .account-list-desktop :is(.account-list-view-toggle,.account-status-toggle) button,
+    body.saas-enabled .account-list-desktop .account-saved-view-controls :is(select,button),
+    body.saas-enabled .account-list-desktop .account-sort-controls select { box-sizing:border-box !important; min-height:38px !important; height:38px !important; display:inline-flex !important; align-items:center !important; font-size:12px !important; font-weight:700 !important; }
+    body.saas-enabled .account-detail-layout-grid :is(.account-detail-main-card,.agreements-rates-stack > section,.account-detail-contacts-card,#account-referral-activity-card,#activity-log-card,.account-connections-card,.account-detail-email-card,.account-detail-meetings-card) { padding:20px !important; }
+    body.saas-enabled .account-detail-layout-grid :is(.account-detail-main-card,.agreements-rates-stack,.account-detail-contacts-card,#account-referral-activity-card,#activity-log-card,.account-connections-card,.account-detail-email-card,.account-detail-meetings-card,.account-detail-map-card) { margin-bottom:16px !important; }
+    body.saas-enabled .account-detail-layout-grid .account-detail-main-card { order:1; }
+    body.saas-enabled .account-detail-layout-grid .agreements-rates-stack { order:1; }
+    body.saas-enabled .account-detail-layout-grid .account-detail-contacts-card { order:2; }
+    body.saas-enabled .account-detail-layout-grid #account-referral-activity-card { order:3; }
+    body.saas-enabled .account-detail-layout-grid #activity-log-card { order:4; }
+    body.saas-enabled .account-detail-layout-grid .account-connections-card { order:5; }
+    body.saas-enabled .account-detail-layout-grid .account-detail-email-card { order:6; }
+    body.saas-enabled .account-detail-layout-grid .account-detail-meetings-card { order:7; }
+    body.saas-enabled .account-detail-layout-grid .account-detail-map-card { order:8; }
+    body.saas-enabled .bdd-home .home-grid { gap:16px !important; margin-bottom:16px !important; }
+    body.saas-enabled .bdd-home .home-card { padding:20px !important; }
+    body.saas-enabled .bdd-home .home-card-title { display:flex; align-items:center; }
+    body.saas-enabled .bdd-home .home-card-title::before { content:'▦'; box-sizing:border-box; display:inline-flex; width:30px; height:30px; flex:0 0 30px; margin-right:9px; align-items:center; justify-content:center; border:1px solid #dce7ed; border-radius:9px; background:#f3f8f9; color:#52717a; font-family:Inter,sans-serif; font-size:13px; font-weight:700; line-height:1; }
+    body.saas-enabled .bdd-home .home-trend-card .home-card-title::before { content:'↗'; }
+    body.saas-enabled .bdd-home .home-top-referral-sources .home-card-title::before { content:'◎'; }
+    body.saas-enabled .desktop-empty-action { min-height:36px; margin-top:12px; padding:0 13px; border:1px solid #b9dcd8; border-radius:9px; background:#fff; color:#0f766e; font-size:12px; font-weight:750; cursor:pointer; }
+    body.saas-enabled .desktop-empty-action:hover { background:#edf8f7; }
+    body.saas-enabled :is(.mobile-modal-close,.analytics-activity-drilldown-close,.home-month-modal-close,.saas-preferences-close,.today-quick-close,.saas-mobile-search-close) {
+      box-sizing:border-box !important;
+      width:auto !important;
+      min-width:64px !important;
+      height:36px !important;
+      min-height:36px !important;
+      padding:0 13px !important;
+      border:1px solid #dfe7ed !important;
+      border-radius:9px !important;
+      background:#fff !important;
+      color:#4b5563 !important;
+      font-family:inherit !important;
+      font-size:13px !important;
+      font-weight:700 !important;
+      line-height:1 !important;
+      display:inline-flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      cursor:pointer !important;
+      box-shadow:none !important;
+    }
+    body.saas-enabled :is(.mobile-modal-close,.analytics-activity-drilldown-close,.home-month-modal-close,.saas-preferences-close,.today-quick-close,.saas-mobile-search-close):hover {
+      background:#f6f9fb !important;
+      color:#15233b !important;
+    }
+  }
+</style>
 <style id="bdd-mobile-modal-close-consistency">
   @media (max-width:640px) {
     body.saas-enabled .mobile-modal-close {
@@ -5966,7 +6062,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '157';
+const CRM_BUILD_NUMBER = '162';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7065,7 +7161,9 @@ function Gate({
 // ---------------------------------------------------------------------
 function EmptyState({
   message,
-  hint
+  hint,
+  actionLabel,
+  onAction
 }) {
   return /*#__PURE__*/React.createElement("div", {
     className: "text-center py-8"
@@ -7084,7 +7182,11 @@ function EmptyState({
     className: "text-sm text-navy-700/60 font-medium"
   }, message), hint && /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40 mt-0.5"
-  }, hint));
+  }, hint), actionLabel && onAction && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: onAction,
+    className: "desktop-empty-action"
+  }, actionLabel));
 }
 
 // Shown under the empty state when a search finds nothing in the current
@@ -7702,13 +7804,13 @@ function AccountForm({
     className: "flex gap-3 mt-5"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => onSave(form),
-    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition"
+    className: "desktop-form-action desktop-form-primary bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition"
   }, "Save account"), onDelete && /*#__PURE__*/React.createElement("button", {
     onClick: onDelete,
-    className: "border border-red-200 text-red-500 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition"
+    className: "desktop-form-action desktop-form-danger border border-red-200 text-red-500 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition"
   }, "Delete account"), /*#__PURE__*/React.createElement("button", {
     onClick: onCancel,
-    className: "text-navy-700/60 hover:text-navy-900 text-sm px-3"
+    className: "desktop-form-action desktop-form-secondary text-navy-700/60 hover:text-navy-900 text-sm px-3"
   }, "Cancel")));
 }
 
@@ -7793,10 +7895,10 @@ function ContactForm({
     className: "flex gap-3 mt-3"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => onSave(form),
-    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition"
+    className: "desktop-form-action desktop-form-primary bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition"
   }, "Save contact"), /*#__PURE__*/React.createElement("button", {
     onClick: onCancel,
-    className: "text-navy-700/60 hover:text-navy-900 text-sm"
+    className: "desktop-form-action desktop-form-secondary text-navy-700/60 hover:text-navy-900 text-sm"
   }, "Cancel")));
 }
 
@@ -7876,10 +7978,10 @@ function ConnectionForm({
     className: "flex gap-3 mt-3"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => onSave(form),
-    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition"
+    className: "desktop-form-action desktop-form-primary bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition"
   }, "Save connection"), /*#__PURE__*/React.createElement("button", {
     onClick: onCancel,
-    className: "text-navy-700/60 hover:text-navy-900 text-sm"
+    className: "desktop-form-action desktop-form-secondary text-navy-700/60 hover:text-navy-900 text-sm"
   }, "Cancel")));
 }
 
@@ -7974,16 +8076,16 @@ function AccountSnapshot({
         /*#__PURE__*/React.createElement("p", { className: nextActionOverdue ? "text-sm text-amber-600 font-medium" : data },
           account.NextAction || 'None', account.NextFollowUp && ` — due ${formatShortDate(new Date(account.NextFollowUp))}`, nextActionOverdue && ' (OVERDUE)'
         ),
-        (account.NextAction || account.NextFollowUp) && /*#__PURE__*/React.createElement("div", { className: "flex flex-wrap items-center gap-2 mt-2" },
-          /*#__PURE__*/React.createElement("button", { type:"button", onClick:onLogFollowUp, className:"bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold transition" }, "Log activity"),
-          /*#__PURE__*/React.createElement("select", { defaultValue:"", onChange:e=>{ if(e.target.value) onRescheduleFollowUp(e.target.value); e.target.value=''; }, className:"border border-skyblue-300 bg-white text-navy-700 rounded-lg px-3 py-1.5 text-xs font-semibold" },
+        (account.NextAction || account.NextFollowUp) && /*#__PURE__*/React.createElement("div", { className: "account-followup-actions" },
+          /*#__PURE__*/React.createElement("button", { type:"button", onClick:onLogFollowUp, className:"account-followup-action bg-navy-900 hover:bg-navy-700 text-white transition" }, "Log activity"),
+          /*#__PURE__*/React.createElement("select", { defaultValue:"", onChange:e=>{ if(e.target.value) onRescheduleFollowUp(e.target.value); e.target.value=''; }, className:"account-followup-action border border-skyblue-300 bg-white text-navy-700" },
             /*#__PURE__*/React.createElement("option", { value:"", disabled:true }, "Reschedule"),
             /*#__PURE__*/React.createElement("option", { value:"1" }, "Tomorrow"),
             /*#__PURE__*/React.createElement("option", { value:"3" }, "+3 days"),
             /*#__PURE__*/React.createElement("option", { value:"7" }, "Next week"),
             /*#__PURE__*/React.createElement("option", { value:"pick" }, "Pick date")
           ),
-          /*#__PURE__*/React.createElement("button", { type:"button", onClick:onCompleteFollowUp, className:"border border-teal-500 text-teal-700 rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-teal-50 transition" }, "✓ Complete")
+          /*#__PURE__*/React.createElement("button", { type:"button", onClick:onCompleteFollowUp, className:"account-followup-action account-followup-complete hover:bg-teal-50 transition" }, "✓ Complete")
         )
       )
     ),
@@ -8051,7 +8153,7 @@ function ActivityLogCard({
     className: "desktop-section-heading font-display text-lg text-navy-900"
   }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon desktop-section-icon-activity", "aria-hidden": "true" }), "Activity Log"), !loggingActivity && /*#__PURE__*/React.createElement("button", {
     onClick: () => setLoggingActivity(true),
-    className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition"
+    className: "desktop-inline-action bg-navy-900 hover:bg-navy-700 text-white transition"
   }, "+ Log Activity")), loggingActivity && /*#__PURE__*/React.createElement("div", {
     className: "bg-skyblue-100/40 rounded-lg p-4 mb-4"
   }, /*#__PURE__*/React.createElement("div", {
@@ -8103,10 +8205,10 @@ function ActivityLogCard({
   }, /*#__PURE__*/React.createElement("button", {
     onClick: logActivity,
     disabled: busy,
-    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition disabled:opacity-60"
+    className: "desktop-form-action desktop-form-primary bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-5 py-2 text-sm font-medium transition disabled:opacity-60"
   }, "Save activity"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setLoggingActivity(false),
-    className: "text-navy-700/60 hover:text-navy-900 text-sm px-3"
+    className: "desktop-form-action desktop-form-secondary text-navy-700/60 hover:text-navy-900 text-sm px-3"
   }, "Cancel"))), activities === null && /*#__PURE__*/React.createElement("p", {
     className: "text-navy-700/40 text-sm"
   }, "Loading…"), activities !== null && activities.length === 0 && !loggingActivity && /*#__PURE__*/React.createElement("p", {
@@ -8158,10 +8260,10 @@ function ActivityLogCard({
   }, /*#__PURE__*/React.createElement("button", {
     onClick: onSaveEdit,
     disabled: busy,
-    className: "bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition disabled:opacity-60"
+    className: "desktop-form-action desktop-form-primary bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-1.5 text-sm font-medium transition disabled:opacity-60"
   }, "Save"), /*#__PURE__*/React.createElement("button", {
     onClick: onCancelEdit,
-    className: "text-navy-700/60 hover:text-navy-900 text-sm px-3"
+    className: "desktop-form-action desktop-form-secondary text-navy-700/60 hover:text-navy-900 text-sm px-3"
   }, "Cancel"))) : /*#__PURE__*/React.createElement("div", {
     key: a.ActivityId,
     className: "py-3"
@@ -9362,7 +9464,7 @@ function AccountDetail({
     className: "desktop-section-heading font-display text-lg text-navy-900 mb-1"
   }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "◎"), "Account Details"), /*#__PURE__*/React.createElement("button", {
     onClick: openAccountEditor,
-    className: "account-detail-edit-btn border border-skyblue-300 text-navy-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-skyblue-100/50 transition"
+    className: "account-detail-edit-btn desktop-inline-action border border-skyblue-300 text-navy-700 hover:bg-skyblue-100/50 transition"
   }, "Edit")), /*#__PURE__*/React.createElement("div", {
     className: "account-detail-summary-row flex items-start justify-between flex-wrap gap-3"
   }, /*#__PURE__*/React.createElement("div", { className: "account-detail-snapshot min-w-0 flex-1" }, /*#__PURE__*/React.createElement(AccountSnapshot, {
@@ -9391,7 +9493,7 @@ function AccountDetail({
     className: "desktop-section-heading font-display text-lg text-navy-900"
   }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon desktop-section-icon-contact", "aria-hidden": "true" }), "Contacts"), !addingContact && /*#__PURE__*/React.createElement("button", {
     onClick: () => setAddingContact(true),
-    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
+    className: "desktop-inline-action border border-skyblue-300 bg-white text-teal-600 hover:bg-skyblue-100/50"
   }, "+ Add contact")), addingContact && /*#__PURE__*/React.createElement(ContactForm, {
     onSave: saveContact,
     onCancel: () => setAddingContact(false),
@@ -9594,7 +9696,7 @@ function AccountDetail({
     className: "desktop-section-heading font-display text-lg text-navy-900"
   }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon desktop-section-icon-connections", "aria-hidden": "true" }), "Connections"), !addingConnection && /*#__PURE__*/React.createElement("button", {
     onClick: () => setAddingConnection(true),
-    className: "text-teal-600 hover:text-teal-700 text-sm font-medium"
+    className: "desktop-inline-action border border-skyblue-300 bg-white text-teal-600 hover:bg-skyblue-100/50"
   }, "+ Add connection")), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40 mb-4"
   }, "People tied to this account who don't work there — e.g. a covering physician or referral partner."), addingConnection && /*#__PURE__*/React.createElement(ConnectionForm, {
@@ -9639,7 +9741,7 @@ function AccountDetail({
   }, /*#__PURE__*/React.createElement("span", { className: "desktop-section-icon", "aria-hidden": "true" }, "✉"), "Emails"), emailThreads !== null && /*#__PURE__*/React.createElement("button", {
     onClick: loadEmails,
     disabled: emailsLoading,
-    className: "text-teal-600 hover:text-teal-700 text-sm font-medium disabled:opacity-50"
+    className: "desktop-inline-action border border-skyblue-300 bg-white text-teal-600 hover:bg-skyblue-100/50 disabled:opacity-50"
   }, emailsLoading ? 'Refreshing…' : 'Refresh')), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-navy-700/40 mb-4"
   }, "Gmail threads to or from any contact/connection email on file for this account (3 most recent, loaded automatically)."), knownEmails.length === 0 && /*#__PURE__*/React.createElement("p", {
@@ -9647,7 +9749,7 @@ function AccountDetail({
   }, "No contact emails on file to search for yet — add one under Contacts or Connections."), knownEmails.length > 0 && emailThreads === null && /*#__PURE__*/React.createElement("button", {
     onClick: loadEmails,
     disabled: emailsLoading,
-    className: "bg-navy-900 hover:bg-navy-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-60"
+    className: "desktop-inline-action bg-navy-900 hover:bg-navy-700 text-white transition disabled:opacity-60"
   }, emailsLoading ? 'Loading…' : 'Load emails'), emailsError && /*#__PURE__*/React.createElement("p", {
     className: "text-red-500 text-sm mt-2"
   }, emailsError), emailThreads !== null && emailThreads.length === 0 && !emailsError && /*#__PURE__*/React.createElement("p", {
@@ -11439,9 +11541,7 @@ function AccountList({
     key: s,
     onClick: () => setFilter(s),
     className: `px-3 py-1.5 rounded-md text-sm font-medium transition ${filter === s ? 'bg-navy-900 text-white' : 'text-navy-700/60 hover:bg-skyblue-100/50'}`
-  }, s, " ", /*#__PURE__*/React.createElement("span", {
-    className: "opacity-60"
-  }, "(", counts[s], ")")))), initialViewMode !== 'pipeline' && viewMode !== 'chain' && /*#__PURE__*/React.createElement("div", {
+  }, s))), initialViewMode !== 'pipeline' && viewMode !== 'chain' && /*#__PURE__*/React.createElement("div", {
     className: "account-sort-controls flex items-center gap-3 flex-nowrap ml-3 shrink-0"
   }, /*#__PURE__*/React.createElement("label", {
     className: "text-xs text-navy-700/50 flex items-center gap-1.5"
@@ -11471,7 +11571,9 @@ function AccountList({
     className: "account-list-empty-card bg-white rounded-xl border border-skyblue-100"
   }, /*#__PURE__*/React.createElement(EmptyState, {
     message: "No accounts match yet",
-    hint: "Add one to get started."
+    hint: query || filter !== 'All' || region !== 'All Regions' || chainFilter !== 'All Chains' ? "Try clearing the current search and filters." : "Add the first account to get started.",
+    actionLabel: query || filter !== 'All' || region !== 'All Regions' || chainFilter !== 'All Chains' ? "Clear filters" : "+ New Account",
+    onAction: () => { if (query || filter !== 'All' || region !== 'All Regions' || chainFilter !== 'All Chains') { setQuery(''); setFilter('All'); setRegion('All Regions'); setChainFilter('All Chains'); setActionFilter(''); setActionLabel(''); } else onCreate(); }
   })), /*#__PURE__*/React.createElement(CrossRegionHint, {
     matches: crossRegionMatches,
     setRegion: setRegion
@@ -11482,7 +11584,9 @@ function AccountList({
     className: "account-list-empty-card bg-white rounded-xl border border-skyblue-100"
   }, /*#__PURE__*/React.createElement(EmptyState, {
     message: "No accounts match yet",
-    hint: "Add one to get started."
+    hint: query || filter !== 'All' || region !== 'All Regions' || chainFilter !== 'All Chains' ? "Try clearing the current search and filters." : "Add the first account to get started.",
+    actionLabel: query || filter !== 'All' || region !== 'All Regions' || chainFilter !== 'All Chains' ? "Clear filters" : "+ New Account",
+    onAction: () => { if (query || filter !== 'All' || region !== 'All Regions' || chainFilter !== 'All Chains') { setQuery(''); setFilter('All'); setRegion('All Regions'); setChainFilter('All Chains'); setActionFilter(''); setActionLabel(''); } else onCreate(); }
   })), filtered.length === 0 && /*#__PURE__*/React.createElement(CrossRegionHint, {
     matches: crossRegionMatches,
     setRegion: setRegion
@@ -11591,7 +11695,7 @@ function TodayActionCard({
         /*#__PURE__*/React.createElement("option",{value:"7"},"Next week"),
         /*#__PURE__*/React.createElement("option",{value:"pick"},"Pick date")
       ),
-      (account.NextAction||account.NextFollowUp)&&/*#__PURE__*/React.createElement("button",{type:"button",className:"today-action-btn",onClick:()=>onComplete(account)},"✓ Complete")
+      (account.NextAction||account.NextFollowUp)&&/*#__PURE__*/React.createElement("button",{type:"button",className:"today-action-btn today-action-complete",onClick:()=>onComplete(account)},"✓ Complete")
     )
   );
 }
@@ -11830,7 +11934,10 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
         model.rows.length?/*#__PURE__*/React.createElement('div',{className:'analytics-activity-table-wrap'},/*#__PURE__*/React.createElement('table',{className:'analytics-activity-table'},
           /*#__PURE__*/React.createElement('thead',null,/*#__PURE__*/React.createElement('tr',null,/*#__PURE__*/React.createElement('th',null,'Facility'),/*#__PURE__*/React.createElement('th',null,'Region'),/*#__PURE__*/React.createElement('th',null,'Stage'),model.periods.map(p=>/*#__PURE__*/React.createElement('th',{key:p.key},p.label)),/*#__PURE__*/React.createElement('th',null,'Total'),/*#__PURE__*/React.createElement('th',null,'Last activity'))),
           /*#__PURE__*/React.createElement('tbody',null,model.rows.map(row=>/*#__PURE__*/React.createElement('tr',{key:row.id,className:'analytics-activity-clickable-row'},/*#__PURE__*/React.createElement('td',null,row.account?/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-facility',onClick:()=>onSelect(row.account),title:`Open ${row.name}`},row.name):row.name),/*#__PURE__*/React.createElement('td',null,row.region),/*#__PURE__*/React.createElement('td',null,row.account?/*#__PURE__*/React.createElement('span',{className:`analytics-activity-stage ${stageColor(row.account.RelationshipStage)}`},row.account.RelationshipStage||'Target'):'—'),model.periods.map(p=>/*#__PURE__*/React.createElement('td',{key:p.key,className:row.counts[p.key]?'':'analytics-activity-zero'},row.counts[p.key]?/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-count-button',onClick:()=>openActivityDrilldown(row,p),title:`View ${row.counts[p.key]} activities`},row.counts[p.key]):'—')),/*#__PURE__*/React.createElement('td',{className:'analytics-activity-total'},/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-count-button',onClick:()=>openActivityDrilldown(row),title:`View all ${row.total} activities`},row.total)),/*#__PURE__*/React.createElement('td',{className:'analytics-activity-last'},row.account&&row.latest?/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-last-button',onClick:()=>onSelect(row.account)},`${row.latest._date.toLocaleDateString(undefined,{month:'short',day:'numeric'})} · ${row.latest.ActivityType||'Activity'}`):'—'))))
-        )):/*#__PURE__*/React.createElement('div',{className:'analytics-activity-empty'},'No logged activity is available for this period and filter selection.')
+        )):/*#__PURE__*/React.createElement('div',{className:'analytics-activity-empty'},
+          /*#__PURE__*/React.createElement('div',null,'No logged activity is available for this period and filter selection.'),
+          (regionFilter!=='All Regions'||typeFilter!=='All Activity')&&/*#__PURE__*/React.createElement('button',{type:'button',className:'desktop-empty-action',onClick:()=>{setRegionFilter('All Regions');setTypeFilter('All Activity');}},'Clear filters')
+        )
       )
     ),
     activityDrilldown&&/*#__PURE__*/React.createElement('div',{className:'home-month-modal-backdrop',onMouseDown:e=>{if(e.target===e.currentTarget)setActivityDrilldown(null);}},
