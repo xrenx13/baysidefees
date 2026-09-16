@@ -47,7 +47,7 @@ const REFERRAL_ACTIVITY_HEADERS = [
   'ReferralActivityId', 'AccountId', 'ReferralDate', 'RecordedBy', 'Rate'
 ];
 const RELATIONSHIP_STAGES = [
-  'Target', 'Contacted', 'Connected', 'Referral Discussion', 'Active Referrer', 'Not a fit'
+  'Target', 'Contacted', 'Connected', 'Contract Discussion', 'Active Contract', 'Not a fit'
 ];
 const CONTACT_ROLE_CATEGORIES = [
   'Clinical Champion', 'SLP', 'Director of Rehab', 'Rehab Director', 'Administrator', 'DON',
@@ -765,9 +765,9 @@ function backfillRoleCategoryFromRoleText() {
  *   Contacted -> Contacted
  *   Connected -> Connected
  *   Clinical Champion -> Connected
- *   Referral Discussion -> Referral Discussion
- *   First FEES -> Active Referrer
- *   Active Referrer -> Active Referrer
+ *   Contract Discussion -> Contract Discussion (renamed from "Referral Discussion")
+ *   First FEES -> Active Contract
+ *   Active Contract -> Active Contract (renamed from "Active Referrer")
  *   Dormant -> Not a fit
  *   Not a Fit -> Not a fit
  * Also handles the older ALL CAPS versions. Safe to re-run.
@@ -776,8 +776,8 @@ function migrateRelationshipStages() {
   const stageMap = {
     'TARGET': 'Target', 'RESEARCHED': 'Target', 'CONTACTED': 'Contacted',
     'CONNECTED': 'Connected', 'CLINICAL CHAMPION': 'Connected',
-    'REFERRAL DISCUSSION': 'Referral Discussion', 'FIRST FEES': 'Active Referrer',
-    'ACTIVE REFERRER': 'Active Referrer', 'DORMANT': 'Not a fit', 'NOT A FIT': 'Not a fit'
+    'REFERRAL DISCUSSION': 'Contract Discussion', 'FIRST FEES': 'Active Contract',
+    'ACTIVE REFERRER': 'Active Contract', 'DORMANT': 'Not a fit', 'NOT A FIT': 'Not a fit'
   };
   const sheet = getSpreadsheet_().getSheetByName(ACCOUNTS_SHEET);
   if (!sheet) throw new Error('Accounts sheet not found');
@@ -801,6 +801,42 @@ function migrateRelationshipStages() {
 
   if (updated > 0) range.setValues(values);
   Logger.log('Simplified RelationshipStage on ' + updated + ' account(s).');
+}
+
+/**
+ * ONE-TIME: renames "Referral Discussion" -> "Contract Discussion" and
+ * "Active Referrer" -> "Active Contract" on every existing account still
+ * holding the old stage name. Only touches those two exact values --
+ * every other stage (Target, Contacted, Connected, Not a fit) is left
+ * completely alone. Safe to re-run; does nothing once no accounts still
+ * hold the old names.
+ */
+function renameContractStages() {
+  const renameMap = {
+    'Referral Discussion': 'Contract Discussion',
+    'Active Referrer': 'Active Contract'
+  };
+  const sheet = getSpreadsheet_().getSheetByName(ACCOUNTS_SHEET);
+  if (!sheet) throw new Error('Accounts sheet not found');
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  const stageCol = ACCOUNTS_HEADERS.indexOf('RelationshipStage') + 1;
+  const range = sheet.getRange(2, stageCol, lastRow - 1, 1);
+  const values = range.getValues();
+  let updated = 0;
+
+  values.forEach(row => {
+    const current = String(row[0] || '').trim();
+    const replacement = renameMap[current];
+    if (replacement) {
+      row[0] = replacement;
+      updated++;
+    }
+  });
+
+  if (updated > 0) range.setValues(values);
+  Logger.log('Renamed RelationshipStage on ' + updated + ' account(s): "Referral Discussion" -> "Contract Discussion", "Active Referrer" -> "Active Contract".');
 }
 
 /**
@@ -2081,6 +2117,9 @@ function doPost(e) {
       case 'createReferralActivity':
         result = createReferralActivity_(body.data);
         break;
+      case 'deleteReferralActivity':
+        result = deleteReferralActivity_(body.referralActivityId);
+        break;
       case 'updateActivity':
         result = updateActivity_(body.data);
         break;
@@ -2296,10 +2335,10 @@ function updateAccount_(data) {
   const rowIndex = findRowIndex_(ACCOUNTS_SHEET, 'AccountId', data.AccountId);
   if (rowIndex === -1) throw new Error('Account not found');
 
-  // Active Referrer is the CRM's objective customer stage. Keep Status in
+  // Active Contract is the CRM's objective customer stage. Keep Status in
   // sync automatically so users never need a separate conversion action.
   // Set DateConverted the first time the account reaches this stage.
-  if (data.RelationshipStage === 'Active Referrer') {
+  if (data.RelationshipStage === 'Active Contract') {
     data.Status = 'Customer';
     const convertedCol = ACCOUNTS_HEADERS.indexOf('DateConverted');
     const existingConverted = convertedCol !== -1
@@ -2326,7 +2365,10 @@ function updateAccount_(data) {
 // is a single save rather than two separate steps.
 function createActivity_(data) {
   const id = newId_();
-  const now = new Date().toISOString();
+  // Optional override lets callers (like synthetic test-data generation)
+  // backdate an activity to a specific historical date. Defaults to now,
+  // exactly as before, when no override is given.
+  const now = data.Timestamp || new Date().toISOString();
   appendRow_(ACTIVITIES_SHEET, ACTIVITIES_HEADERS, {
     ActivityId: id,
     AccountId: data.AccountId,
@@ -2390,7 +2432,7 @@ function createReferralActivity_(data) {
   const rowIndex = findRowIndex_(ACCOUNTS_SHEET, 'AccountId', data.AccountId);
   if (rowIndex !== -1) {
     updateRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, rowIndex, {
-      RelationshipStage: 'Active Referrer',
+      RelationshipStage: 'Active Contract',
       Status: 'Customer'
     });
   }
@@ -2398,10 +2440,507 @@ function createReferralActivity_(data) {
   return { ReferralActivityId: id };
 }
 
+function deleteReferralActivity_(referralActivityId) {
+  if (!referralActivityId) throw new Error('ReferralActivityId is required');
+  return deleteRow_(REFERRAL_ACTIVITY_SHEET, 'ReferralActivityId', referralActivityId);
+}
+
 function getReferralActivityForAccount_(accountId) {
   return readSheet_(REFERRAL_ACTIVITY_SHEET, REFERRAL_ACTIVITY_HEADERS)
     .filter(r => r.AccountId === accountId)
     .sort((a, b) => String(b.ReferralDate || '').localeCompare(String(a.ReferralDate || '')));
+}
+
+/**
+ * ONE-TIME / RE-RUNNABLE: creates 5 synthetic accounts for testing, each
+ * named with a " - TEST" suffix and ReferralSource "Test User" -- both
+ * of which removeTestAccounts() below uses to find and delete every
+ * trace of this data later. Deliberately spread across different stages
+ * so you have real accounts to click through for each: one Target (no
+ * activity at all), one Contacted, one Connected, and two Active
+ * Referrer/Customer accounts with contrasting referral patterns (steady
+ * moderate volume vs. infrequent higher-value) built by actually calling
+ * createReferralActivity_() over the last 12 months -- exercising the
+ * real auto-promotion logic rather than hand-setting Stage/Status.
+ * No patient information anywhere, consistent with the Referral Activity
+ * sheet's own rule. Safe to re-run -- each run adds another batch of 5
+ * (they don't collide with a prior run, since AccountIds are fresh), so
+ * run removeTestAccounts() first if you want to regenerate cleanly.
+ */
+function createTestAccounts() {
+  const now = new Date();
+  const daysAgo = n => {
+    const d = new Date(now.getTime() - n * 24 * 60 * 60 * 1000);
+    return d.toISOString();
+  };
+
+  // ---- Account 1: Target -- no activity yet at all ----
+  const acct1Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct1Id,
+    AccountName: 'Test Harbor Rehabilitation Center - TEST',
+    Status: 'Prospect',
+    Region: 'Cape Cod',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(3),
+    RelationshipStage: 'Target',
+    NextAction: 'Call facility and introduce services.',
+    ClinicalNeed: 'Unknown',
+    RehabActivity: 'Unknown',
+    AccessRelationship: 'None',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'No cadence'
+  });
+
+  // ---- Account 2: Contacted -- a couple of early activities, one contact ----
+  const acct2Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct2Id,
+    AccountName: 'Test Bayview Nursing Home - TEST',
+    Status: 'Prospect',
+    Region: 'South Shore',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(50),
+    RelationshipStage: 'Contacted',
+    NextAction: 'Follow up with more information on FEES scheduling.',
+    LastContactDate: daysAgo(20),
+    LastContactType: 'Email',
+    LastContactResult: 'Sent info packet',
+    ClinicalNeed: 'Medium',
+    RehabActivity: 'Medium',
+    AccessRelationship: 'Cold',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'No cadence'
+  });
+  createContact_({
+    AccountId: acct2Id, ContactName: 'Jane Smith', Role: 'Director of Rehab',
+    RoleCategory: 'Rehab Director', PreferredContact: 'Phone'
+  });
+  createActivity_({
+    AccountId: acct2Id, ActivityType: 'Call', ActivityResult: 'Spoke with Director of Rehab',
+    Details: 'Introduced BDD and our FEES services.', Timestamp: daysAgo(45)
+  });
+  createActivity_({
+    AccountId: acct2Id, ActivityType: 'Email', ActivityResult: 'Sent information',
+    Details: 'Sent info packet with scheduling process.', Timestamp: daysAgo(20)
+  });
+
+  // ---- Account 3: Connected -- more activity, two contacts, real momentum ----
+  const acct3Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct3Id,
+    AccountName: 'Test Coastal Care Center - TEST',
+    Status: 'Prospect',
+    Region: 'South Coast',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(90),
+    RelationshipStage: 'Connected',
+    NextAction: 'Discuss FEES scheduling process with Administrator.',
+    LastContactDate: daysAgo(8),
+    LastContactType: 'Meeting',
+    LastContactResult: 'Interested',
+    ClinicalNeed: 'High',
+    RehabActivity: 'High',
+    AccessRelationship: 'Connected',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'Every 4 weeks'
+  });
+  createContact_({
+    AccountId: acct3Id, ContactName: 'Maria Alves', Role: 'SLP',
+    RoleCategory: 'SLP', PreferredContact: 'Email'
+  });
+  createContact_({
+    AccountId: acct3Id, ContactName: 'Robert Chen', Role: 'Administrator',
+    RoleCategory: 'Administrator', PreferredContact: 'Phone'
+  });
+  createActivity_({
+    AccountId: acct3Id, ActivityType: 'Call', ActivityResult: 'Spoke with SLP',
+    Details: 'Discussed current swallow-eval process.', Timestamp: daysAgo(80)
+  });
+  createActivity_({
+    AccountId: acct3Id, ActivityType: 'Email', ActivityResult: 'Follow-up requested',
+    Details: 'Sent case study on FEES turnaround times.', Timestamp: daysAgo(50)
+  });
+  createActivity_({
+    AccountId: acct3Id, ActivityType: 'Meeting', ActivityResult: 'Interested',
+    Details: 'On-site meeting with Administrator and SLP; walked through onboarding.', Timestamp: daysAgo(8)
+  });
+
+  // ---- Account 4: Active Contract/Customer -- steady moderate referral volume ----
+  const acct4Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct4Id,
+    AccountName: 'Test Riverside Skilled Nursing - TEST',
+    Status: 'Prospect', // will flip to Customer automatically once the first referral posts below
+    Region: 'South Central',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(365),
+    RelationshipStage: 'Contract Discussion',
+    ClinicalNeed: 'High',
+    RehabActivity: 'High',
+    AccessRelationship: 'Champion',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: '3-5 FEES/month',
+    VisitCadence: 'Every 6 weeks'
+  });
+  createActivity_({
+    AccountId: acct4Id, ActivityType: 'Meeting', ActivityResult: 'Referral opportunity',
+    Details: 'Onboarding call before first referral.', Timestamp: daysAgo(360)
+  });
+  // Roughly monthly referrals for the last 12 months, moderate/consistent rate.
+  [355, 325, 296, 267, 238, 208, 179, 150, 120, 91, 62, 33, 8].forEach((d, i) => {
+    const rate = 180 + (i % 4) * 20; // varies 180-240
+    createReferralActivity_({ AccountId: acct4Id, ReferralDate: daysAgo(d).slice(0, 10), RecordedBy: 'Test User', Rate: rate });
+  });
+
+  // ---- Account 5: Active Contract/Customer -- infrequent, higher-value referrals ----
+  const acct5Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct5Id,
+    AccountName: 'Test Lighthouse Health Center - TEST',
+    Status: 'Prospect', // will flip to Customer automatically once the first referral posts below
+    Region: 'Southeast',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(300),
+    RelationshipStage: 'Contract Discussion',
+    ClinicalNeed: 'Very High',
+    RehabActivity: 'High',
+    AccessRelationship: 'Champion',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: '1-2 FEES/month',
+    VisitCadence: 'Quarterly'
+  });
+  // A small burst, then a long gap, then one recent referral -- irregular,
+  // higher-value pattern for contrast against Account 4.
+  [270, 255, 240, 95, 12].forEach((d, i) => {
+    const rate = [380, 400, 350, 420, 395][i];
+    createReferralActivity_({ AccountId: acct5Id, ReferralDate: daysAgo(d).slice(0, 10), RecordedBy: 'Test User', Rate: rate });
+  });
+
+  // ---- Account 6: Target -- some research done, but zero outreach yet ----
+  const acct6Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct6Id,
+    AccountName: 'Test Ridgeline Post-Acute - TEST',
+    Status: 'Prospect',
+    Region: 'South Central',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(6),
+    BedCount: '110',
+    CMSRating: 'Overall: 3/5 (Health: 3, Staffing: 3, Quality: 4)',
+    RelationshipStage: 'Target',
+    NextAction: 'Call and ask for the Director of Rehabilitation.',
+    ClinicalNeed: 'Medium',
+    RehabActivity: 'Unknown',
+    AccessRelationship: 'None',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'No cadence'
+  });
+
+  // ---- Account 7: Contacted -- one voicemail, no answer yet ----
+  const acct7Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct7Id,
+    AccountName: 'Test Pinecrest Rehabilitation - TEST',
+    Status: 'Prospect',
+    Region: 'South Central',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(15),
+    RelationshipStage: 'Contacted',
+    NextAction: 'Try calling again -- left voicemail, no callback yet.',
+    LastContactDate: daysAgo(10),
+    LastContactType: 'Call',
+    LastContactResult: 'Voicemail',
+    ClinicalNeed: 'Unknown',
+    RehabActivity: 'Unknown',
+    AccessRelationship: 'Cold',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'No cadence'
+  });
+  createActivity_({
+    AccountId: acct7Id, ActivityType: 'Call', ActivityResult: 'Voicemail',
+    Details: 'Left voicemail introducing BDD services.', Timestamp: daysAgo(10)
+  });
+
+  // ---- Account 8: Connected -- strong momentum, contacts, a scheduled follow-up ----
+  const acct8Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct8Id,
+    AccountName: 'Test Oceanview Skilled Nursing - TEST',
+    Status: 'Prospect',
+    Region: 'Cape Cod',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(70),
+    RelationshipStage: 'Connected',
+    NextAction: 'Send updated FEES scheduling one-pager.',
+    NextFollowUp: daysAgo(-5).slice(0, 10), // 5 days from now
+    LastContactDate: daysAgo(6),
+    LastContactType: 'Meeting',
+    LastContactResult: 'Interested',
+    ClinicalNeed: 'High',
+    RehabActivity: 'High',
+    AccessRelationship: 'Connected',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'Every 4 weeks'
+  });
+  createContact_({
+    AccountId: acct8Id, ContactName: 'Priya Nair', Role: 'SLP',
+    RoleCategory: 'SLP', PreferredContact: 'Email'
+  });
+  createContact_({
+    AccountId: acct8Id, ContactName: 'Tom O\'Brien', Role: 'Administrator',
+    RoleCategory: 'Administrator', PreferredContact: 'Phone'
+  });
+  createActivity_({
+    AccountId: acct8Id, ActivityType: 'Email', ActivityResult: 'Wants information',
+    Details: 'Requested pricing details.', Timestamp: daysAgo(60)
+  });
+  createActivity_({
+    AccountId: acct8Id, ActivityType: 'Meeting', ActivityResult: 'Interested',
+    Details: 'On-site meeting; walked through onboarding process.', Timestamp: daysAgo(6)
+  });
+
+  // ---- Account 9: Connected -- high FEES opportunity but access/outreach lagging ----
+  const acct9Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct9Id,
+    AccountName: 'Test Sunnyside Extended Care - TEST',
+    Status: 'Prospect',
+    Region: 'Southeast',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(40),
+    RelationshipStage: 'Connected',
+    NextAction: 'Re-engage -- high opportunity, but access has stalled.',
+    LastContactDate: daysAgo(35),
+    LastContactType: 'Call',
+    LastContactResult: 'Receptionist',
+    ClinicalNeed: 'Very High',
+    VolumeOpportunity: 'Very High',
+    RehabActivity: 'Very High',
+    AccessRelationship: 'Cold',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'No local FEES provider',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'No cadence'
+  });
+  createActivity_({
+    AccountId: acct9Id, ActivityType: 'Call', ActivityResult: 'Receptionist',
+    Details: 'Could not reach clinical or admin staff directly.', Timestamp: daysAgo(35)
+  });
+
+  // ---- Account 10: Contract Discussion -- actively negotiating, has a champion ----
+  const acct10Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct10Id,
+    AccountName: 'Test Willowbend Care Center - TEST',
+    Status: 'Prospect',
+    Region: 'South Shore',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(120),
+    RelationshipStage: 'Contract Discussion',
+    NextAction: 'Finalize referral process paperwork with Director of Rehab.',
+    LastContactDate: daysAgo(4),
+    LastContactType: 'Meeting',
+    LastContactResult: 'Referral opportunity',
+    ClinicalNeed: 'High',
+    RehabActivity: 'High',
+    AccessRelationship: 'Champion',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: '1-2 FEES/month',
+    VisitCadence: 'Every 8 weeks'
+  });
+  createContact_({
+    AccountId: acct10Id, ContactName: 'Elena Torres', Role: 'Director of Rehab',
+    RoleCategory: 'Clinical Champion', PreferredContact: 'Email'
+  });
+  createActivity_({
+    AccountId: acct10Id, ActivityType: 'Meeting', ActivityResult: 'Referral opportunity',
+    Details: 'Discussed formal referral process and expected volume.', Timestamp: daysAgo(4)
+  });
+
+  // ---- Account 11: Not a fit -- disqualified, tests the pipeline-exclusion path ----
+  const acct11Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct11Id,
+    AccountName: 'Test Northgate Assisted Living - TEST',
+    Status: 'Prospect',
+    Region: 'South Coast',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(100),
+    RelationshipStage: 'Not a fit',
+    NextAction: '',
+    LastContactDate: daysAgo(85),
+    LastContactType: 'Call',
+    LastContactResult: 'Not interested',
+    ClinicalNeed: 'Unknown',
+    RehabActivity: 'Unknown',
+    AccessRelationship: 'None',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'No cadence'
+  });
+  createActivity_({
+    AccountId: acct11Id, ActivityType: 'Call', ActivityResult: 'Not interested',
+    Details: 'Assisted-living only, no SNF beds -- not a fit for FEES services.', Timestamp: daysAgo(85)
+  });
+
+  // ---- Account 12: Active Contract/Customer -- high, frequent volume ----
+  const acct12Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct12Id,
+    AccountName: 'Test Fairhaven Manor - TEST',
+    Status: 'Prospect',
+    Region: 'Cape Cod',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(365),
+    RelationshipStage: 'Contract Discussion',
+    ClinicalNeed: 'Very High',
+    RehabActivity: 'Very High',
+    AccessRelationship: 'Champion',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: '5+/month',
+    VisitCadence: 'Every 2 weeks'
+  });
+  // Frequent referrals, roughly every 2 weeks for a year -- your highest-volume test account.
+  for (let d = 350; d >= 5; d -= 14) {
+    const rate = 160 + (d % 3) * 15; // varies 160-190
+    createReferralActivity_({ AccountId: acct12Id, ReferralDate: daysAgo(d).slice(0, 10), RecordedBy: 'Test User', Rate: rate });
+  }
+
+  // ---- Account 13: Active Contract/Customer -- churned/declining pattern ----
+  const acct13Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct13Id,
+    AccountName: 'Test Brookside Health Center - TEST',
+    Status: 'Prospect',
+    Region: 'South Shore',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(365),
+    RelationshipStage: 'Contract Discussion',
+    ClinicalNeed: 'High',
+    RehabActivity: 'High',
+    AccessRelationship: 'Champion',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'Every 4 weeks'
+  });
+  // Strong and regular for the first ~8 months, then went quiet -- nothing
+  // in the last ~130 days. Useful for testing "at risk" / re-engagement
+  // scenarios, since the account is technically an Active Contract but has
+  // clearly gone stale.
+  [350, 320, 290, 260, 230, 200, 170, 140].forEach((d, i) => {
+    const rate = 210 + (i % 3) * 10;
+    createReferralActivity_({ AccountId: acct13Id, ReferralDate: daysAgo(d).slice(0, 10), RecordedBy: 'Test User', Rate: rate });
+  });
+
+  // ---- Account 14: Active Contract/Customer -- simple, flat consistent rate ----
+  const acct14Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct14Id,
+    AccountName: 'Test Cedar Grove Rehab - TEST',
+    Status: 'Prospect',
+    Region: 'South Coast',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(300),
+    RelationshipStage: 'Contract Discussion',
+    ClinicalNeed: 'Medium',
+    RehabActivity: 'Medium',
+    AccessRelationship: 'Connected',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: '0-1 FEES/month',
+    VisitCadence: 'Quarterly'
+  });
+  // Every ~6 weeks, always exactly $200 -- a simple, uniform pattern for
+  // contrast against the other, more variable-rate accounts.
+  [280, 238, 196, 154, 112, 70, 28].forEach(d => {
+    createReferralActivity_({ AccountId: acct14Id, ReferralDate: daysAgo(d).slice(0, 10), RecordedBy: 'Test User', Rate: 200 });
+  });
+
+  // ---- Account 15: Target -- another blank-slate prospect, different region ----
+  const acct15Id = newId_();
+  appendRow_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS, {
+    AccountId: acct15Id,
+    AccountName: 'Test Meadowbrook Senior Care - TEST',
+    Status: 'Prospect',
+    Region: 'Southeast',
+    ReferralSource: 'Test User',
+    DateAdded: daysAgo(1),
+    RelationshipStage: 'Target',
+    NextAction: '',
+    ClinicalNeed: 'Unknown',
+    RehabActivity: 'Unknown',
+    AccessRelationship: 'None',
+    CurrentInstrumentalAssessment: 'Unknown',
+    DysphagiaPainPoint: 'Unknown',
+    EstimatedFeesVolume: 'Unknown',
+    VisitCadence: 'No cadence'
+  });
+
+  Logger.log('Created 15 test accounts total: Target x2, Contacted x2, Connected x3, Contract Discussion x1, Not a fit x1, and Active Contract/Customer x5 (contrasting referral patterns: moderate-steady, infrequent-high-value, high-frequency, churned/declining, and flat-rate) with 12 months of referral history where applicable. All named with " - TEST" and ReferralSource "Test User" for easy identification. Run removeTestAccounts() to delete all of it later.');
+}
+
+/**
+ * Deletes every account whose name ends in " - TEST" (created by
+ * createTestAccounts() above), along with all of its Contacts,
+ * Connections, Activities, and Referral Activity rows. Matches by name
+ * suffix specifically -- not by ReferralSource alone -- so this only ever
+ * removes accounts that are unambiguously test data, never a real account
+ * that happens to have "Test User" recorded somewhere. Logs what it
+ * removed. Safe to run any time; does nothing if no test accounts exist.
+ */
+function removeTestAccounts() {
+  const accounts = readSheet_(ACCOUNTS_SHEET, ACCOUNTS_HEADERS)
+    .filter(a => String(a.AccountName || '').endsWith(' - TEST'));
+
+  if (accounts.length === 0) {
+    Logger.log('No test accounts found (looking for names ending in " - TEST").');
+    return;
+  }
+
+  let contactsRemoved = 0, connectionsRemoved = 0, activitiesRemoved = 0, referralsRemoved = 0;
+
+  accounts.forEach(account => {
+    readSheet_(CONTACTS_SHEET, CONTACTS_HEADERS)
+      .filter(c => c.AccountId === account.AccountId)
+      .forEach(c => { deleteRow_(CONTACTS_SHEET, 'ContactId', c.ContactId); contactsRemoved++; });
+
+    readSheet_(CONNECTIONS_SHEET, CONNECTIONS_HEADERS)
+      .filter(c => c.AccountId === account.AccountId)
+      .forEach(c => { deleteRow_(CONNECTIONS_SHEET, 'ConnectionId', c.ConnectionId); connectionsRemoved++; });
+
+    readSheet_(ACTIVITIES_SHEET, ACTIVITIES_HEADERS)
+      .filter(a => a.AccountId === account.AccountId)
+      .forEach(a => { deleteRow_(ACTIVITIES_SHEET, 'ActivityId', a.ActivityId); activitiesRemoved++; });
+
+    readSheet_(REFERRAL_ACTIVITY_SHEET, REFERRAL_ACTIVITY_HEADERS)
+      .filter(r => r.AccountId === account.AccountId)
+      .forEach(r => { deleteRow_(REFERRAL_ACTIVITY_SHEET, 'ReferralActivityId', r.ReferralActivityId); referralsRemoved++; });
+
+    deleteRow_(ACCOUNTS_SHEET, 'AccountId', account.AccountId);
+  });
+
+  Logger.log('Removed ' + accounts.length + ' test account(s), ' + contactsRemoved + ' contact(s), ' +
+    connectionsRemoved + ' connection(s), ' + activitiesRemoved + ' activit(y/ies), and ' +
+    referralsRemoved + ' referral activity row(s).');
 }
 
 function getActivitiesForAccount_(accountId) {
