@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>BDD EXP — Bayside Dysphagia Diagnostics</title>
+<meta name="theme-color" content="#ffffff" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="BDD EXP" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: { DEFAULT: '#081e3d', 50:'#eef2f7', 100:'#d7e0eb', 700:'#0f2a4e', 900:'#081e3d' },
+          teal: { DEFAULT: '#0f766e', 50:'#effaf8', 500:'#0f766e', 600:'#0c5f58' },
+          skyblue: { DEFAULT: '#a9c6dc', 100:'#eaf2f7', 300:'#c6dbe8', 500:'#a9c6dc' }
+        }
+      }
+    }
+  }
+</script>
+<style>
+  /* ---------- Design tokens (matches the BDD CRM palette) ---------- */
+  :root {
+    --ink: #182238;
+    --muted: #6b7280;
+    --faint: #98a2b3;
+    --line: #e6e9ef;
+    --canvas: #f6f7f9;
+    --surface: #ffffff;
+    --navy: #0b1f3a;
+    --navy-deep: #081e3d;
+    --teal: #0f766e;
+    --teal-dark: #0c5f58;
+    --teal-wash: #eef6f5;
+    --danger: #c2413a;
+    --warning: #9a6700;
+    --good: #0c8a5f;
+    --sidebar-w: 224px;
+    --topbar-h: 60px;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--canvas); }
+  body { margin:0; font-family:'Inter',sans-serif; background:var(--canvas); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb { background:#cfd5de; border-radius:999px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  button { font-family:inherit; }
+  input, select, textarea { font-family:inherit; }
+
+  /* ---------- Login (split brand / auth panel, same pattern as the CRM) ---------- */
+  .exp-login-page { min-height:100vh; min-height:100dvh; display:grid; grid-template-columns:minmax(440px,1fr) minmax(400px,.9fr); background:#f5f7f8; color:var(--navy); }
+  .exp-login-brand { position:relative; isolation:isolate; overflow:hidden; display:flex; align-items:center; padding:64px clamp(48px,7vw,100px); background:linear-gradient(145deg,#071b36 0%,#0a2949 58%,#0d555b 125%); color:#fff; }
+  .exp-login-brand:before { content:''; position:absolute; z-index:-1; width:520px; height:520px; right:-260px; top:-200px; border-radius:50%; border:1px solid rgba(139,211,203,.18); box-shadow:0 0 0 70px rgba(139,211,203,.035),0 0 0 140px rgba(139,211,203,.025); }
+  .exp-login-brand:after { content:''; position:absolute; z-index:-1; width:400px; height:400px; left:-220px; bottom:-250px; border-radius:50%; background:rgba(47,151,142,.16); filter:blur(2px); }
+  .exp-login-brand-inner { width:min(520px,100%); }
+  .exp-login-identity { display:flex; align-items:center; gap:13px; margin-bottom:58px; }
+  .exp-login-logo-tile { width:52px; height:52px; flex:0 0 52px; display:flex; align-items:center; justify-content:center; border-radius:14px; background:#fff; color:var(--navy-deep); font-weight:800; font-size:18px; box-shadow:0 12px 32px rgba(0,0,0,.14); }
+  .exp-login-company { font-size:14px; font-weight:750; letter-spacing:.01em; }
+  .exp-login-product { margin-top:3px; color:#9fc9ca; font-size:12px; font-weight:650; letter-spacing:.08em; text-transform:uppercase; }
+  .exp-login-eyebrow { margin-bottom:12px; color:#8dd0c9; font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+  .exp-login-brand h1 { max-width:480px; margin:0; font-size:clamp(34px,3.6vw,50px); font-weight:800; line-height:1.08; letter-spacing:-.02em; }
+  .exp-login-lede { max-width:470px; margin:18px 0 26px; color:#c0cfdd; font-size:15.5px; line-height:1.65; }
+  .exp-login-benefits { display:grid; gap:12px; margin:0; padding:0; list-style:none; }
+  .exp-login-benefits li { display:flex; align-items:center; gap:10px; color:#e2eaf1; font-size:13.5px; font-weight:600; }
+  .exp-login-check { width:22px; height:22px; flex:0 0 22px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(141,208,201,.48); border-radius:50%; background:rgba(141,208,201,.1); color:#9ee0d8; font-size:12px; }
+  .exp-login-privacy { max-width:470px; margin-top:32px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12); color:#95a9bd; font-size:11.5px; line-height:1.55; }
+  .exp-login-auth { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:56px clamp(32px,6vw,80px) 28px; background:linear-gradient(180deg,#fff 0%,#fbfcfd 100%); }
+  .exp-login-card { width:min(400px,100%); }
+  .exp-login-mobile-logo { display:none; }
+  .exp-login-badge { display:inline-flex; align-items:center; gap:7px; margin-bottom:20px; color:#14756e; font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; }
+  .exp-login-badge:before { content:''; width:8px; height:8px; border-radius:50%; background:#2e9b91; box-shadow:0 0 0 4px #e5f4f2; }
+  .exp-login-card h2 { margin:0; color:var(--navy-deep); font-size:32px; font-weight:800; line-height:1.15; letter-spacing:-.02em; }
+  .exp-login-auth-copy { margin:12px 0 26px; color:#69778b; font-size:13.5px; line-height:1.6; }
+  .exp-login-google-wrap { min-height:52px; display:flex; align-items:center; justify-content:center; padding:8px; border:1px solid #dbe5ed; border-radius:12px; background:#fff; box-shadow:0 2px 8px rgba(8,30,61,.045); }
+  .exp-login-status { margin:14px 0 0; text-align:center; color:#718096; font-size:12px; line-height:1.5; }
+  .exp-login-status.error { color:var(--danger); }
+  .exp-login-assurance { display:flex; align-items:flex-start; gap:9px; margin-top:22px; padding:13px 14px; border:1px solid #dce9e8; border-radius:11px; background:#f3f9f8; color:#53677a; font-size:11.5px; line-height:1.5; }
+  .exp-login-lock { color:#1a7f77; font-size:14px; line-height:1.3; }
+  .exp-login-help { margin-top:22px; text-align:center; color:#8b96a7; font-size:11px; }
+  .exp-login-footer { width:min(400px,100%); margin-top:auto; padding-top:40px; display:flex; justify-content:space-between; gap:16px; color:#9aa4b2; font-size:10.5px; }
+  .exp-login-footer a { color:#61768a; text-decoration:none; }
+  .exp-login-footer a:hover { color:#16756f; }
+  @media (max-width:900px) {
+    .exp-login-page { grid-template-columns:1fr; }
+    .exp-login-brand { display:none; }
+    .exp-login-auth { width:100%; min-height:100vh; min-height:100dvh; padding:40px 20px 24px; }
+    .exp-login-card { max-width:400px; margin:0 auto; padding:26px 22px; border:1px solid #dbe5ed; border-radius:16px; background:#fff; box-shadow:0 18px 50px rgba(8,30,61,.1); }
+    .exp-login-mobile-logo { display:flex; width:52px; height:52px; margin-bottom:22px; border-radius:14px; background:var(--navy-deep); color:#fff; align-items:center; justify-content:center; font-weight:800; font-size:17px; }
+    .exp-login-footer { max-width:400px; margin:22px auto 0; padding-top:0; align-items:center; }
+  }
+
+  /* ---------- App chrome: fixed sidebar + top bar ---------- */
+  .app-shell { min-height:100vh; }
+  .sidebar { position:fixed; inset:0 auto 0 0; width:var(--sidebar-w); background:#fff; border-right:1px solid var(--line); z-index:40; display:flex; flex-direction:column; }
+  .sidebar-brand { height:var(--topbar-h); display:flex; align-items:center; gap:10px; padding:0 18px; border-bottom:1px solid var(--line); }
+  .sidebar-brand-mark { width:30px; height:30px; border-radius:9px; background:var(--navy-deep); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; }
+  .sidebar-brand-title { font-size:13px; line-height:1.15; font-weight:700; color:var(--navy-deep); letter-spacing:-.01em; }
+  .sidebar-brand-sub { font-size:10px; line-height:1.2; color:var(--faint); margin-top:2px; }
+  .sidebar-nav { padding:14px 10px; display:flex; flex-direction:column; gap:3px; flex:1; overflow-y:auto; }
+  .nav-label { padding:12px 10px 6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); }
+  .nav-btn { width:100%; height:38px; border:0; background:transparent; display:flex; align-items:center; gap:10px; padding:0 10px; border-radius:9px; color:#657084; font-size:13px; font-weight:550; text-align:left; cursor:pointer; transition:.15s ease; }
+  .nav-btn:hover { background:#f4f6f8; color:var(--navy-deep); }
+  .nav-btn.active { background:var(--teal-wash); color:var(--teal-dark); font-weight:650; }
+  .nav-icon { width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; }
+  .nav-icon svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .sidebar-bottom { margin-top:auto; padding:12px 10px 14px; border-top:1px solid var(--line); }
+  .profile-row { display:flex; align-items:flex-start; gap:9px; padding:8px 9px; border-radius:10px; }
+  .avatar { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#edf1f5; color:var(--navy-deep); font-size:11px; font-weight:700; flex:0 0 30px; }
+  .profile-copy { min-width:0; flex:1; }
+  .profile-name { font-size:12px; line-height:1.35; font-weight:600; color:#39465a; word-break:break-word; }
+  .signout-btn { border:0; background:transparent; color:var(--faint); font-size:11px; cursor:pointer; padding:2px 0; border-radius:6px; }
+  .signout-btn:hover { background:#f3f4f6; color:#4b5563; }
+
+  .main { margin-left:var(--sidebar-w); min-height:100vh; }
+  .topbar { position:sticky; top:0; z-index:30; height:var(--topbar-h); display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 24px; background:rgba(246,247,249,.9); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); }
+  .topbar-title { font-size:16px; font-weight:750; color:var(--navy-deep); letter-spacing:-.01em; }
+  .topbar-sub { font-size:12px; color:var(--muted); margin-top:1px; }
+  .page { padding:24px; max-width:1180px; }
+  .hamburger { display:none; }
+
+  @media (max-width:860px) {
+    .sidebar { transform:translateX(-100%); transition:transform .2s ease; box-shadow:0 20px 50px rgba(8,30,61,.25); }
+    .sidebar.open { transform:translateX(0); }
+    .main { margin-left:0; }
+    .hamburger { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:9px; border:1px solid var(--line); background:#fff; }
+    .sidebar-scrim { position:fixed; inset:0; background:rgba(8,20,40,.35); z-index:39; }
+    .page { padding:16px; }
+  }
+
+  /* ---------- Cards, tiles, tables ---------- */
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:14px; }
+  .card-pad { padding:18px 20px; }
+  .card-title { font-size:14px; font-weight:700; color:var(--navy-deep); }
+  .card-copy { font-size:12px; color:var(--muted); margin-top:2px; }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+  @media (max-width:960px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .kpi-tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+  .kpi-label { font-size:11.5px; font-weight:650; color:var(--muted); }
+  .kpi-value { margin-top:8px; font-size:26px; font-weight:800; color:var(--navy-deep); letter-spacing:-.02em; font-variant-numeric:proportional-nums; }
+  .kpi-delta { margin-top:4px; font-size:11.5px; font-weight:650; }
+  .kpi-delta.up { color:var(--danger); }
+  .kpi-delta.down { color:var(--good); }
+  .kpi-delta.flat { color:var(--muted); }
+
+  .bar-row { display:grid; grid-template-columns:150px 1fr 78px; align-items:center; gap:10px; padding:7px 0; }
+  .bar-row-label { font-size:12.5px; color:#39465a; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar-track { position:relative; height:20px; background:#eef1f4; border-radius:6px; overflow:hidden; }
+  .bar-fill { position:absolute; inset:0 auto 0 0; height:100%; background:var(--teal); border-radius:6px; min-width:4px; }
+  .bar-row-value { font-size:12.5px; font-weight:700; color:var(--navy-deep); text-align:right; font-variant-numeric:tabular-nums; }
+
+  .table-wrap { overflow-x:auto; }
+  table.data-table { width:100%; border-collapse:collapse; font-size:13px; }
+  table.data-table th { text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--faint); padding:10px 14px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data-table td { padding:11px 14px; border-bottom:1px solid #f0f2f5; vertical-align:middle; color:#39465a; }
+  table.data-table tbody tr:hover { background:#fafbfc; cursor:pointer; }
+  table.data-table td.num, table.data-table th.num { text-align:right; font-variant-numeric:tabular-nums; }
+
+  .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:650; background:#eef1f4; color:#475467; white-space:nowrap; }
+  .pill-teal { background:var(--teal-wash); color:var(--teal-dark); }
+  .pill-navy { background:#eef2f7; color:var(--navy-deep); }
+  .pill-warn { background:#fff8e8; color:var(--warning); }
+  .pill-danger { background:#fdecea; color:var(--danger); }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; height:36px; padding:0 16px; border-radius:9px; font-size:13px; font-weight:650; cursor:pointer; border:1px solid transparent; transition:.15s ease; white-space:nowrap; }
+  .btn-primary { background:var(--navy-deep); color:#fff; }
+  .btn-primary:hover { background:#0f2a4e; }
+  .btn-teal { background:var(--teal); color:#fff; }
+  .btn-teal:hover { background:var(--teal-dark); }
+  .btn-ghost { background:#fff; color:#39465a; border-color:var(--line); }
+  .btn-ghost:hover { background:#f7f8fa; }
+  .btn-danger-ghost { background:#fff; color:var(--danger); border-color:#f3d3d0; }
+  .btn-danger-ghost:hover { background:#fdecea; }
+  .btn:disabled { opacity:.55; cursor:not-allowed; }
+  .btn-sm { height:30px; padding:0 12px; font-size:12px; }
+
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field label { font-size:12px; font-weight:650; color:#475467; }
+  .input, select.input, textarea.input { width:100%; height:38px; padding:0 12px; border-radius:9px; border:1px solid #d7dde5; background:#fff; font-size:13.5px; color:var(--ink); }
+  textarea.input { height:auto; padding:10px 12px; resize:vertical; }
+  .input:focus, select.input:focus, textarea.input:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(15,118,110,.12); }
+  .field-hint { font-size:11px; color:var(--faint); }
+  .field-error { font-size:11px; color:var(--danger); }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(8,20,40,.4); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; z-index:60; overflow-y:auto; }
+  .modal { width:min(560px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 70px rgba(8,20,40,.3); margin-bottom:5vh; }
+  .modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid var(--line); }
+  .modal-title { font-size:15px; font-weight:750; color:var(--navy-deep); }
+  .modal-close { border:0; background:transparent; color:var(--faint); font-size:18px; line-height:1; cursor:pointer; padding:4px; }
+  .modal-body { padding:20px; display:grid; gap:14px; }
+  .modal-foot { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:16px 20px; border-top:1px solid var(--line); }
+  .modal-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:520px) { .modal-row-2 { grid-template-columns:1fr; } }
+
+  .receipt-drop { border:1.5px dashed #d7dde5; border-radius:12px; padding:16px; text-align:center; color:var(--muted); font-size:12.5px; cursor:pointer; background:#fbfcfd; }
+  .receipt-drop:hover { border-color:var(--teal); background:var(--teal-wash); }
+  .receipt-chip { display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:#fafbfc; font-size:12.5px; }
+  .receipt-chip a { color:var(--teal-dark); font-weight:650; text-decoration:none; }
+  .receipt-chip a:hover { text-decoration:underline; }
+
+  .empty-state { text-align:center; padding:48px 20px; color:var(--muted); }
+  .empty-state-title { font-size:14px; font-weight:700; color:var(--navy-deep); margin-bottom:6px; }
+
+  .toast { position:fixed; right:20px; bottom:20px; z-index:80; background:var(--navy-deep); color:#fff; padding:11px 16px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 14px 30px rgba(8,20,40,.3); }
+  .toast.error { background:#7a2b26; }
+
+  .filter-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .segmented { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff; }
+  .segmented button { border:0; background:transparent; padding:7px 13px; font-size:12.5px; font-weight:650; color:#657084; cursor:pointer; }
+  .segmented button.active { background:var(--navy-deep); color:#fff; }
+
+  .spinner { width:22px; height:22px; border-radius:50%; border:2.5px solid #dfe7ed; border-top-color:var(--teal); animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .full-loading { min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+"use strict";
+const h = React.createElement;
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+// =====================================================================
+// Config — this app is a fully separate deployment from the BDD CRM:
+// its own Google Sheet, its own Apps Script project/exec URL, its own
+// session store. Paste this app's own /exec URL below once deployed.
+// =====================================================================
+const API_URL = "https://script.google.com/macros/s/AKfycbzvkoS7P8RXCOE40rZzdI2tJ2pyCBOyVTDfv3H0YbH3NyWb3jlNZgpO0LQT3lgj4sTaDQ/exec";
+// Must match Code.gs's GOOGLE_CLIENT_ID for this app.
+const GOOGLE_CLIENT_ID = "611665595000-9c7domumik2gogfrevom2c26nt357upf.apps.googleusercontent.com";
+
+const LS_PREFIX = 'bdd_exp_';
+const CACHE_KEY = LS_PREFIX + 'cache_v1';
+
+// =====================================================================
+// Small utilities
+// =====================================================================
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function parseDate_(s) {
+  if (!s) return null;
+  const d = new Date(s.length <= 10 ? s + 'T00:00:00' : s);
+  return isNaN(d.getTime()) ? null : d;
+}
+function formatDate(s) {
+  const d = parseDate_(s);
+  if (!d) return '—';
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+}
+function formatCurrency(v) {
+  const n = Number(v) || 0;
+  return n.toLocaleString(undefined, { style:'currency', currency:'USD' });
+}
+function formatCurrencyCompact(v) {
+  const n = Number(v) || 0;
+  if (Math.abs(n) >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
+  return formatCurrency(n);
+}
+function getInitials(name, email) {
+  const src = (name || '').trim() || (email || '').split('@')[0];
+  const parts = src.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return src.slice(0,2).toUpperCase();
+}
+function uid_() {
+  return 'tmp_' + Math.random().toString(36).slice(2) + Date.now();
+}
+function readCache_() {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) { return null; }
+}
+function writeCache_(data) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+function getSessionToken() { return sessionStorage.getItem(LS_PREFIX + 'session_token') || ''; }
+
+function handleUnauthorized() {
+  sessionStorage.removeItem(LS_PREFIX + 'unlocked');
+  sessionStorage.removeItem(LS_PREFIX + 'session_token');
+  sessionStorage.removeItem(LS_PREFIX + 'user_email');
+  sessionStorage.removeItem(LS_PREFIX + 'user_name');
+  window.location.reload();
+}
+
+async function apiGet(extraParams) {
+  const params = new URLSearchParams({ action:'all', token:getSessionToken(), ...(extraParams||{}) });
+  const res = await fetch(`${API_URL}?${params.toString()}`);
+  if (!res.ok) throw new Error(`Server returned an error (status ${res.status}).`);
+  let result;
+  try { result = await res.json(); } catch (e) { throw new Error('Server returned an unexpected response — please try again.'); }
+  if (result.error === 'Unauthorized - please sign in again') { handleUnauthorized(); return { expenses:[], settings:{}, categories:[], paymentMethods:[] }; }
+  return result;
+}
+async function apiPost(action, payload) {
+  const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action, token:getSessionToken(), ...payload }) });
+  if (!res.ok) throw new Error(`Server returned an error (status ${res.status}).`);
+  let result;
+  try { result = await res.json(); } catch (e) { throw new Error('Server returned an unexpected response — please try again.'); }
+  if (result.error === 'Unauthorized - please sign in again') handleUnauthorized();
+  return result;
+}
+function fileToBase64_(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+let _gsiPromise = null;
+function loadGoogleIdentity() {
+  if (_gsiPromise) return _gsiPromise;
+  _gsiPromise = new Promise((resolve, reject) => {
+    if (window.google && window.google.accounts && window.google.accounts.id) return resolve(window.google);
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => (window.google && window.google.accounts && window.google.accounts.id) ? resolve(window.google) : reject(new Error('Google Identity failed to initialize'));
+    script.onerror = () => reject(new Error('Google Identity script failed to load'));
+    document.head.appendChild(script);
+  });
+  return _gsiPromise;
+}
+
+// =====================================================================
+// Icons (inline, stroke-based — matches the CRM's icon treatment)
+// =====================================================================
+function Icon({ name }) {
+  const paths = {
+    dashboard: h('path', { d:'M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zM13 3v6h8V3h-8z' }),
+    expenses: h(React.Fragment, null, h('path',{d:'M4 7h16M4 12h16M4 17h10'})),
+    mileage: h(React.Fragment, null, h('path',{d:'M6 10l1.7-3.4A2 2 0 0 1 9.5 5.5h5a2 2 0 0 1 1.8 1.1L18 10'}), h('rect',{x:'3',y:'10',width:'18',height:'6',rx:'2'}), h('circle',{cx:'7.5',cy:'18.5',r:'1.6'}), h('circle',{cx:'16.5',cy:'18.5',r:'1.6'})),
+    reports: h(React.Fragment, null, h('path',{d:'M4 20V10M10 20V4M16 20v-7M22 20H2'})),
+    settings: h(React.Fragment, null, h('circle',{cx:'12',cy:'12',r:'3'}), h('path',{d:'M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z'})),
+    plus: h('path',{d:'M12 5v14M5 12h14'}),
+    close: h('path',{d:'M18 6 6 18M6 6l12 12'}),
+    receipt: h(React.Fragment, null, h('path',{d:'M6 2h12v20l-3-2-2 2-2-2-2 2-3-2z'}), h('path',{d:'M9 8h6M9 12h6'})),
+    trash: h(React.Fragment, null, h('path',{d:'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14'})),
+    logout: h(React.Fragment, null, h('path',{d:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'}), h('path',{d:'M16 17l5-5-5-5'}), h('path',{d:'M21 12H9'})),
+    menu: h(React.Fragment, null, h('path',{d:'M3 6h18M3 12h18M3 18h18'})),
+  };
+  return h('span', { className:'nav-icon' }, h('svg', { viewBox:'0 0 24 24' }, paths[name] || null));
+}
+
+// =====================================================================
+// Login gate — Google Sign-In only, restricted to the allowed account
+// =====================================================================
+function Gate({ onUnlock }) {
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [googleFailedToLoad, setGoogleFailedToLoad] = useState(false);
+  const googleButtonRef = useRef(null);
+  const loginInFlightRef = useRef(false);
+
+  const handleCredentialResponse = useCallback(async response => {
+    if (loginInFlightRef.current) return;
+    loginInFlightRef.current = true;
+    setBusy(true); setError('');
+    try {
+      const result = await apiPost('verifyGoogleLogin', { idToken: response.credential });
+      if (result.success) {
+        sessionStorage.setItem(LS_PREFIX + 'user_email', result.result.email);
+        sessionStorage.setItem(LS_PREFIX + 'user_name', result.result.name || '');
+        sessionStorage.setItem(LS_PREFIX + 'session_token', result.result.sessionToken);
+        sessionStorage.setItem(LS_PREFIX + 'unlocked', 'true');
+        onUnlock();
+      } else {
+        setError(result.error || "That Google account isn't authorized for this app.");
+        loginInFlightRef.current = false;
+      }
+    } catch (err) {
+      setError((err.message || 'Something went wrong signing in') + ' — try again.');
+      loginInFlightRef.current = false;
+    }
+    setBusy(false);
+  }, []);
+
+  useEffect(() => {
+    loadGoogleIdentity().then(google => {
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleCredentialResponse });
+      if (googleButtonRef.current) {
+        const container = googleButtonRef.current.parentElement;
+        const w = container ? Math.max(200, Math.floor(container.clientWidth - 20)) : 260;
+        google.accounts.id.renderButton(googleButtonRef.current, { theme:'outline', size:'large', width: Math.min(280, w) });
+      }
+    }).catch(() => setGoogleFailedToLoad(true));
+  }, [handleCredentialResponse]);
+
+  return h('main', { className:'exp-login-page' },
+    h('section', { className:'exp-login-brand', 'aria-label':'BDD EXP overview' },
+      h('div', { className:'exp-login-brand-inner' },
+        h('div', { className:'exp-login-identity' },
+          h('div', { className:'exp-login-logo-tile' }, 'BDD'),
+          h('div', null,
+            h('div', { className:'exp-login-company' }, 'Bayside Dysphagia Diagnostics'),
+            h('div', { className:'exp-login-product' }, 'BDD EXP')
+          )
+        ),
+        h('div', { className:'exp-login-eyebrow' }, 'Business expense workspace'),
+        h('h1', null, 'Track every mileage mile and business expense in one place.'),
+        h('p', { className:'exp-login-lede' }, 'Log expenses, mileage, and receipts as they happen, and see spend by category at a glance — built for the Bayside team.'),
+        h('ul', { className:'exp-login-benefits' }, [
+          'Log an expense or a drive in seconds',
+          'Keep every receipt attached and organized',
+          'See month-to-date and year-to-date spend at a glance'
+        ].map(item => h('li', { key:item },
+          h('span', { className:'exp-login-check', 'aria-hidden':'true' }, '✓'),
+          h('span', null, item)
+        ))),
+        h('p', { className:'exp-login-privacy' }, 'BDD EXP stores business expense records only — a separate workspace from the BDD CRM.')
+      )
+    ),
+    h('section', { className:'exp-login-auth', 'aria-label':'Sign in' },
+      h('div', { className:'exp-login-card' },
+        h('div', { className:'exp-login-mobile-logo' }, 'BDD'),
+        h('div', { className:'exp-login-badge' }, 'BDD EXP'),
+        h('h2', null, 'Welcome back'),
+        h('p', { className:'exp-login-auth-copy' }, 'Sign in with your authorized Bayside Google account to continue.'),
+        googleFailedToLoad
+          ? h('p', { className:'exp-login-status error' }, 'Sign-in is currently unavailable. Please check back shortly.')
+          : h('div', { className:'exp-login-google-wrap' }, h('div', { ref:googleButtonRef })),
+        busy && h('p', { className:'exp-login-status' }, 'Signing in…'),
+        error && h('p', { className:'exp-login-status error' }, error),
+        h('div', { className:'exp-login-assurance' },
+          h('span', { className:'exp-login-lock', 'aria-hidden':'true' }, '▣'),
+          h('span', null, 'Secure access is limited to authorized Bayside team members.')
+        ),
+        h('p', { className:'exp-login-help' }, 'Having trouble signing in? Contact your BDD EXP administrator.')
+      ),
+      h('footer', { className:'exp-login-footer' },
+        h('span', null, '© ' + new Date().getFullYear() + ' Bayside Dysphagia Diagnostics'),
+        h('a', { href:'https://baysidefees.com', target:'_blank', rel:'noopener noreferrer' }, 'baysidefees.com')
+      )
+    )
+  );
+}
+
+// =====================================================================
+// Toast
+// =====================================================================
+function Toast({ toast }) {
+  if (!toast) return null;
+  return h('div', { className:'toast' + (toast.type === 'error' ? ' error' : '') }, toast.message);
+}
+
+// =====================================================================
+// Sidebar
+// =====================================================================
+const NAV_ITEMS = [
+  { key:'dashboard', label:'Dashboard', icon:'dashboard' },
+  { key:'expenses', label:'Expenses', icon:'expenses' },
+  { key:'mileage', label:'Mileage', icon:'mileage' },
+  { key:'reports', label:'Reports', icon:'reports' },
+  { key:'settings', label:'Settings', icon:'settings' },
+];
+
+function Sidebar({ view, setView, user, onSignOut, open, onClose }) {
+  return h(React.Fragment, null,
+    open && h('div', { className:'sidebar-scrim', onClick:onClose }),
+    h('aside', { className:'sidebar' + (open ? ' open' : '') },
+      h('div', { className:'sidebar-brand' },
+        h('div', { className:'sidebar-brand-mark' }, 'B'),
+        h('div', null,
+          h('div', { className:'sidebar-brand-title' }, 'BDD EXP'),
+          h('div', { className:'sidebar-brand-sub' }, 'Expense tracker')
+        )
+      ),
+      h('nav', { className:'sidebar-nav' },
+        h('div', { className:'nav-label' }, 'Workspace'),
+        NAV_ITEMS.map(item => h('button', {
+          key:item.key, type:'button',
+          className:'nav-btn' + (view === item.key ? ' active' : ''),
+          onClick:() => { setView(item.key); onClose && onClose(); }
+        }, h(Icon, { name:item.icon }), h('span', null, item.label)))
+      ),
+      h('div', { className:'sidebar-bottom' },
+        h('div', { className:'profile-row' },
+          h('div', { className:'avatar' }, getInitials(user.name, user.email)),
+          h('div', { className:'profile-copy' },
+            h('div', { className:'profile-name' }, user.name || user.email),
+            h('button', { type:'button', className:'signout-btn', onClick:onSignOut }, 'Sign out')
+          )
+        )
+      )
+    )
+  );
+}
+
+// =====================================================================
+// Category → color mapping for pills (fixed order, matches dataviz rules)
+// =====================================================================
+function categoryPillClass(cat) {
+  if (cat === 'Mileage') return 'pill-teal';
+  if (cat === 'Equipment & Supplies' || cat === 'Office Supplies') return 'pill-navy';
+  return 'pill';
+}
+
+// =====================================================================
+// Expense form (create/edit), with optional receipt upload
+// =====================================================================
+function ExpenseForm({ initial, categories, paymentMethods, defaultMileageRate, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
+  const isEdit = !!(initial && initial.ExpenseId);
+  const [form, setForm] = useState(() => ({
+    Date: (initial && initial.Date) || todayStr(),
+    Category: (initial && initial.Category) || categories[0] || 'Other',
+    Vendor: (initial && initial.Vendor) || '',
+    Description: (initial && initial.Description) || '',
+    Amount: (initial && initial.Amount) || '',
+    PaymentMethod: (initial && initial.PaymentMethod) || paymentMethods[0] || '',
+    Miles: (initial && initial.Miles) || '',
+    MileageRate: (initial && initial.MileageRate) || defaultMileageRate,
+    Notes: (initial && initial.Notes) || ''
+  }));
+  const [file, setFile] = useState(null);
+  const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl } : null);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const isMileage = form.Category === 'Mileage';
+  const computedMileageAmount = isMileage ? (Number(form.Miles || 0) * Number(form.MileageRate || 0)) : null;
+
+  function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErr('');
+    if (!form.Date) return setErr('Date is required.');
+    if (!form.Category) return setErr('Category is required.');
+    if (isMileage) {
+      if (!form.Miles || Number(form.Miles) <= 0) return setErr('Enter the number of miles.');
+    } else if (!form.Amount || Number(form.Amount) <= 0) {
+      return setErr('Enter an amount greater than zero.');
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        Date: form.Date,
+        Category: form.Category,
+        Vendor: form.Vendor,
+        Description: form.Description,
+        PaymentMethod: form.PaymentMethod,
+        Notes: form.Notes,
+        Amount: isMileage ? computedMileageAmount : Number(form.Amount),
+        Miles: isMileage ? Number(form.Miles) : '',
+        MileageRate: isMileage ? Number(form.MileageRate) : ''
+      };
+      let expenseId = initial && initial.ExpenseId;
+      if (isEdit) {
+        await apiUpdate({ ExpenseId: expenseId, ...payload });
+      } else {
+        const created = await apiCreate(payload);
+        expenseId = created.ExpenseId;
+      }
+      if (file) {
+        const base64Data = await fileToBase64_(file);
+        const uploaded = await apiUploadReceipt(expenseId, file.name, file.type, base64Data);
+        await apiUpdate({ ExpenseId: expenseId, ReceiptFileId: uploaded.fileId, ReceiptFileUrl: uploaded.url, ReceiptFileName: uploaded.name });
+      }
+      onSaved();
+    } catch (err2) {
+      setErr(err2.message || 'Something went wrong saving this expense.');
+    }
+    setSaving(false);
+  }
+
+  return h('div', { className:'modal-overlay', onClick: e => { if (e.target === e.currentTarget) onCancel(); } },
+    h('form', { className:'modal', onSubmit:handleSubmit },
+      h('div', { className:'modal-head' },
+        h('div', null,
+          h('div', { className:'modal-title' }, isEdit ? 'Edit expense' : 'Add expense'),
+        ),
+        h('button', { type:'button', className:'modal-close', onClick:onCancel }, h(Icon, { name:'close' }))
+      ),
+      h('div', { className:'modal-body' },
+        err && h('div', { className:'field-error' }, err),
+        h('div', { className:'modal-row-2' },
+          h('div', { className:'field' },
+            h('label', null, 'Date'),
+            h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
+          ),
+          h('div', { className:'field' },
+            h('label', null, 'Category'),
+            h('select', { className:'input', value:form.Category, onChange:e => set('Category', e.target.value) },
+              categories.map(c => h('option', { key:c, value:c }, c))
+            )
+          )
+        ),
+        isMileage
+          ? h('div', { className:'modal-row-2' },
+              h('div', { className:'field' },
+                h('label', null, 'Miles'),
+                h('input', { type:'number', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) })
+              ),
+              h('div', { className:'field' },
+                h('label', null, 'Rate per mile'),
+                h('input', { type:'number', min:'0', step:'0.001', className:'input', value:form.MileageRate, onChange:e => set('MileageRate', e.target.value) }),
+                h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedMileageAmount || 0))
+              )
+            )
+          : h('div', { className:'field' },
+              h('label', null, 'Amount'),
+              h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
+            ),
+        h('div', { className:'field' },
+          h('label', null, isMileage ? 'Destination / purpose' : 'Vendor'),
+          h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder: isMileage ? 'e.g. Cape Cod Hospital — FEES visit' : 'e.g. Staples' })
+        ),
+        h('div', { className:'field' },
+          h('label', null, 'Description'),
+          h('input', { type:'text', className:'input', value:form.Description, onChange:e => set('Description', e.target.value) })
+        ),
+        h('div', { className:'modal-row-2' },
+          h('div', { className:'field' },
+            h('label', null, 'Payment method'),
+            h('select', { className:'input', value:form.PaymentMethod, onChange:e => set('PaymentMethod', e.target.value) },
+              paymentMethods.map(p => h('option', { key:p, value:p }, p))
+            )
+          ),
+          h('div', { className:'field' },
+            h('label', null, 'Notes'),
+            h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
+          )
+        ),
+        h('div', { className:'field' },
+          h('label', null, 'Receipt'),
+          existingReceipt && !file
+            ? h('div', { className:'receipt-chip' },
+                h(Icon, { name:'receipt' }),
+                h('a', { href:existingReceipt.url, target:'_blank', rel:'noopener noreferrer' }, existingReceipt.name || 'View receipt'),
+                h('button', { type:'button', className:'btn btn-ghost btn-sm', style:{ marginLeft:'auto' }, onClick:() => setExistingReceipt(null) }, 'Replace')
+              )
+            : h('label', { className:'receipt-drop' },
+                file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt',
+                h('input', { type:'file', accept:'image/*,application/pdf', style:{ display:'none' }, onChange:e => setFile(e.target.files[0] || null) })
+              )
+        )
+      ),
+      h('div', { className:'modal-foot' },
+        h('button', { type:'button', className:'btn btn-ghost', onClick:onCancel, disabled:saving }, 'Cancel'),
+        h('button', { type:'submit', className:'btn btn-teal', disabled:saving }, saving ? 'Saving…' : (isEdit ? 'Save changes' : 'Add expense'))
+      )
+    )
+  );
+}
+
+// =====================================================================
+// Expenses list/table view
+// =====================================================================
+function ExpensesView({ expenses, categories, onEdit, onDelete, onAdd }) {
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [sortDesc, setSortDesc] = useState(true);
+
+  const filtered = useMemo(() => {
+    let rows = expenses.slice();
+    if (categoryFilter !== 'All') rows = rows.filter(r => r.Category === categoryFilter);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      rows = rows.filter(r => (r.Vendor||'').toLowerCase().includes(q) || (r.Description||'').toLowerCase().includes(q) || (r.Notes||'').toLowerCase().includes(q));
+    }
+    rows.sort((a,b) => {
+      const da = parseDate_(a.Date), db = parseDate_(b.Date);
+      const ta = da ? da.getTime() : 0, tb = db ? db.getTime() : 0;
+      return sortDesc ? tb - ta : ta - tb;
+    });
+    return rows;
+  }, [expenses, categoryFilter, search, sortDesc]);
+
+  function exportCsv() {
+    const headers = ['Date','Category','Vendor','Description','Amount','PaymentMethod','Miles','MileageRate','Notes'];
+    const lines = [headers.join(',')].concat(filtered.map(r => headers.map(hd => {
+      const v = r[hd] === undefined || r[hd] === null ? '' : String(r[hd]);
+      return '"' + v.replace(/"/g,'""') + '"';
+    }).join(',')));
+    const blob = new Blob([lines.join('\n')], { type:'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'bdd-exp-expenses.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return h('div', null,
+    h('div', { className:'filter-row', style:{ marginBottom:'16px', justifyContent:'space-between' } },
+      h('div', { className:'filter-row' },
+        h('input', { type:'text', className:'input', style:{ width:'220px' }, placeholder:'Search vendor, description…', value:search, onChange:e => setSearch(e.target.value) }),
+        h('select', { className:'input', style:{ width:'190px' }, value:categoryFilter, onChange:e => setCategoryFilter(e.target.value) },
+          h('option', { value:'All' }, 'All categories'),
+          categories.map(c => h('option', { key:c, value:c }, c))
+        ),
+        h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:() => setSortDesc(s => !s) }, 'Date ' + (sortDesc ? '↓' : '↑'))
+      ),
+      h('div', { className:'filter-row' },
+        h('button', { type:'button', className:'btn btn-ghost', onClick:exportCsv }, 'Export CSV'),
+        h('button', { type:'button', className:'btn btn-teal', onClick:onAdd }, h(Icon, { name:'plus' }), 'Add expense')
+      )
+    ),
+    h('div', { className:'card table-wrap' },
+      filtered.length === 0
+        ? h('div', { className:'empty-state' },
+            h('div', { className:'empty-state-title' }, 'No expenses yet'),
+            h('p', null, 'Add your first expense to start tracking spend.')
+          )
+        : h('table', { className:'data-table' },
+            h('thead', null, h('tr', null,
+              h('th', null, 'Date'), h('th', null, 'Category'), h('th', null, 'Vendor / Purpose'),
+              h('th', null, 'Payment'), h('th', { className:'num' }, 'Amount'), h('th', null, 'Receipt'), h('th', null, '')
+            )),
+            h('tbody', null, filtered.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
+              h('td', null, formatDate(r.Date)),
+              h('td', null, h('span', { className:'pill ' + categoryPillClass(r.Category) }, r.Category)),
+              h('td', null, r.Vendor || '—'),
+              h('td', null, r.PaymentMethod || '—'),
+              h('td', { className:'num' }, formatCurrency(r.Amount)),
+              h('td', null, r.ReceiptFileUrl ? h('a', { href:r.ReceiptFileUrl, target:'_blank', rel:'noopener noreferrer', style:{ color:'var(--teal-dark)', display:'inline-flex' }, onClick:e => e.stopPropagation() }, h(Icon,{name:'receipt'})) : '—'),
+              h('td', { style:{ textAlign:'right' } }, h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'})))
+            )))
+          )
+    )
+  );
+}
+
+// =====================================================================
+// Mileage view — same data, filtered to Category === 'Mileage'
+// =====================================================================
+function MileageView({ expenses, onEdit, onDelete, onAdd }) {
+  const rows = useMemo(() => expenses.filter(e => e.Category === 'Mileage').sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)), [expenses]);
+  const totalMiles = rows.reduce((s,r) => s + (Number(r.Miles)||0), 0);
+  const totalAmount = rows.reduce((s,r) => s + (Number(r.Amount)||0), 0);
+  return h('div', null,
+    h('div', { className:'kpi-grid', style:{ marginBottom:'18px', gridTemplateColumns:'repeat(2,minmax(0,1fr))' } },
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Total miles logged'), h('div', { className:'kpi-value' }, totalMiles.toLocaleString(undefined,{maximumFractionDigits:1}))),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Total mileage reimbursement'), h('div', { className:'kpi-value' }, formatCurrency(totalAmount)))
+    ),
+    h('div', { style:{ display:'flex', justifyContent:'flex-end', marginBottom:'12px' } },
+      h('button', { type:'button', className:'btn btn-teal', onClick:onAdd }, h(Icon, { name:'plus' }), 'Log a drive')
+    ),
+    h('div', { className:'card table-wrap' },
+      rows.length === 0
+        ? h('div', { className:'empty-state' }, h('div', { className:'empty-state-title' }, 'No mileage logged yet'), h('p', null, 'Log a drive to a facility visit to start tracking.'))
+        : h('table', { className:'data-table' },
+            h('thead', null, h('tr', null, h('th', null,'Date'), h('th', null,'Destination / purpose'), h('th', {className:'num'}, 'Miles'), h('th', {className:'num'}, 'Rate'), h('th', {className:'num'}, 'Amount'), h('th', null, ''))),
+            h('tbody', null, rows.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
+              h('td', null, formatDate(r.Date)),
+              h('td', null, r.Vendor || '—'),
+              h('td', { className:'num' }, Number(r.Miles||0).toLocaleString(undefined,{maximumFractionDigits:1})),
+              h('td', { className:'num' }, '$' + Number(r.MileageRate||0).toFixed(3)),
+              h('td', { className:'num' }, formatCurrency(r.Amount)),
+              h('td', { style:{ textAlign:'right' } }, h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'})))
+            )))
+          )
+    )
+  );
+}
+
+// =====================================================================
+// Dashboard — KPI tiles + spend-by-category bars + recent activity
+// =====================================================================
+function DashboardView({ expenses, onAdd, setView }) {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23,59,59);
+
+  const sum = (rows) => rows.reduce((s,r) => s + (Number(r.Amount)||0), 0);
+  const inRange = (r, start, end) => { const d = parseDate_(r.Date); return d && d >= start && (!end || d <= end); };
+
+  const mtd = expenses.filter(r => inRange(r, monthStart));
+  const lastMonth = expenses.filter(r => inRange(r, lastMonthStart, lastMonthEnd));
+  const ytd = expenses.filter(r => inRange(r, yearStart));
+  const mileageYtd = ytd.filter(r => r.Category === 'Mileage');
+  const missingReceipts = ytd.filter(r => !r.ReceiptFileUrl).length;
+
+  const mtdTotal = sum(mtd), lastMonthTotal = sum(lastMonth), ytdTotal = sum(ytd);
+  const mtdDelta = lastMonthTotal > 0 ? Math.round(((mtdTotal - lastMonthTotal) / lastMonthTotal) * 100) : null;
+
+  const byCategory = useMemo(() => {
+    const map = {};
+    ytd.forEach(r => { map[r.Category] = (map[r.Category]||0) + (Number(r.Amount)||0); });
+    return Object.entries(map).sort((a,b) => b[1]-a[1]);
+  }, [ytd]);
+  const maxCategory = byCategory.length ? byCategory[0][1] : 0;
+
+  const recent = expenses.slice().sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)).slice(0,6);
+
+  return h('div', null,
+    h('div', { className:'kpi-grid', style:{ marginBottom:'20px' } },
+      h('div', { className:'kpi-tile' },
+        h('div', { className:'kpi-label' }, 'This month'),
+        h('div', { className:'kpi-value' }, formatCurrencyCompact(mtdTotal)),
+        mtdDelta !== null && h('div', { className:'kpi-delta ' + (mtdDelta > 0 ? 'up' : mtdDelta < 0 ? 'down' : 'flat') }, (mtdDelta>0?'↑ ':mtdDelta<0?'↓ ':'') + Math.abs(mtdDelta) + '% vs last month')
+      ),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Year to date'), h('div', { className:'kpi-value' }, formatCurrencyCompact(ytdTotal))),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Mileage YTD'), h('div', { className:'kpi-value' }, mileageYtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Missing receipts (YTD)'), h('div', { className:'kpi-value' }, missingReceipts))
+    ),
+    h('div', { style:{ display:'grid', gridTemplateColumns:'1.1fr .9fr', gap:'16px' }, className:'dash-grid' },
+      h('div', { className:'card card-pad' },
+        h('div', { className:'card-title' }, 'Spend by category · year to date'),
+        h('div', { style:{ marginTop:'12px' } },
+          byCategory.length === 0
+            ? h('p', { className:'card-copy' }, 'No expenses logged yet this year.')
+            : byCategory.map(([cat, amt]) => h('div', { className:'bar-row', key:cat },
+                h('div', { className:'bar-row-label' }, cat),
+                h('div', { className:'bar-track' }, h('div', { className:'bar-fill', style:{ width: (maxCategory ? (amt/maxCategory*100) : 0) + '%' } })),
+                h('div', { className:'bar-row-value' }, formatCurrency(amt))
+              ))
+        )
+      ),
+      h('div', { className:'card card-pad' },
+        h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' } },
+          h('div', { className:'card-title' }, 'Recent activity'),
+          h('button', { type:'button', className:'btn btn-teal btn-sm', onClick:onAdd }, h(Icon,{name:'plus'}), 'Add')
+        ),
+        h('div', { style:{ marginTop:'10px', display:'grid', gap:'2px' } },
+          recent.length === 0
+            ? h('p', { className:'card-copy' }, 'Nothing logged yet.')
+            : recent.map(r => h('div', { key:r.ExpenseId, style:{ display:'flex', justifyContent:'space-between', gap:'10px', padding:'9px 0', borderBottom:'1px solid #f0f2f5', cursor:'pointer' }, onClick:() => setView('expenses') },
+                h('div', { style:{ minWidth:0 } },
+                  h('div', { style:{ fontSize:'12.5px', fontWeight:600, color:'#39465a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, r.Vendor || r.Category),
+                  h('div', { style:{ fontSize:'11px', color:'var(--faint)' } }, formatDate(r.Date) + ' · ' + r.Category)
+                ),
+                h('div', { style:{ fontSize:'12.5px', fontWeight:700, color:'var(--navy-deep)', flex:'0 0 auto' } }, formatCurrency(r.Amount))
+              ))
+        )
+      )
+    ),
+    h('style', null, '@media (max-width:900px){ .dash-grid { grid-template-columns:1fr !important; } }')
+  );
+}
+
+// =====================================================================
+// Reports view — simple month-by-month category matrix
+// =====================================================================
+function ReportsView({ expenses, categories }) {
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const years = useMemo(() => {
+    const set = new Set(expenses.map(r => { const d = parseDate_(r.Date); return d ? d.getFullYear() : null; }).filter(Boolean));
+    set.add(new Date().getFullYear());
+    return Array.from(set).sort((a,b) => b-a);
+  }, [expenses]);
+
+  const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const matrix = useMemo(() => {
+    const grid = {};
+    categories.forEach(c => { grid[c] = new Array(12).fill(0); });
+    expenses.forEach(r => {
+      const d = parseDate_(r.Date);
+      if (!d || d.getFullYear() !== year) return;
+      if (!grid[r.Category]) grid[r.Category] = new Array(12).fill(0);
+      grid[r.Category][d.getMonth()] += Number(r.Amount) || 0;
+    });
+    return grid;
+  }, [expenses, categories, year]);
+
+  const monthTotals = monthLabels.map((_, i) => Object.values(matrix).reduce((s,arr) => s + arr[i], 0));
+  const yearTotal = monthTotals.reduce((s,v) => s+v, 0);
+
+  return h('div', null,
+    h('div', { className:'filter-row', style:{ marginBottom:'14px' } },
+      h('div', { className:'card-title' }, 'Expenses by category and month'),
+      h('select', { className:'input', style:{ width:'110px', marginLeft:'auto' }, value:year, onChange:e => setYear(Number(e.target.value)) },
+        years.map(y => h('option', { key:y, value:y }, y))
+      )
+    ),
+    h('div', { className:'card table-wrap' },
+      h('table', { className:'data-table' },
+        h('thead', null, h('tr', null, h('th', null, 'Category'), monthLabels.map(m => h('th', { key:m, className:'num' }, m)), h('th', { className:'num' }, 'Total'))),
+        h('tbody', null,
+          Object.entries(matrix).filter(([,arr]) => arr.some(v => v>0)).map(([cat, arr]) => h('tr', { key:cat },
+            h('td', null, cat),
+            arr.map((v,i) => h('td', { key:i, className:'num' }, v ? formatCurrency(v) : '—')),
+            h('td', { className:'num', style:{ fontWeight:700 } }, formatCurrency(arr.reduce((s,v)=>s+v,0)))
+          )),
+          h('tr', null,
+            h('td', { style:{ fontWeight:700 } }, 'Total'),
+            monthTotals.map((v,i) => h('td', { key:i, className:'num', style:{ fontWeight:700 } }, v ? formatCurrency(v) : '—')),
+            h('td', { className:'num', style:{ fontWeight:800 } }, formatCurrency(yearTotal))
+          )
+        )
+      )
+    )
+  );
+}
+
+// =====================================================================
+// Settings view
+// =====================================================================
+function SettingsView({ settings, onSaveSettings, user }) {
+  const [rate, setRate] = useState(settings.mileageRate);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    await onSaveSettings({ mileageRate: rate });
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  return h('div', { style:{ maxWidth:'520px' } },
+    h('div', { className:'card card-pad', style:{ marginBottom:'16px' } },
+      h('div', { className:'card-title' }, 'Mileage rate'),
+      h('p', { className:'card-copy' }, 'Used as the default rate on new mileage entries. Changing it never rewrites the rate stored on past entries.'),
+      h('div', { style:{ display:'flex', gap:'10px', marginTop:'12px', alignItems:'center' } },
+        h('input', { type:'number', step:'0.001', min:'0', className:'input', style:{ width:'140px' }, value:rate, onChange:e => setRate(e.target.value) }),
+        h('button', { type:'button', className:'btn btn-teal', onClick:save, disabled:saving }, saving ? 'Saving…' : 'Save'),
+        saved && h('span', { style:{ fontSize:'12px', color:'var(--good)', fontWeight:650 } }, 'Saved')
+      )
+    ),
+    h('div', { className:'card card-pad' },
+      h('div', { className:'card-title' }, 'Signed in as'),
+      h('p', { className:'card-copy' }, user.email)
+    )
+  );
+}
+
+// =====================================================================
+// App shell
+// =====================================================================
+function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[] }; }
+
+function App() {
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(LS_PREFIX+'unlocked') === 'true' && !!sessionStorage.getItem(LS_PREFIX+'session_token'));
+  const [startupCache] = useState(() => readCache_());
+  const [data, setData] = useState(() => startupCache || emptyData_());
+  const [loading, setLoading] = useState(() => !startupCache);
+  const [loadError, setLoadError] = useState(null);
+  const [view, setView] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [modal, setModal] = useState(null); // null | { mode:'create'|'edit', expense }
+  const [toast, setToast] = useState(null);
+
+  const user = {
+    email: sessionStorage.getItem(LS_PREFIX+'user_email') || '',
+    name: sessionStorage.getItem(LS_PREFIX+'user_name') || ''
+  };
+
+  function showToast(message, type) {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2800);
+  }
+
+  const refresh = useCallback(async () => {
+    setLoadError(null);
+    try {
+      const result = await apiGet();
+      const next = {
+        expenses: result.expenses || [],
+        settings: result.settings || { mileageRate:0.76 },
+        categories: (result.categories && result.categories.length) ? result.categories : ['Mileage','Equipment & Supplies','Software & Subscriptions','Insurance','Marketing','Professional Services','Travel & Lodging','Office Supplies','Other'],
+        paymentMethods: (result.paymentMethods && result.paymentMethods.length) ? result.paymentMethods : ['Business Debit Card','Business Credit Card','Personal (to be reimbursed)','Check','Cash','Other']
+      };
+      setData(next);
+      writeCache_(next);
+    } catch (err) {
+      setLoadError(err.message || 'Failed to load your expenses.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { if (unlocked) refresh(); }, [unlocked, refresh]);
+
+  function handleUnlock() { setUnlocked(true); }
+  function handleSignOut() {
+    apiPost('logout', {}).catch(() => {});
+    sessionStorage.clear();
+    window.location.reload();
+  }
+
+  const apiCreate = useCallback(async (payload) => {
+    const res = await apiPost('createExpense', { data: payload });
+    if (!res.success) throw new Error(res.error || 'Could not save expense.');
+    setData(d => { const next = { ...d, expenses: [...d.expenses, res.result] }; writeCache_(next); return next; });
+    return res.result;
+  }, []);
+  const apiUpdate = useCallback(async (payload) => {
+    const res = await apiPost('updateExpense', { data: payload });
+    if (!res.success) throw new Error(res.error || 'Could not save changes.');
+    setData(d => { const next = { ...d, expenses: d.expenses.map(e => e.ExpenseId === payload.ExpenseId ? { ...e, ...payload } : e) }; writeCache_(next); return next; });
+    return res.result;
+  }, []);
+  const apiUploadReceipt = useCallback(async (expenseId, filename, mimeType, base64Data) => {
+    const res = await apiPost('uploadReceipt', { expenseId, filename, mimeType, base64Data });
+    if (!res.success) throw new Error(res.error || 'Could not upload the receipt.');
+    return res.result;
+  }, []);
+  const apiDelete = useCallback(async (expenseId) => {
+    const res = await apiPost('deleteExpense', { expenseId });
+    if (!res.success) throw new Error(res.error || 'Could not delete this expense.');
+    setData(d => { const next = { ...d, expenses: d.expenses.filter(e => e.ExpenseId !== expenseId) }; writeCache_(next); return next; });
+  }, []);
+  const apiSaveSettings = useCallback(async (payload) => {
+    const res = await apiPost('updateSettings', { data: payload });
+    if (res.success) setData(d => { const next = { ...d, settings: res.result }; writeCache_(next); return next; });
+  }, []);
+
+  function openAdd() { setModal({ mode:'create' }); }
+  function openEdit(expense) { setModal({ mode:'edit', expense }); }
+  async function handleDelete(expense) {
+    if (!window.confirm('Delete this expense? This cannot be undone.')) return;
+    try { await apiDelete(expense.ExpenseId); showToast('Expense deleted.'); }
+    catch (err) { showToast(err.message, 'error'); }
+  }
+  async function handleSaved() {
+    setModal(null);
+    showToast(modal && modal.mode === 'edit' ? 'Expense updated.' : 'Expense added.');
+  }
+
+  if (!unlocked) return h(Gate, { onUnlock: handleUnlock });
+
+  if (loading) {
+    return h('div', { className:'full-loading' }, h('div', { className:'spinner' }), h('p', null, 'Loading BDD EXP…'));
+  }
+
+  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', settings:'Settings' };
+
+  return h('div', { className:'app-shell' },
+    h(Sidebar, { view, setView, user, onSignOut:handleSignOut, open:sidebarOpen, onClose:() => setSidebarOpen(false) }),
+    h('div', { className:'main' },
+      h('div', { className:'topbar' },
+        h('div', { style:{ display:'flex', alignItems:'center', gap:'12px' } },
+          h('button', { type:'button', className:'hamburger', onClick:() => setSidebarOpen(true) }, h(Icon, { name:'menu' })),
+          h('div', null,
+            h('div', { className:'topbar-title' }, pageTitles[view] || ''),
+            loadError && h('div', { className:'topbar-sub', style:{ color:'var(--danger)' } }, loadError)
+          )
+        ),
+        h('button', { type:'button', className:'btn btn-primary btn-sm', onClick:openAdd }, h(Icon,{name:'plus'}), 'Add expense')
+      ),
+      h('div', { className:'page' },
+        view === 'dashboard' && h(DashboardView, { expenses:data.expenses, onAdd:openAdd, setView }),
+        view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDelete:handleDelete, onAdd:openAdd }),
+        view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete, onAdd:openAdd }),
+        view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
+        view === 'settings' && h(SettingsView, { settings:data.settings, onSaveSettings:apiSaveSettings, user })
+      )
+    ),
+    modal && h(ExpenseForm, {
+      initial: modal.mode === 'edit' ? modal.expense : null,
+      categories: data.categories,
+      paymentMethods: data.paymentMethods,
+      defaultMileageRate: data.settings.mileageRate,
+      onCancel: () => setModal(null),
+      onSaved: handleSaved,
+      apiCreate, apiUpdate, apiUploadReceipt
+    }),
+    h(Toast, { toast })
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App, null));
+</script>
+</body>
+</html>
