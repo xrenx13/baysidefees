@@ -265,6 +265,10 @@ const SAVED_START_LOCATIONS = [
 const LS_PREFIX = 'bdd_exp_';
 const CACHE_KEY = LS_PREFIX + 'cache_v1';
 
+// Bump this with each deployed change while actively developing — shown in
+// the sidebar footer so it's easy to confirm which build is live.
+const BUILD_NUMBER = '2026.09.16-1';
+
 // =====================================================================
 // Small utilities
 // =====================================================================
@@ -387,6 +391,7 @@ function Icon({ name }) {
     trash: h(React.Fragment, null, h('path',{d:'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14'})),
     logout: h(React.Fragment, null, h('path',{d:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'}), h('path',{d:'M16 17l5-5-5-5'}), h('path',{d:'M21 12H9'})),
     menu: h(React.Fragment, null, h('path',{d:'M3 6h18M3 12h18M3 18h18'})),
+    po: h(React.Fragment, null, h('path',{d:'M9 3h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V4a1 1 0 0 1 1-1z'}), h('path',{d:'M9 11h6M9 15h6M9 7h6'})),
   };
   return h('span', { className:'nav-icon' }, h('svg', { viewBox:'0 0 24 24' }, paths[name] || null));
 }
@@ -500,6 +505,7 @@ const NAV_ITEMS = [
   { key:'expenses', label:'Expenses', icon:'expenses' },
   { key:'mileage', label:'Mileage', icon:'mileage' },
   { key:'reports', label:'Reports', icon:'reports' },
+  { key:'purchaseorders', label:'Purchase Orders', icon:'po' },
   { key:'settings', label:'Settings', icon:'settings' },
 ];
 
@@ -529,7 +535,8 @@ function Sidebar({ view, setView, user, onSignOut, open, onClose }) {
             h('div', { className:'profile-name' }, user.name || user.email),
             h('button', { type:'button', className:'signout-btn', onClick:onSignOut }, 'Sign out')
           )
-        )
+        ),
+        h('div', { style:{ fontSize:'10.5px', color:'var(--faint)', textAlign:'center', marginTop:'10px', letterSpacing:'.02em' } }, 'Build ' + BUILD_NUMBER)
       )
     )
   );
@@ -545,9 +552,33 @@ function categoryPillClass(cat) {
 }
 
 // =====================================================================
-// Expense form (create/edit), with optional receipt upload
+// Shared modal shell — overlay + card + header/footer chrome, used by the
+// three separate forms below (Expense, Mileage, Purchase Order) so each of
+// those only has to describe its own fields.
 // =====================================================================
-function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defaultMileageRate, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
+function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }) {
+  const body = Array.isArray(children) ? children : [children];
+  return h('div', { className:'modal-overlay', onClick: e => { if (e.target === e.currentTarget) onCancel(); } },
+    h('form', { className:'modal', onSubmit },
+      h('div', { className:'modal-head' },
+        h('div', { className:'modal-title' }, title),
+        h('button', { type:'button', className:'modal-close', onClick:onCancel }, h(Icon, { name:'close' }))
+      ),
+      h('div', { className:'modal-body' }, ...body),
+      h('div', { className:'modal-foot' },
+        h('button', { type:'button', className:'btn btn-ghost', onClick:onCancel, disabled:saving }, 'Cancel'),
+        h('button', { type:'submit', className:'btn btn-teal', disabled:saving }, saving ? 'Saving…' : submitLabel)
+      )
+    )
+  );
+}
+
+// =====================================================================
+// Expense form (create/edit) — general business expenses only. Mileage has
+// its own dedicated form (MileageForm, below) so this one only ever shows
+// fields that actually apply: no start/end locations, no mileage rate.
+// =====================================================================
+function ExpenseForm({ initial, presetCategory, categories, paymentMethods, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const [form, setForm] = useState(() => ({
     Date: (initial && initial.Date) || todayStr(),
@@ -556,36 +587,142 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defa
     Description: (initial && initial.Description) || '',
     Amount: (initial && initial.Amount) || '',
     PaymentMethod: (initial && initial.PaymentMethod) || paymentMethods[0] || '',
-    Miles: (initial && initial.Miles) || '',
-    MileageRate: (initial && initial.MileageRate) || defaultMileageRate,
-    Notes: (initial && initial.Notes) || '',
-    StartLocation: (initial && initial.StartLocation) || (presetCategory === 'Mileage' ? SAVED_START_LOCATIONS[0].address : ''),
-    EndLocation: (initial && initial.EndLocation) || ''
+    Notes: (initial && initial.Notes) || ''
   }));
   const [file, setFile] = useState(null);
   const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl } : null);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErr('');
+    if (!form.Date) return setErr('Date is required.');
+    if (!form.Category) return setErr('Category is required.');
+    if (!form.Amount || Number(form.Amount) <= 0) return setErr('Enter an amount greater than zero.');
+    setSaving(true);
+    try {
+      const payload = {
+        Date: form.Date,
+        Category: form.Category,
+        Vendor: form.Vendor,
+        Description: form.Description,
+        PaymentMethod: form.PaymentMethod,
+        Notes: form.Notes,
+        Amount: Number(form.Amount),
+        Miles: '', MileageRate: '', StartLocation: '', EndLocation: ''
+      };
+      let expenseId = initial && initial.ExpenseId;
+      if (isEdit) {
+        await apiUpdate({ ExpenseId: expenseId, ...payload });
+      } else {
+        const created = await apiCreate(payload);
+        expenseId = created.ExpenseId;
+      }
+      if (file) {
+        const base64Data = await fileToBase64_(file);
+        const uploaded = await apiUploadReceipt(expenseId, file.name, file.type, base64Data);
+        await apiUpdate({ ExpenseId: expenseId, ReceiptFileId: uploaded.fileId, ReceiptFileUrl: uploaded.url, ReceiptFileName: uploaded.name });
+      }
+      onSaved();
+    } catch (err2) {
+      setErr(err2.message || 'Something went wrong saving this expense.');
+    }
+    setSaving(false);
+  }
+
+  return h(ModalShell, {
+    title: isEdit ? 'Edit expense' : 'Add expense',
+    onCancel, onSubmit: handleSubmit, saving,
+    submitLabel: isEdit ? 'Save changes' : 'Add expense'
+  },
+    err && h('div', { className:'field-error' }, err),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Date'),
+        h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Category'),
+        h('select', { className:'input', value:form.Category, onChange:e => set('Category', e.target.value) },
+          categories.map(c => h('option', { key:c, value:c }, c))
+        )
+      )
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Amount'),
+      h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Vendor'),
+      h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. Staples' })
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Description'),
+      h('input', { type:'text', className:'input', value:form.Description, onChange:e => set('Description', e.target.value) })
+    ),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Payment method'),
+        h('select', { className:'input', value:form.PaymentMethod, onChange:e => set('PaymentMethod', e.target.value) },
+          paymentMethods.map(p => h('option', { key:p, value:p }, p))
+        )
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Notes'),
+        h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
+      )
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Receipt'),
+      existingReceipt && !file
+        ? h('div', { className:'receipt-chip' },
+            h(Icon, { name:'receipt' }),
+            h('a', { href:existingReceipt.url, target:'_blank', rel:'noopener noreferrer' }, existingReceipt.name || 'View receipt'),
+            h('button', { type:'button', className:'btn btn-ghost btn-sm', style:{ marginLeft:'auto' }, onClick:() => setExistingReceipt(null) }, 'Replace')
+          )
+        : h('label', { className:'receipt-drop' },
+            file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt',
+            h('input', { type:'file', accept:'image/*,application/pdf', style:{ display:'none' }, onChange:e => setFile(e.target.files[0] || null) })
+          )
+    )
+  );
+}
+
+// =====================================================================
+// Mileage form (create/edit) — its own dedicated modal, separate from
+// ExpenseForm above. No payment method, no receipt, no category picker
+// (always Mileage) — just what a drive actually needs.
+// =====================================================================
+function MileageForm({ initial, defaultMileageRate, onCancel, onSaved, apiCreate, apiUpdate }) {
+  const isEdit = !!(initial && initial.ExpenseId);
+  const [form, setForm] = useState(() => ({
+    Date: (initial && initial.Date) || todayStr(),
+    Vendor: (initial && initial.Vendor) || '',
+    Notes: (initial && initial.Notes) || '',
+    Miles: (initial && initial.Miles) || '',
+    MileageRate: (initial && initial.MileageRate) || defaultMileageRate,
+    StartLocation: (initial && initial.StartLocation) || SAVED_START_LOCATIONS[0].address,
+    EndLocation: (initial && initial.EndLocation) || ''
+  }));
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const [roundTrip, setRoundTrip] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
-  const isMileage = form.Category === 'Mileage';
   const hasMapsKey = GOOGLE_MAPS_BROWSER_API_KEY && GOOGLE_MAPS_BROWSER_API_KEY.indexOf('PASTE_YOUR') !== 0;
-  const computedMileageAmount = isMileage ? (Number(form.Miles || 0) * Number(form.MileageRate || 0)) : null;
+  const computedAmount = Number(form.Miles || 0) * Number(form.MileageRate || 0);
   // True when the Start location isn't one of the three saved bases — that's
   // when the free-text (autocomplete) input is shown at all.
   const isCustomStart = !SAVED_START_LOCATIONS.some(loc => loc.address === form.StartLocation);
 
   function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
 
-  // Wire Google Places autocomplete onto the start/end address inputs, once
-  // Maps is loaded and only while this is a mileage entry. Guarded so it
-  // only attaches once per input even if this effect re-runs. Depends on
-  // isCustomStart too, since the start input only exists in the DOM once a
-  // custom (non-saved) start location is selected.
   useEffect(() => {
-    if (!isMileage || !hasMapsKey) return;
+    if (!hasMapsKey) return;
     let cancelled = false;
     loadGoogleMaps(GOOGLE_MAPS_BROWSER_API_KEY).then(google => {
       if (cancelled) return;
@@ -607,7 +744,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defa
       }
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [isMileage, hasMapsKey, isCustomStart]);
+  }, [hasMapsKey, isCustomStart]);
 
   async function calculateDistance() {
     setErr('');
@@ -640,146 +777,201 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defa
     e.preventDefault();
     setErr('');
     if (!form.Date) return setErr('Date is required.');
-    if (!form.Category) return setErr('Category is required.');
-    if (isMileage) {
-      if (!form.Miles || Number(form.Miles) <= 0) return setErr('Enter the number of miles.');
-    } else if (!form.Amount || Number(form.Amount) <= 0) {
-      return setErr('Enter an amount greater than zero.');
-    }
+    if (!form.Miles || Number(form.Miles) <= 0) return setErr('Enter the number of miles.');
     setSaving(true);
     try {
       const payload = {
         Date: form.Date,
-        Category: form.Category,
+        Category: 'Mileage',
         Vendor: form.Vendor,
-        Description: form.Description,
-        PaymentMethod: form.PaymentMethod,
+        Description: '',
+        PaymentMethod: '',
         Notes: form.Notes,
-        Amount: isMileage ? computedMileageAmount : Number(form.Amount),
-        Miles: isMileage ? Number(form.Miles) : '',
-        MileageRate: isMileage ? Number(form.MileageRate) : '',
-        StartLocation: isMileage ? form.StartLocation : '',
-        EndLocation: isMileage ? form.EndLocation : ''
+        Amount: computedAmount,
+        Miles: Number(form.Miles),
+        MileageRate: Number(form.MileageRate),
+        StartLocation: form.StartLocation,
+        EndLocation: form.EndLocation
       };
-      let expenseId = initial && initial.ExpenseId;
       if (isEdit) {
-        await apiUpdate({ ExpenseId: expenseId, ...payload });
+        await apiUpdate({ ExpenseId: initial.ExpenseId, ...payload });
       } else {
-        const created = await apiCreate(payload);
-        expenseId = created.ExpenseId;
-      }
-      if (file) {
-        const base64Data = await fileToBase64_(file);
-        const uploaded = await apiUploadReceipt(expenseId, file.name, file.type, base64Data);
-        await apiUpdate({ ExpenseId: expenseId, ReceiptFileId: uploaded.fileId, ReceiptFileUrl: uploaded.url, ReceiptFileName: uploaded.name });
+        await apiCreate(payload);
       }
       onSaved();
     } catch (err2) {
-      setErr(err2.message || 'Something went wrong saving this expense.');
+      setErr(err2.message || 'Something went wrong saving this mileage entry.');
     }
     setSaving(false);
   }
 
-  return h('div', { className:'modal-overlay', onClick: e => { if (e.target === e.currentTarget) onCancel(); } },
-    h('form', { className:'modal', onSubmit:handleSubmit },
-      h('div', { className:'modal-head' },
-        h('div', null,
-          h('div', { className:'modal-title' }, isEdit ? (isMileage ? 'Edit mileage' : 'Edit expense') : (isMileage ? 'Add mileage' : 'Add expense')),
-        ),
-        h('button', { type:'button', className:'modal-close', onClick:onCancel }, h(Icon, { name:'close' }))
+  return h(ModalShell, {
+    title: isEdit ? 'Edit mileage' : 'Add mileage',
+    onCancel, onSubmit: handleSubmit, saving,
+    submitLabel: isEdit ? 'Save changes' : 'Add mileage'
+  },
+    err && h('div', { className:'field-error' }, err),
+    h('div', { className:'field' },
+      h('label', null, 'Date'),
+      h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Start location'),
+      h('select', {
+        className:'input',
+        value: isCustomStart ? '__custom__' : form.StartLocation,
+        onChange: e => set('StartLocation', e.target.value === '__custom__' ? '' : e.target.value)
+      },
+        SAVED_START_LOCATIONS.map(loc => h('option', { key:loc.label, value:loc.address }, loc.label)),
+        h('option', { value:'__custom__' }, 'Other (type an address)')
       ),
-      h('div', { className:'modal-body' },
-        err && h('div', { className:'field-error' }, err),
-        h('div', { className:'modal-row-2' },
-          h('div', { className:'field' },
-            h('label', null, 'Date'),
-            h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
-          ),
-          h('div', { className:'field' },
-            h('label', null, 'Category'),
-            h('select', { className:'input', value:form.Category, onChange:e => set('Category', e.target.value) },
-              categories.map(c => h('option', { key:c, value:c }, c))
-            )
-          )
-        ),
-        isMileage && h('div', { className:'field' },
-          h('label', null, 'Start location'),
-          h('select', {
-            className:'input',
-            value: isCustomStart ? '__custom__' : form.StartLocation,
-            onChange: e => set('StartLocation', e.target.value === '__custom__' ? '' : e.target.value)
-          },
-            SAVED_START_LOCATIONS.map(loc => h('option', { key:loc.label, value:loc.address }, loc.label)),
-            h('option', { value:'__custom__' }, 'Other (type an address)')
-          ),
-          isCustomStart && h('input', { type:'text', className:'input', style:{ marginTop:'6px' }, ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
-        ),
-        isMileage && h('div', { className:'field' },
-          h('label', null, 'End location'),
-          h('input', { type:'text', className:'input', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' })
-        ),
-        isMileage && h('div', { style:{ display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap' } },
-          h('label', { className:'checkbox-row' },
-            h('input', { type:'checkbox', checked:roundTrip, onChange:e => setRoundTrip(e.target.checked) }),
-            'Round trip'
-          ),
-          h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:calculateDistance, disabled:calculating }, calculating ? 'Calculating…' : 'Calculate miles'),
-          !hasMapsKey && h('span', { className:'field-hint' }, 'Add a Google Maps API key in index.html to enable autocomplete + auto-calculated mileage — you can still type miles in manually below.')
-        ),
-        isMileage
-          ? h('div', { className:'modal-row-2' },
-              h('div', { className:'field' },
-                h('label', null, 'Miles'),
-                h('input', { type:'number', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) })
-              ),
-              h('div', { className:'field' },
-                h('label', null, 'Rate per mile'),
-                h('input', { type:'number', min:'0', step:'0.001', className:'input', value:form.MileageRate, onChange:e => set('MileageRate', e.target.value) }),
-                h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedMileageAmount || 0))
-              )
-            )
-          : h('div', { className:'field' },
-              h('label', null, 'Amount'),
-              h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
-            ),
-        h('div', { className:'field' },
-          h('label', null, isMileage ? 'Purpose' : 'Vendor'),
-          h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder: isMileage ? 'e.g. FEES visit, supply pickup' : 'e.g. Staples' })
-        ),
-        h('div', { className:'field' },
-          h('label', null, 'Description'),
-          h('input', { type:'text', className:'input', value:form.Description, onChange:e => set('Description', e.target.value) })
-        ),
-        h('div', { className:'modal-row-2' },
-          h('div', { className:'field' },
-            h('label', null, 'Payment method'),
-            h('select', { className:'input', value:form.PaymentMethod, onChange:e => set('PaymentMethod', e.target.value) },
-              paymentMethods.map(p => h('option', { key:p, value:p }, p))
-            )
-          ),
-          h('div', { className:'field' },
-            h('label', null, 'Notes'),
-            h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
-          )
-        ),
-        h('div', { className:'field' },
-          h('label', null, 'Receipt'),
-          existingReceipt && !file
-            ? h('div', { className:'receipt-chip' },
-                h(Icon, { name:'receipt' }),
-                h('a', { href:existingReceipt.url, target:'_blank', rel:'noopener noreferrer' }, existingReceipt.name || 'View receipt'),
-                h('button', { type:'button', className:'btn btn-ghost btn-sm', style:{ marginLeft:'auto' }, onClick:() => setExistingReceipt(null) }, 'Replace')
-              )
-            : h('label', { className:'receipt-drop' },
-                file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt',
-                h('input', { type:'file', accept:'image/*,application/pdf', style:{ display:'none' }, onChange:e => setFile(e.target.files[0] || null) })
-              )
-        )
+      isCustomStart && h('input', { type:'text', className:'input', style:{ marginTop:'6px' }, ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'End location'),
+      h('input', { type:'text', className:'input', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' })
+    ),
+    h('div', { style:{ display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap' } },
+      h('label', { className:'checkbox-row' },
+        h('input', { type:'checkbox', checked:roundTrip, onChange:e => setRoundTrip(e.target.checked) }),
+        'Round trip'
       ),
-      h('div', { className:'modal-foot' },
-        h('button', { type:'button', className:'btn btn-ghost', onClick:onCancel, disabled:saving }, 'Cancel'),
-        h('button', { type:'submit', className:'btn btn-teal', disabled:saving }, saving ? 'Saving…' : (isEdit ? 'Save changes' : (isMileage ? 'Add mileage' : 'Add expense')))
+      h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:calculateDistance, disabled:calculating }, calculating ? 'Calculating…' : 'Calculate miles'),
+      !hasMapsKey && h('span', { className:'field-hint' }, 'Add a Google Maps API key in index.html to enable autocomplete + auto-calculated mileage — you can still type miles in manually below.')
+    ),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Miles'),
+        h('input', { type:'number', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) })
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Rate per mile'),
+        h('input', { type:'number', min:'0', step:'0.001', className:'input', value:form.MileageRate, onChange:e => set('MileageRate', e.target.value) }),
+        h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedAmount || 0))
       )
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Purpose'),
+      h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. FEES visit, supply pickup' })
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Notes'),
+      h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
+    )
+  );
+}
+
+// =====================================================================
+// Purchase Order form (create/edit) — its own separate section from
+// Expenses/Mileage. PO number auto-generates (category + date + a running
+// sequence, from the backend) the first time this opens for a new PO, and
+// can be regenerated on demand.
+// =====================================================================
+function PurchaseOrderForm({ initial, categories, statuses, onCancel, onSaved, apiCreate, apiUpdate, apiGeneratePo }) {
+  const isEdit = !!(initial && initial.PoId);
+  const [form, setForm] = useState(() => ({
+    PoNumber: (initial && initial.PoNumber) || '',
+    Date: (initial && initial.Date) || todayStr(),
+    Category: (initial && initial.Category) || categories[0] || 'Other',
+    Vendor: (initial && initial.Vendor) || '',
+    Description: (initial && initial.Description) || '',
+    Amount: (initial && initial.Amount) || '',
+    Status: (initial && initial.Status) || statuses[0] || 'Open',
+    Notes: (initial && initial.Notes) || ''
+  }));
+  const [saving, setSaving] = useState(false);
+  const [generatingPo, setGeneratingPo] = useState(false);
+  const [err, setErr] = useState('');
+
+  function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+
+  async function generatePo() {
+    setGeneratingPo(true);
+    setErr('');
+    try {
+      const poNumber = await apiGeneratePo(form.Category, form.Date);
+      set('PoNumber', poNumber);
+    } catch (e) {
+      setErr(e.message || 'Could not generate a PO number.');
+    }
+    setGeneratingPo(false);
+  }
+
+  // Auto-generate a PO number the moment this form opens for a brand-new PO.
+  useEffect(() => {
+    if (!isEdit && !form.PoNumber) generatePo();
+  }, []);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErr('');
+    if (!form.PoNumber) return setErr('Generate a PO number first.');
+    if (!form.Date) return setErr('Date is required.');
+    if (!form.Vendor) return setErr('Vendor is required.');
+    if (!form.Amount || Number(form.Amount) <= 0) return setErr('Enter an amount greater than zero.');
+    setSaving(true);
+    try {
+      const payload = { ...form, Amount: Number(form.Amount) };
+      if (isEdit) {
+        await apiUpdate({ PoId: initial.PoId, ...payload });
+      } else {
+        await apiCreate(payload);
+      }
+      onSaved();
+    } catch (err2) {
+      setErr(err2.message || 'Something went wrong saving this purchase order.');
+    }
+    setSaving(false);
+  }
+
+  return h(ModalShell, {
+    title: isEdit ? 'Edit purchase order' : 'New purchase order',
+    onCancel, onSubmit: handleSubmit, saving,
+    submitLabel: isEdit ? 'Save changes' : 'Create PO'
+  },
+    err && h('div', { className:'field-error' }, err),
+    h('div', { className:'field' },
+      h('label', null, 'PO number'),
+      h('div', { style:{ display:'flex', gap:'8px' } },
+        h('input', { type:'text', className:'input', value:form.PoNumber, onChange:e => set('PoNumber', e.target.value), style:{ fontVariantNumeric:'tabular-nums' } }),
+        h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:generatePo, disabled:generatingPo }, generatingPo ? 'Generating…' : 'Regenerate')
+      )
+    ),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Date'),
+        h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Category'),
+        h('select', { className:'input', value:form.Category, onChange:e => set('Category', e.target.value) },
+          categories.map(c => h('option', { key:c, value:c }, c))
+        )
+      )
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Vendor'),
+      h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. Olympus' })
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Description'),
+      h('input', { type:'text', className:'input', value:form.Description, onChange:e => set('Description', e.target.value) })
+    ),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Amount'),
+        h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Status'),
+        h('select', { className:'input', value:form.Status, onChange:e => set('Status', e.target.value) },
+          statuses.map(s => h('option', { key:s, value:s }, s))
+        )
+      )
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Notes'),
+      h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
     )
   );
 }
@@ -1016,6 +1208,52 @@ function ReportsView({ expenses, categories }) {
 }
 
 // =====================================================================
+// Purchase Orders view — its own section, separate from Expenses/Mileage
+// =====================================================================
+function poStatusPillClass(status) {
+  if (status === 'Received') return 'pill-navy';
+  if (status === 'Cancelled') return 'pill';
+  return 'pill-teal';
+}
+
+function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDelete }) {
+  const rows = useMemo(() => purchaseOrders.slice().sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)), [purchaseOrders]);
+  const openTotal = rows.filter(r => r.Status === 'Open').reduce((s,r) => s + (Number(r.Amount)||0), 0);
+
+  return h('div', null,
+    h('div', { className:'kpi-grid', style:{ marginBottom:'18px', gridTemplateColumns:'repeat(2,minmax(0,1fr))' } },
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Open purchase orders'), h('div', { className:'kpi-value' }, rows.filter(r => r.Status === 'Open').length)),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Open PO total'), h('div', { className:'kpi-value' }, formatCurrency(openTotal)))
+    ),
+    h('div', { className:'filter-row', style:{ marginBottom:'14px', justifyContent:'flex-end' } },
+      h('button', { type:'button', className:'btn btn-primary btn-sm', onClick:onAdd }, h(Icon,{name:'plus'}), 'New PO')
+    ),
+    h('div', { className:'card table-wrap' },
+      rows.length === 0
+        ? h('div', { className:'empty-state' },
+            h('div', { className:'empty-state-title' }, 'No purchase orders yet'),
+            h('p', null, 'Use "New PO" above to create one.')
+          )
+        : h('table', { className:'data-table' },
+            h('thead', null, h('tr', null,
+              h('th', null, 'PO number'), h('th', null, 'Date'), h('th', null, 'Category'), h('th', null, 'Vendor'),
+              h('th', { className:'num' }, 'Amount'), h('th', null, 'Status'), h('th', null, '')
+            )),
+            h('tbody', null, rows.map(r => h('tr', { key:r.PoId, onClick:() => onEdit(r) },
+              h('td', { style:{ fontVariantNumeric:'tabular-nums' } }, r.PoNumber),
+              h('td', null, formatDate(r.Date)),
+              h('td', null, h('span', { className:'pill ' + categoryPillClass(r.Category) }, r.Category)),
+              h('td', null, r.Vendor || '—'),
+              h('td', { className:'num' }, formatCurrency(r.Amount)),
+              h('td', null, h('span', { className:'pill ' + poStatusPillClass(r.Status) }, r.Status)),
+              h('td', { style:{ textAlign:'right' } }, h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'})))
+            )))
+          )
+    )
+  );
+}
+
+// =====================================================================
 // Settings view
 // =====================================================================
 function SettingsView({ settings, onSaveSettings, user }) {
@@ -1051,7 +1289,7 @@ function SettingsView({ settings, onSaveSettings, user }) {
 // =====================================================================
 // App shell
 // =====================================================================
-function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[] }; }
+function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[] }; }
 
 function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(LS_PREFIX+'unlocked') === 'true' && !!sessionStorage.getItem(LS_PREFIX+'session_token'));
@@ -1061,7 +1299,7 @@ function App() {
   const [loadError, setLoadError] = useState(null);
   const [view, setView] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [modal, setModal] = useState(null); // null | { mode:'create'|'edit', expense }
+  const [modal, setModal] = useState(null); // null | { type:'expense'|'mileage'|'po', mode:'create'|'edit', expense?, po? }
   const [toast, setToast] = useState(null);
 
   const user = {
@@ -1078,11 +1316,15 @@ function App() {
     setLoadError(null);
     try {
       const result = await apiGet();
+      const categories = (result.categories && result.categories.length) ? result.categories : ['Mileage','Equipment & Supplies','Software & Subscriptions','Insurance','Marketing','Professional Services','Travel & Lodging','Office Supplies','Other'];
       const next = {
         expenses: result.expenses || [],
         settings: result.settings || { mileageRate:0.76 },
-        categories: (result.categories && result.categories.length) ? result.categories : ['Mileage','Equipment & Supplies','Software & Subscriptions','Insurance','Marketing','Professional Services','Travel & Lodging','Office Supplies','Other'],
-        paymentMethods: (result.paymentMethods && result.paymentMethods.length) ? result.paymentMethods : ['Business Debit Card','Business Credit Card','Personal (to be reimbursed)','Check','Cash','Other']
+        categories,
+        paymentMethods: (result.paymentMethods && result.paymentMethods.length) ? result.paymentMethods : ['Business Debit Card','Business Credit Card','Personal (to be reimbursed)','Check','Cash','Other'],
+        purchaseOrders: result.purchaseOrders || [],
+        poCategories: (result.poCategories && result.poCategories.length) ? result.poCategories : categories.filter(c => c !== 'Mileage'),
+        poStatuses: (result.poStatuses && result.poStatuses.length) ? result.poStatuses : ['Open','Received','Cancelled']
       };
       setData(next);
       writeCache_(next);
@@ -1129,20 +1371,56 @@ function App() {
     if (res.success) setData(d => { const next = { ...d, settings: res.result }; writeCache_(next); return next; });
   }, []);
 
+  const apiGeneratePo = useCallback(async (category, date) => {
+    const res = await apiPost('generatePoNumber', { category, date });
+    if (!res.success) throw new Error(res.error || 'Could not generate a PO number.');
+    return res.result.poNumber;
+  }, []);
+  const apiCreatePO = useCallback(async (payload) => {
+    const res = await apiPost('createPurchaseOrder', { data: payload });
+    if (!res.success) throw new Error(res.error || 'Could not save the purchase order.');
+    setData(d => { const next = { ...d, purchaseOrders: [...d.purchaseOrders, res.result] }; writeCache_(next); return next; });
+    return res.result;
+  }, []);
+  const apiUpdatePO = useCallback(async (payload) => {
+    const res = await apiPost('updatePurchaseOrder', { data: payload });
+    if (!res.success) throw new Error(res.error || 'Could not save changes.');
+    setData(d => { const next = { ...d, purchaseOrders: d.purchaseOrders.map(p => p.PoId === payload.PoId ? { ...p, ...payload } : p) }; writeCache_(next); return next; });
+    return res.result;
+  }, []);
+  const apiDeletePO = useCallback(async (poId) => {
+    const res = await apiPost('deletePurchaseOrder', { poId });
+    if (!res.success) throw new Error(res.error || 'Could not delete this purchase order.');
+    setData(d => { const next = { ...d, purchaseOrders: d.purchaseOrders.filter(p => p.PoId !== poId) }; writeCache_(next); return next; });
+  }, []);
+
   function openAddExpense() {
     const firstNonMileage = data.categories.find(c => c !== 'Mileage') || data.categories[0];
-    setModal({ mode:'create', presetCategory: firstNonMileage });
+    setModal({ type:'expense', mode:'create', presetCategory: firstNonMileage });
   }
-  function openAddMileage() { setModal({ mode:'create', presetCategory:'Mileage' }); }
-  function openEdit(expense) { setModal({ mode:'edit', expense }); }
+  function openAddMileage() { setModal({ type:'mileage', mode:'create' }); }
+  function openAddPO() { setModal({ type:'po', mode:'create' }); }
+  function openEdit(expense) {
+    setModal(expense.Category === 'Mileage' ? { type:'mileage', mode:'edit', expense } : { type:'expense', mode:'edit', expense });
+  }
+  function openEditPO(po) { setModal({ type:'po', mode:'edit', po }); }
   async function handleDelete(expense) {
     if (!window.confirm('Delete this expense? This cannot be undone.')) return;
     try { await apiDelete(expense.ExpenseId); showToast('Expense deleted.'); }
     catch (err) { showToast(err.message, 'error'); }
   }
+  async function handleDeletePO(po) {
+    if (!window.confirm('Delete this purchase order? This cannot be undone.')) return;
+    try { await apiDeletePO(po.PoId); showToast('Purchase order deleted.'); }
+    catch (err) { showToast(err.message, 'error'); }
+  }
   async function handleSaved() {
+    const type = modal && modal.type;
+    const isEdit = modal && modal.mode === 'edit';
     setModal(null);
-    showToast(modal && modal.mode === 'edit' ? 'Expense updated.' : 'Expense added.');
+    if (type === 'po') showToast(isEdit ? 'Purchase order updated.' : 'Purchase order created.');
+    else if (type === 'mileage') showToast(isEdit ? 'Mileage updated.' : 'Mileage added.');
+    else showToast(isEdit ? 'Expense updated.' : 'Expense added.');
   }
 
   if (!unlocked) return h(Gate, { onUnlock: handleUnlock });
@@ -1151,7 +1429,7 @@ function App() {
     return h('div', { className:'full-loading' }, h('div', { className:'spinner' }), h('p', null, 'Loading BDD EXP…'));
   }
 
-  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', settings:'Settings' };
+  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', purchaseorders:'Purchase Orders', settings:'Settings' };
 
   return h('div', { className:'app-shell' },
     h(Sidebar, { view, setView, user, onSignOut:handleSignOut, open:sidebarOpen, onClose:() => setSidebarOpen(false) }),
@@ -1174,18 +1452,33 @@ function App() {
         view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDelete:handleDelete }),
         view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete }),
         view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
+        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, onAdd:openAddPO, onEdit:openEditPO, onDelete:handleDeletePO }),
         view === 'settings' && h(SettingsView, { settings:data.settings, onSaveSettings:apiSaveSettings, user })
       )
     ),
-    modal && h(ExpenseForm, {
+    modal && modal.type === 'mileage' && h(MileageForm, {
       initial: modal.mode === 'edit' ? modal.expense : null,
-      presetCategory: modal.presetCategory,
-      categories: data.categories,
-      paymentMethods: data.paymentMethods,
       defaultMileageRate: data.settings.mileageRate,
       onCancel: () => setModal(null),
       onSaved: handleSaved,
+      apiCreate, apiUpdate
+    }),
+    modal && modal.type === 'expense' && h(ExpenseForm, {
+      initial: modal.mode === 'edit' ? modal.expense : null,
+      presetCategory: modal.presetCategory,
+      categories: data.categories.filter(c => c !== 'Mileage'),
+      paymentMethods: data.paymentMethods,
+      onCancel: () => setModal(null),
+      onSaved: handleSaved,
       apiCreate, apiUpdate, apiUploadReceipt
+    }),
+    modal && modal.type === 'po' && h(PurchaseOrderForm, {
+      initial: modal.mode === 'edit' ? modal.po : null,
+      categories: data.poCategories,
+      statuses: data.poStatuses,
+      onCancel: () => setModal(null),
+      onSaved: handleSaved,
+      apiCreate: apiCreatePO, apiUpdate: apiUpdatePO, apiGeneratePo
     }),
     h(Toast, { toast })
   );
