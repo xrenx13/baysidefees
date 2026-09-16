@@ -253,6 +253,15 @@ const GOOGLE_CLIENT_ID = "611665595000-9c7domumik2gogfrevom2c26nt357upf.apps.goo
 // manual mileage entry (no autocomplete, no auto-calculated distance).
 const GOOGLE_MAPS_BROWSER_API_KEY = "PASTE_YOUR_BROWSER_MAPS_API_KEY_HERE";
 
+// Quick-select starting points for mileage entries — the same three base
+// locations the CRM already tracks driving distance from. Add, remove, or
+// edit these freely; they only pre-fill the Start location field.
+const SAVED_START_LOCATIONS = [
+  { label: 'Norwell', address: '35 Riverside Drive, Norwell, MA 02061' },
+  { label: 'Cape House', address: '31 Bramble Lane, Dennis, MA 02638' },
+  { label: 'Cape Cod Hospital', address: '27 Park Street, Hyannis, MA 02601' }
+];
+
 const LS_PREFIX = 'bdd_exp_';
 const CACHE_KEY = LS_PREFIX + 'cache_v1';
 
@@ -550,7 +559,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defa
     Miles: (initial && initial.Miles) || '',
     MileageRate: (initial && initial.MileageRate) || defaultMileageRate,
     Notes: (initial && initial.Notes) || '',
-    StartLocation: (initial && initial.StartLocation) || '',
+    StartLocation: (initial && initial.StartLocation) || (presetCategory === 'Mileage' ? SAVED_START_LOCATIONS[0].address : ''),
     EndLocation: (initial && initial.EndLocation) || ''
   }));
   const [file, setFile] = useState(null);
@@ -564,12 +573,17 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defa
   const isMileage = form.Category === 'Mileage';
   const hasMapsKey = GOOGLE_MAPS_BROWSER_API_KEY && GOOGLE_MAPS_BROWSER_API_KEY.indexOf('PASTE_YOUR') !== 0;
   const computedMileageAmount = isMileage ? (Number(form.Miles || 0) * Number(form.MileageRate || 0)) : null;
+  // True when the Start location isn't one of the three saved bases — that's
+  // when the free-text (autocomplete) input is shown at all.
+  const isCustomStart = !SAVED_START_LOCATIONS.some(loc => loc.address === form.StartLocation);
 
   function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
 
   // Wire Google Places autocomplete onto the start/end address inputs, once
   // Maps is loaded and only while this is a mileage entry. Guarded so it
-  // only attaches once per input even if this effect re-runs.
+  // only attaches once per input even if this effect re-runs. Depends on
+  // isCustomStart too, since the start input only exists in the DOM once a
+  // custom (non-saved) start location is selected.
   useEffect(() => {
     if (!isMileage || !hasMapsKey) return;
     let cancelled = false;
@@ -593,7 +607,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defa
       }
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [isMileage, hasMapsKey]);
+  }, [isMileage, hasMapsKey, isCustomStart]);
 
   async function calculateDistance() {
     setErr('');
@@ -688,15 +702,21 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defa
             )
           )
         ),
-        isMileage && h('div', { className:'modal-row-2' },
-          h('div', { className:'field' },
-            h('label', null, 'Start location'),
-            h('input', { type:'text', className:'input', ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'e.g. 35 Riverside Drive, Norwell, MA' })
+        isMileage && h('div', { className:'field' },
+          h('label', null, 'Start location'),
+          h('select', {
+            className:'input',
+            value: isCustomStart ? '__custom__' : form.StartLocation,
+            onChange: e => set('StartLocation', e.target.value === '__custom__' ? '' : e.target.value)
+          },
+            SAVED_START_LOCATIONS.map(loc => h('option', { key:loc.label, value:loc.address }, loc.label)),
+            h('option', { value:'__custom__' }, 'Other (type an address)')
           ),
-          h('div', { className:'field' },
-            h('label', null, 'End location'),
-            h('input', { type:'text', className:'input', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' })
-          )
+          isCustomStart && h('input', { type:'text', className:'input', style:{ marginTop:'6px' }, ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
+        ),
+        isMileage && h('div', { className:'field' },
+          h('label', null, 'End location'),
+          h('input', { type:'text', className:'input', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' })
         ),
         isMileage && h('div', { style:{ display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap' } },
           h('label', { className:'checkbox-row' },
