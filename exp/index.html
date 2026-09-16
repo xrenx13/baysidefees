@@ -224,6 +224,11 @@
   .spinner { width:22px; height:22px; border-radius:50%; border:2.5px solid #dfe7ed; border-top-color:var(--teal); animation:spin .7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
   .full-loading { min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--muted); font-size:13px; }
+
+  /* Google Places autocomplete dropdown — must clear the modal overlay (z-index:60). */
+  .pac-container { z-index:9999; font-family:'Inter',sans-serif; border:1px solid var(--line); border-radius:10px; box-shadow:0 14px 36px rgba(15,23,42,.14); margin-top:4px; overflow:hidden; }
+  .checkbox-row { display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; color:#475467; }
+  .checkbox-row input { width:15px; height:15px; }
 </style>
 </head>
 <body>
@@ -241,6 +246,12 @@ const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const API_URL = "https://script.google.com/macros/s/AKfycbzvkoS7P8RXCOE40rZzdI2tJ2pyCBOyVTDfv3H0YbH3NyWb3jlNZgpO0LQT3lgj4sTaDQ/exec";
 // Must match Code.gs's GOOGLE_CLIENT_ID for this app.
 const GOOGLE_CLIENT_ID = "611665595000-9c7domumik2gogfrevom2c26nt357upf.apps.googleusercontent.com";
+// Browser (HTTP-referrer-restricted) Google Maps API key — same kind of key
+// the CRM uses for its address autocomplete/map. Needs the Places API and
+// Distance Matrix API enabled, and this app's domain added to the key's
+// allowed referrers. Leave the placeholder in place to fall back to plain
+// manual mileage entry (no autocomplete, no auto-calculated distance).
+const GOOGLE_MAPS_BROWSER_API_KEY = "PASTE_YOUR_BROWSER_MAPS_API_KEY_HERE";
 
 const LS_PREFIX = 'bdd_exp_';
 const CACHE_KEY = LS_PREFIX + 'cache_v1';
@@ -321,6 +332,21 @@ function fileToBase64_(file) {
     reader.readAsDataURL(file);
   });
 }
+let _gmapsPromise = null;
+function loadGoogleMaps(apiKey) {
+  if (_gmapsPromise) return _gmapsPromise;
+  _gmapsPromise = new Promise((resolve, reject) => {
+    if (window.google && window.google.maps && window.google.maps.places) return resolve(window.google);
+    window.__onGoogleMapsLoaded_ = () => resolve(window.google);
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&callback=__onGoogleMapsLoaded_`;
+    script.async = true;
+    script.onerror = () => reject(new Error('Google Maps failed to load'));
+    document.head.appendChild(script);
+  });
+  return _gmapsPromise;
+}
+
 let _gsiPromise = null;
 function loadGoogleIdentity() {
   if (_gsiPromise) return _gsiPromise;
@@ -512,27 +538,89 @@ function categoryPillClass(cat) {
 // =====================================================================
 // Expense form (create/edit), with optional receipt upload
 // =====================================================================
-function ExpenseForm({ initial, categories, paymentMethods, defaultMileageRate, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
+function ExpenseForm({ initial, presetCategory, categories, paymentMethods, defaultMileageRate, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const [form, setForm] = useState(() => ({
     Date: (initial && initial.Date) || todayStr(),
-    Category: (initial && initial.Category) || categories[0] || 'Other',
+    Category: (initial && initial.Category) || presetCategory || categories[0] || 'Other',
     Vendor: (initial && initial.Vendor) || '',
     Description: (initial && initial.Description) || '',
     Amount: (initial && initial.Amount) || '',
     PaymentMethod: (initial && initial.PaymentMethod) || paymentMethods[0] || '',
     Miles: (initial && initial.Miles) || '',
     MileageRate: (initial && initial.MileageRate) || defaultMileageRate,
-    Notes: (initial && initial.Notes) || ''
+    Notes: (initial && initial.Notes) || '',
+    StartLocation: (initial && initial.StartLocation) || '',
+    EndLocation: (initial && initial.EndLocation) || ''
   }));
   const [file, setFile] = useState(null);
   const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl } : null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  const [roundTrip, setRoundTrip] = useState(false);
+  const [calculating, setCalculating] = useState(false);
+  const startInputRef = useRef(null);
+  const endInputRef = useRef(null);
   const isMileage = form.Category === 'Mileage';
+  const hasMapsKey = GOOGLE_MAPS_BROWSER_API_KEY && GOOGLE_MAPS_BROWSER_API_KEY.indexOf('PASTE_YOUR') !== 0;
   const computedMileageAmount = isMileage ? (Number(form.Miles || 0) * Number(form.MileageRate || 0)) : null;
 
   function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+
+  // Wire Google Places autocomplete onto the start/end address inputs, once
+  // Maps is loaded and only while this is a mileage entry. Guarded so it
+  // only attaches once per input even if this effect re-runs.
+  useEffect(() => {
+    if (!isMileage || !hasMapsKey) return;
+    let cancelled = false;
+    loadGoogleMaps(GOOGLE_MAPS_BROWSER_API_KEY).then(google => {
+      if (cancelled) return;
+      if (startInputRef.current && !startInputRef.current._bddAutocomplete) {
+        const ac = new google.maps.places.Autocomplete(startInputRef.current, { fields:['formatted_address'] });
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace();
+          set('StartLocation', (place && place.formatted_address) || startInputRef.current.value);
+        });
+        startInputRef.current._bddAutocomplete = ac;
+      }
+      if (endInputRef.current && !endInputRef.current._bddAutocomplete) {
+        const ac2 = new google.maps.places.Autocomplete(endInputRef.current, { fields:['formatted_address'] });
+        ac2.addListener('place_changed', () => {
+          const place = ac2.getPlace();
+          set('EndLocation', (place && place.formatted_address) || endInputRef.current.value);
+        });
+        endInputRef.current._bddAutocomplete = ac2;
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [isMileage, hasMapsKey]);
+
+  async function calculateDistance() {
+    setErr('');
+    if (!form.StartLocation || !form.EndLocation) { setErr('Enter both a start and end location first.'); return; }
+    if (!window.google || !window.google.maps) { setErr('Google Maps is still loading — try again in a moment.'); return; }
+    setCalculating(true);
+    try {
+      const service = new google.maps.DistanceMatrixService();
+      const response = await new Promise((resolve, reject) => {
+        service.getDistanceMatrix({
+          origins: [form.StartLocation],
+          destinations: [form.EndLocation],
+          travelMode: google.maps.TravelMode.DRIVING,
+          unitSystem: google.maps.UnitSystem.IMPERIAL
+        }, (result, status) => {
+          if (status === 'OK') resolve(result); else reject(new Error('Could not calculate a route between those two locations.'));
+        });
+      });
+      const element = response.rows[0] && response.rows[0].elements[0];
+      if (!element || element.status !== 'OK') throw new Error('Could not calculate a route between those two locations.');
+      const oneWayMiles = element.distance.value / 1609.344;
+      set('Miles', (roundTrip ? oneWayMiles * 2 : oneWayMiles).toFixed(1));
+    } catch (e) {
+      setErr(e.message || 'Could not calculate mileage.');
+    }
+    setCalculating(false);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -555,7 +643,9 @@ function ExpenseForm({ initial, categories, paymentMethods, defaultMileageRate, 
         Notes: form.Notes,
         Amount: isMileage ? computedMileageAmount : Number(form.Amount),
         Miles: isMileage ? Number(form.Miles) : '',
-        MileageRate: isMileage ? Number(form.MileageRate) : ''
+        MileageRate: isMileage ? Number(form.MileageRate) : '',
+        StartLocation: isMileage ? form.StartLocation : '',
+        EndLocation: isMileage ? form.EndLocation : ''
       };
       let expenseId = initial && initial.ExpenseId;
       if (isEdit) {
@@ -580,7 +670,7 @@ function ExpenseForm({ initial, categories, paymentMethods, defaultMileageRate, 
     h('form', { className:'modal', onSubmit:handleSubmit },
       h('div', { className:'modal-head' },
         h('div', null,
-          h('div', { className:'modal-title' }, isEdit ? 'Edit expense' : 'Add expense'),
+          h('div', { className:'modal-title' }, isEdit ? (isMileage ? 'Edit mileage' : 'Edit expense') : (isMileage ? 'Add mileage' : 'Add expense')),
         ),
         h('button', { type:'button', className:'modal-close', onClick:onCancel }, h(Icon, { name:'close' }))
       ),
@@ -597,6 +687,24 @@ function ExpenseForm({ initial, categories, paymentMethods, defaultMileageRate, 
               categories.map(c => h('option', { key:c, value:c }, c))
             )
           )
+        ),
+        isMileage && h('div', { className:'modal-row-2' },
+          h('div', { className:'field' },
+            h('label', null, 'Start location'),
+            h('input', { type:'text', className:'input', ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'e.g. 35 Riverside Drive, Norwell, MA' })
+          ),
+          h('div', { className:'field' },
+            h('label', null, 'End location'),
+            h('input', { type:'text', className:'input', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' })
+          )
+        ),
+        isMileage && h('div', { style:{ display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap' } },
+          h('label', { className:'checkbox-row' },
+            h('input', { type:'checkbox', checked:roundTrip, onChange:e => setRoundTrip(e.target.checked) }),
+            'Round trip'
+          ),
+          h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:calculateDistance, disabled:calculating }, calculating ? 'Calculating…' : 'Calculate miles'),
+          !hasMapsKey && h('span', { className:'field-hint' }, 'Add a Google Maps API key in index.html to enable autocomplete + auto-calculated mileage — you can still type miles in manually below.')
         ),
         isMileage
           ? h('div', { className:'modal-row-2' },
@@ -615,8 +723,8 @@ function ExpenseForm({ initial, categories, paymentMethods, defaultMileageRate, 
               h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
             ),
         h('div', { className:'field' },
-          h('label', null, isMileage ? 'Destination / purpose' : 'Vendor'),
-          h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder: isMileage ? 'e.g. Cape Cod Hospital — FEES visit' : 'e.g. Staples' })
+          h('label', null, isMileage ? 'Purpose' : 'Vendor'),
+          h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder: isMileage ? 'e.g. FEES visit, supply pickup' : 'e.g. Staples' })
         ),
         h('div', { className:'field' },
           h('label', null, 'Description'),
@@ -650,7 +758,7 @@ function ExpenseForm({ initial, categories, paymentMethods, defaultMileageRate, 
       ),
       h('div', { className:'modal-foot' },
         h('button', { type:'button', className:'btn btn-ghost', onClick:onCancel, disabled:saving }, 'Cancel'),
-        h('button', { type:'submit', className:'btn btn-teal', disabled:saving }, saving ? 'Saving…' : (isEdit ? 'Save changes' : 'Add expense'))
+        h('button', { type:'submit', className:'btn btn-teal', disabled:saving }, saving ? 'Saving…' : (isEdit ? 'Save changes' : (isMileage ? 'Add mileage' : 'Add expense')))
       )
     )
   );
@@ -659,7 +767,7 @@ function ExpenseForm({ initial, categories, paymentMethods, defaultMileageRate, 
 // =====================================================================
 // Expenses list/table view
 // =====================================================================
-function ExpensesView({ expenses, categories, onEdit, onDelete, onAdd }) {
+function ExpensesView({ expenses, categories, onEdit, onDelete }) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [sortDesc, setSortDesc] = useState(true);
@@ -680,7 +788,7 @@ function ExpensesView({ expenses, categories, onEdit, onDelete, onAdd }) {
   }, [expenses, categoryFilter, search, sortDesc]);
 
   function exportCsv() {
-    const headers = ['Date','Category','Vendor','Description','Amount','PaymentMethod','Miles','MileageRate','Notes'];
+    const headers = ['Date','Category','Vendor','Description','Amount','PaymentMethod','Miles','MileageRate','StartLocation','EndLocation','Notes'];
     const lines = [headers.join(',')].concat(filtered.map(r => headers.map(hd => {
       const v = r[hd] === undefined || r[hd] === null ? '' : String(r[hd]);
       return '"' + v.replace(/"/g,'""') + '"';
@@ -702,10 +810,7 @@ function ExpensesView({ expenses, categories, onEdit, onDelete, onAdd }) {
         ),
         h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:() => setSortDesc(s => !s) }, 'Date ' + (sortDesc ? '↓' : '↑'))
       ),
-      h('div', { className:'filter-row' },
-        h('button', { type:'button', className:'btn btn-ghost', onClick:exportCsv }, 'Export CSV'),
-        h('button', { type:'button', className:'btn btn-teal', onClick:onAdd }, h(Icon, { name:'plus' }), 'Add expense')
-      )
+      h('button', { type:'button', className:'btn btn-ghost', onClick:exportCsv }, 'Export CSV')
     ),
     h('div', { className:'card table-wrap' },
       filtered.length === 0
@@ -735,7 +840,7 @@ function ExpensesView({ expenses, categories, onEdit, onDelete, onAdd }) {
 // =====================================================================
 // Mileage view — same data, filtered to Category === 'Mileage'
 // =====================================================================
-function MileageView({ expenses, onEdit, onDelete, onAdd }) {
+function MileageView({ expenses, onEdit, onDelete }) {
   const rows = useMemo(() => expenses.filter(e => e.Category === 'Mileage').sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)), [expenses]);
   const totalMiles = rows.reduce((s,r) => s + (Number(r.Miles)||0), 0);
   const totalAmount = rows.reduce((s,r) => s + (Number(r.Amount)||0), 0);
@@ -744,14 +849,11 @@ function MileageView({ expenses, onEdit, onDelete, onAdd }) {
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Total miles logged'), h('div', { className:'kpi-value' }, totalMiles.toLocaleString(undefined,{maximumFractionDigits:1}))),
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Total mileage reimbursement'), h('div', { className:'kpi-value' }, formatCurrency(totalAmount)))
     ),
-    h('div', { style:{ display:'flex', justifyContent:'flex-end', marginBottom:'12px' } },
-      h('button', { type:'button', className:'btn btn-teal', onClick:onAdd }, h(Icon, { name:'plus' }), 'Log a drive')
-    ),
     h('div', { className:'card table-wrap' },
       rows.length === 0
-        ? h('div', { className:'empty-state' }, h('div', { className:'empty-state-title' }, 'No mileage logged yet'), h('p', null, 'Log a drive to a facility visit to start tracking.'))
+        ? h('div', { className:'empty-state' }, h('div', { className:'empty-state-title' }, 'No mileage logged yet'), h('p', null, 'Use "Add Mileage" at the top to log a drive.'))
         : h('table', { className:'data-table' },
-            h('thead', null, h('tr', null, h('th', null,'Date'), h('th', null,'Destination / purpose'), h('th', {className:'num'}, 'Miles'), h('th', {className:'num'}, 'Rate'), h('th', {className:'num'}, 'Amount'), h('th', null, ''))),
+            h('thead', null, h('tr', null, h('th', null,'Date'), h('th', null,'Purpose'), h('th', {className:'num'}, 'Miles'), h('th', {className:'num'}, 'Rate'), h('th', {className:'num'}, 'Amount'), h('th', null, ''))),
             h('tbody', null, rows.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
               h('td', null, formatDate(r.Date)),
               h('td', null, r.Vendor || '—'),
@@ -768,7 +870,7 @@ function MileageView({ expenses, onEdit, onDelete, onAdd }) {
 // =====================================================================
 // Dashboard — KPI tiles + spend-by-category bars + recent activity
 // =====================================================================
-function DashboardView({ expenses, onAdd, setView }) {
+function DashboardView({ expenses, setView }) {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const yearStart = new Date(now.getFullYear(), 0, 1);
@@ -821,10 +923,7 @@ function DashboardView({ expenses, onAdd, setView }) {
         )
       ),
       h('div', { className:'card card-pad' },
-        h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' } },
-          h('div', { className:'card-title' }, 'Recent activity'),
-          h('button', { type:'button', className:'btn btn-teal btn-sm', onClick:onAdd }, h(Icon,{name:'plus'}), 'Add')
-        ),
+        h('div', { className:'card-title' }, 'Recent activity'),
         h('div', { style:{ marginTop:'10px', display:'grid', gap:'2px' } },
           recent.length === 0
             ? h('p', { className:'card-copy' }, 'Nothing logged yet.')
@@ -1010,7 +1109,11 @@ function App() {
     if (res.success) setData(d => { const next = { ...d, settings: res.result }; writeCache_(next); return next; });
   }, []);
 
-  function openAdd() { setModal({ mode:'create' }); }
+  function openAddExpense() {
+    const firstNonMileage = data.categories.find(c => c !== 'Mileage') || data.categories[0];
+    setModal({ mode:'create', presetCategory: firstNonMileage });
+  }
+  function openAddMileage() { setModal({ mode:'create', presetCategory:'Mileage' }); }
   function openEdit(expense) { setModal({ mode:'edit', expense }); }
   async function handleDelete(expense) {
     if (!window.confirm('Delete this expense? This cannot be undone.')) return;
@@ -1041,18 +1144,22 @@ function App() {
             loadError && h('div', { className:'topbar-sub', style:{ color:'var(--danger)' } }, loadError)
           )
         ),
-        h('button', { type:'button', className:'btn btn-primary btn-sm', onClick:openAdd }, h(Icon,{name:'plus'}), 'Add expense')
+        h('div', { style:{ display:'flex', alignItems:'center', gap:'8px' } },
+          h('button', { type:'button', className:'btn btn-teal btn-sm', onClick:openAddMileage }, h(Icon,{name:'plus'}), 'Add Mileage'),
+          h('button', { type:'button', className:'btn btn-primary btn-sm', onClick:openAddExpense }, h(Icon,{name:'plus'}), 'Add expense')
+        )
       ),
       h('div', { className:'page' },
-        view === 'dashboard' && h(DashboardView, { expenses:data.expenses, onAdd:openAdd, setView }),
-        view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDelete:handleDelete, onAdd:openAdd }),
-        view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete, onAdd:openAdd }),
+        view === 'dashboard' && h(DashboardView, { expenses:data.expenses, setView }),
+        view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDelete:handleDelete }),
+        view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete }),
         view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
         view === 'settings' && h(SettingsView, { settings:data.settings, onSaveSettings:apiSaveSettings, user })
       )
     ),
     modal && h(ExpenseForm, {
       initial: modal.mode === 'edit' ? modal.expense : null,
+      presetCategory: modal.presetCategory,
       categories: data.categories,
       paymentMethods: data.paymentMethods,
       defaultMileageRate: data.settings.mileageRate,
