@@ -129,7 +129,7 @@
   .avatar-btn { border:0; padding:0; cursor:pointer; }
 
   /* ---------- Sidebar theme toggle + mini calendar ---------- */
-  .theme-toggle-btn { width:100%; height:34px; border:0; background:transparent; display:flex; align-items:center; gap:9px; padding:0 9px; margin-bottom:6px; border-radius:9px; color:#657084; font-size:12px; font-weight:600; cursor:pointer; transition:.15s ease; }
+  .theme-toggle-btn { width:32px; height:32px; border:0; background:transparent; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; border-radius:9px; color:#657084; cursor:pointer; transition:.15s ease; }
   .theme-toggle-btn:hover { background:#f4f6f8; color:var(--navy-deep); }
 
   .mini-cal { margin:4px 10px 10px; padding:10px 8px; border:1px solid var(--line); border-radius:12px; }
@@ -347,7 +347,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.16-4';
+const BUILD_NUMBER = '2026.09.16-5';
 
 // =====================================================================
 // Small utilities
@@ -588,7 +588,6 @@ const NAV_ITEMS = [
   { key:'mileage', label:'Mileage', icon:'mileage' },
   { key:'reports', label:'Reports', icon:'reports' },
   { key:'purchaseorders', label:'Purchase Orders', icon:'po' },
-  { key:'settings', label:'Settings', icon:'settings' },
 ];
 
 // Small month calendar shown in the sidebar (matches the CRM's mini
@@ -662,7 +661,7 @@ function Sidebar({ view, setView, user, onSignOut, open, onClose, sidebarTheme, 
           type:'button', className:'theme-toggle-btn', onClick:onToggleTheme,
           'aria-label': sidebarTheme === 'dark' ? 'Use light sidebar' : 'Use dark sidebar',
           title: sidebarTheme === 'dark' ? 'Use light sidebar' : 'Use dark sidebar'
-        }, h(Icon, { name: sidebarTheme === 'dark' ? 'sun' : 'moon' }), h('span', null, sidebarTheme === 'dark' ? 'Light sidebar' : 'Dark sidebar')),
+        }, h(Icon, { name: sidebarTheme === 'dark' ? 'sun' : 'moon' })),
         h('div', { className:'profile-row' },
           h('button', { type:'button', className:'avatar avatar-btn', onClick:onOpenPreferences, title:'Preferences', 'aria-label':'Open preferences' }, getInitials(user.name, user.email)),
           h('div', { className:'profile-copy' },
@@ -679,7 +678,19 @@ function Sidebar({ view, setView, user, onSignOut, open, onClose, sidebarTheme, 
 // =====================================================================
 // Preferences — opened by clicking the profile initials in the sidebar.
 // =====================================================================
-function PreferencesModal({ open, onClose, sidebarTheme, onChangeTheme, showCalendar, onChangeShowCalendar, lastSyncedAt, refreshing, onRefresh, onSignOut }) {
+function PreferencesModal({ open, onClose, sidebarTheme, onChangeTheme, showCalendar, onChangeShowCalendar, settings, onSaveSettings, lastSyncedAt, refreshing, onRefresh, onSignOut }) {
+  const [rate, setRate] = useState(settings.mileageRate);
+  const [rateSaving, setRateSaving] = useState(false);
+  const [rateSaved, setRateSaved] = useState(false);
+
+  async function saveRate() {
+    setRateSaving(true);
+    await onSaveSettings({ mileageRate: rate });
+    setRateSaving(false);
+    setRateSaved(true);
+    setTimeout(() => setRateSaved(false), 2000);
+  }
+
   if (!open) return null;
   const lastSyncedLabel = lastSyncedAt && !isNaN(new Date(lastSyncedAt).getTime())
     ? new Date(lastSyncedAt).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })
@@ -712,6 +723,17 @@ function PreferencesModal({ open, onClose, sidebarTheme, onChangeTheme, showCale
             className:'pref-switch' + (showCalendar ? ' on' : ''),
             onClick:() => onChangeShowCalendar(!showCalendar)
           })
+        ),
+        h('div', { className:'pref-row' },
+          h('div', { className:'pref-copy' },
+            h('strong', null, 'Mileage rate'),
+            h('span', null, 'Default rate on new mileage entries. Past entries keep their own stored rate.')
+          ),
+          h('div', { style:{ display:'flex', gap:'8px', alignItems:'center' } },
+            h('input', { type:'number', step:'0.001', min:'0', className:'input', style:{ width:'90px' }, value:rate, onChange:e => setRate(e.target.value) }),
+            h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:saveRate, disabled:rateSaving }, rateSaving ? 'Saving…' : 'Save'),
+            rateSaved && h('span', { style:{ fontSize:'11px', color:'var(--good)', fontWeight:650 } }, 'Saved')
+          )
         ),
         h('div', { className:'pref-sync' },
           h('div', null,
@@ -1564,39 +1586,6 @@ function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDelete, onRecordE
 }
 
 // =====================================================================
-// Settings view
-// =====================================================================
-function SettingsView({ settings, onSaveSettings, user }) {
-  const [rate, setRate] = useState(settings.mileageRate);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  async function save() {
-    setSaving(true);
-    await onSaveSettings({ mileageRate: rate });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  }
-
-  return h('div', { style:{ maxWidth:'520px' } },
-    h('div', { className:'card card-pad', style:{ marginBottom:'16px' } },
-      h('div', { className:'card-title' }, 'Mileage rate'),
-      h('p', { className:'card-copy' }, 'Used as the default rate on new mileage entries. Changing it never rewrites the rate stored on past entries.'),
-      h('div', { style:{ display:'flex', gap:'10px', marginTop:'12px', alignItems:'center' } },
-        h('input', { type:'number', step:'0.001', min:'0', className:'input', style:{ width:'140px' }, value:rate, onChange:e => setRate(e.target.value) }),
-        h('button', { type:'button', className:'btn btn-teal', onClick:save, disabled:saving }, saving ? 'Saving…' : 'Save'),
-        saved && h('span', { style:{ fontSize:'12px', color:'var(--good)', fontWeight:650 } }, 'Saved')
-      )
-    ),
-    h('div', { className:'card card-pad' },
-      h('div', { className:'card-title' }, 'Signed in as'),
-      h('p', { className:'card-copy' }, user.email)
-    )
-  );
-}
-
-// =====================================================================
 // App shell
 // =====================================================================
 function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[] }; }
@@ -1779,7 +1768,7 @@ function App() {
     return h('div', { className:'full-loading' }, h('div', { className:'spinner' }), h('p', null, 'Loading BDD EXP…'));
   }
 
-  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', purchaseorders:'Purchase Orders', settings:'Settings' };
+  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', purchaseorders:'Purchase Orders' };
 
   return h('div', { className:'app-shell' },
     h(Sidebar, {
@@ -1806,8 +1795,7 @@ function App() {
         view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDelete:handleDelete }),
         view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete }),
         view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
-        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, onAdd:openAddPO, onEdit:openEditPO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense }),
-        view === 'settings' && h(SettingsView, { settings:data.settings, onSaveSettings:apiSaveSettings, user })
+        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, onAdd:openAddPO, onEdit:openEditPO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense })
       )
     ),
     modal && modal.type === 'mileage' && h(MileageForm, {
@@ -1843,6 +1831,7 @@ function App() {
       onClose: () => setShowPreferences(false),
       sidebarTheme, onChangeTheme: applySidebarTheme,
       showCalendar, onChangeShowCalendar: updateShowCalendar,
+      settings: data.settings, onSaveSettings: apiSaveSettings,
       lastSyncedAt, refreshing: preferencesRefreshing, onRefresh: runPreferencesRefresh,
       onSignOut: handleSignOut
     }),
