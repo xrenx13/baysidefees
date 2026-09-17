@@ -114,12 +114,12 @@
   .sidebar-brand-sub { font-size:10px; line-height:1.2; color:var(--faint); margin-top:2px; }
   .sidebar-nav { padding:14px 10px; display:flex; flex-direction:column; gap:3px; flex:1; overflow-y:auto; }
   .nav-label { padding:12px 10px 6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); }
-  .nav-btn { width:100%; height:38px; border:0; background:transparent; display:flex; align-items:center; gap:10px; padding:0 10px; border-radius:9px; color:#657084; font-size:13px; font-weight:550; text-align:left; cursor:pointer; transition:.15s ease; }
+  .nav-btn { width:100%; height:38px; border:0; background:transparent; display:flex; align-items:center; gap:10px; padding:0 10px; border-radius:9px; color:#657084; font-size:13px; font-weight:550; text-align:left; text-decoration:none; cursor:pointer; transition:.15s ease; box-sizing:border-box; }
   .nav-btn:hover { background:#f4f6f8; color:var(--navy-deep); }
   .nav-btn.active { background:var(--teal-wash); color:var(--teal-dark); font-weight:650; }
   .nav-icon { width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; }
   .nav-icon svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-  .sidebar-bottom { margin-top:auto; padding:12px 10px 14px; border-top:1px solid var(--line); }
+  .sidebar-bottom { margin-top:auto; padding:22px 10px 18px; border-top:1px solid var(--line); }
   .profile-row { display:flex; align-items:flex-start; gap:9px; padding:8px 9px; border-radius:10px; }
   .avatar { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#edf1f5; color:var(--navy-deep); font-size:11px; font-weight:700; flex:0 0 30px; }
   .profile-copy { min-width:0; flex:1; }
@@ -173,15 +173,18 @@
   .sidebar.dark .signout-btn:hover { background:rgba(255,255,255,.07); color:#fff; }
 
   /* ---------- Preferences modal ---------- */
-  .pref-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid var(--line); }
-  .pref-row:last-of-type { border-bottom:none; }
+  .pref-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:15px; border:1px solid var(--line); border-radius:12px; background:#f7fafb; }
   .pref-copy strong { display:block; font-size:13px; font-weight:650; color:var(--navy-deep); }
   .pref-copy span { display:block; font-size:11.5px; color:var(--muted); margin-top:2px; }
   .pref-switch { position:relative; width:42px; height:24px; flex:0 0 42px; border:0; border-radius:999px; padding:0; background:#cbd5df; cursor:pointer; transition:background .18s ease; }
   .pref-switch:after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(8,30,61,.25); transition:transform .18s ease; }
   .pref-switch.on { background:var(--teal); }
   .pref-switch.on:after { transform:translateX(18px); }
-  .pref-sync { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 0 4px; }
+  .pref-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .pref-grid label { display:block; font-size:13px; font-weight:650; color:var(--navy-deep); }
+  .pref-grid select.input { margin-top:6px; font-weight:700; }
+  @media (max-width:520px) { .pref-grid { grid-template-columns:1fr; } }
+  .pref-sync { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 15px; border:1px solid var(--line); border-radius:12px; background:#fff; }
   .pref-sync strong { display:block; font-size:13px; font-weight:650; color:var(--navy-deep); }
   .pref-sync span { display:block; font-size:11.5px; color:var(--muted); margin-top:2px; }
   .pref-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -192,7 +195,24 @@
   .topbar-title { font-size:16px; font-weight:750; color:var(--navy-deep); letter-spacing:-.01em; }
   .topbar-sub { font-size:12px; color:var(--muted); margin-top:1px; }
   .page { padding:24px; max-width:1180px; }
+  .history-back { width:34px; height:34px; flex:0 0 34px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:9px; background:#fff; color:#43556d; font-size:20px; line-height:1; cursor:pointer; box-shadow:0 1px 3px rgba(8,30,61,.04); transition:.15s ease; }
+  .history-back:hover { border-color:#c7d5df; background:#f7fafb; color:var(--navy-deep); }
+  .history-back:focus-visible { outline:2px solid var(--teal-dark); outline-offset:2px; }
   .hamburger { display:none; }
+
+  .topbar-actions { display:flex; align-items:center; gap:8px; }
+  .global-search { position:relative; width:220px; max-width:240px; min-width:0; }
+  .global-search input { width:100%; height:34px; border:1px solid var(--line); border-radius:9px; background:#fff; padding:0 34px 0 12px; font-size:12px; color:#0f172a; outline:none; transition:.15s; }
+  .global-search input:focus { border-color:#94a3b8; box-shadow:0 0 0 3px rgba(148,163,184,.12); }
+  .global-search-icon { position:absolute; right:11px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none; }
+  .global-search-clear { position:absolute; right:7px; top:50%; transform:translateY(-50%); width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:7px; background:transparent; color:#7b8797; font-size:18px; line-height:1; cursor:pointer; }
+  .global-search-clear:hover { background:#eef3f6; color:var(--navy-deep); }
+  .search-results { position:absolute; left:0; right:0; top:40px; max-height:340px; overflow:auto; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 14px 35px rgba(15,23,42,.14); padding:6px; z-index:1200; }
+  .search-result { width:100%; text-align:left; border:0; background:transparent; padding:9px 10px; border-radius:8px; cursor:pointer; }
+  .search-result:hover { background:var(--teal-wash); }
+  .search-result strong { display:block; font-size:12px; color:#0f172a; }
+  .search-result span { display:block; margin-top:2px; font-size:11px; color:#64748b; }
+  .search-empty { padding:12px 10px; font-size:12px; color:#64748b; }
 
   @media (max-width:860px) {
     .sidebar { transform:translateX(-100%); transition:transform .2s ease; box-shadow:0 20px 50px rgba(8,30,61,.25); }
@@ -201,6 +221,9 @@
     .hamburger { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:9px; border:1px solid var(--line); background:#fff; }
     .sidebar-scrim { position:fixed; inset:0; background:rgba(8,20,40,.35); z-index:39; }
     .page { padding:16px; }
+    .topbar { flex-wrap:wrap; height:auto; min-height:var(--topbar-h); padding:12px 16px; row-gap:10px; }
+    .topbar-actions { flex:1 1 100%; flex-wrap:wrap; row-gap:8px; }
+    .global-search { flex:1 1 100%; width:auto; max-width:none; }
   }
 
   /* ---------- Cards, tiles, tables ---------- */
@@ -208,6 +231,8 @@
   .card-pad { padding:18px 20px; }
   .card-title { font-size:14px; font-weight:700; color:var(--navy-deep); }
   .card-copy { font-size:12px; color:var(--muted); margin-top:2px; }
+  .facility-map-card { overflow:hidden; }
+  .facility-map { width:100%; height:280px; }
 
   .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
   @media (max-width:960px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -227,10 +252,17 @@
 
   .table-wrap { overflow-x:auto; }
   table.data-table { width:100%; border-collapse:collapse; font-size:13px; }
+  table.data-table thead { background:var(--teal-wash); }
   table.data-table th { text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--faint); padding:10px 14px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data-table th.sortable { cursor:pointer; user-select:none; transition:.12s ease; }
+  table.data-table th.sortable:hover { color:var(--navy-deep); }
+  table.data-table th.sort-active { color:var(--teal-dark); background:#dcf1ee; }
   table.data-table td { padding:11px 14px; border-bottom:1px solid #f0f2f5; vertical-align:middle; color:#39465a; }
-  table.data-table tbody tr:hover { background:#fafbfc; cursor:pointer; }
+  table.data-table tbody tr:nth-child(even) { background:#fbfcfd; }
+  table.data-table tbody tr:hover { background:var(--teal-wash); cursor:pointer; }
   table.data-table td.num, table.data-table th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .table-summary { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:11px 14px; border-top:1px solid var(--line); background:var(--teal-wash); font-size:12px; color:#5b6b7c; border-radius:0 0 14px 14px; }
+  .table-summary strong { color:var(--navy-deep); font-size:13px; }
 
   .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:650; background:#eef1f4; color:#475467; white-space:nowrap; }
   .pill-teal { background:var(--teal-wash); color:var(--teal-dark); }
@@ -265,7 +297,8 @@
   .modal { width:min(560px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 70px rgba(8,20,40,.3); margin-bottom:5vh; }
   .modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid var(--line); }
   .modal-title { font-size:15px; font-weight:750; color:var(--navy-deep); }
-  .modal-close { border:0; background:transparent; color:var(--faint); font-size:18px; line-height:1; cursor:pointer; padding:4px; }
+  .modal-close { border:1px solid var(--line); border-radius:8px; background:#fff; color:#526174; font-size:11.5px; font-weight:650; line-height:1; cursor:pointer; padding:7px 12px; transition:.12s ease; }
+  .modal-close:hover { background:#f8fafc; color:#334155; border-color:#cbd5e1; }
   .modal-body { padding:20px; display:grid; gap:14px; }
   .modal-foot { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:16px 20px; border-top:1px solid var(--line); }
 
@@ -293,7 +326,8 @@
 
   .filter-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
   .segmented { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff; }
-  .segmented button { border:0; background:transparent; padding:7px 13px; font-size:12.5px; font-weight:650; color:#657084; cursor:pointer; }
+  .segmented button { display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; padding:7px 13px; font-size:12.5px; font-weight:650; color:#657084; cursor:pointer; transition:.12s ease; }
+  .segmented button:hover:not(.active) { background:#f4f6f8; }
   .segmented button.active { background:var(--navy-deep); color:#fff; }
 
   .spinner { width:22px; height:22px; border-radius:50%; border:2.5px solid #dfe7ed; border-top-color:var(--teal); animation:spin .7s linear infinite; }
@@ -347,7 +381,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.16-5';
+const BUILD_NUMBER = '2026.09.17-14';
 
 // =====================================================================
 // Small utilities
@@ -376,6 +410,53 @@ function recentUniqueValues_(rows, field, limit) {
     if (limit && out.length >= limit) break;
   }
   return out;
+}
+// Pulls just the town/city out of a full address, e.g. "35 Riverside
+// Drive, Norwell, MA 02061" -> "Norwell", so the Mileage table's From/To
+// columns can show something short instead of a whole street address.
+function extractTown_(address) {
+  if (!address) return '';
+  let parts = address.split(',').map(s => s.trim()).filter(Boolean);
+  if (parts.length && /^(USA|United States)$/i.test(parts[parts.length - 1])) {
+    parts = parts.slice(0, -1);
+  }
+  if (parts.length >= 2) {
+    const last = parts[parts.length - 1];
+    // A trailing "MA" or "MA 02061" segment means the town is the piece
+    // right before it; otherwise the last remaining piece is the town.
+    if (/^[A-Za-z]{2}(\s+\d{5}(-\d{4})?)?$/.test(last)) return parts[parts.length - 2];
+    return parts[parts.length - 1];
+  }
+  return parts[0] || address.trim();
+}
+// Click-to-sort table helpers — same pattern as the CRM's Accounts table
+// view: compare numbers numerically and everything else as a locale-aware
+// string, and show a small ▲/▼ next to whichever column is active.
+function compareForSort_(va, vb) {
+  if (typeof va === 'number' && typeof vb === 'number') return va - vb;
+  return String(va).localeCompare(String(vb));
+}
+function sortArrow_(active, dir) {
+  return active ? (dir === 'asc' ? ' ▲' : ' ▼') : '';
+}
+// CSV export helpers, shared by every "Export CSV" button in the app. Cells
+// are quoted when needed, and any cell starting with =, +, -, @, tab, or a
+// carriage return gets an apostrophe prefix — a formula-injection guard, so
+// a vendor name or note can't turn into a live formula when the file is
+// later opened in Excel/Sheets.
+function csvEscapeCell_(val) {
+  let s = val === undefined || val === null ? '' : String(val);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function downloadCsv_(filename, headers, rows) {
+  const csvContent = [headers].concat(rows).map(row => row.map(csvEscapeCell_).join(',')).join('\n');
+  const blob = new Blob([csvContent], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = filename;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 function formatDate(s) {
   const d = parseDate_(s);
@@ -489,6 +570,7 @@ function Icon({ name }) {
     menu: h(React.Fragment, null, h('path',{d:'M3 6h18M3 12h18M3 18h18'})),
     po: h(React.Fragment, null, h('path',{d:'M9 3h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V4a1 1 0 0 1 1-1z'}), h('path',{d:'M9 11h6M9 15h6M9 7h6'})),
     duplicate: h(React.Fragment, null, h('rect',{x:'9',y:'9',width:'12',height:'12',rx:'2'}), h('path',{d:'M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1'})),
+    external: h(React.Fragment, null, h('path',{d:'M14 5h5v5'}), h('path',{d:'M10 14 19 5'}), h('path',{d:'M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5'})),
     moon: h('path',{d:'M20.5 14.3A8.3 8.3 0 0 1 9.7 3.5 8.7 8.7 0 1 0 20.5 14.3Z'}),
     sun: h(React.Fragment, null, h('circle',{cx:'12',cy:'12',r:'4.2'}), h('path',{d:'M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7'})),
   };
@@ -607,6 +689,15 @@ const NAV_ITEMS = [
   { key:'purchaseorders', label:'Purchase Orders', icon:'po' },
 ];
 
+// External shortcuts shown in the sidebar's "Tools" section — matches the
+// CRM's list, with its last entry swapped for a link back to the CRM itself.
+const TOOLS_LIST = [
+  ['SimplePractice', 'https://secure.simplepractice.com/'],
+  ['BDD Calendar', 'http://calendar.google.com/'],
+  ['BDD Email', 'http://gmail.com/'],
+  ['BDD CRM', 'https://crm.baysidefees.com'],
+];
+
 // Small month calendar shown in the sidebar (matches the CRM's mini
 // calendar) — days with a logged expense or mileage entry are highlighted
 // and clicking one jumps to the Expenses log.
@@ -653,7 +744,7 @@ function MiniCalendar({ expenses, onSelectDay }) {
   );
 }
 
-function Sidebar({ view, setView, user, onSignOut, open, onClose, sidebarTheme, onToggleTheme, showCalendar, expenses, onOpenPreferences }) {
+function Sidebar({ view, setView, user, onSignOut, open, onClose, sidebarTheme, onToggleTheme, showCalendar, showTools, expenses, onOpenPreferences }) {
   return h(React.Fragment, null,
     open && h('div', { className:'sidebar-scrim', onClick:onClose }),
     h('aside', { className:'sidebar' + (open ? ' open' : '') + (sidebarTheme === 'dark' ? ' dark' : '') },
@@ -670,7 +761,13 @@ function Sidebar({ view, setView, user, onSignOut, open, onClose, sidebarTheme, 
           key:item.key, type:'button',
           className:'nav-btn' + (view === item.key ? ' active' : ''),
           onClick:() => { setView(item.key); onClose && onClose(); }
-        }, h(Icon, { name:item.icon }), h('span', null, item.label)))
+        }, h(Icon, { name:item.icon }), h('span', null, item.label))),
+        showTools && h(React.Fragment, null,
+          h('div', { className:'nav-label', style:{ marginTop:'8px' } }, 'Tools'),
+          TOOLS_LIST.map(([label, href]) => h('a', {
+            key:label, href, target:'_blank', rel:'noopener noreferrer', className:'nav-btn'
+          }, h(Icon, { name:'external' }), h('span', null, label)))
+        )
       ),
       showCalendar && h(MiniCalendar, { expenses, onSelectDay:() => { setView('expenses'); onClose && onClose(); } }),
       h('div', { className:'sidebar-bottom' },
@@ -685,8 +782,7 @@ function Sidebar({ view, setView, user, onSignOut, open, onClose, sidebarTheme, 
             h('div', { className:'profile-name' }, user.name || user.email),
             h('button', { type:'button', className:'signout-btn', onClick:onSignOut }, 'Sign out')
           )
-        ),
-        h('div', { style:{ fontSize:'10.5px', color:'var(--faint)', textAlign:'center', marginTop:'10px', letterSpacing:'.02em' } }, 'Build ' + BUILD_NUMBER)
+        )
       )
     )
   );
@@ -695,7 +791,7 @@ function Sidebar({ view, setView, user, onSignOut, open, onClose, sidebarTheme, 
 // =====================================================================
 // Preferences — opened by clicking the profile initials in the sidebar.
 // =====================================================================
-function PreferencesModal({ open, onClose, sidebarTheme, onChangeTheme, showCalendar, onChangeShowCalendar, settings, onSaveSettings, lastSyncedAt, refreshing, onRefresh, onSignOut }) {
+function PreferencesModal({ open, onClose, sidebarTheme, onChangeTheme, showCalendar, onChangeShowCalendar, showTools, onChangeShowTools, settings, onSaveSettings, lastSyncedAt, refreshing, onRefresh, onSignOut }) {
   const [rate, setRate] = useState(settings.mileageRate);
   const [rateSaving, setRateSaving] = useState(false);
   const [rateSaved, setRateSaved] = useState(false);
@@ -716,24 +812,24 @@ function PreferencesModal({ open, onClose, sidebarTheme, onChangeTheme, showCale
     h('div', { className:'modal' },
       h('div', { className:'modal-head' },
         h('div', { className:'modal-title' }, 'Preferences'),
-        h('button', { type:'button', className:'modal-close', onClick:onClose }, h(Icon, { name:'close' }))
+        h('button', { type:'button', className:'modal-close', onClick:onClose }, 'Close')
       ),
       h('div', { className:'modal-body' },
         h('div', { className:'pref-row' },
           h('div', { className:'pref-copy' },
-            h('strong', null, 'Sidebar theme'),
-            h('span', null, 'Switch the left navigation between light and dark.')
+            h('strong', null, 'Show tools'),
+            h('span', null, 'Display external shortcuts in the left navigation.')
           ),
           h('button', {
-            type:'button', role:'switch', 'aria-checked': sidebarTheme === 'dark', 'aria-label':'Dark sidebar',
-            className:'pref-switch' + (sidebarTheme === 'dark' ? ' on' : ''),
-            onClick:() => onChangeTheme(sidebarTheme === 'dark' ? 'light' : 'dark')
+            type:'button', role:'switch', 'aria-checked': showTools, 'aria-label':'Show tools',
+            className:'pref-switch' + (showTools ? ' on' : ''),
+            onClick:() => onChangeShowTools(!showTools)
           })
         ),
         h('div', { className:'pref-row' },
           h('div', { className:'pref-copy' },
             h('strong', null, 'Show calendar'),
-            h('span', null, 'Display the monthly calendar in the sidebar.')
+            h('span', null, 'Display the monthly calendar in the desktop sidebar.')
           ),
           h('button', {
             type:'button', role:'switch', 'aria-checked': showCalendar, 'aria-label':'Show calendar',
@@ -752,6 +848,16 @@ function PreferencesModal({ open, onClose, sidebarTheme, onChangeTheme, showCale
             rateSaved && h('span', { style:{ fontSize:'11px', color:'var(--good)', fontWeight:650 } }, 'Saved')
           )
         ),
+        h('div', { className:'pref-grid' },
+          h('label', null, 'Sidebar theme',
+            h('select', {
+              className:'input', value:sidebarTheme, onChange:e => onChangeTheme(e.target.value)
+            },
+              h('option', { value:'light' }, 'Light'),
+              h('option', { value:'dark' }, 'Dark')
+            )
+          )
+        ),
         h('div', { className:'pref-sync' },
           h('div', null,
             h('strong', null, 'BDD EXP data'),
@@ -761,7 +867,7 @@ function PreferencesModal({ open, onClose, sidebarTheme, onChangeTheme, showCale
         )
       ),
       h('div', { className:'modal-foot', style:{ justifyContent:'space-between' } },
-        h('button', { type:'button', className:'btn btn-ghost', onClick:() => { onClose(); onSignOut(); } }, 'Sign out'),
+        h('button', { type:'button', className:'btn btn-danger-ghost', onClick:() => { onClose(); onSignOut(); } }, 'Sign out'),
         h('div', { className:'pref-meta' },
           h('div', null, 'Build ' + BUILD_NUMBER),
           h('div', null, 'Built with ❤️ in Dennis & Norwell')
@@ -791,7 +897,7 @@ function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }
     h('form', { className:'modal', onSubmit },
       h('div', { className:'modal-head' },
         h('div', { className:'modal-title' }, title),
-        h('button', { type:'button', className:'modal-close', onClick:onCancel }, h(Icon, { name:'close' }))
+        h('button', { type:'button', className:'modal-close', onClick:onCancel }, 'Close')
       ),
       h('div', { className:'modal-body' }, ...body),
       h('div', { className:'modal-foot' },
@@ -809,15 +915,22 @@ function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }
 // =====================================================================
 function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
   const isEdit = !!(initial && initial.ExpenseId);
-  const [form, setForm] = useState(() => ({
-    Date: (initial && initial.Date) || todayStr(),
-    Category: (initial && initial.Category) || presetCategory || categories[0] || 'Other',
-    Vendor: (initial && initial.Vendor) || '',
-    Description: (initial && initial.Description) || '',
-    Amount: (initial && initial.Amount) || '',
-    PaymentMethod: (initial && initial.PaymentMethod) || paymentMethods[0] || '',
-    Notes: (initial && initial.Notes) || ''
-  }));
+  // For a brand-new, non-preset expense, default Category/PaymentMethod to
+  // whatever was picked last time — most of Melanie's entries repeat the
+  // same category/payment method in a row, so this saves a couple of taps.
+  const [form, setForm] = useState(() => {
+    const lastCategory = localStorage.getItem(LS_PREFIX+'last_category');
+    const lastPayment = localStorage.getItem(LS_PREFIX+'last_payment_method');
+    return {
+      Date: (initial && initial.Date) || todayStr(),
+      Category: (initial && initial.Category) || presetCategory || (lastCategory && categories.includes(lastCategory) ? lastCategory : null) || categories[0] || 'Other',
+      Vendor: (initial && initial.Vendor) || '',
+      Description: (initial && initial.Description) || '',
+      Amount: (initial && initial.Amount) || '',
+      PaymentMethod: (initial && initial.PaymentMethod) || (lastPayment && paymentMethods.includes(lastPayment) ? lastPayment : null) || paymentMethods[0] || '',
+      Notes: (initial && initial.Notes) || ''
+    };
+  });
   const [file, setFile] = useState(null);
   const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl } : null);
   const [saving, setSaving] = useState(false);
@@ -855,6 +968,8 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
         const uploaded = await apiUploadReceipt(expenseId, file.name, file.type, base64Data);
         await apiUpdate({ ExpenseId: expenseId, ReceiptFileId: uploaded.fileId, ReceiptFileUrl: uploaded.url, ReceiptFileName: uploaded.name });
       }
+      localStorage.setItem(LS_PREFIX+'last_category', form.Category);
+      localStorage.setItem(LS_PREFIX+'last_payment_method', form.PaymentMethod);
       onSaved({ ExpenseId: expenseId, ...payload });
     } catch (err2) {
       setErr(err2.message || 'Something went wrong saving this expense.');
@@ -929,11 +1044,12 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
 // ExpenseForm above. No payment method, no receipt, no category picker
 // (always Mileage) — just what a drive actually needs.
 // =====================================================================
-function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationOptions, onCancel, onSaved, apiCreate, apiUpdate }) {
+function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationOptions, facilityOptions, onCancel, onSaved, apiCreate, apiUpdate }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const [form, setForm] = useState(() => ({
     Date: (initial && initial.Date) || todayStr(),
     Vendor: (initial && initial.Vendor) || '',
+    FacilityName: (initial && initial.FacilityName) || '',
     Notes: (initial && initial.Notes) || '',
     Miles: (initial && initial.Miles) || '',
     MileageRate: (initial && initial.MileageRate) || defaultMileageRate,
@@ -1024,7 +1140,8 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
         Miles: Number(form.Miles),
         MileageRate: Number(form.MileageRate),
         StartLocation: form.StartLocation,
-        EndLocation: form.EndLocation
+        EndLocation: form.EndLocation,
+        FacilityName: form.FacilityName
       };
       if (isEdit) {
         await apiUpdate({ ExpenseId: initial.ExpenseId, ...payload });
@@ -1064,6 +1181,22 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
       h('label', null, 'End location'),
       h('input', { type:'text', className:'input', list:'end-location-options', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' }),
       endLocationOptions && endLocationOptions.length > 0 && h('datalist', { id:'end-location-options' }, endLocationOptions.map(v => h('option', { key:v, value:v })))
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Facility name'),
+      (facilityOptions && facilityOptions.length > 0)
+        ? h('select', { className:'input', value:form.FacilityName, onChange:e => set('FacilityName', e.target.value) },
+            h('option', { value:'' }, '— Select a facility —'),
+            // If this entry's saved facility isn't in the CRM's current
+            // list (renamed/removed there since), still offer it so editing
+            // doesn't silently blank out what was actually saved.
+            (form.FacilityName && !facilityOptions.includes(form.FacilityName)) && h('option', { value:form.FacilityName }, form.FacilityName + ' (no longer in CRM)'),
+            facilityOptions.map(v => h('option', { key:v, value:v }, v))
+          )
+        : h(React.Fragment, null,
+            h('input', { type:'text', className:'input', value:form.FacilityName, onChange:e => set('FacilityName', e.target.value), placeholder:'e.g. Sunrise Senior Living – Hyannis' }),
+            h('span', { className:'field-hint' }, 'Facility list from the CRM isn’t available right now — typed in as free text for now.')
+          )
     ),
     h('div', { style:{ display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap' } },
       h('label', { className:'checkbox-row' },
@@ -1218,10 +1351,29 @@ function PurchaseOrderForm({ initial, categories, statuses, vendorOptions, onCan
 // =====================================================================
 // Expenses list/table view
 // =====================================================================
+// Column definitions for the Expenses table — click a header to sort by it,
+// click again to reverse direction (same interaction as the CRM's Accounts
+// table view).
+const EXPENSE_COLUMNS = [
+  { key:'Date', label:'Date', getValue:r => { const d = parseDate_(r.Date); return d ? d.getTime() : 0; } },
+  { key:'Category', label:'Category', getValue:r => r.Category || '' },
+  { key:'Vendor', label:'Vendor / Purpose', getValue:r => r.Vendor || '' },
+  { key:'PaymentMethod', label:'Payment', getValue:r => r.PaymentMethod || '' },
+  { key:'Amount', label:'Amount', num:true, getValue:r => Number(r.Amount) || 0 },
+  { key:'Receipt', label:'Receipt', getValue:r => r.ReceiptFileUrl ? 1 : 0 },
+];
+
 function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete }) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
-  const [sortDesc, setSortDesc] = useState(true);
+  const restoredSortRef = useRef((() => { try { return JSON.parse(sessionStorage.getItem(LS_PREFIX+'expenses_table_sort')||'{}')||{}; } catch(_) { return {}; } })());
+  const [sortCol, setSortCol] = useState(() => restoredSortRef.current.sortCol || 'Date');
+  const [sortDir, setSortDir] = useState(() => restoredSortRef.current.sortDir === 'asc' ? 'asc' : 'desc');
+  useEffect(() => sessionStorage.setItem(LS_PREFIX+'expenses_table_sort', JSON.stringify({ sortCol, sortDir })), [sortCol, sortDir]);
+  function toggleSort(col) {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('asc'); }
+  }
 
   const filtered = useMemo(() => {
     let rows = expenses.slice();
@@ -1230,25 +1382,15 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete }) {
       const q = search.trim().toLowerCase();
       rows = rows.filter(r => (r.Vendor||'').toLowerCase().includes(q) || (r.Description||'').toLowerCase().includes(q) || (r.Notes||'').toLowerCase().includes(q));
     }
-    rows.sort((a,b) => {
-      const da = parseDate_(a.Date), db = parseDate_(b.Date);
-      const ta = da ? da.getTime() : 0, tb = db ? db.getTime() : 0;
-      return sortDesc ? tb - ta : ta - tb;
-    });
+    const col = EXPENSE_COLUMNS.find(c => c.key === sortCol) || EXPENSE_COLUMNS[0];
+    rows.sort((a,b) => { const cmp = compareForSort_(col.getValue(a), col.getValue(b)); return sortDir === 'asc' ? cmp : -cmp; });
     return rows;
-  }, [expenses, categoryFilter, search, sortDesc]);
+  }, [expenses, categoryFilter, search, sortCol, sortDir]);
 
   function exportCsv() {
     const headers = ['Date','Category','Vendor','Description','Amount','PaymentMethod','Miles','MileageRate','StartLocation','EndLocation','Notes'];
-    const lines = [headers.join(',')].concat(filtered.map(r => headers.map(hd => {
-      const v = r[hd] === undefined || r[hd] === null ? '' : String(r[hd]);
-      return '"' + v.replace(/"/g,'""') + '"';
-    }).join(',')));
-    const blob = new Blob([lines.join('\n')], { type:'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'bdd-exp-expenses.csv'; a.click();
-    URL.revokeObjectURL(url);
+    const rows = filtered.map(r => headers.map(hd => r[hd] === undefined || r[hd] === null ? '' : r[hd]));
+    downloadCsv_('bdd-exp-expenses-' + todayStr() + '.csv', headers, rows);
   }
 
   return h('div', null,
@@ -1258,8 +1400,7 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete }) {
         h('select', { className:'input', style:{ width:'190px' }, value:categoryFilter, onChange:e => setCategoryFilter(e.target.value) },
           h('option', { value:'All' }, 'All categories'),
           categories.map(c => h('option', { key:c, value:c }, c))
-        ),
-        h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:() => setSortDesc(s => !s) }, 'Date ' + (sortDesc ? '↓' : '↑'))
+        )
       ),
       h('button', { type:'button', className:'btn btn-ghost', onClick:exportCsv }, 'Export CSV')
     ),
@@ -1269,56 +1410,303 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete }) {
             h('div', { className:'empty-state-title' }, 'No expenses yet'),
             h('p', null, 'Add your first expense to start tracking spend.')
           )
-        : h('table', { className:'data-table' },
-            h('thead', null, h('tr', null,
-              h('th', null, 'Date'), h('th', null, 'Category'), h('th', null, 'Vendor / Purpose'),
-              h('th', null, 'Payment'), h('th', { className:'num' }, 'Amount'), h('th', null, 'Receipt'), h('th', null, '')
-            )),
-            h('tbody', null, filtered.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
-              h('td', null, formatDate(r.Date)),
-              h('td', null, h('span', { className:'pill ' + categoryPillClass(r.Category) }, r.Category)),
-              h('td', null, r.Vendor || '—'),
-              h('td', null, r.PaymentMethod || '—'),
-              h('td', { className:'num' }, formatCurrency(r.Amount)),
-              h('td', null, r.ReceiptFileUrl ? h('a', { href:r.ReceiptFileUrl, target:'_blank', rel:'noopener noreferrer', style:{ color:'var(--teal-dark)', display:'inline-flex' }, onClick:e => e.stopPropagation() }, h(Icon,{name:'receipt'})) : '—'),
-              h('td', { style:{ textAlign:'right' } },
-                h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'6px' } },
-                  h('button', { type:'button', className:'btn btn-ghost btn-sm', title:'Duplicate', onClick:e => { e.stopPropagation(); onDuplicate(r); } }, h(Icon,{name:'duplicate'})),
-                  h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+        : h(React.Fragment, null,
+            h('table', { className:'data-table' },
+              h('thead', null, h('tr', null,
+                EXPENSE_COLUMNS.map(col => h('th', {
+                  key:col.key,
+                  className:(col.num ? 'num ' : '') + 'sortable' + (sortCol === col.key ? ' sort-active' : ''),
+                  onClick:() => toggleSort(col.key)
+                }, col.label + sortArrow_(sortCol === col.key, sortDir))),
+                h('th', null, '')
+              )),
+              h('tbody', null, filtered.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
+                h('td', null, formatDate(r.Date)),
+                h('td', null, h('span', { className:'pill ' + categoryPillClass(r.Category) }, r.Category)),
+                h('td', null, r.Vendor || '—'),
+                h('td', null, r.PaymentMethod || '—'),
+                h('td', { className:'num' }, formatCurrency(r.Amount)),
+                h('td', null, r.ReceiptFileUrl ? h('a', { href:r.ReceiptFileUrl, target:'_blank', rel:'noopener noreferrer', style:{ color:'var(--teal-dark)', display:'inline-flex' }, onClick:e => e.stopPropagation() }, h(Icon,{name:'receipt'})) : '—'),
+                h('td', { style:{ textAlign:'right' } },
+                  h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'6px' } },
+                    h('button', { type:'button', className:'btn btn-ghost btn-sm', title:'Duplicate', onClick:e => { e.stopPropagation(); onDuplicate(r); } }, h(Icon,{name:'duplicate'})),
+                    h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+                  )
                 )
-              )
-            )))
+              )))
+            ),
+            h('div', { className:'table-summary' },
+              h('span', null, 'Expenses log'),
+              h('span', null, h('strong', null, filtered.length + (filtered.length === 1 ? ' expense' : ' expenses')))
+            )
           )
     )
   );
 }
 
 // =====================================================================
+// Facility map — one pin per distinct place you've driven to (bigger pin
+// = more visits). Click a pin to see its visit count/mileage and jump to
+// its drives in Table view. Geocoding results are cached in localStorage
+// — addresses don't move, so this only ever looks a destination up once,
+// not on every page load.
+// =====================================================================
+const GEOCODE_CACHE_KEY = LS_PREFIX + 'geocode_cache_v1';
+function readGeocodeCache_() {
+  try { return JSON.parse(localStorage.getItem(GEOCODE_CACHE_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function writeGeocodeCache_(cache) {
+  try { localStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(cache)); } catch (e) {}
+}
+function markerIcon_(google, visits, maxVisits, isSelected) {
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 7 + (visits / (maxVisits || 1)) * 13,
+    fillColor: isSelected ? '#0c5f58' : '#0f766e',
+    fillOpacity: isSelected ? 1 : 0.82,
+    strokeColor: '#ffffff',
+    strokeWeight: 2
+  };
+}
+function escapeHtml_(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+function FacilityMap({ facilities, selectedFacility, onSelectFacility, onViewDrives, heightPx }) {
+  const mapElRef = useRef(null);
+  const mapObjRef = useRef(null);
+  const infoWindowRef = useRef(null);
+  const markersRef = useRef([]); // [{ key, marker }]
+  const firstFitRef = useRef(false);
+  const [mapsError, setMapsError] = useState('');
+  const hasMapsKey = GOOGLE_MAPS_BROWSER_API_KEY && GOOGLE_MAPS_BROWSER_API_KEY.indexOf('PASTE_YOUR') !== 0;
+
+  useEffect(() => {
+    if (!hasMapsKey || !mapElRef.current || facilities.length === 0) return;
+    let cancelled = false;
+    setMapsError('');
+    loadGoogleMaps(GOOGLE_MAPS_BROWSER_API_KEY).then(google => {
+      if (cancelled) return;
+      if (!mapObjRef.current) {
+        mapObjRef.current = new google.maps.Map(mapElRef.current, {
+          center: { lat: 41.7, lng: -70.3 }, // Cape Cod/South Shore — a reasonable start before pins fit the view
+          zoom: 9,
+          disableDefaultUI: true,
+          zoomControl: true,
+          gestureHandling: 'greedy'
+        });
+      }
+      const map = mapObjRef.current;
+      if (!infoWindowRef.current) infoWindowRef.current = new google.maps.InfoWindow();
+      markersRef.current.forEach(({ marker }) => marker.setMap(null));
+      markersRef.current = [];
+
+      // Uses the Places API's "Find Place" lookup rather than the separate
+      // Geocoding API — Places is already enabled and working (it's what
+      // powers the autocomplete on this same form), so this avoids needing
+      // yet another Google Cloud API turned on just for this map.
+      const placesService = new google.maps.places.PlacesService(map);
+      const cache = readGeocodeCache_();
+      const bounds = new google.maps.LatLngBounds();
+      const maxVisits = Math.max.apply(null, facilities.map(f => f.visits)) || 1;
+      let pending = facilities.length;
+      let cacheDirty = false;
+      let failures = 0;
+      let lastFailureStatus = '';
+
+      function finishOne(failed, status) {
+        if (failed) { failures += 1; lastFailureStatus = status || lastFailureStatus; }
+        pending -= 1;
+        if (pending !== 0) return;
+        if (!bounds.isEmpty() && !firstFitRef.current) {
+          map.fitBounds(bounds, 48);
+          firstFitRef.current = true;
+        }
+        if (cancelled) return;
+        if (bounds.isEmpty() && failures > 0) {
+          // Every lookup failed. This uses the same Places API the
+          // autocomplete on this form already relies on, so REQUEST_DENIED
+          // here most likely means this specific browser key's API
+          // restrictions don't include Places, or ZERO_RESULTS means none
+          // of the saved facility names/end locations matched a real place.
+          setMapsError(
+            'Couldn’t place any locations on the map (Google returned "' + lastFailureStatus + '"). ' +
+            (lastFailureStatus === 'REQUEST_DENIED'
+              ? 'In Google Cloud Console, check that this browser key’s API restrictions include the "Places API" — the same one the autocomplete fields on this form use.'
+              : lastFailureStatus === 'OVER_QUERY_LIMIT'
+                ? 'This usually clears on its own — try again in a bit, or check billing/quota on the Google Maps key.'
+                : 'Double-check the facility names/end locations are real, findable places.')
+          );
+        } else if (failures > 0) {
+          setMapsError(failures + ' of ' + facilities.length + ' location' + (facilities.length === 1 ? '' : 's') + ' couldn’t be placed on the map (' + lastFailureStatus + ').');
+        }
+      }
+      function placeMarker(facility, location) {
+        if (cancelled) return;
+        const isSelected = selectedFacility === facility.key;
+        const marker = new google.maps.Marker({
+          position: location,
+          map,
+          title: facility.key + ' — ' + facility.visits + (facility.visits === 1 ? ' visit' : ' visits') + ', ' + facility.miles.toLocaleString(undefined,{maximumFractionDigits:1}) + ' mi',
+          icon: markerIcon_(google, facility.visits, maxVisits, isSelected),
+          zIndex: isSelected ? 999 : undefined
+        });
+        marker.addListener('click', () => {
+          onSelectFacility(facility.key);
+          const btnId = 'facility-view-drives-btn';
+          const html =
+            '<div style="font-family:Inter,sans-serif;min-width:170px;">' +
+              '<div style="font-size:12.5px;font-weight:750;color:#0f172a;margin-bottom:3px;">' + escapeHtml_(facility.key) + '</div>' +
+              '<div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px;">' +
+                facility.visits + (facility.visits === 1 ? ' visit' : ' visits') + ' · ' + facility.miles.toLocaleString(undefined,{maximumFractionDigits:1}) + ' mi' +
+              '</div>' +
+              '<button id="' + btnId + '" type="button" style="border:1px solid #0f766e;background:#0f766e;color:#fff;border-radius:7px;padding:6px 11px;font-size:11.5px;font-weight:650;cursor:pointer;">View drives →</button>' +
+            '</div>';
+          infoWindowRef.current.setContent(html);
+          infoWindowRef.current.open(map, marker);
+          google.maps.event.addListenerOnce(infoWindowRef.current, 'domready', () => {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.onclick = () => onViewDrives(facility.key);
+          });
+        });
+        markersRef.current.push({ key: facility.key, marker });
+        bounds.extend(location);
+        finishOne(false);
+      }
+
+      facilities.forEach(facility => {
+        const cached = cache[facility.address];
+        if (cached) { placeMarker(facility, cached); return; }
+        placesService.findPlaceFromQuery({ query: facility.address, fields: ['geometry'] }, (results, status) => {
+          if (cancelled) return;
+          if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0] && results[0].geometry) {
+            const loc = { lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng() };
+            cache[facility.address] = loc;
+            cacheDirty = true;
+            placeMarker(facility, loc);
+          } else {
+            finishOne(true, status);
+          }
+          if (cacheDirty) writeGeocodeCache_(cache);
+        });
+      });
+    }).catch(err => setMapsError(err.message || 'Could not load Google Maps.'));
+    return () => { cancelled = true; };
+  }, [facilities, hasMapsKey]);
+
+  // Recolor/resize markers when the selection changes, without re-geocoding.
+  useEffect(() => {
+    if (!window.google || !window.google.maps) return;
+    const maxVisits = Math.max.apply(null, facilities.map(f => f.visits)) || 1;
+    markersRef.current.forEach(({ key, marker }) => {
+      const facility = facilities.find(f => f.key === key);
+      if (!facility) return;
+      const isSelected = selectedFacility === key;
+      marker.setIcon(markerIcon_(window.google, facility.visits, maxVisits, isSelected));
+      marker.setZIndex(isSelected ? 999 : undefined);
+    });
+  }, [selectedFacility, facilities]);
+
+  if (!hasMapsKey) {
+    return h('div', { className:'card card-pad', style:{ marginBottom:'18px' } },
+      h('div', { className:'card-title' }, 'Facility map'),
+      h('p', { className:'card-copy' }, 'Add a Google Maps API key in index.html to see a map of the facilities you’ve driven to.')
+    );
+  }
+  if (facilities.length === 0) return null;
+  return h('div', { className:'card facility-map-card', style:{ marginBottom:'18px' } },
+    h('div', { ref:mapElRef, className:'facility-map', style:{ height:(heightPx || 280) + 'px' } }),
+    mapsError && h('div', { className:'field-error', style:{ margin:'10px 14px' } }, mapsError)
+  );
+}
+
+// =====================================================================
 // Mileage view — same data, filtered to Category === 'Mileage'
 // =====================================================================
-function MileageView({ expenses, onEdit, onDelete }) {
+function MileageView({ expenses, onEdit, onDelete, onDuplicate }) {
   const rows = useMemo(() => expenses.filter(e => e.Category === 'Mileage').sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)), [expenses]);
   const totalMiles = rows.reduce((s,r) => s + (Number(r.Miles)||0), 0);
   const totalAmount = rows.reduce((s,r) => s + (Number(r.Amount)||0), 0);
+
+  // Group drives by destination (preferring the CRM facility name — the
+  // more meaningful identity — and falling back to the raw End location)
+  // so the map can show one pin per place, sized by how often you've been.
+  const facilities = useMemo(() => {
+    const map = new Map();
+    rows.forEach(r => {
+      const key = (r.FacilityName || r.EndLocation || '').trim();
+      if (!key) return;
+      const address = r.EndLocation || r.FacilityName;
+      if (!map.has(key)) map.set(key, { key, address, visits:0, miles:0 });
+      const entry = map.get(key);
+      entry.visits += 1;
+      entry.miles += Number(r.Miles) || 0;
+    });
+    return Array.from(map.values()).sort((a,b) => b.visits - a.visits).slice(0, 40);
+  }, [rows]);
+
+  const [selectedFacility, setSelectedFacility] = useState(null);
+  useEffect(() => {
+    if (selectedFacility && !facilities.some(f => f.key === selectedFacility)) setSelectedFacility(null);
+  }, [facilities, selectedFacility]);
+
+  // Table / Map toggle — same idea as the CRM's Accounts view toggle.
+  // Remembered per browser tab so switching pages and coming back doesn't
+  // reset it.
+  const [viewMode, setViewMode] = useState(() => {
+    const saved = sessionStorage.getItem(LS_PREFIX + 'mileage_view_mode');
+    return saved === 'map' ? 'map' : 'table';
+  });
+  useEffect(() => { sessionStorage.setItem(LS_PREFIX + 'mileage_view_mode', viewMode); }, [viewMode]);
+  function viewDrivesForFacility(key) {
+    setSelectedFacility(key);
+    setViewMode('table');
+  }
+
+  const visibleRows = selectedFacility
+    ? rows.filter(r => (r.FacilityName || r.EndLocation || '').trim() === selectedFacility)
+    : rows;
+  const selectedStats = selectedFacility ? facilities.find(f => f.key === selectedFacility) : null;
+
   return h('div', null,
     h('div', { className:'kpi-grid', style:{ marginBottom:'18px', gridTemplateColumns:'repeat(2,minmax(0,1fr))' } },
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Total miles logged'), h('div', { className:'kpi-value' }, totalMiles.toLocaleString(undefined,{maximumFractionDigits:1}))),
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Total mileage reimbursement'), h('div', { className:'kpi-value' }, formatCurrency(totalAmount)))
     ),
+    h('div', { className:'filter-row', style:{ marginBottom:'14px', justifyContent:'flex-end' } },
+      viewMode === 'table' && rows.length > 0 && h('button', { type:'button', className:'btn btn-teal btn-sm', onClick:() => onDuplicate(rows[0]) }, h(Icon,{name:'duplicate'}), 'Repeat last drive'),
+      h('div', { className:'segmented' },
+        h('button', { type:'button', className:viewMode === 'table' ? 'active' : '', onClick:() => setViewMode('table') }, h(Icon,{name:'expenses'}), 'Table'),
+        h('button', { type:'button', className:viewMode === 'map' ? 'active' : '', onClick:() => setViewMode('map') }, h(Icon,{name:'mileage'}), 'Map')
+      )
+    ),
+    viewMode === 'map'
+      ? h(FacilityMap, { facilities, selectedFacility, onSelectFacility:setSelectedFacility, onViewDrives:viewDrivesForFacility, heightPx:480 })
+      : h(React.Fragment, null,
+    selectedStats && h('div', { className:'filter-row', style:{ marginBottom:'14px' } },
+      h('span', { className:'pill pill-teal' }, selectedStats.key + ' · ' + selectedStats.visits + (selectedStats.visits === 1 ? ' visit' : ' visits') + ' · ' + selectedStats.miles.toLocaleString(undefined,{maximumFractionDigits:1}) + ' mi'),
+      h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:() => setSelectedFacility(null) }, 'Clear filter')
+    ),
     h('div', { className:'card table-wrap' },
-      rows.length === 0
-        ? h('div', { className:'empty-state' }, h('div', { className:'empty-state-title' }, 'No mileage logged yet'), h('p', null, 'Use "Add Mileage" at the top to log a drive.'))
+      visibleRows.length === 0
+        ? h('div', { className:'empty-state' },
+            h('div', { className:'empty-state-title' }, rows.length === 0 ? 'No mileage logged yet' : 'No drives to this facility'),
+            h('p', null, rows.length === 0 ? 'Use "Add Mileage" at the top to log a drive.' : 'Click "Clear filter" above to see everything again.')
+          )
         : h('table', { className:'data-table' },
-            h('thead', null, h('tr', null, h('th', null,'Date'), h('th', null,'Purpose'), h('th', {className:'num'}, 'Miles'), h('th', {className:'num'}, 'Rate'), h('th', {className:'num'}, 'Amount'), h('th', null, ''))),
-            h('tbody', null, rows.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
+            h('thead', null, h('tr', null, h('th', null,'Date'), h('th', null,'Purpose'), h('th', null,'Facility'), h('th', null,'From'), h('th', null,'To'), h('th', {className:'num'}, 'Miles'), h('th', {className:'num'}, 'Amount'), h('th', null, ''))),
+            h('tbody', null, visibleRows.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
               h('td', null, formatDate(r.Date)),
               h('td', null, r.Vendor || '—'),
+              h('td', null, r.FacilityName || '—'),
+              h('td', null, extractTown_(r.StartLocation) || '—'),
+              h('td', null, extractTown_(r.EndLocation) || '—'),
               h('td', { className:'num' }, Number(r.Miles||0).toLocaleString(undefined,{maximumFractionDigits:1})),
-              h('td', { className:'num' }, '$' + Number(r.MileageRate||0).toFixed(3)),
               h('td', { className:'num' }, formatCurrency(r.Amount)),
               h('td', { style:{ textAlign:'right' } }, h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'})))
             )))
           )
+    )
     )
   );
 }
@@ -1340,7 +1728,9 @@ function DashboardView({ expenses, setView }) {
   const lastMonth = expenses.filter(r => inRange(r, lastMonthStart, lastMonthEnd));
   const ytd = expenses.filter(r => inRange(r, yearStart));
   const mileageYtd = ytd.filter(r => r.Category === 'Mileage');
-  const missingReceipts = ytd.filter(r => !r.ReceiptFileUrl).length;
+  // Mileage entries never have a receipt to attach — they're a calculated
+  // distance × rate, not a purchase — so they shouldn't count as "missing."
+  const missingReceipts = ytd.filter(r => r.Category !== 'Mileage' && !r.ReceiptFileUrl).length;
 
   const mtdTotal = sum(mtd), lastMonthTotal = sum(lastMonth), ytdTotal = sum(ytd);
   const mtdDelta = lastMonthTotal > 0 ? Math.round(((mtdTotal - lastMonthTotal) / lastMonthTotal) * 100) : null;
@@ -1444,7 +1834,7 @@ function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onY
     h('div', { className:'modal', style:{ width:'min(680px,100%)' } },
       h('div', { className:'modal-head no-print' },
         h('div', { className:'modal-title' }, 'Tax summary'),
-        h('button', { type:'button', className:'modal-close', onClick:onClose }, h(Icon, { name:'close' }))
+        h('button', { type:'button', className:'modal-close', onClick:onClose }, 'Close')
       ),
       h('div', { className:'modal-body' },
         h('div', { className:'no-print', style:{ display:'flex', alignItems:'center', gap:'10px' } },
@@ -1564,17 +1954,73 @@ function poStatusPillClass(status) {
   return 'pill-teal';
 }
 
-function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDuplicate, onDelete, onRecordExpense }) {
-  const rows = useMemo(() => purchaseOrders.slice().sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)), [purchaseOrders]);
-  const openTotal = rows.filter(r => r.Status === 'Open').reduce((s,r) => s + (Number(r.Amount)||0), 0);
+// Column definitions for the Purchase Orders table — same click-to-sort
+// interaction as the Expenses table. Status sorts by business priority
+// (Open, then Received, then Cancelled) rather than alphabetically.
+const PO_STATUS_RANK = { Open:0, Received:1, Cancelled:2 };
+const PO_COLUMNS = [
+  { key:'PoNumber', label:'PO number', getValue:r => r.PoNumber || '' },
+  { key:'Date', label:'Date', getValue:r => { const d = parseDate_(r.Date); return d ? d.getTime() : 0; } },
+  { key:'Category', label:'Category', getValue:r => r.Category || '' },
+  { key:'Vendor', label:'Vendor', getValue:r => r.Vendor || '' },
+  { key:'Amount', label:'Amount', num:true, getValue:r => Number(r.Amount) || 0 },
+  { key:'Status', label:'Status', getValue:r => PO_STATUS_RANK[r.Status] === undefined ? 99 : PO_STATUS_RANK[r.Status] },
+];
+
+function PurchaseOrdersView({ purchaseOrders, categories, statuses, onAdd, onEdit, onDuplicate, onDelete, onRecordExpense }) {
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const restoredSortRef = useRef((() => { try { return JSON.parse(sessionStorage.getItem(LS_PREFIX+'po_table_sort')||'{}')||{}; } catch(_) { return {}; } })());
+  const [sortCol, setSortCol] = useState(() => restoredSortRef.current.sortCol || 'Date');
+  const [sortDir, setSortDir] = useState(() => restoredSortRef.current.sortDir === 'asc' ? 'asc' : 'desc');
+  useEffect(() => sessionStorage.setItem(LS_PREFIX+'po_table_sort', JSON.stringify({ sortCol, sortDir })), [sortCol, sortDir]);
+  function toggleSort(col) {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('asc'); }
+  }
+
+  const rows = useMemo(() => {
+    let list = purchaseOrders.slice();
+    if (categoryFilter !== 'All') list = list.filter(r => r.Category === categoryFilter);
+    if (statusFilter !== 'All') list = list.filter(r => r.Status === statusFilter);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(r => (r.Vendor||'').toLowerCase().includes(q) || (r.PoNumber||'').toLowerCase().includes(q) || (r.Description||'').toLowerCase().includes(q) || (r.Notes||'').toLowerCase().includes(q));
+    }
+    const col = PO_COLUMNS.find(c => c.key === sortCol) || PO_COLUMNS[1];
+    list.sort((a,b) => { const cmp = compareForSort_(col.getValue(a), col.getValue(b)); return sortDir === 'asc' ? cmp : -cmp; });
+    return list;
+  }, [purchaseOrders, categoryFilter, statusFilter, search, sortCol, sortDir]);
+  const openTotal = purchaseOrders.filter(r => r.Status === 'Open').reduce((s,r) => s + (Number(r.Amount)||0), 0);
+
+  function exportCsv() {
+    const headers = ['PoNumber','Date','Category','Vendor','Description','Amount','Status','Notes'];
+    const csvRows = rows.map(r => headers.map(hd => r[hd] === undefined || r[hd] === null ? '' : r[hd]));
+    downloadCsv_('bdd-exp-purchase-orders-' + todayStr() + '.csv', headers, csvRows);
+  }
 
   return h('div', null,
     h('div', { className:'kpi-grid', style:{ marginBottom:'18px', gridTemplateColumns:'repeat(2,minmax(0,1fr))' } },
-      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Open purchase orders'), h('div', { className:'kpi-value' }, rows.filter(r => r.Status === 'Open').length)),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Open purchase orders'), h('div', { className:'kpi-value' }, purchaseOrders.filter(r => r.Status === 'Open').length)),
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Open PO total'), h('div', { className:'kpi-value' }, formatCurrency(openTotal)))
     ),
-    h('div', { className:'filter-row', style:{ marginBottom:'14px', justifyContent:'flex-end' } },
-      h('button', { type:'button', className:'btn btn-primary btn-sm', onClick:onAdd }, h(Icon,{name:'plus'}), 'New PO')
+    h('div', { className:'filter-row', style:{ marginBottom:'14px', justifyContent:'space-between' } },
+      h('div', { className:'filter-row' },
+        h('input', { type:'text', className:'input', style:{ width:'220px' }, placeholder:'Search PO number, vendor…', value:search, onChange:e => setSearch(e.target.value) }),
+        h('select', { className:'input', style:{ width:'190px' }, value:categoryFilter, onChange:e => setCategoryFilter(e.target.value) },
+          h('option', { value:'All' }, 'All categories'),
+          categories.map(c => h('option', { key:c, value:c }, c))
+        ),
+        h('select', { className:'input', style:{ width:'150px' }, value:statusFilter, onChange:e => setStatusFilter(e.target.value) },
+          h('option', { value:'All' }, 'All statuses'),
+          statuses.map(s => h('option', { key:s, value:s }, s))
+        )
+      ),
+      h('div', { style:{ display:'flex', gap:'10px' } },
+        h('button', { type:'button', className:'btn btn-ghost', onClick:exportCsv }, 'Export CSV'),
+        h('button', { type:'button', className:'btn btn-primary btn-sm', onClick:onAdd }, h(Icon,{name:'plus'}), 'New PO')
+      )
     ),
     h('div', { className:'card table-wrap' },
       rows.length === 0
@@ -1582,31 +2028,41 @@ function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDuplicate, onDele
             h('div', { className:'empty-state-title' }, 'No purchase orders yet'),
             h('p', null, 'Use "New PO" above to create one.')
           )
-        : h('table', { className:'data-table' },
-            h('thead', null, h('tr', null,
-              h('th', null, 'PO number'), h('th', null, 'Date'), h('th', null, 'Category'), h('th', null, 'Vendor'),
-              h('th', { className:'num' }, 'Amount'), h('th', null, 'Status'), h('th', null, '')
-            )),
-            h('tbody', null, rows.map(r => h('tr', { key:r.PoId, onClick:() => onEdit(r) },
-              h('td', { style:{ fontVariantNumeric:'tabular-nums' } }, r.PoNumber),
-              h('td', null, formatDate(r.Date)),
-              h('td', null, h('span', { className:'pill ' + categoryPillClass(r.Category) }, r.Category)),
-              h('td', null, r.Vendor || '—'),
-              h('td', { className:'num' }, formatCurrency(r.Amount)),
-              h('td', null, h('span', { className:'pill ' + poStatusPillClass(r.Status) }, r.Status)),
-              h('td', null,
-                h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', whiteSpace:'nowrap' } },
-                  r.RecordedExpenseId
-                    ? h('span', { style:{ fontSize:'11px', color:'var(--good)', fontWeight:650 } }, 'Recorded ✓')
-                    : (r.Status === 'Received' && h('button', {
-                        type:'button', className:'btn btn-ghost btn-sm',
-                        onClick:e => { e.stopPropagation(); onRecordExpense(r); }
-                      }, 'Record as expense')),
-                  h('button', { type:'button', className:'btn btn-ghost btn-sm', title:'Duplicate', onClick:e => { e.stopPropagation(); onDuplicate(r); } }, h(Icon,{name:'duplicate'})),
-                  h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+        : h(React.Fragment, null,
+            h('table', { className:'data-table' },
+              h('thead', null, h('tr', null,
+                PO_COLUMNS.map(col => h('th', {
+                  key:col.key,
+                  className:(col.num ? 'num ' : '') + 'sortable' + (sortCol === col.key ? ' sort-active' : ''),
+                  onClick:() => toggleSort(col.key)
+                }, col.label + sortArrow_(sortCol === col.key, sortDir))),
+                h('th', null, '')
+              )),
+              h('tbody', null, rows.map(r => h('tr', { key:r.PoId, onClick:() => onEdit(r) },
+                h('td', { style:{ fontVariantNumeric:'tabular-nums' } }, r.PoNumber),
+                h('td', null, formatDate(r.Date)),
+                h('td', null, h('span', { className:'pill ' + categoryPillClass(r.Category) }, r.Category)),
+                h('td', null, r.Vendor || '—'),
+                h('td', { className:'num' }, formatCurrency(r.Amount)),
+                h('td', null, h('span', { className:'pill ' + poStatusPillClass(r.Status) }, r.Status)),
+                h('td', null,
+                  h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', whiteSpace:'nowrap' } },
+                    r.RecordedExpenseId
+                      ? h('span', { style:{ fontSize:'11px', color:'var(--good)', fontWeight:650 } }, 'Recorded ✓')
+                      : (r.Status === 'Received' && h('button', {
+                          type:'button', className:'btn btn-ghost btn-sm',
+                          onClick:e => { e.stopPropagation(); onRecordExpense(r); }
+                        }, 'Record as expense')),
+                    h('button', { type:'button', className:'btn btn-ghost btn-sm', title:'Duplicate', onClick:e => { e.stopPropagation(); onDuplicate(r); } }, h(Icon,{name:'duplicate'})),
+                    h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+                  )
                 )
-              )
-            )))
+              )))
+            ),
+            h('div', { className:'table-summary' },
+              h('span', null, 'Purchase orders'),
+              h('span', null, h('strong', null, rows.length + (rows.length === 1 ? ' PO' : ' POs')))
+            )
           )
     )
   );
@@ -1615,7 +2071,7 @@ function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDuplicate, onDele
 // =====================================================================
 // App shell
 // =====================================================================
-function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[] }; }
+function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[], facilities:[] }; }
 
 function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(LS_PREFIX+'unlocked') === 'true' && !!sessionStorage.getItem(LS_PREFIX+'session_token'));
@@ -1623,12 +2079,55 @@ function App() {
   const [data, setData] = useState(() => startupCache || emptyData_());
   const [loading, setLoading] = useState(() => !startupCache);
   const [loadError, setLoadError] = useState(null);
-  const [view, setView] = useState('dashboard');
+  // Browser back/forward support: same pushState/popstate pattern as BDD
+  // CRM's setView — switching pages pushes a history entry so the phone/
+  // browser back button (and the header's back button below) step back
+  // through the pages you've visited, instead of leaving the app.
+  const [view, setViewState] = useState('dashboard');
+  const historyDepthRef = useRef(0);
+  const [canGoBack, setCanGoBack] = useState(false);
+  const setView = useCallback(next => {
+    const value = typeof next === 'function' ? next(view) : next;
+    if (value === view) return;
+    const depth = historyDepthRef.current + 1;
+    window.history.pushState({ bddExp:true, view:value, depth }, '', window.location.href);
+    historyDepthRef.current = depth;
+    setCanGoBack(true);
+    setViewState(value);
+  }, [view]);
+  const goBack = useCallback(() => {
+    if (historyDepthRef.current > 0) window.history.back();
+  }, []);
+  useEffect(() => {
+    window.history.replaceState({ bddExp:true, view, depth:0 }, '', window.location.href);
+    const handlePop = event => {
+      const state = event.state;
+      if (!state || !state.bddExp) return;
+      historyDepthRef.current = Math.max(0, Number(state.depth) || 0);
+      setCanGoBack(historyDepthRef.current > 0);
+      setViewState(state.view || 'dashboard');
+    };
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, []);
+  // Sticky-header search — same pattern as the CRM's global search: type
+  // to filter, click a result to jump straight into that expense/mileage/PO
+  // record's edit modal, click outside (or Escape) to dismiss.
+  const [globalSearch, setGlobalSearch] = useState('');
+  const globalSearchRef = useRef(null);
+  useEffect(() => {
+    const clearSearchOutside = event => {
+      if (globalSearchRef.current && !globalSearchRef.current.contains(event.target)) setGlobalSearch('');
+    };
+    document.addEventListener('pointerdown', clearSearchOutside);
+    return () => document.removeEventListener('pointerdown', clearSearchOutside);
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modal, setModal] = useState(null); // null | { type:'expense'|'mileage'|'po', mode:'create'|'edit', expense?, po? }
   const [toast, setToast] = useState(null);
   const [sidebarTheme, setSidebarTheme] = useState(() => localStorage.getItem(LS_PREFIX+'sidebar_theme') === 'dark' ? 'dark' : 'light');
   const [showCalendar, setShowCalendar] = useState(() => localStorage.getItem(LS_PREFIX+'show_calendar') !== 'false');
+  const [showTools, setShowTools] = useState(() => localStorage.getItem(LS_PREFIX+'show_tools') !== 'false');
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferencesRefreshing, setPreferencesRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(() => localStorage.getItem(LS_PREFIX+'last_synced_at') || '');
@@ -1677,6 +2176,11 @@ function App() {
     localStorage.setItem(LS_PREFIX+'show_calendar', enabled ? 'true' : 'false');
     setShowCalendar(enabled);
   }
+  function updateShowTools(next) {
+    const enabled = !!next;
+    localStorage.setItem(LS_PREFIX+'show_tools', enabled ? 'true' : 'false');
+    setShowTools(enabled);
+  }
 
   const refresh = useCallback(async () => {
     setLoadError(null);
@@ -1690,7 +2194,12 @@ function App() {
         paymentMethods: (result.paymentMethods && result.paymentMethods.length) ? result.paymentMethods : ['Business Debit Card','Business Credit Card','Personal (to be reimbursed)','Check','Cash','Other'],
         purchaseOrders: result.purchaseOrders || [],
         poCategories: (result.poCategories && result.poCategories.length) ? result.poCategories : categories.filter(c => c !== 'Mileage'),
-        poStatuses: (result.poStatuses && result.poStatuses.length) ? result.poStatuses : ['Open','Received','Cancelled']
+        poStatuses: (result.poStatuses && result.poStatuses.length) ? result.poStatuses : ['Open','Received','Cancelled'],
+        // Distinct facility names read live from the CRM's own Accounts
+        // sheet (see Code.gs's getCrmFacilities_) — an empty list here just
+        // means the Facility name field on Add Mileage falls back to plain
+        // free text with no suggestions.
+        facilities: result.facilities || []
       };
       setData(next);
       writeCache_(next);
@@ -1705,6 +2214,23 @@ function App() {
   }, []);
 
   useEffect(() => { if (unlocked) refresh(); }, [unlocked, refresh]);
+
+  // PWA "shortcuts": long-pressing the installed app's icon offers "Add
+  // Mileage" / "Add expense" shortcuts (see manifest.json) that land here
+  // with a `?action=` URL param. Once signed in and loaded, jump straight
+  // into the matching modal, then scrub the param so refreshing the page
+  // doesn't reopen it.
+  useEffect(() => {
+    if (!unlocked || loading) return;
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    if (!action) return;
+    if (action === 'addExpense') openAddExpense();
+    else if (action === 'addMileage') openAddMileage();
+    const url = new URL(window.location.href);
+    url.searchParams.delete('action');
+    window.history.replaceState({ bddExp:true, view, depth:historyDepthRef.current }, '', url.pathname + url.search + url.hash);
+  }, [unlocked, loading]);
 
   async function runPreferencesRefresh() {
     setPreferencesRefreshing(true);
@@ -1770,8 +2296,9 @@ function App() {
   }, []);
 
   function openAddExpense() {
-    const firstNonMileage = data.categories.find(c => c !== 'Mileage') || data.categories[0];
-    setModal({ type:'expense', mode:'create', presetCategory: firstNonMileage });
+    // No presetCategory here — ExpenseForm falls back to whatever category
+    // was used last time, so it doesn't override that remembered default.
+    setModal({ type:'expense', mode:'create' });
   }
   function openAddMileage() { setModal({ type:'mileage', mode:'create' }); }
   function openAddPO() { setModal({ type:'po', mode:'create' }); }
@@ -1789,7 +2316,8 @@ function App() {
       Description: expense.Description, Amount: expense.Amount,
       PaymentMethod: expense.PaymentMethod, Notes: expense.Notes,
       Miles: expense.Miles, MileageRate: expense.MileageRate,
-      StartLocation: expense.StartLocation, EndLocation: expense.EndLocation
+      StartLocation: expense.StartLocation, EndLocation: expense.EndLocation,
+      FacilityName: expense.FacilityName
     };
     if (expense.Category === 'Mileage') {
       setModal({ type:'mileage', mode:'create', duplicateFrom: base });
@@ -1801,6 +2329,58 @@ function App() {
     setModal({ type:'po', mode:'create', duplicateFrom: {
       Date: todayStr(), Category: po.Category, Vendor: po.Vendor, Description: po.Description, Amount: po.Amount, Notes: po.Notes
     } });
+  }
+  // Sticky-header search results, ranked the same way as the CRM's global
+  // search: exact/prefix/word-prefix matches on the name first, then
+  // substring matches on the name, then a match found only in the record's
+  // other fields (notes, category, locations, PO number, etc).
+  const globalSearchResults = useMemo(() => {
+    const q = globalSearch.trim().toLowerCase();
+    if (!q) return [];
+    function scoreFor(name, meta) {
+      const n = String(name || '').toLowerCase();
+      if (n === q) return 0;
+      if (n.startsWith(q)) return 1;
+      if (n.split(/\s+/).some(w => w.startsWith(q))) return 2;
+      if (n.includes(q)) return 3;
+      if (meta.includes(q)) return 4;
+      return null;
+    }
+    const scored = [];
+    data.expenses.forEach(e => {
+      const isMileage = e.Category === 'Mileage';
+      const name = e.Vendor || (isMileage ? 'Mileage' : e.Category) || '';
+      const meta = [e.Description, e.Notes, e.Category, e.PaymentMethod, e.StartLocation, e.EndLocation, e.FacilityName].filter(Boolean).join(' ').toLowerCase();
+      const score = scoreFor(name, meta);
+      if (score === null) return;
+      const fromTo = isMileage ? [extractTown_(e.StartLocation), extractTown_(e.EndLocation)].filter(Boolean).join(' → ') : '';
+      scored.push({ score, item: {
+        key: 'exp_' + e.ExpenseId, kind: isMileage ? 'mileage' : 'expense',
+        title: name || (isMileage ? 'Mileage entry' : 'Expense'),
+        subtitle: [formatDate(e.Date), isMileage ? (fromTo || 'Mileage') : e.Category, formatCurrency(e.Amount)].filter(Boolean).join(' · '),
+        record: e
+      }});
+    });
+    data.purchaseOrders.forEach(po => {
+      const name = po.Vendor || po.PoNumber || '';
+      const meta = [po.PoNumber, po.Description, po.Notes, po.Category, po.Status].filter(Boolean).join(' ').toLowerCase();
+      const score = scoreFor(name, meta);
+      if (score === null) return;
+      scored.push({ score, item: {
+        key: 'po_' + po.PoId, kind: 'po',
+        title: name || 'Purchase order',
+        subtitle: [po.PoNumber, po.Status, formatCurrency(po.Amount)].filter(Boolean).join(' · '),
+        record: po
+      }});
+    });
+    scored.sort((a, b) => a.score - b.score || String(a.item.title).localeCompare(String(b.item.title)));
+    return scored.map(s => s.item).slice(0, 20);
+  }, [globalSearch, data.expenses, data.purchaseOrders]);
+  function selectSearchResult(result) {
+    setGlobalSearch('');
+    if (result.kind === 'po') { setView('purchaseorders'); openEditPO(result.record); }
+    else if (result.kind === 'mileage') { setView('mileage'); openEdit(result.record); }
+    else { setView('expenses'); openEdit(result.record); }
   }
   async function handleDelete(expense) {
     if (!window.confirm('Delete this expense? This cannot be undone.')) return;
@@ -1839,19 +2419,37 @@ function App() {
   return h('div', { className:'app-shell' },
     h(Sidebar, {
       view, setView, user, onSignOut:handleSignOut, open:sidebarOpen, onClose:() => setSidebarOpen(false),
-      sidebarTheme, onToggleTheme:toggleSidebarTheme, showCalendar, expenses:data.expenses,
+      sidebarTheme, onToggleTheme:toggleSidebarTheme, showCalendar, showTools, expenses:data.expenses,
       onOpenPreferences:() => setShowPreferences(true)
     }),
     h('div', { className:'main' },
       h('div', { className:'topbar' },
         h('div', { style:{ display:'flex', alignItems:'center', gap:'12px' } },
           h('button', { type:'button', className:'hamburger', onClick:() => setSidebarOpen(true) }, h(Icon, { name:'menu' })),
+          canGoBack && h('button', { type:'button', className:'history-back', onClick:goBack, title:'Go back', 'aria-label':'Go back to previous page' }, '‹'),
           h('div', null,
             h('div', { className:'topbar-title' }, pageTitles[view] || ''),
             loadError && h('div', { className:'topbar-sub', style:{ color:'var(--danger)' } }, loadError)
           )
         ),
-        h('div', { style:{ display:'flex', alignItems:'center', gap:'8px' } },
+        h('div', { className:'topbar-actions' },
+          h('div', { className:'global-search', ref:globalSearchRef },
+            h('input', {
+              value:globalSearch, onChange:e => setGlobalSearch(e.target.value),
+              placeholder:'Search expenses, mileage, POs…', 'aria-label':'Search BDD EXP'
+            }),
+            globalSearch
+              ? h('button', { type:'button', className:'global-search-clear', onClick:() => setGlobalSearch(''), 'aria-label':'Clear search', title:'Clear search' }, '×')
+              : h('span', { className:'global-search-icon' }, '⌕'),
+            globalSearch.trim() && h('div', { className:'search-results' },
+              globalSearchResults.length
+                ? globalSearchResults.map(r => h('button', { key:r.key, type:'button', className:'search-result', onClick:() => selectSearchResult(r) },
+                    h('strong', null, r.title),
+                    h('span', null, r.subtitle)
+                  ))
+                : h('div', { className:'search-empty' }, 'No matches')
+            )
+          ),
           h('button', { type:'button', className:'btn btn-teal btn-sm', onClick:openAddMileage }, h(Icon,{name:'plus'}), 'Add Mileage'),
           h('button', { type:'button', className:'btn btn-primary btn-sm', onClick:openAddExpense }, h(Icon,{name:'plus'}), 'Add expense')
         )
@@ -1859,9 +2457,9 @@ function App() {
       h('div', { className:'page' },
         view === 'dashboard' && h(DashboardView, { expenses:data.expenses, setView }),
         view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDuplicate:openDuplicate, onDelete:handleDelete }),
-        view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete }),
+        view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete, onDuplicate:openDuplicate }),
         view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
-        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, onAdd:openAddPO, onEdit:openEditPO, onDuplicate:openDuplicatePO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense })
+        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, categories:data.poCategories, statuses:data.poStatuses, onAdd:openAddPO, onEdit:openEditPO, onDuplicate:openDuplicatePO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense })
       )
     ),
     modal && modal.type === 'mileage' && h(MileageForm, {
@@ -1869,6 +2467,7 @@ function App() {
       defaultMileageRate: data.settings.mileageRate,
       purposeOptions: mileagePurposeOptions,
       endLocationOptions: mileageLocationOptions,
+      facilityOptions: data.facilities,
       onCancel: () => setModal(null),
       onSaved: handleSaved,
       apiCreate, apiUpdate
@@ -1901,6 +2500,7 @@ function App() {
       onClose: () => setShowPreferences(false),
       sidebarTheme, onChangeTheme: applySidebarTheme,
       showCalendar, onChangeShowCalendar: updateShowCalendar,
+      showTools, onChangeShowTools: updateShowTools,
       settings: data.settings, onSaveSettings: apiSaveSettings,
       lastSyncedAt, refreshing: preferencesRefreshing, onRefresh: runPreferencesRefresh,
       onSignOut: handleSignOut
