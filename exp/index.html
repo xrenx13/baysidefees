@@ -626,7 +626,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, onCa
         const uploaded = await apiUploadReceipt(expenseId, file.name, file.type, base64Data);
         await apiUpdate({ ExpenseId: expenseId, ReceiptFileId: uploaded.fileId, ReceiptFileUrl: uploaded.url, ReceiptFileName: uploaded.name });
       }
-      onSaved();
+      onSaved({ ExpenseId: expenseId, ...payload });
     } catch (err2) {
       setErr(err2.message || 'Something went wrong saving this expense.');
     }
@@ -1216,7 +1216,7 @@ function poStatusPillClass(status) {
   return 'pill-teal';
 }
 
-function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDelete }) {
+function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDelete, onRecordExpense }) {
   const rows = useMemo(() => purchaseOrders.slice().sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)), [purchaseOrders]);
   const openTotal = rows.filter(r => r.Status === 'Open').reduce((s,r) => s + (Number(r.Amount)||0), 0);
 
@@ -1246,7 +1246,15 @@ function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDelete }) {
               h('td', null, r.Vendor || '—'),
               h('td', { className:'num' }, formatCurrency(r.Amount)),
               h('td', null, h('span', { className:'pill ' + poStatusPillClass(r.Status) }, r.Status)),
-              h('td', { style:{ textAlign:'right' } }, h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'})))
+              h('td', { style:{ textAlign:'right', whiteSpace:'nowrap' } },
+                r.RecordedExpenseId
+                  ? h('span', { style:{ fontSize:'11px', color:'var(--good)', fontWeight:650, marginRight:'10px' } }, 'Recorded ✓')
+                  : (r.Status === 'Received' && h('button', {
+                      type:'button', className:'btn btn-ghost btn-sm', style:{ marginRight:'8px' },
+                      onClick:e => { e.stopPropagation(); onRecordExpense(r); }
+                    }, 'Record as expense')),
+                h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+              )
             )))
           )
     )
@@ -1400,6 +1408,7 @@ function App() {
   }
   function openAddMileage() { setModal({ type:'mileage', mode:'create' }); }
   function openAddPO() { setModal({ type:'po', mode:'create' }); }
+  function openRecordExpense(po) { setModal({ type:'expense', mode:'create', presetCategory: po.Category, po }); }
   function openEdit(expense) {
     setModal(expense.Category === 'Mileage' ? { type:'mileage', mode:'edit', expense } : { type:'expense', mode:'edit', expense });
   }
@@ -1414,13 +1423,20 @@ function App() {
     try { await apiDeletePO(po.PoId); showToast('Purchase order deleted.'); }
     catch (err) { showToast(err.message, 'error'); }
   }
-  async function handleSaved() {
+  async function handleSaved(savedRecord) {
     const type = modal && modal.type;
     const isEdit = modal && modal.mode === 'edit';
+    const linkedPO = modal && modal.po;
     setModal(null);
-    if (type === 'po') showToast(isEdit ? 'Purchase order updated.' : 'Purchase order created.');
-    else if (type === 'mileage') showToast(isEdit ? 'Mileage updated.' : 'Mileage added.');
-    else showToast(isEdit ? 'Expense updated.' : 'Expense added.');
+    if (type === 'po') { showToast(isEdit ? 'Purchase order updated.' : 'Purchase order created.'); return; }
+    if (type === 'mileage') { showToast(isEdit ? 'Mileage updated.' : 'Mileage added.'); return; }
+    if (linkedPO && savedRecord && savedRecord.ExpenseId) {
+      try { await apiUpdatePO({ PoId: linkedPO.PoId, RecordedExpenseId: savedRecord.ExpenseId }); }
+      catch (err) { /* the expense itself still saved fine; the PO just won't show "Recorded" */ }
+      showToast('Expense recorded from ' + linkedPO.PoNumber + '.');
+      return;
+    }
+    showToast(isEdit ? 'Expense updated.' : 'Expense added.');
   }
 
   if (!unlocked) return h(Gate, { onUnlock: handleUnlock });
@@ -1452,7 +1468,7 @@ function App() {
         view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDelete:handleDelete }),
         view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete }),
         view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
-        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, onAdd:openAddPO, onEdit:openEditPO, onDelete:handleDeletePO }),
+        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, onAdd:openAddPO, onEdit:openEditPO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense }),
         view === 'settings' && h(SettingsView, { settings:data.settings, onSaveSettings:apiSaveSettings, user })
       )
     ),
@@ -1464,7 +1480,11 @@ function App() {
       apiCreate, apiUpdate
     }),
     modal && modal.type === 'expense' && h(ExpenseForm, {
-      initial: modal.mode === 'edit' ? modal.expense : null,
+      initial: modal.mode === 'edit' ? modal.expense : (modal.po ? {
+        Date: modal.po.Date, Category: modal.po.Category, Vendor: modal.po.Vendor,
+        Description: modal.po.Description, Amount: modal.po.Amount,
+        Notes: 'PO ' + modal.po.PoNumber + (modal.po.Notes ? ' — ' + modal.po.Notes : '')
+      } : null),
       presetCategory: modal.presetCategory,
       categories: data.categories.filter(c => c !== 'Mileage'),
       paymentMethods: data.paymentMethods,
