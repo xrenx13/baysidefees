@@ -12,6 +12,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="BDD EXP" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -265,6 +268,14 @@
   .modal-close { border:0; background:transparent; color:var(--faint); font-size:18px; line-height:1; cursor:pointer; padding:4px; }
   .modal-body { padding:20px; display:grid; gap:14px; }
   .modal-foot { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:16px 20px; border-top:1px solid var(--line); }
+
+  /* ---------- Tax summary print view ---------- */
+  @media print {
+    body.printing-tax-summary .app-shell > *:not(.tax-summary-overlay) { display:none !important; }
+    body.printing-tax-summary .tax-summary-overlay { position:static !important; inset:auto !important; background:none !important; padding:0 !important; display:block !important; }
+    body.printing-tax-summary .tax-summary-overlay .modal { box-shadow:none !important; border:none !important; width:100% !important; max-width:100% !important; margin:0 !important; border-radius:0 !important; }
+    body.printing-tax-summary .no-print { display:none !important; }
+  }
   .modal-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   @media (max-width:520px) { .modal-row-2 { grid-template-columns:1fr; } }
 
@@ -336,7 +347,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.16-3';
+const BUILD_NUMBER = '2026.09.16-4';
 
 // =====================================================================
 // Small utilities
@@ -461,7 +472,7 @@ function Icon({ name }) {
     logout: h(React.Fragment, null, h('path',{d:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'}), h('path',{d:'M16 17l5-5-5-5'}), h('path',{d:'M21 12H9'})),
     menu: h(React.Fragment, null, h('path',{d:'M3 6h18M3 12h18M3 18h18'})),
     po: h(React.Fragment, null, h('path',{d:'M9 3h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V4a1 1 0 0 1 1-1z'}), h('path',{d:'M9 11h6M9 15h6M9 7h6'})),
-    moon: h('path',{d:'M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z'}),
+    moon: h('path',{d:'M20.5 14.3A8.3 8.3 0 0 1 9.7 3.5 8.7 8.7 0 1 0 20.5 14.3Z'}),
     sun: h(React.Fragment, null, h('circle',{cx:'12',cy:'12',r:'4.2'}), h('path',{d:'M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7'})),
   };
   return h('span', { className:'nav-icon' }, h('svg', { viewBox:'0 0 24 24' }, paths[name] || null));
@@ -867,7 +878,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, onCa
           )
         : h('label', { className:'receipt-drop' },
             file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt',
-            h('input', { type:'file', accept:'image/*,application/pdf', style:{ display:'none' }, onChange:e => setFile(e.target.files[0] || null) })
+            h('input', { type:'file', accept:'image/*,application/pdf', capture:'environment', style:{ display:'none' }, onChange:e => setFile(e.target.files[0] || null) })
           )
     )
   );
@@ -1341,8 +1352,110 @@ function DashboardView({ expenses, setView }) {
 // =====================================================================
 // Reports view — simple month-by-month category matrix
 // =====================================================================
+// =====================================================================
+// Tax summary — a printable, one-click year-end summary: category totals,
+// the mileage deduction (summed from each entry's own stored rate, so a
+// mid-year IRS rate change is already accounted for), and a missing-
+// receipts list. "Print / Save as PDF" hides the rest of the app and
+// prints only the .tax-summary-print block (see the @media print rule).
+// =====================================================================
+function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onYearChange }) {
+  useEffect(() => {
+    function handleAfterPrint() { document.body.classList.remove('printing-tax-summary'); }
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => window.removeEventListener('afterprint', handleAfterPrint);
+  }, []);
+
+  const yearExpenses = useMemo(() => expenses.filter(r => { const d = parseDate_(r.Date); return d && d.getFullYear() === year; }), [expenses, year]);
+  const nonMileage = useMemo(() => yearExpenses.filter(r => r.Category !== 'Mileage'), [yearExpenses]);
+  const mileageRows = useMemo(() => yearExpenses.filter(r => r.Category === 'Mileage'), [yearExpenses]);
+  const byCategory = useMemo(() => {
+    const map = {};
+    nonMileage.forEach(r => { map[r.Category] = (map[r.Category] || 0) + (Number(r.Amount) || 0); });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [nonMileage]);
+  const nonMileageTotal = byCategory.reduce((s, [, amt]) => s + amt, 0);
+  const totalMiles = mileageRows.reduce((s, r) => s + (Number(r.Miles) || 0), 0);
+  const mileageTotal = mileageRows.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+  const grandTotal = nonMileageTotal + mileageTotal;
+  const missingReceipts = useMemo(
+    () => nonMileage.filter(r => !r.ReceiptFileUrl).sort((a, b) => (parseDate_(a.Date) || 0) - (parseDate_(b.Date) || 0)),
+    [nonMileage]
+  );
+
+  if (!open) return null;
+
+  function handlePrint() {
+    document.body.classList.add('printing-tax-summary');
+    setTimeout(() => window.print(), 50);
+  }
+
+  const generatedLabel = new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+
+  return h('div', { className:'modal-overlay tax-summary-overlay', onClick: e => { if (e.target === e.currentTarget) onClose(); } },
+    h('div', { className:'modal', style:{ width:'min(680px,100%)' } },
+      h('div', { className:'modal-head no-print' },
+        h('div', { className:'modal-title' }, 'Tax summary'),
+        h('button', { type:'button', className:'modal-close', onClick:onClose }, h(Icon, { name:'close' }))
+      ),
+      h('div', { className:'modal-body' },
+        h('div', { className:'no-print', style:{ display:'flex', alignItems:'center', gap:'10px' } },
+          h('label', { style:{ fontSize:'12px', fontWeight:650, color:'#475467' } }, 'Tax year'),
+          h('select', { className:'input', style:{ width:'110px' }, value:year, onChange:e => onYearChange(Number(e.target.value)) },
+            years.map(y => h('option', { key:y, value:y }, y))
+          )
+        ),
+        h('div', { className:'tax-summary-print' },
+          h('div', { style:{ marginBottom:'16px' } },
+            h('div', { style:{ fontSize:'16px', fontWeight:800, color:'var(--navy-deep)' } }, 'Bayside Dysphagia Diagnostics'),
+            h('div', { style:{ fontSize:'13px', color:'var(--muted)' } }, 'Tax summary — ' + year),
+            h('div', { style:{ fontSize:'11px', color:'var(--faint)', marginTop:'2px' } }, 'Generated ' + generatedLabel)
+          ),
+          h('table', { className:'data-table', style:{ marginBottom:'14px' } },
+            h('thead', null, h('tr', null, h('th', null, 'Category'), h('th', { className:'num' }, 'Amount'))),
+            h('tbody', null,
+              byCategory.length === 0
+                ? h('tr', null, h('td', { colSpan:2, style:{ color:'var(--faint)' } }, 'No non-mileage expenses recorded for ' + year + '.'))
+                : byCategory.map(([cat, amt]) => h('tr', { key:cat }, h('td', null, cat), h('td', { className:'num' }, formatCurrency(amt)))),
+              h('tr', null,
+                h('td', { style:{ fontWeight:700 } }, 'Mileage (' + totalMiles.toLocaleString(undefined,{maximumFractionDigits:1}) + ' mi)'),
+                h('td', { className:'num', style:{ fontWeight:700 } }, formatCurrency(mileageTotal))
+              ),
+              h('tr', null,
+                h('td', { style:{ fontWeight:800 } }, 'Total business expenses'),
+                h('td', { className:'num', style:{ fontWeight:800 } }, formatCurrency(grandTotal))
+              )
+            )
+          ),
+          h('div', { style:{ marginBottom:'10px' } },
+            h('div', { style:{ fontSize:'13px', fontWeight:700, color:'var(--navy-deep)' } }, 'Receipts on file'),
+            h('div', { style:{ fontSize:'12px', color:'var(--muted)', marginTop:'2px' } },
+              (nonMileage.length - missingReceipts.length) + ' of ' + nonMileage.length + ' non-mileage expenses have a receipt attached' +
+              (missingReceipts.length ? ' — ' + missingReceipts.length + ' missing:' : '.')
+            )
+          ),
+          missingReceipts.length > 0 && h('table', { className:'data-table', style:{ marginBottom:'10px' } },
+            h('thead', null, h('tr', null, h('th', null, 'Date'), h('th', null, 'Vendor'), h('th', { className:'num' }, 'Amount'))),
+            h('tbody', null, missingReceipts.map(r => h('tr', { key:r.ExpenseId },
+              h('td', null, formatDate(r.Date)), h('td', null, r.Vendor || '—'), h('td', { className:'num' }, formatCurrency(r.Amount))
+            )))
+          ),
+          h('p', { style:{ fontSize:'10.5px', color:'var(--faint)', marginTop:'16px' } },
+            'Prepared by BDD EXP for recordkeeping and tax preparation purposes. Not tax advice — confirm categorization and deductibility with your accountant.'
+          )
+        )
+      ),
+      h('div', { className:'modal-foot no-print' },
+        h('button', { type:'button', className:'btn btn-ghost', onClick:onClose }, 'Close'),
+        h('button', { type:'button', className:'btn btn-teal', onClick:handlePrint }, 'Print / Save as PDF')
+      )
+    )
+  );
+}
+
 function ReportsView({ expenses, categories }) {
   const [year, setYear] = useState(() => new Date().getFullYear());
+  const [showTaxSummary, setShowTaxSummary] = useState(false);
   const years = useMemo(() => {
     const set = new Set(expenses.map(r => { const d = parseDate_(r.Date); return d ? d.getFullYear() : null; }).filter(Boolean));
     set.add(new Date().getFullYear());
@@ -1370,7 +1483,8 @@ function ReportsView({ expenses, categories }) {
       h('div', { className:'card-title' }, 'Expenses by category and month'),
       h('select', { className:'input', style:{ width:'110px', marginLeft:'auto' }, value:year, onChange:e => setYear(Number(e.target.value)) },
         years.map(y => h('option', { key:y, value:y }, y))
-      )
+      ),
+      h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:() => setShowTaxSummary(true) }, 'Tax summary')
     ),
     h('div', { className:'card table-wrap' },
       h('table', { className:'data-table' },
@@ -1388,7 +1502,8 @@ function ReportsView({ expenses, categories }) {
           )
         )
       )
-    )
+    ),
+    h(TaxSummaryModal, { open:showTaxSummary, onClose:() => setShowTaxSummary(false), expenses, categories, year, years, onYearChange:setYear })
   );
 }
 
@@ -1736,6 +1851,15 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(h(App, null));
+
+// Register the (deliberately minimal) service worker so the app is
+// installable on a phone's home screen. Safe to no-op wherever service
+// workers aren't available (e.g. plain http:// during local testing).
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
