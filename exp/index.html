@@ -129,7 +129,7 @@
   .avatar-btn { border:0; padding:0; cursor:pointer; }
 
   /* ---------- Sidebar theme toggle + mini calendar ---------- */
-  .theme-toggle-btn { width:32px; height:32px; border:0; background:transparent; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; border-radius:9px; color:#657084; cursor:pointer; transition:.15s ease; }
+  .theme-toggle-btn { width:32px; height:32px; border:0; background:transparent; display:flex; align-items:center; justify-content:center; margin:0 0 8px 8px; border-radius:9px; color:#657084; cursor:pointer; transition:.15s ease; }
   .theme-toggle-btn:hover { background:#f4f6f8; color:var(--navy-deep); }
 
   .mini-cal { margin:4px 10px 10px; padding:10px 8px; border:1px solid var(--line); border-radius:12px; }
@@ -361,6 +361,22 @@ function parseDate_(s) {
   const d = new Date(s.length <= 10 ? s + 'T00:00:00' : s);
   return isNaN(d.getTime()) ? null : d;
 }
+// Unique, non-empty values for a field across a list of rows, most-recently-used
+// first (by Date desc) — used to power lightweight <datalist> autocomplete on
+// Vendor/location fields without any backend change.
+function recentUniqueValues_(rows, field, limit) {
+  const sorted = rows.slice().sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0));
+  const seen = new Set();
+  const out = [];
+  for (const r of sorted) {
+    const v = (r[field] || '').trim();
+    if (!v || seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+    if (limit && out.length >= limit) break;
+  }
+  return out;
+}
 function formatDate(s) {
   const d = parseDate_(s);
   if (!d) return '—';
@@ -472,6 +488,7 @@ function Icon({ name }) {
     logout: h(React.Fragment, null, h('path',{d:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'}), h('path',{d:'M16 17l5-5-5-5'}), h('path',{d:'M21 12H9'})),
     menu: h(React.Fragment, null, h('path',{d:'M3 6h18M3 12h18M3 18h18'})),
     po: h(React.Fragment, null, h('path',{d:'M9 3h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V4a1 1 0 0 1 1-1z'}), h('path',{d:'M9 11h6M9 15h6M9 7h6'})),
+    duplicate: h(React.Fragment, null, h('rect',{x:'9',y:'9',width:'12',height:'12',rx:'2'}), h('path',{d:'M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1'})),
     moon: h('path',{d:'M20.5 14.3A8.3 8.3 0 0 1 9.7 3.5 8.7 8.7 0 1 0 20.5 14.3Z'}),
     sun: h(React.Fragment, null, h('circle',{cx:'12',cy:'12',r:'4.2'}), h('path',{d:'M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7'})),
   };
@@ -790,7 +807,7 @@ function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }
 // its own dedicated form (MileageForm, below) so this one only ever shows
 // fields that actually apply: no start/end locations, no mileage rate.
 // =====================================================================
-function ExpenseForm({ initial, presetCategory, categories, paymentMethods, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
+function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const [form, setForm] = useState(() => ({
     Date: (initial && initial.Date) || todayStr(),
@@ -872,7 +889,8 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, onCa
     ),
     h('div', { className:'field' },
       h('label', null, 'Vendor'),
-      h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. Staples' })
+      h('input', { type:'text', className:'input', list:'vendor-options', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. Staples' }),
+      vendorOptions && vendorOptions.length > 0 && h('datalist', { id:'vendor-options' }, vendorOptions.map(v => h('option', { key:v, value:v })))
     ),
     h('div', { className:'field' },
       h('label', null, 'Description'),
@@ -911,7 +929,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, onCa
 // ExpenseForm above. No payment method, no receipt, no category picker
 // (always Mileage) — just what a drive actually needs.
 // =====================================================================
-function MileageForm({ initial, defaultMileageRate, onCancel, onSaved, apiCreate, apiUpdate }) {
+function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationOptions, onCancel, onSaved, apiCreate, apiUpdate }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const [form, setForm] = useState(() => ({
     Date: (initial && initial.Date) || todayStr(),
@@ -1040,11 +1058,12 @@ function MileageForm({ initial, defaultMileageRate, onCancel, onSaved, apiCreate
         SAVED_START_LOCATIONS.map(loc => h('option', { key:loc.label, value:loc.address }, loc.label)),
         h('option', { value:'__custom__' }, 'Other (type an address)')
       ),
-      isCustomStart && h('input', { type:'text', className:'input', style:{ marginTop:'6px' }, ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
+      isCustomStart && h('input', { type:'text', className:'input', list:'end-location-options', style:{ marginTop:'6px' }, ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
     ),
     h('div', { className:'field' },
       h('label', null, 'End location'),
-      h('input', { type:'text', className:'input', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' })
+      h('input', { type:'text', className:'input', list:'end-location-options', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' }),
+      endLocationOptions && endLocationOptions.length > 0 && h('datalist', { id:'end-location-options' }, endLocationOptions.map(v => h('option', { key:v, value:v })))
     ),
     h('div', { style:{ display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap' } },
       h('label', { className:'checkbox-row' },
@@ -1067,7 +1086,8 @@ function MileageForm({ initial, defaultMileageRate, onCancel, onSaved, apiCreate
     ),
     h('div', { className:'field' },
       h('label', null, 'Purpose'),
-      h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. FEES visit, supply pickup' })
+      h('input', { type:'text', className:'input', list:'purpose-options', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. FEES visit, supply pickup' }),
+      purposeOptions && purposeOptions.length > 0 && h('datalist', { id:'purpose-options' }, purposeOptions.map(v => h('option', { key:v, value:v })))
     ),
     h('div', { className:'field' },
       h('label', null, 'Notes'),
@@ -1082,7 +1102,7 @@ function MileageForm({ initial, defaultMileageRate, onCancel, onSaved, apiCreate
 // sequence, from the backend) the first time this opens for a new PO, and
 // can be regenerated on demand.
 // =====================================================================
-function PurchaseOrderForm({ initial, categories, statuses, onCancel, onSaved, apiCreate, apiUpdate, apiGeneratePo }) {
+function PurchaseOrderForm({ initial, categories, statuses, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiGeneratePo }) {
   const isEdit = !!(initial && initial.PoId);
   const [form, setForm] = useState(() => ({
     PoNumber: (initial && initial.PoNumber) || '',
@@ -1166,7 +1186,8 @@ function PurchaseOrderForm({ initial, categories, statuses, onCancel, onSaved, a
     ),
     h('div', { className:'field' },
       h('label', null, 'Vendor'),
-      h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. Olympus' })
+      h('input', { type:'text', className:'input', list:'vendor-options', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. Olympus' }),
+      vendorOptions && vendorOptions.length > 0 && h('datalist', { id:'vendor-options' }, vendorOptions.map(v => h('option', { key:v, value:v })))
     ),
     h('div', { className:'field' },
       h('label', null, 'Description'),
@@ -1197,7 +1218,7 @@ function PurchaseOrderForm({ initial, categories, statuses, onCancel, onSaved, a
 // =====================================================================
 // Expenses list/table view
 // =====================================================================
-function ExpensesView({ expenses, categories, onEdit, onDelete }) {
+function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete }) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [sortDesc, setSortDesc] = useState(true);
@@ -1260,7 +1281,12 @@ function ExpensesView({ expenses, categories, onEdit, onDelete }) {
               h('td', null, r.PaymentMethod || '—'),
               h('td', { className:'num' }, formatCurrency(r.Amount)),
               h('td', null, r.ReceiptFileUrl ? h('a', { href:r.ReceiptFileUrl, target:'_blank', rel:'noopener noreferrer', style:{ color:'var(--teal-dark)', display:'inline-flex' }, onClick:e => e.stopPropagation() }, h(Icon,{name:'receipt'})) : '—'),
-              h('td', { style:{ textAlign:'right' } }, h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'})))
+              h('td', { style:{ textAlign:'right' } },
+                h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'6px' } },
+                  h('button', { type:'button', className:'btn btn-ghost btn-sm', title:'Duplicate', onClick:e => { e.stopPropagation(); onDuplicate(r); } }, h(Icon,{name:'duplicate'})),
+                  h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+                )
+              )
             )))
           )
     )
@@ -1538,7 +1564,7 @@ function poStatusPillClass(status) {
   return 'pill-teal';
 }
 
-function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDelete, onRecordExpense }) {
+function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDuplicate, onDelete, onRecordExpense }) {
   const rows = useMemo(() => purchaseOrders.slice().sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)), [purchaseOrders]);
   const openTotal = rows.filter(r => r.Status === 'Open').reduce((s,r) => s + (Number(r.Amount)||0), 0);
 
@@ -1576,6 +1602,7 @@ function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDelete, onRecordE
                         type:'button', className:'btn btn-ghost btn-sm',
                         onClick:e => { e.stopPropagation(); onRecordExpense(r); }
                       }, 'Record as expense')),
+                  h('button', { type:'button', className:'btn btn-ghost btn-sm', title:'Duplicate', onClick:e => { e.stopPropagation(); onDuplicate(r); } }, h(Icon,{name:'duplicate'})),
                   h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
                 )
               )
@@ -1610,6 +1637,23 @@ function App() {
     email: sessionStorage.getItem(LS_PREFIX+'user_email') || '',
     name: sessionStorage.getItem(LS_PREFIX+'user_name') || ''
   };
+
+  // Lightweight autocomplete sources — built client-side from history already
+  // in memory, no extra backend calls.
+  const vendorOptions = useMemo(() => recentUniqueValues_(
+    data.expenses.filter(e => e.Category !== 'Mileage').concat(data.purchaseOrders), 'Vendor', 40
+  ), [data.expenses, data.purchaseOrders]);
+  const mileagePurposeOptions = useMemo(() => recentUniqueValues_(
+    data.expenses.filter(e => e.Category === 'Mileage'), 'Vendor', 20
+  ), [data.expenses]);
+  const mileageLocationOptions = useMemo(() => {
+    const mileageRows = data.expenses.filter(e => e.Category === 'Mileage');
+    const ends = recentUniqueValues_(mileageRows, 'EndLocation', 20);
+    const starts = recentUniqueValues_(mileageRows, 'StartLocation', 20);
+    const seen = new Set(); const out = [];
+    ends.concat(starts).forEach(v => { if (!seen.has(v)) { seen.add(v); out.push(v); } });
+    return out;
+  }, [data.expenses]);
 
   function showToast(message, type) {
     setToast({ message, type });
@@ -1736,6 +1780,28 @@ function App() {
     setModal(expense.Category === 'Mileage' ? { type:'mileage', mode:'edit', expense } : { type:'expense', mode:'edit', expense });
   }
   function openEditPO(po) { setModal({ type:'po', mode:'edit', po }); }
+  // "Duplicate" pre-fills a brand-new record from an existing one (minus its
+  // id, receipt, PO number and status) so a recurring expense/PO doesn't have
+  // to be typed from scratch every time — the date resets to today.
+  function openDuplicate(expense) {
+    const base = {
+      Date: todayStr(), Category: expense.Category, Vendor: expense.Vendor,
+      Description: expense.Description, Amount: expense.Amount,
+      PaymentMethod: expense.PaymentMethod, Notes: expense.Notes,
+      Miles: expense.Miles, MileageRate: expense.MileageRate,
+      StartLocation: expense.StartLocation, EndLocation: expense.EndLocation
+    };
+    if (expense.Category === 'Mileage') {
+      setModal({ type:'mileage', mode:'create', duplicateFrom: base });
+    } else {
+      setModal({ type:'expense', mode:'create', presetCategory: expense.Category, duplicateFrom: base });
+    }
+  }
+  function openDuplicatePO(po) {
+    setModal({ type:'po', mode:'create', duplicateFrom: {
+      Date: todayStr(), Category: po.Category, Vendor: po.Vendor, Description: po.Description, Amount: po.Amount, Notes: po.Notes
+    } });
+  }
   async function handleDelete(expense) {
     if (!window.confirm('Delete this expense? This cannot be undone.')) return;
     try { await apiDelete(expense.ExpenseId); showToast('Expense deleted.'); }
@@ -1792,15 +1858,17 @@ function App() {
       ),
       h('div', { className:'page' },
         view === 'dashboard' && h(DashboardView, { expenses:data.expenses, setView }),
-        view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDelete:handleDelete }),
+        view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDuplicate:openDuplicate, onDelete:handleDelete }),
         view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete }),
         view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
-        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, onAdd:openAddPO, onEdit:openEditPO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense })
+        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, onAdd:openAddPO, onEdit:openEditPO, onDuplicate:openDuplicatePO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense })
       )
     ),
     modal && modal.type === 'mileage' && h(MileageForm, {
-      initial: modal.mode === 'edit' ? modal.expense : null,
+      initial: modal.mode === 'edit' ? modal.expense : (modal.duplicateFrom || null),
       defaultMileageRate: data.settings.mileageRate,
+      purposeOptions: mileagePurposeOptions,
+      endLocationOptions: mileageLocationOptions,
       onCancel: () => setModal(null),
       onSaved: handleSaved,
       apiCreate, apiUpdate
@@ -1810,18 +1878,20 @@ function App() {
         Date: modal.po.Date, Category: modal.po.Category, Vendor: modal.po.Vendor,
         Description: modal.po.Description, Amount: modal.po.Amount,
         Notes: modal.po.PoNumber + (modal.po.Notes ? ' — ' + modal.po.Notes : '')
-      } : null),
+      } : (modal.duplicateFrom || null)),
       presetCategory: modal.presetCategory,
       categories: data.categories.filter(c => c !== 'Mileage'),
       paymentMethods: data.paymentMethods,
+      vendorOptions,
       onCancel: () => setModal(null),
       onSaved: handleSaved,
       apiCreate, apiUpdate, apiUploadReceipt
     }),
     modal && modal.type === 'po' && h(PurchaseOrderForm, {
-      initial: modal.mode === 'edit' ? modal.po : null,
+      initial: modal.mode === 'edit' ? modal.po : (modal.duplicateFrom || null),
       categories: data.poCategories,
       statuses: data.poStatuses,
+      vendorOptions,
       onCancel: () => setModal(null),
       onSaved: handleSaved,
       apiCreate: apiCreatePO, apiUpdate: apiUpdatePO, apiGeneratePo
