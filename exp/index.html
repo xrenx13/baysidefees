@@ -193,6 +193,9 @@
   .input:focus, select.input:focus, textarea.input:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(15,118,110,.12); }
   .field-hint { font-size:11px; color:var(--faint); }
   .field-error { font-size:11px; color:var(--danger); }
+  .amount-input-wrap { position:relative; }
+  .amount-input-wrap .amount-prefix { position:absolute; left:12px; top:0; bottom:0; display:flex; align-items:center; font-size:13.5px; color:#475467; pointer-events:none; }
+  .amount-input-wrap .input { padding-left:24px; }
 
   .modal-overlay { position:fixed; inset:0; background:rgba(8,20,40,.4); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; z-index:60; overflow-y:auto; }
   .modal { width:min(560px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 70px rgba(8,20,40,.3); margin-bottom:5vh; }
@@ -265,9 +268,10 @@ const SAVED_START_LOCATIONS = [
 const LS_PREFIX = 'bdd_exp_';
 const CACHE_KEY = LS_PREFIX + 'cache_v1';
 
-// Bump this with each deployed change while actively developing — shown in
-// the sidebar footer so it's easy to confirm which build is live.
-const BUILD_NUMBER = '2026.09.16-1';
+// Bumped with each delivered change while actively developing — shown in
+// the sidebar footer so it's easy to confirm which build is live. Format:
+// YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
+const BUILD_NUMBER = '2026.09.16-2';
 
 // =====================================================================
 // Small utilities
@@ -653,7 +657,10 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, onCa
     ),
     h('div', { className:'field' },
       h('label', null, 'Amount'),
-      h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
+      h('div', { className:'amount-input-wrap' },
+        h('span', { className:'amount-prefix' }, '$'),
+        h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
+      )
     ),
     h('div', { className:'field' },
       h('label', null, 'Vendor'),
@@ -960,7 +967,10 @@ function PurchaseOrderForm({ initial, categories, statuses, onCancel, onSaved, a
     h('div', { className:'modal-row-2' },
       h('div', { className:'field' },
         h('label', null, 'Amount'),
-        h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
+        h('div', { className:'amount-input-wrap' },
+          h('span', { className:'amount-prefix' }, '$'),
+          h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
+        )
       ),
       h('div', { className:'field' },
         h('label', null, 'Status'),
@@ -1246,14 +1256,16 @@ function PurchaseOrdersView({ purchaseOrders, onAdd, onEdit, onDelete, onRecordE
               h('td', null, r.Vendor || '—'),
               h('td', { className:'num' }, formatCurrency(r.Amount)),
               h('td', null, h('span', { className:'pill ' + poStatusPillClass(r.Status) }, r.Status)),
-              h('td', { style:{ textAlign:'right', whiteSpace:'nowrap' } },
-                r.RecordedExpenseId
-                  ? h('span', { style:{ fontSize:'11px', color:'var(--good)', fontWeight:650, marginRight:'10px' } }, 'Recorded ✓')
-                  : (r.Status === 'Received' && h('button', {
-                      type:'button', className:'btn btn-ghost btn-sm', style:{ marginRight:'8px' },
-                      onClick:e => { e.stopPropagation(); onRecordExpense(r); }
-                    }, 'Record as expense')),
-                h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+              h('td', null,
+                h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', whiteSpace:'nowrap' } },
+                  r.RecordedExpenseId
+                    ? h('span', { style:{ fontSize:'11px', color:'var(--good)', fontWeight:650 } }, 'Recorded ✓')
+                    : (r.Status === 'Received' && h('button', {
+                        type:'button', className:'btn btn-ghost btn-sm',
+                        onClick:e => { e.stopPropagation(); onRecordExpense(r); }
+                      }, 'Record as expense')),
+                  h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+                )
               )
             )))
           )
@@ -1483,7 +1495,7 @@ function App() {
       initial: modal.mode === 'edit' ? modal.expense : (modal.po ? {
         Date: modal.po.Date, Category: modal.po.Category, Vendor: modal.po.Vendor,
         Description: modal.po.Description, Amount: modal.po.Amount,
-        Notes: 'PO ' + modal.po.PoNumber + (modal.po.Notes ? ' — ' + modal.po.Notes : '')
+        Notes: modal.po.PoNumber + (modal.po.Notes ? ' — ' + modal.po.Notes : '')
       } : null),
       presetCategory: modal.presetCategory,
       categories: data.categories.filter(c => c !== 'Mileage'),
