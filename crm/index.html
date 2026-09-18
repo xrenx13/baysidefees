@@ -59,6 +59,10 @@ try {
   * { box-sizing: border-box; }
   html { background: var(--saas-canvas); }
   body { font-family: 'Inter', sans-serif; background: var(--saas-canvas) !important; color: var(--saas-ink); }
+  .crm-loading-screen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; color:#526079; font-size:15px; font-weight:600; }
+  .crm-loading-spinner { width:30px; height:30px; border:3px solid #d9eeeb; border-top-color:#0f8a80; border-radius:50%; animation:crm-loading-spin .8s linear infinite; }
+  @keyframes crm-loading-spin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .crm-loading-spinner { animation-duration:1.8s; } }
   .font-display { font-family: 'Inter', sans-serif !important; font-weight: 650 !important; letter-spacing: -0.025em; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: #cfd5de; border-radius: 999px; }
@@ -6118,7 +6122,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.17-5';
+const CRM_BUILD_NUMBER = '2026.09.18-1';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -13703,8 +13707,13 @@ function App() {
   );
   if (loading) {
     return /*#__PURE__*/React.createElement("div", {
-      className: "min-h-screen flex items-center justify-center text-navy-700/50"
-    }, "Loading accounts…");
+      className: "crm-loading-screen",
+      role: "status",
+      "aria-live": "polite"
+    }, /*#__PURE__*/React.createElement("div", null, "Loading accounts…"), /*#__PURE__*/React.createElement("div", {
+      className: "crm-loading-spinner",
+      "aria-hidden": "true"
+    }));
   }
   if (loadError && data.accounts.length === 0) {
     return /*#__PURE__*/React.createElement("div", {

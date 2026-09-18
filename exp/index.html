@@ -250,6 +250,19 @@
   .bar-fill { position:absolute; inset:0 auto 0 0; height:100%; background:var(--teal); border-radius:6px; min-width:4px; }
   .bar-row-value { font-size:12.5px; font-weight:700; color:var(--navy-deep); text-align:right; font-variant-numeric:tabular-nums; }
 
+  .dash-scroll-list { overflow-y:auto; padding-right:12px; }
+  /* Applied only when a list is actually taller than its box (see the
+     overflow check in DashboardView) — fades the last ~26px to transparent
+     so a row cut off by the scroll boundary trails away instead of being
+     chopped off mid-line. */
+  .dash-scroll-fade { -webkit-mask-image:linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%); mask-image:linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%); }
+  .month-chart { display:flex; align-items:flex-end; gap:8px; }
+  .month-chart-col { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; height:100%; cursor:default; }
+  .month-chart-value { height:15px; margin-bottom:4px; font-size:11px; font-weight:700; color:var(--navy-deep); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .month-chart-track { width:100%; max-width:32px; flex:1 1 auto; display:flex; align-items:flex-end; background:#eef1f4; border-radius:5px 5px 2px 2px; overflow:hidden; }
+  .month-chart-fill { width:100%; background:var(--teal); border-radius:5px 5px 0 0; transition:height .2s ease; }
+  .month-chart-label { margin-top:7px; font-size:10.5px; font-weight:650; color:var(--faint); }
+
   .table-wrap { overflow-x:auto; }
   table.data-table { width:100%; border-collapse:collapse; font-size:13px; }
   table.data-table thead { background:var(--teal-wash); }
@@ -381,7 +394,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.17-14';
+const BUILD_NUMBER = '2026.09.18-22';
 
 // =====================================================================
 // Small utilities
@@ -481,6 +494,118 @@ function getInitials(name, email) {
 function uid_() {
   return 'tmp_' + Math.random().toString(36).slice(2) + Date.now();
 }
+
+// ---------- Recurring subscriptions: client-side date math ----------
+// Mirrors Code.gs's addInterval_ exactly (month/year clamp to the last real
+// day of the result month instead of rolling over) so the "Next occurrence"
+// preview shown while creating a subscription always matches what the
+// server will actually generate.
+function addIntervalClient_(dateStr, unit, count) {
+  const parts = String(dateStr).split('-').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return null;
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  const n = Math.max(1, parseInt(count, 10) || 1);
+  const result = new Date(date.getTime());
+  if (unit === 'day') {
+    result.setDate(result.getDate() + n);
+  } else if (unit === 'week') {
+    result.setDate(result.getDate() + n * 7);
+  } else if (unit === 'year') {
+    const originalDay = date.getDate();
+    result.setFullYear(result.getFullYear() + n);
+    if (result.getDate() !== originalDay) result.setDate(0);
+  } else { // 'month'
+    const originalDay = date.getDate();
+    result.setDate(1);
+    result.setMonth(result.getMonth() + n);
+    const daysInResultMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+    result.setDate(Math.min(originalDay, daysInResultMonth));
+  }
+  return result;
+}
+function formatDateOnlyClient_(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+// Friendly label for a template's cadence, e.g. "Monthly", "Quarterly".
+function formatInterval_(unit, count) {
+  const n = Number(count) || 1;
+  if (unit === 'month' && n === 3) return 'Quarterly';
+  if (n === 1) {
+    if (unit === 'day') return 'Daily';
+    if (unit === 'week') return 'Weekly';
+    if (unit === 'month') return 'Monthly';
+    if (unit === 'year') return 'Yearly';
+  }
+  return 'Every ' + n + ' ' + unit + (n === 1 ? '' : 's');
+}
+// The recurring-subscription forms only ever offer these three cadences —
+// no interval-count picker, since a subscription is always "every 1 of
+// something." Quarter is just month×3 under the hood (same IntervalUnit/
+// IntervalCount fields Code.gs already understands), so nothing server-side
+// needed to change for this simplification.
+const RECURRING_CADENCES = [
+  { value:'month', label:'Month', unit:'month', count:1 },
+  { value:'quarter', label:'Quarter', unit:'month', count:3 },
+  { value:'year', label:'Year', unit:'year', count:1 },
+];
+function intervalFromCadenceClient_(cadence) {
+  const found = RECURRING_CADENCES.find(c => c.value === cadence);
+  return found ? { unit: found.unit, count: found.count } : { unit:'month', count:1 };
+}
+// Maps an existing template's stored IntervalUnit/IntervalCount back to one
+// of the three cadence options, for pre-filling the edit form. A template
+// from before this simplification (or an unusual interval) falls back to
+// "Month" — its actual stored interval is left untouched unless the person
+// explicitly changes and re-saves the cadence.
+function cadenceFromIntervalClient_(unit, count) {
+  const n = Number(count) || 1;
+  const match = RECURRING_CADENCES.find(c => c.unit === unit && c.count === n);
+  return match ? match.value : 'month';
+}
+// A subscription's optional "Ends on" is picked as Month + Year (day
+// granularity doesn't matter for a cutoff like this) rather than a full date
+// picker. Internally it still resolves to a real 'YYYY-MM-DD' EndDate — the
+// last day of the chosen month — so Code.gs's EndDate comparison logic
+// (nextDue > EndDate) doesn't need to know this is month-granularity.
+const END_DATE_MONTH_OPTIONS = [
+  { value:'', label:'No end date' },
+  { value:'01', label:'January' }, { value:'02', label:'February' }, { value:'03', label:'March' },
+  { value:'04', label:'April' }, { value:'05', label:'May' }, { value:'06', label:'June' },
+  { value:'07', label:'July' }, { value:'08', label:'August' }, { value:'09', label:'September' },
+  { value:'10', label:'October' }, { value:'11', label:'November' }, { value:'12', label:'December' }
+];
+function endDateYearOptions_() {
+  const start = new Date().getFullYear();
+  const years = [];
+  for (let y = start; y <= start + 15; y++) years.push(y);
+  return years;
+}
+function endDateFromMonthYear_(month, year) {
+  if (!month || !year) return '';
+  const y = Number(year), m = Number(month);
+  const lastDay = new Date(y, m, 0).getDate(); // day 0 of next month = last day of this month
+  return y + '-' + String(m).padStart(2,'0') + '-' + String(lastDay).padStart(2,'0');
+}
+function monthYearFromEndDate_(endDate) {
+  if (!endDate) return { month:'', year: String(new Date().getFullYear()) };
+  const parts = String(endDate).split('-');
+  return { month: parts[1] || '', year: parts[0] || String(new Date().getFullYear()) };
+}
+// Roughly how many months one interval spans, for normalizing subscriptions
+// billed on different schedules into one "per month" total.
+function intervalToMonths_(unit, count) {
+  const n = Number(count) || 1;
+  if (unit === 'day') return n / 30.44;
+  if (unit === 'week') return n / 4.345;
+  if (unit === 'year') return n * 12;
+  return n; // 'month'
+}
+// A template's Active cell can come back from the Sheet as a real boolean,
+// or (before the checkbox format is ever applied) as the text "TRUE"/"FALSE" —
+// mirrors Code.gs's isActiveFlag_ so both read the same way here.
+function isActiveFlagClient_(v) {
+  return !(v === false || v === 'FALSE' || v === 'false' || v === '');
+}
 function readCache_() {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) { return null; }
 }
@@ -573,6 +698,10 @@ function Icon({ name }) {
     external: h(React.Fragment, null, h('path',{d:'M14 5h5v5'}), h('path',{d:'M10 14 19 5'}), h('path',{d:'M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5'})),
     moon: h('path',{d:'M20.5 14.3A8.3 8.3 0 0 1 9.7 3.5 8.7 8.7 0 1 0 20.5 14.3Z'}),
     sun: h(React.Fragment, null, h('circle',{cx:'12',cy:'12',r:'4.2'}), h('path',{d:'M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7'})),
+    subscription: h(React.Fragment, null, h('path',{d:'M20 12a8 8 0 0 0-14.6-4.6M4 12a8 8 0 0 0 14.6 4.6'}), h('path',{d:'M4 4v4h4M20 20v-4h-4'})),
+    pause: h(React.Fragment, null, h('rect',{x:'6',y:'4',width:'4',height:'16',rx:'1'}), h('rect',{x:'14',y:'4',width:'4',height:'16',rx:'1'})),
+    play: h('path',{d:'M7 4.5v15l13-7.5z'}),
+    edit: h('path',{d:'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'}),
   };
   return h('span', { className:'nav-icon' }, h('svg', { viewBox:'0 0 24 24' }, paths[name] || null));
 }
@@ -687,6 +816,7 @@ const NAV_ITEMS = [
   { key:'mileage', label:'Mileage', icon:'mileage' },
   { key:'reports', label:'Reports', icon:'reports' },
   { key:'purchaseorders', label:'Purchase Orders', icon:'po' },
+  { key:'subscriptions', label:'Subscriptions', icon:'subscription' },
 ];
 
 // External shortcuts shown in the sidebar's "Tools" section — matches the
@@ -913,8 +1043,16 @@ function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }
 // its own dedicated form (MileageForm, below) so this one only ever shows
 // fields that actually apply: no start/end locations, no mileage rate.
 // =====================================================================
-function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
+function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt, apiCreateRecurringSub, recurringSubscriptions }) {
   const isEdit = !!(initial && initial.ExpenseId);
+  const partOfSubscription = isEdit && !!initial.RecurringTemplateId;
+  // The expense row itself only carries a RecurringTemplateId — the actual
+  // cadence (IntervalUnit/IntervalCount) lives on the subscription template
+  // row, so look that up for the read-only note below rather than reading
+  // fields that don't exist on an expense record.
+  const linkedTemplate = partOfSubscription
+    ? (recurringSubscriptions || []).find(s => s.TemplateId === initial.RecurringTemplateId)
+    : null;
   // For a brand-new, non-preset expense, default Category/PaymentMethod to
   // whatever was picked last time — most of Melanie's entries repeat the
   // same category/payment method in a row, so this saves a couple of taps.
@@ -933,6 +1071,16 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
   });
   const [file, setFile] = useState(null);
   const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl } : null);
+  // Recurring subscriptions: only offered on a brand-new expense (see
+  // partOfSubscription above for the read-only note shown when editing one
+  // that's already part of a subscription). Checking this creates a
+  // RecurringSubscriptions template alongside this one expense so future
+  // occurrences generate automatically — see the Subscriptions page.
+  const [recurring, setRecurring] = useState(false);
+  const [cadence, setCadence] = useState('month');
+  const [endMonth, setEndMonth] = useState('');
+  const [endYear, setEndYear] = useState(String(new Date().getFullYear()));
+  const recurringEndDate = endDateFromMonthYear_(endMonth, endYear);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
 
@@ -944,6 +1092,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
     if (!form.Date) return setErr('Date is required.');
     if (!form.Category) return setErr('Category is required.');
     if (!form.Amount || Number(form.Amount) <= 0) return setErr('Enter an amount greater than zero.');
+    if (recurring && recurringEndDate && recurringEndDate <= form.Date) return setErr('The end date must be after this first occurrence.');
     setSaving(true);
     try {
       const payload = {
@@ -960,6 +1109,22 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
       if (isEdit) {
         await apiUpdate({ ExpenseId: expenseId, ...payload });
       } else {
+        if (recurring) {
+          // Create the template first so we know its TemplateId, then save
+          // this first occurrence already linked to it — see the
+          // Subscriptions page for pause/edit/cancel.
+          const { unit, count } = intervalFromCadenceClient_(cadence);
+          const nextDue = addIntervalClient_(form.Date, unit, count);
+          const template = await apiCreateRecurringSub({
+            Category: form.Category, Vendor: form.Vendor, Description: form.Description,
+            Amount: Number(form.Amount), PaymentMethod: form.PaymentMethod, Notes: form.Notes,
+            IntervalUnit: unit, IntervalCount: count,
+            StartDate: form.Date,
+            NextDueDate: nextDue ? formatDateOnlyClient_(nextDue) : form.Date,
+            EndDate: recurringEndDate || '', Active: true
+          });
+          payload.RecurringTemplateId = template.TemplateId;
+        }
         const created = await apiCreate(payload);
         expenseId = created.ExpenseId;
       }
@@ -1035,6 +1200,46 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
             file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt',
             h('input', { type:'file', accept:'image/*,application/pdf', capture:'environment', style:{ display:'none' }, onChange:e => setFile(e.target.files[0] || null) })
           )
+    ),
+    partOfSubscription && h('div', { className:'field-hint', style:{ marginTop:'-4px' } },
+      'Part of a recurring subscription' + (linkedTemplate ? ' (' + formatInterval_(linkedTemplate.IntervalUnit, linkedTemplate.IntervalCount).toLowerCase() + ')' : '') +
+      '. Editing this saves just this one occurrence — manage the subscription itself from the Subscriptions page.'
+    ),
+    !isEdit && h('div', { className:'field', style:{ borderTop:'1px solid var(--line)', paddingTop:'14px' } },
+      h('label', { className:'checkbox-row', style:{ cursor:'pointer' } },
+        h('input', { type:'checkbox', checked:recurring, onChange:e => setRecurring(e.target.checked) }),
+        'This is a recurring subscription'
+      ),
+      recurring && h('div', { style:{ marginTop:'12px', display:'grid', gap:'12px' } },
+        h('div', { className:'modal-row-2' },
+          h('div', { className:'field' },
+            h('label', null, 'Repeats every'),
+            h('select', { className:'input', value:cadence, onChange:e => setCadence(e.target.value) },
+              RECURRING_CADENCES.map(c => h('option', { key:c.value, value:c.value }, c.label))
+            )
+          ),
+          h('div', { className:'field' },
+            h('label', null, 'Ends on (optional)'),
+            h('div', { style:{ display:'flex', gap:'8px' } },
+              h('select', { className:'input', value:endMonth, onChange:e => setEndMonth(e.target.value) },
+                END_DATE_MONTH_OPTIONS.map(m => h('option', { key:m.value, value:m.value }, m.label))
+              ),
+              endMonth && h('select', { className:'input', style:{ width:'90px', flex:'0 0 auto' }, value:endYear, onChange:e => setEndYear(e.target.value) },
+                endDateYearOptions_().map(y => h('option', { key:y, value:y }, y))
+              )
+            )
+          )
+        ),
+        (() => {
+          const { unit, count } = intervalFromCadenceClient_(cadence);
+          const preview = addIntervalClient_(form.Date, unit, count);
+          return h('div', { className:'field-hint' },
+            'This one is added now. The next occurrence — ' + formatInterval_(unit, count).toLowerCase() + ' — is added automatically on ' +
+            (preview ? formatDate(formatDateOnlyClient_(preview)) : 'the next due date') +
+            (recurringEndDate ? ', through ' + formatDate(recurringEndDate) + '.' : ', with no end date (pause or cancel any time from the Subscriptions page).')
+          );
+        })()
+      )
     )
   );
 }
@@ -1742,7 +1947,40 @@ function DashboardView({ expenses, setView }) {
   }, [ytd]);
   const maxCategory = byCategory.length ? byCategory[0][1] : 0;
 
-  const recent = expenses.slice().sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)).slice(0,6);
+  const recent = expenses.slice().sort((a,b) => (parseDate_(b.Date)||0) - (parseDate_(a.Date)||0)).slice(0,10);
+
+  // Both list cards below can scroll internally rather than growing the
+  // whole dashboard. A plain overflow:hidden box abruptly chops the last
+  // row in half right at the edge, which reads as broken/clipped content —
+  // so when (and only when) a list is actually taller than its box, fade
+  // its bottom edge to transparent instead of hard-cutting it. A list that
+  // fits with no scrolling needed is left alone (no fade on the true end
+  // of the data — that would look like something's missing).
+  const categoryListRef = useRef(null);
+  const recentListRef = useRef(null);
+  const [categoryOverflowing, setCategoryOverflowing] = useState(false);
+  const [recentOverflowing, setRecentOverflowing] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      setCategoryOverflowing(!!categoryListRef.current && categoryListRef.current.scrollHeight > categoryListRef.current.clientHeight + 1);
+      setRecentOverflowing(!!recentListRef.current && recentListRef.current.scrollHeight > recentListRef.current.clientHeight + 1);
+    };
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [byCategory, recent]);
+
+  // Spend by month, Jan–Dec of the current year — same scope as the KPI
+  // tiles and the category card above (year to date), just sliced a
+  // different way.
+  const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthTotals = useMemo(() => {
+    const totals = new Array(12).fill(0);
+    ytd.forEach(r => { const d = parseDate_(r.Date); if (d) totals[d.getMonth()] += Number(r.Amount)||0; });
+    return totals;
+  }, [ytd]);
+  const maxMonth = Math.max.apply(null, monthTotals);
+  const hasMonthData = maxMonth > 0;
 
   return h('div', null,
     h('div', { className:'kpi-grid', style:{ marginBottom:'20px' } },
@@ -1751,14 +1989,14 @@ function DashboardView({ expenses, setView }) {
         h('div', { className:'kpi-value' }, formatCurrencyCompact(mtdTotal)),
         mtdDelta !== null && h('div', { className:'kpi-delta ' + (mtdDelta > 0 ? 'up' : mtdDelta < 0 ? 'down' : 'flat') }, (mtdDelta>0?'↑ ':mtdDelta<0?'↓ ':'') + Math.abs(mtdDelta) + '% vs last month')
       ),
-      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Year to date'), h('div', { className:'kpi-value' }, formatCurrencyCompact(ytdTotal))),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Year to date'), h('div', { className:'kpi-value' }, formatCurrency(ytdTotal))),
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Mileage YTD'), h('div', { className:'kpi-value' }, mileageYtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')),
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Missing receipts (YTD)'), h('div', { className:'kpi-value' }, missingReceipts))
     ),
     h('div', { style:{ display:'grid', gridTemplateColumns:'1.1fr .9fr', gap:'16px' }, className:'dash-grid' },
-      h('div', { className:'card card-pad' },
+      h('div', { className:'card card-pad', style:{ display:'flex', flexDirection:'column' } },
         h('div', { className:'card-title' }, 'Spend by category · year to date'),
-        h('div', { style:{ marginTop:'12px' } },
+        h('div', { ref:categoryListRef, className:'dash-scroll-list' + (categoryOverflowing ? ' dash-scroll-fade' : ''), style:{ marginTop:'12px', maxHeight:'236px' } },
           byCategory.length === 0
             ? h('p', { className:'card-copy' }, 'No expenses logged yet this year.')
             : byCategory.map(([cat, amt]) => h('div', { className:'bar-row', key:cat },
@@ -1768,9 +2006,9 @@ function DashboardView({ expenses, setView }) {
               ))
         )
       ),
-      h('div', { className:'card card-pad' },
+      h('div', { className:'card card-pad', style:{ display:'flex', flexDirection:'column' } },
         h('div', { className:'card-title' }, 'Recent activity'),
-        h('div', { style:{ marginTop:'10px', display:'grid', gap:'2px' } },
+        h('div', { ref:recentListRef, className:'dash-scroll-list' + (recentOverflowing ? ' dash-scroll-fade' : ''), style:{ marginTop:'10px', maxHeight:'236px', display:'grid', gap:'2px', alignContent:'start' } },
           recent.length === 0
             ? h('p', { className:'card-copy' }, 'Nothing logged yet.')
             : recent.map(r => h('div', { key:r.ExpenseId, style:{ display:'flex', justifyContent:'space-between', gap:'10px', padding:'9px 0', borderBottom:'1px solid #f0f2f5', cursor:'pointer' }, onClick:() => setView('expenses') },
@@ -1782,6 +2020,20 @@ function DashboardView({ expenses, setView }) {
               ))
         )
       )
+    ),
+    h('div', { className:'card card-pad', style:{ marginTop:'16px' } },
+      h('div', { className:'card-title' }, 'Spend by month · ' + now.getFullYear()),
+      hasMonthData
+        ? h('div', { className:'month-chart', style:{ marginTop:'14px', height:'200px' } },
+            monthLabels.map((label, i) => h('div', { className:'month-chart-col', key:label, title: label + ' ' + now.getFullYear() + ': ' + formatCurrency(monthTotals[i]) },
+              h('div', { className:'month-chart-value' }, monthTotals[i] > 0 ? formatCurrencyCompact(monthTotals[i]) : ''),
+              h('div', { className:'month-chart-track' },
+                monthTotals[i] > 0 && h('div', { className:'month-chart-fill', style:{ height: (maxMonth ? (monthTotals[i]/maxMonth*100) : 0) + '%' } })
+              ),
+              h('div', { className:'month-chart-label' }, label)
+            ))
+          )
+        : h('p', { className:'card-copy', style:{ marginTop:'8px' } }, 'No expenses logged yet this year.')
     ),
     h('style', null, '@media (max-width:900px){ .dash-grid { grid-template-columns:1fr !important; } }')
   );
@@ -2069,14 +2321,181 @@ function PurchaseOrdersView({ purchaseOrders, categories, statuses, onAdd, onEdi
 }
 
 // =====================================================================
+// Recurring Subscriptions — the templates behind auto-generated expenses.
+// Creating one happens from ExpenseForm's "This is a recurring
+// subscription" checkbox; this page is where they're reviewed, paused,
+// edited, or cancelled afterward.
+// =====================================================================
+function SubscriptionEditForm({ initial, categories, paymentMethods, onCancel, onSaved, apiUpdate }) {
+  const [form, setForm] = useState(() => {
+    const { month, year } = monthYearFromEndDate_(initial.EndDate);
+    return {
+      Vendor: initial.Vendor || '',
+      Category: initial.Category || categories[0] || 'Other',
+      Amount: initial.Amount || '',
+      PaymentMethod: initial.PaymentMethod || paymentMethods[0] || '',
+      Notes: initial.Notes || '',
+      Cadence: cadenceFromIntervalClient_(initial.IntervalUnit, initial.IntervalCount),
+      EndMonth: month, EndYear: year
+    };
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+  const endDate = endDateFromMonthYear_(form.EndMonth, form.EndYear);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErr('');
+    if (!form.Amount || Number(form.Amount) <= 0) return setErr('Enter an amount greater than zero.');
+    if (endDate && endDate <= todayStr()) return setErr('The end date should be in the future — to stop it immediately, pause the subscription instead.');
+    setSaving(true);
+    try {
+      const { unit, count } = intervalFromCadenceClient_(form.Cadence);
+      const payload = {
+        TemplateId: initial.TemplateId,
+        Vendor: form.Vendor, Category: form.Category, Amount: Number(form.Amount),
+        PaymentMethod: form.PaymentMethod, Notes: form.Notes,
+        IntervalUnit: unit, IntervalCount: count,
+        EndDate: endDate
+      };
+      await apiUpdate(payload);
+      onSaved();
+    } catch (err2) {
+      setErr(err2.message || 'Something went wrong saving this subscription.');
+    }
+    setSaving(false);
+  }
+
+  return h(ModalShell, {
+    title: 'Edit subscription', onCancel, onSubmit: handleSubmit, saving, submitLabel: 'Save changes'
+  },
+    err && h('div', { className:'field-error' }, err),
+    h('div', { className:'field-hint', style:{ marginTop:'-6px' } }, 'Changes apply to future occurrences only — expenses already added are never rewritten.'),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Vendor'),
+        h('input', { type:'text', className:'input', value:form.Vendor, onChange:e => set('Vendor', e.target.value) })
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Category'),
+        h('select', { className:'input', value:form.Category, onChange:e => set('Category', e.target.value) },
+          categories.map(c => h('option', { key:c, value:c }, c))
+        )
+      )
+    ),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Amount'),
+        h('div', { className:'amount-input-wrap' },
+          h('span', { className:'amount-prefix' }, '$'),
+          h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value) })
+        )
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Payment method'),
+        h('select', { className:'input', value:form.PaymentMethod, onChange:e => set('PaymentMethod', e.target.value) },
+          paymentMethods.map(p => h('option', { key:p, value:p }, p))
+        )
+      )
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Notes'),
+      h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
+    ),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Repeats every'),
+        h('select', { className:'input', value:form.Cadence, onChange:e => set('Cadence', e.target.value) },
+          RECURRING_CADENCES.map(c => h('option', { key:c.value, value:c.value }, c.label))
+        )
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Ends on (optional)'),
+        h('div', { style:{ display:'flex', gap:'8px' } },
+          h('select', { className:'input', value:form.EndMonth, onChange:e => set('EndMonth', e.target.value) },
+            END_DATE_MONTH_OPTIONS.map(m => h('option', { key:m.value, value:m.value }, m.label))
+          ),
+          form.EndMonth && h('select', { className:'input', style:{ width:'90px', flex:'0 0 auto' }, value:form.EndYear, onChange:e => set('EndYear', e.target.value) },
+            endDateYearOptions_().map(y => h('option', { key:y, value:y }, y))
+          )
+        )
+      )
+    )
+  );
+}
+
+function SubscriptionsView({ subscriptions, categories, paymentMethods, onPauseResume, onEdit, onDelete }) {
+  const rows = useMemo(() =>
+    (subscriptions || []).slice().sort((a,b) => {
+      const aActive = isActiveFlagClient_(a.Active), bActive = isActiveFlagClient_(b.Active);
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      return (parseDate_(a.NextDueDate)||0) - (parseDate_(b.NextDueDate)||0);
+    }), [subscriptions]);
+  const activeSubs = rows.filter(r => isActiveFlagClient_(r.Active));
+  const monthlyTotal = activeSubs.reduce((s,r) => s + (Number(r.Amount)||0) / intervalToMonths_(r.IntervalUnit, r.IntervalCount), 0);
+
+  return h('div', null,
+    h('div', { className:'kpi-grid', style:{ marginBottom:'18px', gridTemplateColumns:'repeat(2,minmax(0,1fr))' } },
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Active subscriptions'), h('div', { className:'kpi-value' }, activeSubs.length)),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Estimated cost per month'), h('div', { className:'kpi-value' }, formatCurrency(monthlyTotal)))
+    ),
+    h('div', { className:'card table-wrap' },
+      rows.length === 0
+        ? h('div', { className:'empty-state' },
+            h('div', { className:'empty-state-title' }, 'No recurring subscriptions yet'),
+            h('p', null, 'Check "This is a recurring subscription" the next time you add an expense — the first occurrence is entered now, and every one after it is added automatically.')
+          )
+        : h(React.Fragment, null,
+            h('table', { className:'data-table' },
+              h('thead', null, h('tr', null,
+                h('th', null, 'Vendor'), h('th', null, 'Category'), h('th', { className:'num' }, 'Amount'),
+                h('th', null, 'Repeats'), h('th', null, 'Next occurrence'), h('th', null, 'Status'), h('th', null, '')
+              )),
+              h('tbody', null, rows.map(r => {
+                const active = isActiveFlagClient_(r.Active);
+                return h('tr', { key:r.TemplateId },
+                  h('td', null, r.Vendor || '—'),
+                  h('td', null, h('span', { className:'pill ' + categoryPillClass(r.Category) }, r.Category)),
+                  h('td', { className:'num' }, formatCurrency(r.Amount)),
+                  h('td', null, formatInterval_(r.IntervalUnit, r.IntervalCount)),
+                  h('td', null, active ? formatDate(r.NextDueDate) : '—'),
+                  h('td', null, h('span', { className:'pill ' + (active ? 'pill-teal' : '') }, active ? 'Active' : 'Paused')),
+                  h('td', null,
+                    h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', whiteSpace:'nowrap' } },
+                      h('button', {
+                        type:'button', className:'btn btn-ghost btn-sm', title:active ? 'Pause' : 'Resume',
+                        onClick:() => onPauseResume(r, !active)
+                      }, h(Icon,{ name: active ? 'pause' : 'play' }), active ? 'Pause' : 'Resume'),
+                      h('button', { type:'button', className:'btn btn-ghost btn-sm', title:'Edit', onClick:() => onEdit(r) }, h(Icon,{name:'edit'})),
+                      h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', title:'Delete', onClick:() => onDelete(r) }, h(Icon,{name:'trash'}))
+                    )
+                  )
+                );
+              }))
+            ),
+            h('div', { className:'table-summary' },
+              h('span', null, 'Recurring subscriptions'),
+              h('span', null, h('strong', null, rows.length + (rows.length === 1 ? ' subscription' : ' subscriptions')))
+            )
+          )
+    )
+  );
+}
+
+// =====================================================================
 // App shell
 // =====================================================================
-function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[], facilities:[] }; }
+function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[], facilities:[], recurringSubscriptions:[] }; }
 
 function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(LS_PREFIX+'unlocked') === 'true' && !!sessionStorage.getItem(LS_PREFIX+'session_token'));
   const [startupCache] = useState(() => readCache_());
-  const [data, setData] = useState(() => startupCache || emptyData_());
+  // Merge onto emptyData_()'s defaults (rather than using the cache as-is) so
+  // a cache written by an older version of this app — from before some field
+  // existed (recurringSubscriptions, say) — still gets a safe default for
+  // it, instead of `undefined` reaching a component that assumes an array.
+  const [data, setData] = useState(() => startupCache ? Object.assign({}, emptyData_(), startupCache) : emptyData_());
   const [loading, setLoading] = useState(() => !startupCache);
   const [loadError, setLoadError] = useState(null);
   // Browser back/forward support: same pushState/popstate pattern as BDD
@@ -2199,7 +2618,8 @@ function App() {
         // sheet (see Code.gs's getCrmFacilities_) — an empty list here just
         // means the Facility name field on Add Mileage falls back to plain
         // free text with no suggestions.
-        facilities: result.facilities || []
+        facilities: result.facilities || [],
+        recurringSubscriptions: result.recurringSubscriptions || []
       };
       setData(next);
       writeCache_(next);
@@ -2293,6 +2713,24 @@ function App() {
     const res = await apiPost('deletePurchaseOrder', { poId });
     if (!res.success) throw new Error(res.error || 'Could not delete this purchase order.');
     setData(d => { const next = { ...d, purchaseOrders: d.purchaseOrders.filter(p => p.PoId !== poId) }; writeCache_(next); return next; });
+  }, []);
+
+  const apiCreateRecurringSub = useCallback(async (payload) => {
+    const res = await apiPost('createRecurringSubscription', { data: payload });
+    if (!res.success) throw new Error(res.error || 'Could not set up this recurring subscription.');
+    setData(d => { const next = { ...d, recurringSubscriptions: [...d.recurringSubscriptions, res.result] }; writeCache_(next); return next; });
+    return res.result;
+  }, []);
+  const apiUpdateRecurringSub = useCallback(async (payload) => {
+    const res = await apiPost('updateRecurringSubscription', { data: payload });
+    if (!res.success) throw new Error(res.error || 'Could not save changes to this subscription.');
+    setData(d => { const next = { ...d, recurringSubscriptions: d.recurringSubscriptions.map(s => s.TemplateId === payload.TemplateId ? { ...s, ...payload } : s) }; writeCache_(next); return next; });
+    return res.result;
+  }, []);
+  const apiDeleteRecurringSub = useCallback(async (templateId) => {
+    const res = await apiPost('deleteRecurringSubscription', { templateId });
+    if (!res.success) throw new Error(res.error || 'Could not delete this subscription.');
+    setData(d => { const next = { ...d, recurringSubscriptions: d.recurringSubscriptions.filter(s => s.TemplateId !== templateId) }; writeCache_(next); return next; });
   }, []);
 
   function openAddExpense() {
@@ -2392,6 +2830,18 @@ function App() {
     try { await apiDeletePO(po.PoId); showToast('Purchase order deleted.'); }
     catch (err) { showToast(err.message, 'error'); }
   }
+  function openEditSub(subscription) { setModal({ type:'subscriptionEdit', subscription }); }
+  async function handlePauseResumeSub(subscription, nextActive) {
+    try {
+      await apiUpdateRecurringSub({ TemplateId: subscription.TemplateId, Active: nextActive });
+      showToast(nextActive ? 'Subscription resumed.' : 'Subscription paused.');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+  async function handleDeleteSub(subscription) {
+    if (!window.confirm('Delete this recurring subscription? Expenses already added stay in your records — this only stops future ones from being generated.')) return;
+    try { await apiDeleteRecurringSub(subscription.TemplateId); showToast('Subscription deleted.'); }
+    catch (err) { showToast(err.message, 'error'); }
+  }
   async function handleSaved(savedRecord) {
     const type = modal && modal.type;
     const isEdit = modal && modal.mode === 'edit';
@@ -2405,6 +2855,10 @@ function App() {
       showToast('Expense recorded from ' + linkedPO.PoNumber + '.');
       return;
     }
+    if (!isEdit && savedRecord && savedRecord.RecurringTemplateId) {
+      showToast('Expense added — set up as a recurring subscription.');
+      return;
+    }
     showToast(isEdit ? 'Expense updated.' : 'Expense added.');
   }
 
@@ -2414,7 +2868,7 @@ function App() {
     return h('div', { className:'full-loading' }, h('div', { className:'spinner' }), h('p', null, 'Loading BDD EXP…'));
   }
 
-  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', purchaseorders:'Purchase Orders' };
+  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', purchaseorders:'Purchase Orders', subscriptions:'Subscriptions' };
 
   return h('div', { className:'app-shell' },
     h(Sidebar, {
@@ -2459,7 +2913,8 @@ function App() {
         view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDuplicate:openDuplicate, onDelete:handleDelete }),
         view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete, onDuplicate:openDuplicate }),
         view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
-        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, categories:data.poCategories, statuses:data.poStatuses, onAdd:openAddPO, onEdit:openEditPO, onDuplicate:openDuplicatePO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense })
+        view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, categories:data.poCategories, statuses:data.poStatuses, onAdd:openAddPO, onEdit:openEditPO, onDuplicate:openDuplicatePO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense }),
+        view === 'subscriptions' && h(SubscriptionsView, { subscriptions:data.recurringSubscriptions, categories:data.categories.filter(c => c !== 'Mileage'), paymentMethods:data.paymentMethods, onPauseResume:handlePauseResumeSub, onEdit:openEditSub, onDelete:handleDeleteSub })
       )
     ),
     modal && modal.type === 'mileage' && h(MileageForm, {
@@ -2484,7 +2939,8 @@ function App() {
       vendorOptions,
       onCancel: () => setModal(null),
       onSaved: handleSaved,
-      apiCreate, apiUpdate, apiUploadReceipt
+      apiCreate, apiUpdate, apiUploadReceipt, apiCreateRecurringSub,
+      recurringSubscriptions: data.recurringSubscriptions
     }),
     modal && modal.type === 'po' && h(PurchaseOrderForm, {
       initial: modal.mode === 'edit' ? modal.po : (modal.duplicateFrom || null),
@@ -2494,6 +2950,14 @@ function App() {
       onCancel: () => setModal(null),
       onSaved: handleSaved,
       apiCreate: apiCreatePO, apiUpdate: apiUpdatePO, apiGeneratePo
+    }),
+    modal && modal.type === 'subscriptionEdit' && h(SubscriptionEditForm, {
+      initial: modal.subscription,
+      categories: data.categories.filter(c => c !== 'Mileage'),
+      paymentMethods: data.paymentMethods,
+      onCancel: () => setModal(null),
+      onSaved: () => { setModal(null); showToast('Subscription updated.'); },
+      apiUpdate: apiUpdateRecurringSub
     }),
     h(PreferencesModal, {
       open: showPreferences,
