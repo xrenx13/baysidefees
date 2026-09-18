@@ -99,6 +99,16 @@ try {
   .saas-mini-cal-day.today.has-meeting::after { background:#fff; }
   .saas-mini-cal-day.empty { visibility:hidden; }
   .saas-side-bottom { margin-top:auto; padding:12px 10px 14px; border-top:1px solid var(--saas-line); }
+  /* Keep desktop profile controls clear of the bottom edge on short windows. */
+  @media (min-width:641px) {
+    body.saas-enabled .saas-chrome { height:100vh; height:100dvh; overflow:hidden; }
+    body.saas-enabled .saas-brand,
+    body.saas-enabled .saas-mini-cal,
+    body.saas-enabled .saas-side-bottom { flex-shrink:0; }
+    body.saas-enabled .saas-nav { min-height:0; overflow-y:auto; }
+    body.saas-enabled .saas-nav > * { flex-shrink:0; }
+    body.saas-enabled .saas-side-bottom { padding-bottom:46px; }
+  }
   .saas-profile { display:flex; align-items:flex-start; gap:9px; padding:8px 9px; border-radius:10px; }
   .saas-avatar { width:30px; height:30px; border:0; padding:0; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#edf1f5; color:var(--saas-navy); font-size:11px; font-weight:700; cursor:pointer; transition:box-shadow .15s ease,transform .15s ease; }
   .saas-avatar:hover { box-shadow:0 0 0 3px rgba(27,127,119,.14); transform:translateY(-1px); }
@@ -6122,7 +6132,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.18-1';
+const CRM_BUILD_NUMBER = '2026.09.18-3';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7043,6 +7053,35 @@ function getRequestKey_(extraParams) {
   return JSON.stringify(stableRequestValue_(safe));
 }
 
+// Apps Script can occasionally return Unauthorized for one POST even while
+// the same session still works. Confirm independently before destroying the
+// user's session. Concurrent failures share one validation request.
+let sessionConfirmationPromise_ = null;
+async function confirmSessionAfterUnauthorized_() {
+  if (sessionConfirmationPromise_) return sessionConfirmationPromise_;
+  sessionConfirmationPromise_ = (async () => {
+    try {
+      const params = new URLSearchParams({
+        action: 'validateSession',
+        token: getSessionToken(),
+        _: String(Date.now())
+      });
+      const res = await fetch(`${API_URL}?${params.toString()}`, { cache:'no-store' });
+      if (!res.ok) return null;
+      const result = await res.json();
+      if (result && result.success === true && result.valid === true) return true;
+      if (result && result.error === 'Unauthorized - please sign in again') return false;
+      return null;
+    } catch (err) {
+      console.warn('Could not independently confirm CRM session:', err);
+      return null;
+    } finally {
+      sessionConfirmationPromise_ = null;
+    }
+  })();
+  return sessionConfirmationPromise_;
+}
+
 async function apiGet(extraParams) {
   const requestKey = getRequestKey_(extraParams);
   const existing = inFlightGetRequests_.get(requestKey);
@@ -7086,7 +7125,7 @@ async function apiGet(extraParams) {
   }
 }
 
-async function performApiPost_(action, payload) {
+async function performApiPost_(action, payload, retryAttempt = 0) {
   const startedAt = performance.now();
   try {
     const res = await fetch(API_URL, {
@@ -7107,7 +7146,24 @@ async function performApiPost_(action, payload) {
       throw new Error('Server returned an unexpected response — please try again.');
     }
     if (result.error === 'Unauthorized - please sign in again') {
-      handleUnauthorized({ requestType: 'POST', action });
+      const sessionIsValid = await confirmSessionAfterUnauthorized_();
+      if (sessionIsValid === true) {
+        if (retryAttempt === 0) {
+          recordCrmPerf_('POST unauthorized; session valid; retrying', startedAt, { action, ok: false });
+          return performApiPost_(action, payload, 1);
+        }
+        // A second isolated POST rejection is treated as a temporary Apps
+        // Script delivery issue. Keep the user signed in and let the caller
+        // show its normal save/load error instead of ejecting the whole app.
+        throw new Error('This request could not be completed. Your CRM session is still active; please try again.');
+      }
+      if (sessionIsValid === false) {
+        handleUnauthorized({ requestType: 'POST', action, confirmed: true });
+        return result;
+      }
+      // Network/delivery trouble prevented confirmation. Never destroy the
+      // local session unless the independent check explicitly says invalid.
+      throw new Error('Could not verify your CRM session. Please try again.');
     }
     recordCrmPerf_('POST completed', startedAt, { action, ok: true });
     return result;
