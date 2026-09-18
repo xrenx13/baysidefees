@@ -112,7 +112,16 @@
   .sidebar-brand-mark img { width:100%; height:100%; object-fit:contain; display:block; }
   .sidebar-brand-title { font-size:13px; line-height:1.15; font-weight:700; color:var(--navy-deep); letter-spacing:-.01em; }
   .sidebar-brand-sub { font-size:10px; line-height:1.2; color:var(--faint); margin-top:2px; }
-  .sidebar-nav { padding:14px 10px; display:flex; flex-direction:column; gap:3px; flex:1; overflow-y:auto; }
+  /* min-height:0 overrides a flexbox default (a flex item's min-height is
+     "auto", i.e. at least its content's height) that would otherwise stop
+     this from ever shrinking below the combined height of every nav link,
+     the mini calendar, and the tool shortcuts — so on a shorter browser
+     viewport (a laptop with a visible, non-auto-hiding macOS Dock is the
+     common case) this section couldn't scroll internally, and instead
+     pushed the Profile/Sign out row at the bottom of the sidebar off the
+     bottom of the screen entirely, with no way to scroll the fixed
+     sidebar itself down to reach it. */
+  .sidebar-nav { padding:14px 10px; display:flex; flex-direction:column; gap:3px; flex:1; min-height:0; overflow-y:auto; }
   .nav-label { padding:12px 10px 6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); }
   .nav-btn { width:100%; height:38px; border:0; background:transparent; display:flex; align-items:center; gap:10px; padding:0 10px; border-radius:9px; color:#657084; font-size:13px; font-weight:550; text-align:left; text-decoration:none; cursor:pointer; transition:.15s ease; box-sizing:border-box; }
   .nav-btn:hover { background:#f4f6f8; color:var(--navy-deep); }
@@ -394,7 +403,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.18-22';
+const BUILD_NUMBER = '2026.09.18-23';
 
 // =====================================================================
 // Small utilities
