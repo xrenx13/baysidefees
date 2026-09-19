@@ -281,6 +281,32 @@
   .mobile-page-form-body { display:grid; gap:14px; flex:1; }
   .mobile-page-form-foot { margin-top:18px; }
   .btn-block { width:100%; height:46px; font-size:14px; }
+  /* Compact date field shown inline in a MobilePageShell header (right-
+     justified, next to the back arrow + title) — used by the mobile Add
+     Mileage screen. A real <input type="date">, just stripped of its box
+     so it reads as plain text; tapping it still opens the native date
+     picker exactly like the full-size date field elsewhere. */
+  .mobile-date-field { border:0; background:transparent; font-weight:650; font-size:14px; color:var(--navy-deep); text-align:right; padding:0; width:122px; }
+  /* Start-location shortcuts on the mobile Add Mileage screen — three tap
+     targets (a couple of saved home-base addresses + a hospital/facility
+     default) instead of the desktop's dropdown, since these are the same
+     handful of starting points on nearly every drive. */
+  .mobile-start-shortcuts { display:flex; gap:8px; }
+  .mobile-start-shortcut { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px; border-radius:12px; border:1.5px solid #d7dde5; background:#fff; cursor:pointer; }
+  .mobile-start-shortcut .nav-icon svg { width:22px; height:22px; stroke:#475467; }
+  .mobile-start-shortcut span { font-size:12px; font-weight:650; color:#39465a; }
+  .mobile-start-shortcut.selected { border-color:var(--teal); background:var(--teal-wash); }
+  .mobile-start-shortcut.selected .nav-icon svg { stroke:var(--teal-dark); }
+  .mobile-start-shortcut.selected span { color:var(--teal-dark); }
+  /* Generic "reveal a field" text link used on mobile full-page forms — the
+     start-location override below, and Add Expense's collapsed Description
+     field (see ExpenseForm). */
+  .mobile-link-btn { border:0; background:transparent; color:var(--teal-dark); font-size:12.5px; font-weight:650; padding:8px 0 0; cursor:pointer; text-align:left; text-decoration:underline; display:block; }
+  /* Brief green confirmation flash on a mobile form's submit button right
+     after a successful save, shown for a moment before the screen switches
+     back to the Dashboard — faster feedback than waiting for the toast to
+     appear on the next screen. */
+  .btn-just-saved, .btn-just-saved:disabled { background:var(--good); color:#fff; opacity:1; }
   @media (max-width:720px) {
     .toast { left:16px; right:16px; bottom:calc(70px + env(safe-area-inset-bottom)); text-align:center; }
   }
@@ -385,6 +411,11 @@
   }
   .modal-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   @media (max-width:520px) { .modal-row-2 { grid-template-columns:1fr; } }
+  /* Two-column row for the mobile app's own full-page forms (MobilePageShell)
+     — unlike .modal-row-2 above, this never collapses to one column: the
+     mobile app IS the narrow layout, so Category/Amount (say) staying side
+     by side is the point, not something to collapse further. */
+  .mobile-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
   .receipt-drop { border:1.5px dashed #d7dde5; border-radius:12px; padding:16px; text-align:center; color:var(--muted); font-size:12.5px; cursor:pointer; background:#fbfcfd; }
   .receipt-drop:hover { border-color:var(--teal); background:var(--teal-wash); }
@@ -444,6 +475,14 @@ const SAVED_START_LOCATIONS = [
   { label: 'Cape House', address: '31 Bramble Lane, Dennis, MA 02638' },
   { label: 'Cape Cod Hospital', address: '27 Park Street, Hyannis, MA 02601' }
 ];
+// Same three saved addresses as SAVED_START_LOCATIONS above, just relabeled
+// (shorter) and paired with an icon — the mobile Add Mileage screen shows
+// these as three tappable shortcut buttons instead of a dropdown.
+const MOBILE_START_SHORTCUTS = [
+  { label: 'Norwell', icon: 'house', address: SAVED_START_LOCATIONS[0].address },
+  { label: 'Dennis', icon: 'house', address: SAVED_START_LOCATIONS[1].address },
+  { label: 'Hospital', icon: 'building', address: SAVED_START_LOCATIONS[2].address }
+];
 
 // The BDD shell logo (same mark as the CRM) — used in the sidebar brand
 // mark in place of a plain letter.
@@ -455,7 +494,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-26';
+const BUILD_NUMBER = '2026.09.19-29';
 
 // =====================================================================
 // Small utilities
@@ -809,6 +848,8 @@ function Icon({ name }) {
     pause: h(React.Fragment, null, h('rect',{x:'6',y:'4',width:'4',height:'16',rx:'1'}), h('rect',{x:'14',y:'4',width:'4',height:'16',rx:'1'})),
     play: h('path',{d:'M7 4.5v15l13-7.5z'}),
     edit: h('path',{d:'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'}),
+    house: h(React.Fragment, null, h('path',{d:'M4 11.5 12 4l8 7.5'}), h('path',{d:'M6 10.5V20a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9.5'})),
+    building: h(React.Fragment, null, h('rect',{x:'5',y:'4',width:'14',height:'17',rx:'1.2'}), h('path',{d:'M12 9v6M9 12h6'}), h('path',{d:'M9 21v-3h6v3'})),
   };
   return h('span', { className:'nav-icon' }, h('svg', { viewBox:'0 0 24 24' }, paths[name] || null));
 }
@@ -1151,16 +1192,24 @@ function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }
 // fields in a normal scrolling column, and one full-width submit bar
 // pinned to the bottom — instead of a floating dialog card. Picking the
 // shell is the only thing that changes; none of the form logic does.
-function MobilePageShell({ title, onCancel, onSubmit, saving, submitLabel, children }) {
+function MobilePageShell({ title, headerRight, onCancel, onSubmit, saving, justSaved, submitLabel, children }) {
   const body = Array.isArray(children) ? children : [children];
   return h('form', { className:'mobile-page-form', onSubmit },
     h('div', { className:'mobile-page-form-head' },
-      h('button', { type:'button', className:'mobile-page-back', onClick:onCancel, 'aria-label':'Cancel', disabled:saving }, '‹'),
-      h('div', { className:'mobile-page-form-title' }, title)
+      h('button', { type:'button', className:'mobile-page-back', onClick:onCancel, 'aria-label':'Cancel', disabled:saving || justSaved }, '‹'),
+      h('div', { className:'mobile-page-form-title' }, title),
+      h('div', { style:{ flex:1 } }),
+      headerRight
     ),
     h('div', { className:'mobile-page-form-body' }, ...body),
     h('div', { className:'mobile-page-form-foot' },
-      h('button', { type:'submit', className:'btn btn-teal btn-block', disabled:saving }, saving ? 'Saving…' : submitLabel)
+      // A brief green "✓ Saved" flash on this same button right after a
+      // successful save, before the screen switches back to the Dashboard
+      // (see the justSaved state in ExpenseForm/MileageForm) — quicker
+      // feedback than waiting for the toast to appear on the next screen.
+      h('button', {
+        type:'submit', className:'btn btn-teal btn-block' + (justSaved ? ' btn-just-saved' : ''), disabled:saving || justSaved
+      }, justSaved ? '✓ Saved' : (saving ? 'Saving…' : submitLabel))
     )
   );
 }
@@ -1214,9 +1263,25 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
   const [endYear, setEndYear] = useState(String(new Date().getFullYear()));
   const recurringEndDate = endDateFromMonthYear_(endMonth, endYear);
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [err, setErr] = useState('');
+  const isMobilePage = variant === 'page';
+  // Description is optional and, on a quick phone log, rarely filled in —
+  // collapsed behind a link until asked for (like Add Mileage's "different
+  // start location") so it doesn't take up a row on every entry. Desktop
+  // always shows it. Starts open if there's already a description (editing
+  // isn't part of the mobile app today, but this keeps the component safe
+  // if that changes).
+  const [showDescription, setShowDescription] = useState(() => !isMobilePage || !!(initial && initial.Description));
+  const amountInputRef = useRef(null);
 
   function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+
+  // One less tap on the mobile app: the keyboard is already up on Amount —
+  // the very first thing you'd type — the moment the screen opens.
+  useEffect(() => {
+    if (isMobilePage && amountInputRef.current) amountInputRef.current.focus();
+  }, [isMobilePage]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -1268,55 +1333,104 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
       }
       localStorage.setItem(LS_PREFIX+'last_category', form.Category);
       localStorage.setItem(LS_PREFIX+'last_payment_method', form.PaymentMethod);
-      onSaved({ ExpenseId: expenseId, ...payload });
+      const savedRecord = { ExpenseId: expenseId, ...payload };
+      if (isMobilePage) {
+        // Flash a "✓ Saved" confirmation on the button itself for a moment
+        // before switching back to the Dashboard — quicker feedback on a
+        // phone than waiting for the toast to appear on the next screen.
+        setSaving(false);
+        setJustSaved(true);
+        setTimeout(() => onSaved(savedRecord), 550);
+      } else {
+        setSaving(false);
+        onSaved(savedRecord);
+      }
+      return;
     } catch (err2) {
       setErr(err2.message || 'Something went wrong saving this expense.');
     }
     setSaving(false);
   }
 
-  const Shell = variant === 'page' ? MobilePageShell : ModalShell;
-  return h(Shell, {
+  const Shell = isMobilePage ? MobilePageShell : ModalShell;
+  const shellProps = {
     title: isEdit ? 'Edit expense' : 'Add expense',
-    onCancel, onSubmit: handleSubmit, saving,
+    onCancel, onSubmit: handleSubmit, saving, justSaved,
     submitLabel: isEdit ? 'Save changes' : 'Add expense'
-  },
+  };
+  // Same treatment as the mobile Add Mileage screen: the date moves into
+  // the header, compact and right-justified, instead of taking its own row.
+  if (isMobilePage) {
+    shellProps.headerRight = h('input', {
+      type:'date', className:'mobile-date-field', value:form.Date,
+      onChange:e => set('Date', e.target.value), 'aria-label':'Date'
+    });
+  }
+  const categoryField = h('div', { className:'field' },
+    h('label', null, 'Category'),
+    h('select', { className:'input', value:form.Category, onChange:e => set('Category', e.target.value) },
+      categories.map(c => h('option', { key:c, value:c }, c))
+    )
+  );
+  const amountField = h('div', { className:'field' },
+    h('label', null, 'Amount'),
+    h('div', { className:'amount-input-wrap' },
+      h('span', { className:'amount-prefix' }, '$'),
+      // inputMode:'decimal' gives iOS/Android's plain numeric keypad instead
+      // of type="number"'s keyboard (which adds +/-/e keys that don't apply
+      // to a dollar amount) — type="number" is kept for validation/desktop.
+      h('input', { type:'number', inputMode:'decimal', min:'0', step:'0.01', className:'input', ref:amountInputRef, value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
+    )
+  );
+  const paymentMethodField = h('div', { className:'field' },
+    h('label', null, 'Payment method'),
+    h('select', { className:'input', value:form.PaymentMethod, onChange:e => set('PaymentMethod', e.target.value) },
+      paymentMethods.map(p => h('option', { key:p, value:p }, p))
+    )
+  );
+  return h(Shell, shellProps,
     err && h('div', { className:'field-error' }, err),
-    h('div', { className:'modal-row-2' },
-      h('div', { className:'field' },
-        h('label', null, 'Date'),
-        h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
-      ),
-      h('div', { className:'field' },
-        h('label', null, 'Category'),
-        h('select', { className:'input', value:form.Category, onChange:e => set('Category', e.target.value) },
-          categories.map(c => h('option', { key:c, value:c }, c))
-        )
-      )
-    ),
-    h('div', { className:'field' },
-      h('label', null, 'Amount'),
-      h('div', { className:'amount-input-wrap' },
-        h('span', { className:'amount-prefix' }, '$'),
-        h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Amount, onChange:e => set('Amount', e.target.value), placeholder:'0.00' })
-      )
-    ),
+    // Desktop: Date + Category on one row, Amount on its own row below.
+    // Mobile: Date lives in the header (see headerRight above), so Category
+    // and Amount pair up on one row instead.
+    isMobilePage
+      ? h('div', { className:'mobile-row-2' }, categoryField, amountField)
+      : h(React.Fragment, null,
+          h('div', { className:'modal-row-2' },
+            h('div', { className:'field' },
+              h('label', null, 'Date'),
+              h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
+            ),
+            categoryField
+          ),
+          amountField
+        ),
     h('div', { className:'field' },
       h('label', null, 'Vendor'),
       h('input', { type:'text', className:'input', list:'vendor-options', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. Staples' }),
       vendorOptions && vendorOptions.length > 0 && h('datalist', { id:'vendor-options' }, vendorOptions.map(v => h('option', { key:v, value:v })))
     ),
-    h('div', { className:'field' },
-      h('label', null, 'Description'),
-      h('input', { type:'text', className:'input', value:form.Description, onChange:e => set('Description', e.target.value) })
-    ),
-    h('div', { className:'modal-row-2' },
-      h('div', { className:'field' },
-        h('label', null, 'Payment method'),
-        h('select', { className:'input', value:form.PaymentMethod, onChange:e => set('PaymentMethod', e.target.value) },
-          paymentMethods.map(p => h('option', { key:p, value:p }, p))
-        )
-      ),
+    // Desktop always shows Description. Mobile collapses it behind a link
+    // until tapped (see showDescription above) — most quick phone entries
+    // don't need one.
+    isMobilePage
+      ? (showDescription
+          ? h('div', { className:'field' },
+              h('label', null, 'Description'),
+              h('input', { type:'text', className:'input', autoFocus:true, value:form.Description, onChange:e => set('Description', e.target.value) })
+            )
+          : h('button', { type:'button', className:'mobile-link-btn', onClick:() => setShowDescription(true) }, '+ Add a description'))
+      : h('div', { className:'field' },
+          h('label', null, 'Description'),
+          h('input', { type:'text', className:'input', value:form.Description, onChange:e => set('Description', e.target.value) })
+        ),
+    // Payment method isn't shown on the mobile form either — it already
+    // defaults to whatever was used last time (see the lastPayment lookup
+    // above), same as Facility/Rate/Purpose/Notes on the mobile Add Mileage
+    // screen, and still saved with that default. Still shown on desktop,
+    // paired with Notes as before.
+    !isMobilePage && h('div', { className:'modal-row-2' },
+      paymentMethodField,
       h('div', { className:'field' },
         h('label', null, 'Notes'),
         h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
@@ -1396,11 +1510,13 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
     EndLocation: (initial && initial.EndLocation) || ''
   }));
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [err, setErr] = useState('');
   const [roundTrip, setRoundTrip] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
+  const isMobilePage = variant === 'page';
   const hasMapsKey = GOOGLE_MAPS_BROWSER_API_KEY && GOOGLE_MAPS_BROWSER_API_KEY.indexOf('PASTE_YOUR') !== 0;
   const computedAmount = Number(form.Miles || 0) * Number(form.MileageRate || 0);
   // True when the Start location isn't one of the three saved bases — that's
@@ -1408,6 +1524,13 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
   const isCustomStart = !SAVED_START_LOCATIONS.some(loc => loc.address === form.StartLocation);
 
   function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+
+  // One less tap on the mobile app: Start location already defaults to a
+  // saved shortcut, so End location is the first thing that actually needs
+  // typing — focus it the moment the screen opens.
+  useEffect(() => {
+    if (isMobilePage && endInputRef.current) endInputRef.current.focus();
+  }, [isMobilePage]);
 
   useEffect(() => {
     if (!hasMapsKey) return;
@@ -1487,42 +1610,91 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
       } else {
         await apiCreate(payload);
       }
-      onSaved();
+      if (isMobilePage) {
+        // Flash a "✓ Saved" confirmation on the button itself for a moment
+        // before switching back to the Dashboard — quicker feedback on a
+        // phone than waiting for the toast to appear on the next screen.
+        setSaving(false);
+        setJustSaved(true);
+        setTimeout(() => onSaved(), 550);
+      } else {
+        setSaving(false);
+        onSaved();
+      }
+      return;
     } catch (err2) {
       setErr(err2.message || 'Something went wrong saving this mileage entry.');
     }
     setSaving(false);
   }
 
-  const Shell = variant === 'page' ? MobilePageShell : ModalShell;
-  return h(Shell, {
+  const Shell = isMobilePage ? MobilePageShell : ModalShell;
+  const shellProps = {
     title: isEdit ? 'Edit mileage' : 'Add mileage',
-    onCancel, onSubmit: handleSubmit, saving,
+    onCancel, onSubmit: handleSubmit, saving, justSaved,
     submitLabel: isEdit ? 'Save changes' : 'Add mileage'
-  },
+  };
+  // On the mobile app, the date moves into the header — same field, just
+  // shown compact and right-justified next to "‹ Add mileage" instead of
+  // its own row, to help the whole form fit without scrolling. Still a
+  // real <input type="date">, so tapping it opens the native picker.
+  if (isMobilePage) {
+    shellProps.headerRight = h('input', {
+      type:'date', className:'mobile-date-field', value:form.Date,
+      onChange:e => set('Date', e.target.value), 'aria-label':'Date'
+    });
+  }
+  return h(Shell, shellProps,
     err && h('div', { className:'field-error' }, err),
-    h('div', { className:'field' },
+    // Desktop keeps its own full-width Date field (mobile shows it in the
+    // header instead — see headerRight above).
+    !isMobilePage && h('div', { className:'field' },
       h('label', null, 'Date'),
       h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
     ),
     h('div', { className:'field' },
       h('label', null, 'Start location'),
-      h('select', {
-        className:'input',
-        value: isCustomStart ? '__custom__' : form.StartLocation,
-        onChange: e => set('StartLocation', e.target.value === '__custom__' ? '' : e.target.value)
-      },
-        SAVED_START_LOCATIONS.map(loc => h('option', { key:loc.label, value:loc.address }, loc.label)),
-        h('option', { value:'__custom__' }, 'Other (type an address)')
-      ),
-      isCustomStart && h('input', { type:'text', className:'input', list:'end-location-options', style:{ marginTop:'6px' }, ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
+      isMobilePage
+        // Mobile: three tap targets for the same saved addresses the
+        // desktop dropdown offers, since almost every drive starts from
+        // one of them — plus a link to fall back to a typed address.
+        ? (isCustomStart
+            ? h(React.Fragment, null,
+                h('input', { type:'text', className:'input', list:'end-location-options', ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' }),
+                h('button', { type:'button', className:'mobile-link-btn', onClick:() => set('StartLocation', MOBILE_START_SHORTCUTS[0].address) }, 'Use a saved location instead')
+              )
+            : h(React.Fragment, null,
+                h('div', { className:'mobile-start-shortcuts' },
+                  MOBILE_START_SHORTCUTS.map(loc => h('button', {
+                    type:'button', key:loc.label,
+                    className:'mobile-start-shortcut' + (form.StartLocation === loc.address ? ' selected' : ''),
+                    onClick:() => set('StartLocation', loc.address)
+                  }, h(Icon, { name:loc.icon }), h('span', null, loc.label)))
+                ),
+                h('button', { type:'button', className:'mobile-link-btn', onClick:() => set('StartLocation', '') }, 'Use a different start location')
+              ))
+        // Desktop: unchanged dropdown + "Other" free-text fallback.
+        : h(React.Fragment, null,
+            h('select', {
+              className:'input',
+              value: isCustomStart ? '__custom__' : form.StartLocation,
+              onChange: e => set('StartLocation', e.target.value === '__custom__' ? '' : e.target.value)
+            },
+              SAVED_START_LOCATIONS.map(loc => h('option', { key:loc.label, value:loc.address }, loc.label)),
+              h('option', { value:'__custom__' }, 'Other (type an address)')
+            ),
+            isCustomStart && h('input', { type:'text', className:'input', list:'end-location-options', style:{ marginTop:'6px' }, ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
+          )
     ),
     h('div', { className:'field' },
       h('label', null, 'End location'),
       h('input', { type:'text', className:'input', list:'end-location-options', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' }),
       endLocationOptions && endLocationOptions.length > 0 && h('datalist', { id:'end-location-options' }, endLocationOptions.map(v => h('option', { key:v, value:v })))
     ),
-    h('div', { className:'field' },
+    // Facility name isn't shown on the mobile form — one more field than a
+    // quick phone log needs; still available (and still saved) from the
+    // desktop modal.
+    !isMobilePage && h('div', { className:'field' },
       h('label', null, 'Facility name'),
       // A type-to-search field, not a dropdown: with dozens of CRM accounts,
       // scrolling a <select> to find one is slow, and there's no separate
@@ -1545,23 +1717,35 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
       h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:calculateDistance, disabled:calculating }, calculating ? 'Calculating…' : 'Calculate miles'),
       !hasMapsKey && h('span', { className:'field-hint' }, 'Add a Google Maps API key in index.html to enable autocomplete + auto-calculated mileage — you can still type miles in manually below.')
     ),
-    h('div', { className:'modal-row-2' },
-      h('div', { className:'field' },
-        h('label', null, 'Miles'),
-        h('input', { type:'number', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) })
-      ),
-      h('div', { className:'field' },
-        h('label', null, 'Rate per mile'),
-        h('input', { type:'number', min:'0', step:'0.001', className:'input', value:form.MileageRate, onChange:e => set('MileageRate', e.target.value) }),
-        h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedAmount || 0))
-      )
-    ),
-    h('div', { className:'field' },
+    // Rate per mile isn't shown on mobile — it still applies (silently, at
+    // today's default) so the Amount hint below Miles stays accurate.
+    isMobilePage
+      ? h('div', { className:'field' },
+          h('label', null, 'Miles'),
+          // inputMode:'decimal' gives iOS/Android's plain numeric keypad
+          // here instead of type="number"'s +/-/e keyboard.
+          h('input', { type:'number', inputMode:'decimal', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) }),
+          h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedAmount || 0) + ' · uses your default per-mile rate')
+        )
+      : h('div', { className:'modal-row-2' },
+          h('div', { className:'field' },
+            h('label', null, 'Miles'),
+            h('input', { type:'number', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) })
+          ),
+          h('div', { className:'field' },
+            h('label', null, 'Rate per mile'),
+            h('input', { type:'number', min:'0', step:'0.001', className:'input', value:form.MileageRate, onChange:e => set('MileageRate', e.target.value) }),
+            h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedAmount || 0))
+          )
+        ),
+    // Purpose and Notes aren't shown on the mobile form either — both still
+    // available from the desktop modal.
+    !isMobilePage && h('div', { className:'field' },
       h('label', null, 'Purpose'),
       h('input', { type:'text', className:'input', list:'purpose-options', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. FEES visit, supply pickup' }),
       purposeOptions && purposeOptions.length > 0 && h('datalist', { id:'purpose-options' }, purposeOptions.map(v => h('option', { key:v, value:v })))
     ),
-    h('div', { className:'field' },
+    !isMobilePage && h('div', { className:'field' },
       h('label', null, 'Notes'),
       h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
     )
@@ -2692,8 +2876,8 @@ function useIsMobile(breakpoint) {
 
 const MOBILE_NAV_ITEMS = [
   { key:'dashboard', label:'Dashboard', icon:'dashboard' },
-  { key:'addExpense', label:'Add expense', icon:'receipt' },
   { key:'addMileage', label:'Add mileage', icon:'mileage' },
+  { key:'addExpense', label:'Add expense', icon:'receipt' },
 ];
 
 function MobileBottomNav({ view, setView }) {
