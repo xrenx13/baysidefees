@@ -302,6 +302,13 @@
   .mobile-start-shortcut.selected { border-color:var(--teal); background:var(--teal-wash); }
   .mobile-start-shortcut.selected .nav-icon svg { stroke:var(--teal-dark); }
   .mobile-start-shortcut.selected span { color:var(--teal-dark); }
+  /* Desktop's equivalent of the mobile shortcut buttons above — same saved
+     addresses, but small text pills instead of big icon tap targets (see
+     locationShortcuts() in MileageForm), since a mouse/keyboard user doesn't
+     need the larger touch target. */
+  .location-quick-picks { display:flex; gap:6px; flex-wrap:wrap; }
+  .location-quick-pick { padding:5px 11px; border-radius:999px; border:1.5px solid #d7dde5; background:#fff; font-size:12px; font-weight:650; color:#39465a; cursor:pointer; }
+  .location-quick-pick.selected { border-color:var(--teal); background:var(--teal-wash); color:var(--teal-dark); }
   /* Generic "reveal a field" text link used on mobile full-page forms — the
      start-location override below, and Add Expense's collapsed Description
      field (see ExpenseForm). */
@@ -332,7 +339,7 @@
   .facility-map-card { overflow:hidden; }
   .facility-map { width:100%; height:280px; }
 
-  .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+  .kpi-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
   @media (max-width:960px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
   .kpi-tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
   .kpi-tile-clickable { cursor:pointer; transition:.15s ease; }
@@ -507,7 +514,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-31';
+const BUILD_NUMBER = '2026.09.19-36';
 
 // =====================================================================
 // Small utilities
@@ -767,6 +774,20 @@ function fileToBase64_(file) {
 // chose the last time she logged an expense from this same vendor and
 // default to that. Falls back to null (letting ExpenseForm's own
 // last-used/first-category default take over) when the vendor is new.
+// Multi-stop mileage entries store their intermediate stops as a JSON array
+// string in the Stops column (see EXPENSES_HEADERS in Code.gs). Ordinary
+// two-point drives have a blank Stops value — this always returns an array,
+// never throws on old/blank/malformed data.
+function parseStops_(raw) {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter(s => typeof s === 'string' && s.trim()) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 function guessCategoryFromVendor_(vendor, expenses) {
   const needle = String(vendor || '').trim().toLowerCase();
   if (!needle) return null;
@@ -1335,7 +1356,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
         PaymentMethod: form.PaymentMethod,
         Notes: form.Notes,
         Amount: Number(form.Amount),
-        Miles: '', MileageRate: '', StartLocation: '', EndLocation: ''
+        Miles: '', MileageRate: '', StartLocation: '', EndLocation: '', Stops: ''
       };
       let expenseId = initial && initial.ExpenseId;
       if (isEdit) {
@@ -1543,7 +1564,10 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
     Miles: (initial && initial.Miles) || '',
     MileageRate: (initial && initial.MileageRate) || defaultMileageRate,
     StartLocation: (initial && initial.StartLocation) || SAVED_START_LOCATIONS[0].address,
-    EndLocation: (initial && initial.EndLocation) || ''
+    EndLocation: (initial && initial.EndLocation) || '',
+    // Intermediate stops between Start and End, in order. Capped at 3 (so a
+    // trip tops out at 5 points total: Start + up to 3 stops + End).
+    Stops: parseStops_(initial && initial.Stops)
   }));
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
@@ -1552,14 +1576,38 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
   const [calculating, setCalculating] = useState(false);
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
+  const stopInputRefs = useRef([]);
   const isMobilePage = variant === 'page';
   const hasMapsKey = GOOGLE_MAPS_BROWSER_API_KEY && GOOGLE_MAPS_BROWSER_API_KEY.indexOf('PASTE_YOUR') !== 0;
   const computedAmount = Number(form.Miles || 0) * Number(form.MileageRate || 0);
-  // True when the Start location isn't one of the three saved bases — that's
-  // when the free-text (autocomplete) input is shown at all.
-  const isCustomStart = !SAVED_START_LOCATIONS.some(loc => loc.address === form.StartLocation);
+  const MAX_STOPS = 3;
 
   function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+  function addStop() { setForm(f => f.Stops.length >= MAX_STOPS ? f : { ...f, Stops: [...f.Stops, ''] }); }
+  function updateStop(idx, value) { setForm(f => ({ ...f, Stops: f.Stops.map((s, i) => i === idx ? value : s) })); }
+  function removeStop(idx) { setForm(f => ({ ...f, Stops: f.Stops.filter((_, i) => i !== idx) })); }
+  // Shared shortcut-button row for the three saved addresses, used above
+  // Start location and below End location. Mobile keeps the bigger
+  // icon+label tap targets; desktop gets smaller text pills — same idea,
+  // sized for a mouse/keyboard user instead of a thumb.
+  function locationShortcuts(fieldName, fieldValue) {
+    if (isMobilePage) {
+      return h('div', { className:'mobile-start-shortcuts' },
+        MOBILE_START_SHORTCUTS.map(loc => h('button', {
+          type:'button', key:loc.label,
+          className:'mobile-start-shortcut' + (fieldValue === loc.address ? ' selected' : ''),
+          onClick:() => set(fieldName, loc.address)
+        }, h(Icon, { name:loc.icon }), h('span', null, loc.label)))
+      );
+    }
+    return h('div', { className:'location-quick-picks' },
+      SAVED_START_LOCATIONS.map(loc => h('button', {
+        type:'button', key:loc.label,
+        className:'location-quick-pick' + (fieldValue === loc.address ? ' selected' : ''),
+        onClick:() => set(fieldName, loc.address)
+      }, loc.label))
+    );
+  }
 
   // One less tap on the mobile app: Start location already defaults to a
   // saved shortcut, so End location is the first thing that actually needs
@@ -1589,30 +1637,88 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
         });
         endInputRef.current._bddAutocomplete = ac2;
       }
+      // Same live autocomplete-as-you-type on each stop field as Start/End
+      // get. Each input keeps its own listener wired once (guarded by
+      // _bddAutocomplete below); the listener reads the stop's index off the
+      // element itself at fire time (not a captured closure variable) so it
+      // still targets the right array slot after stops are added/removed
+      // and this list's indices shift.
+      stopInputRefs.current.forEach(el => {
+        if (el && !el._bddAutocomplete) {
+          const ac3 = new google.maps.places.Autocomplete(el, { fields:['formatted_address'] });
+          ac3.addListener('place_changed', () => {
+            const place = ac3.getPlace();
+            const idx = Number(el.dataset.stopIndex);
+            updateStop(idx, (place && place.formatted_address) || el.value);
+          });
+          el._bddAutocomplete = ac3;
+        }
+      });
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [hasMapsKey, isCustomStart]);
+  }, [hasMapsKey, form.Stops.length]);
 
   async function calculateDistance() {
     setErr('');
     if (!form.StartLocation || !form.EndLocation) { setErr('Enter both a start and end location first.'); return; }
     if (!window.google || !window.google.maps) { setErr('Google Maps is still loading — try again in a moment.'); return; }
+    const stopAddresses = form.Stops.map(s => s.trim()).filter(Boolean);
     setCalculating(true);
     try {
-      const service = new google.maps.DistanceMatrixService();
-      const response = await new Promise((resolve, reject) => {
-        service.getDistanceMatrix({
-          origins: [form.StartLocation],
-          destinations: [form.EndLocation],
-          travelMode: google.maps.TravelMode.DRIVING,
-          unitSystem: google.maps.UnitSystem.IMPERIAL
-        }, (result, status) => {
-          if (status === 'OK') resolve(result); else reject(new Error('Could not calculate a route between those two locations.'));
+      let totalMeters;
+      if (stopAddresses.length === 0) {
+        // Common case: a plain two-point drive. Kept on the simpler
+        // DistanceMatrixService call rather than routing it through
+        // Directions too, to avoid changing behavior for the vast majority
+        // of existing trips.
+        const service = new google.maps.DistanceMatrixService();
+        const response = await new Promise((resolve, reject) => {
+          service.getDistanceMatrix({
+            origins: [form.StartLocation],
+            destinations: [form.EndLocation],
+            travelMode: google.maps.TravelMode.DRIVING,
+            unitSystem: google.maps.UnitSystem.IMPERIAL
+          }, (result, status) => {
+            if (status === 'OK') resolve(result); else reject(new Error('Could not calculate a route between those two locations.'));
+          });
         });
-      });
-      const element = response.rows[0] && response.rows[0].elements[0];
-      if (!element || element.status !== 'OK') throw new Error('Could not calculate a route between those two locations.');
-      const oneWayMiles = element.distance.value / 1609.344;
+        const element = response.rows[0] && response.rows[0].elements[0];
+        if (!element || element.status !== 'OK') throw new Error('Could not calculate a route between those two locations.');
+        totalMeters = element.distance.value;
+      } else {
+        // Multi-stop: DirectionsService returns one leg per hop (Start ->
+        // Stop 1 -> ... -> End) — sum every leg's distance for the total.
+        const directionsService = new google.maps.DirectionsService();
+        const response = await new Promise((resolve, reject) => {
+          directionsService.route({
+            origin: form.StartLocation,
+            destination: form.EndLocation,
+            waypoints: stopAddresses.map(address => ({ location: address, stopover: true })),
+            travelMode: google.maps.TravelMode.DRIVING
+          }, (result, status) => {
+            if (status === 'OK') { resolve(result); return; }
+            // Surface Google's actual status rather than a generic message —
+            // Directions is a separate API from Places/Distance Matrix on a
+            // Google Cloud key, so REQUEST_DENIED here almost always means
+            // it just isn't enabled/allowed yet for this key, not a bad
+            // address.
+            reject(new Error(
+              'Could not calculate a route through all of those stops (Google returned "' + status + '"). ' +
+              (status === 'REQUEST_DENIED'
+                ? 'In Google Cloud Console, check that this browser key’s API restrictions include the "Directions API" — it’s a separate one from Places/Distance Matrix, so it usually needs enabling on its own the first time a multi-stop trip is calculated.'
+                : status === 'NOT_FOUND'
+                  ? 'One of the stop addresses (or the start/end) couldn’t be matched to a real place — double-check they’re typed correctly.'
+                  : status === 'ZERO_RESULTS'
+                    ? 'Google couldn’t find a driving route connecting all of those stops in order.'
+                    : 'Try again in a moment, or enter the miles manually below.')
+            ));
+          });
+        });
+        const legs = (response.routes[0] && response.routes[0].legs) || [];
+        if (!legs.length) throw new Error('Could not calculate a route through all of those stops.');
+        totalMeters = legs.reduce((sum, leg) => sum + leg.distance.value, 0);
+      }
+      const oneWayMiles = totalMeters / 1609.344;
       set('Miles', (roundTrip ? oneWayMiles * 2 : oneWayMiles).toFixed(1));
     } catch (e) {
       setErr(e.message || 'Could not calculate mileage.');
@@ -1639,6 +1745,7 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
         MileageRate: Number(form.MileageRate),
         StartLocation: form.StartLocation,
         EndLocation: form.EndLocation,
+        Stops: JSON.stringify(form.Stops.map(s => s.trim()).filter(Boolean)),
         FacilityName: form.FacilityName
       };
       if (isEdit) {
@@ -1688,44 +1795,49 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
       h('label', null, 'Date'),
       h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
     ),
+    // Start location: the three saved-address shortcut buttons sit above a
+    // regular, always-visible autocomplete input — clicking a button just
+    // fills the input with that address (and highlights itself), typing
+    // anything else works exactly like the input always has. Same layout on
+    // desktop and mobile now, no more toggling between "buttons" and
+    // "custom address" modes.
     h('div', { className:'field' },
       h('label', null, 'Start location'),
-      isMobilePage
-        // Mobile: three tap targets for the same saved addresses the
-        // desktop dropdown offers, since almost every drive starts from
-        // one of them — plus a link to fall back to a typed address.
-        ? (isCustomStart
-            ? h(React.Fragment, null,
-                h('input', { type:'text', className:'input', list:'end-location-options', ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' }),
-                h('button', { type:'button', className:'mobile-link-btn', onClick:() => set('StartLocation', MOBILE_START_SHORTCUTS[0].address) }, 'Use a saved location instead')
-              )
-            : h(React.Fragment, null,
-                h('div', { className:'mobile-start-shortcuts' },
-                  MOBILE_START_SHORTCUTS.map(loc => h('button', {
-                    type:'button', key:loc.label,
-                    className:'mobile-start-shortcut' + (form.StartLocation === loc.address ? ' selected' : ''),
-                    onClick:() => set('StartLocation', loc.address)
-                  }, h(Icon, { name:loc.icon }), h('span', null, loc.label)))
-                ),
-                h('button', { type:'button', className:'mobile-link-btn', onClick:() => set('StartLocation', '') }, 'Use a different start location')
-              ))
-        // Desktop: unchanged dropdown + "Other" free-text fallback.
-        : h(React.Fragment, null,
-            h('select', {
-              className:'input',
-              value: isCustomStart ? '__custom__' : form.StartLocation,
-              onChange: e => set('StartLocation', e.target.value === '__custom__' ? '' : e.target.value)
-            },
-              SAVED_START_LOCATIONS.map(loc => h('option', { key:loc.label, value:loc.address }, loc.label)),
-              h('option', { value:'__custom__' }, 'Other (type an address)')
-            ),
-            isCustomStart && h('input', { type:'text', className:'input', list:'end-location-options', style:{ marginTop:'6px' }, ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
-          )
+      h('div', { style:{ marginBottom:'8px' } }, locationShortcuts('StartLocation', form.StartLocation)),
+      h('input', { type:'text', className:'input', list:'end-location-options', ref:startInputRef, value:form.StartLocation, onChange:e => set('StartLocation', e.target.value), placeholder:'Type or search an address' })
     ),
+    // Optional stops between Start and End, capped at 3 (5 points total on
+    // the trip). Collapsed behind "+ Add a stop" by default so an ordinary
+    // two-point drive — the vast majority — looks exactly like it always
+    // has, on both desktop and mobile.
+    h('div', { className:'field' },
+      form.Stops.length > 0 && form.Stops.map((stop, idx) => h('div', {
+        key: idx, style:{ display:'flex', gap:'6px', alignItems:'center', marginBottom:'6px' }
+      },
+        h('input', {
+          type:'text', className:'input', list:'end-location-options', value:stop,
+          ref: el => { stopInputRefs.current[idx] = el; },
+          'data-stop-index': idx,
+          onChange:e => updateStop(idx, e.target.value),
+          placeholder:'Stop ' + (idx + 1) + ' address'
+        }),
+        h('button', { type:'button', className:'mobile-link-btn', onClick:() => removeStop(idx), 'aria-label':'Remove stop ' + (idx + 1), title:'Remove this stop' }, '✕')
+      )),
+      form.Stops.length < MAX_STOPS && h('button', {
+        type:'button', className:'mobile-link-btn', onClick:addStop
+      }, form.Stops.length === 0 ? '+ Add a stop' : '+ Add another stop')
+    ),
+    // End location: the always-visible autocomplete input first (still the
+    // primary way in, since End is usually a real facility), then the same
+    // three shortcut buttons below it for a trip that loops back to one of
+    // them (e.g. Home -> Facility -> Home on a multi-stop day).
     h('div', { className:'field' },
       h('label', null, 'End location'),
       h('input', { type:'text', className:'input', list:'end-location-options', ref:endInputRef, value:form.EndLocation, onChange:e => set('EndLocation', e.target.value), placeholder:'e.g. Cape Cod Hospital, Hyannis, MA' }),
       endLocationOptions && endLocationOptions.length > 0 && h('datalist', { id:'end-location-options' }, endLocationOptions.map(v => h('option', { key:v, value:v })))
+    ),
+    h('div', { className:'field' },
+      locationShortcuts('EndLocation', form.EndLocation)
     ),
     // Facility name isn't shown on the mobile form — one more field than a
     // quick phone log needs; still available (and still saved) from the
@@ -1958,8 +2070,8 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
   }, [expenses, categoryFilter, quickFilter, search, sortCol, sortDir]);
 
   function exportCsv() {
-    const headers = ['Date','Category','Vendor','Description','Amount','PaymentMethod','Miles','MileageRate','StartLocation','EndLocation','Notes'];
-    const rows = filtered.map(r => headers.map(hd => r[hd] === undefined || r[hd] === null ? '' : r[hd]));
+    const headers = ['Date','Category','Vendor','Description','Amount','PaymentMethod','Miles','MileageRate','StartLocation','Stops','EndLocation','Notes'];
+    const rows = filtered.map(r => headers.map(hd => hd === 'Stops' ? parseStops_(r.Stops).join(' | ') : (r[hd] === undefined || r[hd] === null ? '' : r[hd])));
     downloadCsv_('bdd-exp-expenses-' + todayStr() + '.csv', headers, rows);
   }
 
@@ -2249,6 +2361,7 @@ function MileageView({ expenses, onEdit, onDelete, onDuplicate }) {
         (r.FacilityName || '').toLowerCase().includes(q) ||
         (r.StartLocation || '').toLowerCase().includes(q) ||
         (r.EndLocation || '').toLowerCase().includes(q) ||
+        parseStops_(r.Stops).join(' ').toLowerCase().includes(q) ||
         (r.Notes || '').toLowerCase().includes(q)
       );
     }
@@ -2257,8 +2370,8 @@ function MileageView({ expenses, onEdit, onDelete, onDuplicate }) {
   const selectedStats = selectedFacility ? facilities.find(f => f.key === selectedFacility) : null;
 
   function exportCsv() {
-    const headers = ['Date','Vendor','FacilityName','StartLocation','EndLocation','Miles','MileageRate','Amount','Notes'];
-    const csvRows = visibleRows.map(r => headers.map(hd => r[hd] === undefined || r[hd] === null ? '' : r[hd]));
+    const headers = ['Date','Vendor','FacilityName','StartLocation','Stops','EndLocation','Miles','MileageRate','Amount','Notes'];
+    const csvRows = visibleRows.map(r => headers.map(hd => hd === 'Stops' ? parseStops_(r.Stops).join(' | ') : (r[hd] === undefined || r[hd] === null ? '' : r[hd])));
     downloadCsv_('bdd-exp-mileage-' + todayStr() + '.csv', headers, csvRows);
   }
 
@@ -2293,16 +2406,22 @@ function MileageView({ expenses, onEdit, onDelete, onDuplicate }) {
           )
         : h('table', { className:'data-table' },
             h('thead', null, h('tr', null, h('th', null,'Date'), h('th', null,'Purpose'), h('th', null,'Facility'), h('th', null,'From'), h('th', null,'To'), h('th', {className:'num'}, 'Miles'), h('th', {className:'num'}, 'Amount'), h('th', null, ''))),
-            h('tbody', null, visibleRows.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
-              h('td', null, formatDate(r.Date)),
-              h('td', null, r.Vendor || '—'),
-              h('td', null, r.FacilityName || '—'),
-              h('td', null, extractTown_(r.StartLocation) || '—'),
-              h('td', null, extractTown_(r.EndLocation) || '—'),
-              h('td', { className:'num' }, Number(r.Miles||0).toLocaleString(undefined,{maximumFractionDigits:1})),
-              h('td', { className:'num' }, formatCurrency(r.Amount)),
-              h('td', { style:{ textAlign:'right' } }, h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'})))
-            )))
+            h('tbody', null, visibleRows.map(r => {
+              const stopCount = parseStops_(r.Stops).length;
+              return h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
+                h('td', null, formatDate(r.Date)),
+                h('td', null, r.Vendor || '—'),
+                h('td', null, r.FacilityName || '—'),
+                h('td', null, extractTown_(r.StartLocation) || '—'),
+                h('td', null, extractTown_(r.EndLocation) || '—', stopCount > 0 && h('span', {
+                  className:'pill pill-teal', style:{ marginLeft:'6px', fontSize:'10px', padding:'1px 6px' },
+                  title: parseStops_(r.Stops).join(' → ')
+                }, '+' + stopCount + (stopCount === 1 ? ' stop' : ' stops'))),
+                h('td', { className:'num' }, Number(r.Miles||0).toLocaleString(undefined,{maximumFractionDigits:1})),
+                h('td', { className:'num' }, formatCurrency(r.Amount)),
+                h('td', { style:{ textAlign:'right' } }, h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'})))
+              );
+            }))
           )
     )
     )
@@ -2325,6 +2444,7 @@ function DashboardView({ expenses, setView, onMissingReceiptsClick }) {
   const mtd = expenses.filter(r => inRange(r, monthStart));
   const lastMonth = expenses.filter(r => inRange(r, lastMonthStart, lastMonthEnd));
   const ytd = expenses.filter(r => inRange(r, yearStart));
+  const mileageMtd = mtd.filter(r => r.Category === 'Mileage');
   const mileageYtd = ytd.filter(r => r.Category === 'Mileage');
   // Mileage entries never have a receipt to attach — they're a calculated
   // distance × rate, not a purchase — so they shouldn't count as "missing."
@@ -2383,6 +2503,7 @@ function DashboardView({ expenses, setView, onMissingReceiptsClick }) {
         mtdDelta !== null && h('div', { className:'kpi-delta ' + (mtdDelta > 0 ? 'up' : mtdDelta < 0 ? 'down' : 'flat') }, (mtdDelta>0?'↑ ':mtdDelta<0?'↓ ':'') + Math.abs(mtdDelta) + '% vs last month')
       ),
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Year to date'), h('div', { className:'kpi-value' }, formatCurrency(ytdTotal))),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Mileage MTD'), h('div', { className:'kpi-value' }, mileageMtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')),
       h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Mileage YTD'), h('div', { className:'kpi-value' }, mileageYtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')),
       h('div', {
         className:'kpi-tile kpi-tile-clickable',
@@ -2944,8 +3065,8 @@ function MobileDashboard({ expenses }) {
   const inRange = (r, start) => { const d = parseDate_(r.Date); return d && d >= start; };
   const mtd = expenses.filter(r => inRange(r, monthStart));
   const ytd = expenses.filter(r => inRange(r, yearStart));
+  const mileageMtd = mtd.filter(r => r.Category === 'Mileage');
   const mileageYtd = ytd.filter(r => r.Category === 'Mileage');
-  const missingReceipts = ytd.filter(r => r.Category !== 'Mileage' && !r.ReceiptFileUrl).length;
   const recent = expenses.slice().sort((a, b) => (parseDate_(b.Date) || 0) - (parseDate_(a.Date) || 0)).slice(0, 5);
 
   return h('div', null,
@@ -2959,12 +3080,12 @@ function MobileDashboard({ expenses }) {
         h('div', { className:'kpi-value' }, formatCurrencyCompact(sum(ytd)))
       ),
       h('div', { className:'mobile-kpi-tile' },
-        h('div', { className:'kpi-label' }, 'Mileage YTD'),
-        h('div', { className:'kpi-value' }, mileageYtd.reduce((s, r) => s + (Number(r.Miles) || 0), 0).toLocaleString(undefined, { maximumFractionDigits:0 }) + ' mi')
+        h('div', { className:'kpi-label' }, 'Mileage MTD'),
+        h('div', { className:'kpi-value' }, mileageMtd.reduce((s, r) => s + (Number(r.Miles) || 0), 0).toLocaleString(undefined, { maximumFractionDigits:0 }) + ' mi')
       ),
       h('div', { className:'mobile-kpi-tile' },
-        h('div', { className:'kpi-label' }, 'Missing receipts'),
-        h('div', { className:'kpi-value' }, missingReceipts)
+        h('div', { className:'kpi-label' }, 'Mileage YTD'),
+        h('div', { className:'kpi-value' }, mileageYtd.reduce((s, r) => s + (Number(r.Miles) || 0), 0).toLocaleString(undefined, { maximumFractionDigits:0 }) + ' mi')
       )
     ),
     h('div', { className:'card card-pad', style:{ marginTop:'14px' } },
@@ -3367,6 +3488,7 @@ function App() {
       PaymentMethod: expense.PaymentMethod, Notes: expense.Notes,
       Miles: expense.Miles, MileageRate: expense.MileageRate,
       StartLocation: expense.StartLocation, EndLocation: expense.EndLocation,
+      Stops: expense.Stops,
       FacilityName: expense.FacilityName
     };
     if (expense.Category === 'Mileage') {
@@ -3400,7 +3522,7 @@ function App() {
     data.expenses.forEach(e => {
       const isMileage = e.Category === 'Mileage';
       const name = e.Vendor || (isMileage ? 'Mileage' : e.Category) || '';
-      const meta = [e.Description, e.Notes, e.Category, e.PaymentMethod, e.StartLocation, e.EndLocation, e.FacilityName].filter(Boolean).join(' ').toLowerCase();
+      const meta = [e.Description, e.Notes, e.Category, e.PaymentMethod, e.StartLocation, e.EndLocation, parseStops_(e.Stops).join(' '), e.FacilityName].filter(Boolean).join(' ').toLowerCase();
       const score = scoreFor(name, meta);
       if (score === null) return;
       const fromTo = isMileage ? [extractTown_(e.StartLocation), extractTown_(e.EndLocation)].filter(Boolean).join(' → ') : '';
