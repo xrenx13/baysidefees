@@ -409,6 +409,10 @@
   .input:focus, select.input:focus, textarea.input:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(15,118,110,.12); }
   .field-hint { font-size:11px; color:var(--faint); }
   .field-error { font-size:11px; color:var(--danger); }
+  /* A computed value shown in the same box as a real input (Mileage's
+     Amount, next to Miles) but not editable — same size/border rhythm as
+     .input, just a muted fill and bold figure to read as "display only". */
+  .field-static { display:flex; align-items:center; height:38px; padding:0 12px; border-radius:9px; border:1px solid #e2e6ea; background:#f4f6f8; font-size:14px; font-weight:700; color:var(--ink); }
   .amount-input-wrap { position:relative; }
   .amount-input-wrap .amount-prefix { position:absolute; left:12px; top:0; bottom:0; display:flex; align-items:center; font-size:13.5px; color:#475467; pointer-events:none; }
   .amount-input-wrap .input { padding-left:24px; }
@@ -514,7 +518,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-36';
+const BUILD_NUMBER = '2026.09.19-41';
 
 // =====================================================================
 // Small utilities
@@ -903,6 +907,8 @@ function Icon({ name }) {
     house: h(React.Fragment, null, h('path',{d:'M4 11.5 12 4l8 7.5'}), h('path',{d:'M6 10.5V20a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9.5'})),
     building: h(React.Fragment, null, h('rect',{x:'5',y:'4',width:'14',height:'17',rx:'1.2'}), h('path',{d:'M12 9v6M9 12h6'}), h('path',{d:'M9 21v-3h6v3'})),
     camera: h(React.Fragment, null, h('path',{d:'M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z'}), h('circle',{cx:'12',cy:'13.5',r:'3.4'})),
+    assets: h(React.Fragment, null, h('rect',{x:'3',y:'10',width:'18',height:'9',rx:'1.5'}), h('path',{d:'M8 10V7a4 4 0 0 1 8 0v3'}), h('path',{d:'M3 14h18'})),
+    warning: h(React.Fragment, null, h('path',{d:'M12 3.5 22 20.5H2z'}), h('path',{d:'M12 10v4'}), h('circle',{cx:'12',cy:'17',r:'0.6',fill:'currentColor'})),
   };
   return h('span', { className:'nav-icon' }, h('svg', { viewBox:'0 0 24 24' }, paths[name] || null));
 }
@@ -1015,9 +1021,10 @@ const NAV_ITEMS = [
   { key:'dashboard', label:'Dashboard', icon:'dashboard' },
   { key:'expenses', label:'Expenses', icon:'expenses' },
   { key:'mileage', label:'Mileage', icon:'mileage' },
-  { key:'reports', label:'Reports', icon:'reports' },
+  { key:'assets', label:'Assets', icon:'assets' },
   { key:'purchaseorders', label:'Purchase Orders', icon:'po' },
   { key:'subscriptions', label:'Subscriptions', icon:'subscription' },
+  { key:'reports', label:'Reports', icon:'reports' },
 ];
 
 // External shortcuts shown in the sidebar's "Tools" section — matches the
@@ -1277,7 +1284,7 @@ function MobilePageShell({ title, headerRight, onCancel, onSubmit, saving, justS
 // MobilePageShell above, and minimal hides the recurring-subscription
 // section, which is a desktop/admin setup task, not a quick phone log.
 // =====================================================================
-function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt, apiCreateRecurringSub, recurringSubscriptions, variant, minimal, initialReceiptFile, scanHint }) {
+function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt, apiScanReceipt, apiCreateRecurringSub, recurringSubscriptions, variant, minimal, initialReceiptFile, scanHint, expenses }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const partOfSubscription = isEdit && !!initial.RecurringTemplateId;
   // The expense row itself only carries a RecurringTemplateId — the actual
@@ -1321,6 +1328,23 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [err, setErr] = useState('');
+  // Reusing the same Document AI scan the mobile "Scan receipt" button uses
+  // (see MobileApp's handleScanFileChosen) — but here it runs against
+  // whatever's attached in the Receipt field below, on either platform,
+  // instead of a dedicated real-time camera capture. dirtyFieldsRef tracks
+  // which fields the person has actually edited (via set(), below) so a
+  // scan only ever fills in what's still blank/untouched — it never
+  // clobbers something already typed, or a value that came from an
+  // existing record being edited.
+  const [scanningReceipt, setScanningReceipt] = useState(false);
+  const [receiptScanNote, setReceiptScanNote] = useState('');
+  const dirtyFieldsRef = useRef(new Set());
+  // Scanning happens after an `await`, well outside the event handler that
+  // triggered it — React doesn't guarantee a setState updater runs
+  // synchronously there, so applyScanResult below reads the latest form
+  // from this ref (kept current every render) rather than trying to read
+  // state back out of a setState call.
+  const formRef = useRef(null);
   const isMobilePage = variant === 'page';
   // Description is optional and, on a quick phone log, rarely filled in —
   // collapsed behind a link until asked for (like Add Mileage's "different
@@ -1331,7 +1355,58 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
   const [showDescription, setShowDescription] = useState(() => !isMobilePage || !!(initial && initial.Description));
   const amountInputRef = useRef(null);
 
-  function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+  function set(field, value) { dirtyFieldsRef.current.add(field); setForm(f => ({ ...f, [field]: value })); }
+  formRef.current = form;
+
+  // Merges a Document AI scan result into the form, filling only fields
+  // that are still safe to touch: Date/Category never get overwritten once
+  // edited (or on an existing expense, where they already reflect a real
+  // record) and Vendor/Amount only fill in if they're still empty. Returns
+  // whether anything actually got filled in, for the hint shown below.
+  function applyScanResult(scanned) {
+    const dirty = dirtyFieldsRef.current;
+    const f = formRef.current;
+    const next = { ...f };
+    let filledAny = false;
+    if (!isEdit && !dirty.has('Date') && scanned.date) { next.Date = scanned.date; filledAny = true; }
+    if (!dirty.has('Vendor') && !f.Vendor && scanned.vendor) { next.Vendor = scanned.vendor; filledAny = true; }
+    if (!dirty.has('Amount') && !f.Amount && scanned.amount != null) { next.Amount = String(scanned.amount); filledAny = true; }
+    if (!isEdit && !dirty.has('Category')) {
+      const guessed = guessCategoryFromVendor_(scanned.vendor, expenses);
+      if (guessed && categories.includes(guessed) && guessed !== f.Category) { next.Category = guessed; filledAny = true; }
+    }
+    if (filledAny) setForm(next);
+    return filledAny;
+  }
+
+  // Runs whenever a file is attached in the Receipt field below (desktop
+  // modal or mobile Add Expense — same shared field either way), whether
+  // it's a fresh create or replacing the receipt on an edit. Fails open:
+  // if scanning errors out or finds nothing, the file is still attached as
+  // the receipt exactly as before, just without the auto-fill.
+  async function handleReceiptFile(rawFile) {
+    setFile(rawFile);
+    setReceiptScanNote('');
+    if (!rawFile || !apiScanReceipt) return;
+    setScanningReceipt(true);
+    try {
+      const compressed = await compressReceiptImage_(rawFile);
+      const base64Data = await fileToBase64_(compressed);
+      const scanned = await apiScanReceipt(compressed.type || rawFile.type, base64Data);
+      if (scanned && (scanned.vendor || scanned.amount || scanned.date)) {
+        // Found something, but every field it could have filled was already
+        // entered (common when replacing the receipt on an existing
+        // expense) — worth a different note than "couldn't find much",
+        // since the scan itself worked fine.
+        setReceiptScanNote(applyScanResult(scanned) ? 'filled' : 'skipped');
+      } else {
+        setReceiptScanNote('empty');
+      }
+    } catch (scanErr) {
+      setReceiptScanNote('error');
+    }
+    setScanningReceipt(false);
+  }
 
   // One less tap on the mobile app: the keyboard is already up on Amount —
   // the very first thing you'd type — the moment the screen opens.
@@ -1495,6 +1570,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
     ),
     h('div', { className:'field' },
       h('label', null, 'Receipt'),
+      apiScanReceipt && !file && !existingReceipt && h('div', { className:'field-hint', style:{ marginTop:'-2px', marginBottom:'6px' } }, 'Attach a receipt to auto-populate this form.'),
       existingReceipt && !file
         ? h('div', { className:'receipt-chip' },
             h(Icon, { name:'receipt' }),
@@ -1503,8 +1579,16 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
           )
         : h('label', { className:'receipt-drop' },
             file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt',
-            h('input', { type:'file', accept:'image/*,application/pdf', capture:'environment', style:{ display:'none' }, onChange:e => setFile(e.target.files[0] || null) })
-          )
+            h('input', { type:'file', accept:'image/*,application/pdf', capture:'environment', style:{ display:'none' }, onChange:e => handleReceiptFile(e.target.files[0] || null) })
+          ),
+      // Same read-then-fill Document AI pass the mobile "Scan receipt"
+      // button uses, just triggered from this field instead — see
+      // handleReceiptFile above for exactly what it will and won't overwrite.
+      scanningReceipt && h('div', { className:'field-hint' }, 'Reading receipt…'),
+      !scanningReceipt && receiptScanNote === 'filled' && h('div', { className:'scan-hint' }, '✨ Auto-filled from your receipt — check it over before saving.'),
+      !scanningReceipt && receiptScanNote === 'skipped' && h('div', { className:'field-hint' }, "Read the receipt, but kept what's already entered above."),
+      !scanningReceipt && receiptScanNote === 'empty' && h('div', { className:'field-hint' }, "Couldn't find much on that receipt — check the details above."),
+      !scanningReceipt && receiptScanNote === 'error' && h('div', { className:'field-hint' }, "Couldn't read that receipt — enter the details manually.")
     ),
     partOfSubscription && h('div', { className:'field-hint', style:{ marginTop:'-4px' } },
       'Part of a recurring subscription' + (linkedTemplate ? ' (' + formatInterval_(linkedTemplate.IntervalUnit, linkedTemplate.IntervalCount).toLowerCase() + ')' : '') +
@@ -1839,9 +1923,41 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
     h('div', { className:'field' },
       locationShortcuts('EndLocation', form.EndLocation)
     ),
+    h('div', { style:{ display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap' } },
+      h('label', { className:'checkbox-row' },
+        h('input', { type:'checkbox', checked:roundTrip, onChange:e => setRoundTrip(e.target.checked) }),
+        'Round trip'
+      ),
+      h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:calculateDistance, disabled:calculating }, calculating ? 'Calculating…' : 'Calculate miles'),
+      !hasMapsKey && h('span', { className:'field-hint' }, 'Add a Google Maps API key in index.html to enable autocomplete + auto-calculated mileage — you can still type miles in manually below.')
+    ),
+    // Rate per mile isn't shown as an editable field on either platform now
+    // — it still applies (silently, at today's default rate) so Amount
+    // stays accurate. Desktop shows the computed Amount next to Miles as a
+    // read-only figure rather than an input; mobile keeps its single
+    // Miles field with an Amount hint below it.
+    isMobilePage
+      ? h('div', { className:'field' },
+          h('label', null, 'Miles'),
+          // inputMode:'decimal' gives iOS/Android's plain numeric keypad
+          // here instead of type="number"'s +/-/e keyboard.
+          h('input', { type:'number', inputMode:'decimal', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) }),
+          h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedAmount || 0) + ' · uses your default per-mile rate')
+        )
+      : h('div', { className:'modal-row-2' },
+          h('div', { className:'field' },
+            h('label', null, 'Miles'),
+            h('input', { type:'number', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) })
+          ),
+          h('div', { className:'field' },
+            h('label', null, 'Amount'),
+            h('div', { className:'field-static' }, formatCurrency(computedAmount || 0))
+          )
+        ),
     // Facility name isn't shown on the mobile form — one more field than a
     // quick phone log needs; still available (and still saved) from the
-    // desktop modal.
+    // desktop modal. Sits after Miles/Amount now rather than up with the
+    // locations.
     !isMobilePage && h('div', { className:'field' },
       h('label', null, 'Facility name'),
       // A type-to-search field, not a dropdown: with dozens of CRM accounts,
@@ -1857,45 +1973,12 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
         ? h('datalist', { id:'facility-options' }, facilityOptions.map(v => h('option', { key:v, value:v })))
         : h('span', { className:'field-hint' }, 'Facility list from the CRM isn’t available right now — typed in as free text for now.')
     ),
-    h('div', { style:{ display:'flex', alignItems:'center', gap:'14px', flexWrap:'wrap' } },
-      h('label', { className:'checkbox-row' },
-        h('input', { type:'checkbox', checked:roundTrip, onChange:e => setRoundTrip(e.target.checked) }),
-        'Round trip'
-      ),
-      h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:calculateDistance, disabled:calculating }, calculating ? 'Calculating…' : 'Calculate miles'),
-      !hasMapsKey && h('span', { className:'field-hint' }, 'Add a Google Maps API key in index.html to enable autocomplete + auto-calculated mileage — you can still type miles in manually below.')
-    ),
-    // Rate per mile isn't shown on mobile — it still applies (silently, at
-    // today's default) so the Amount hint below Miles stays accurate.
-    isMobilePage
-      ? h('div', { className:'field' },
-          h('label', null, 'Miles'),
-          // inputMode:'decimal' gives iOS/Android's plain numeric keypad
-          // here instead of type="number"'s +/-/e keyboard.
-          h('input', { type:'number', inputMode:'decimal', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) }),
-          h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedAmount || 0) + ' · uses your default per-mile rate')
-        )
-      : h('div', { className:'modal-row-2' },
-          h('div', { className:'field' },
-            h('label', null, 'Miles'),
-            h('input', { type:'number', min:'0', step:'0.1', className:'input', value:form.Miles, onChange:e => set('Miles', e.target.value) })
-          ),
-          h('div', { className:'field' },
-            h('label', null, 'Rate per mile'),
-            h('input', { type:'number', min:'0', step:'0.001', className:'input', value:form.MileageRate, onChange:e => set('MileageRate', e.target.value) }),
-            h('span', { className:'field-hint' }, 'Amount: ' + formatCurrency(computedAmount || 0))
-          )
-        ),
-    // Purpose and Notes aren't shown on the mobile form either — both still
-    // available from the desktop modal.
+    // Purpose isn't shown on the mobile form either — still available from
+    // the desktop modal. Notes has been removed from this form entirely.
     !isMobilePage && h('div', { className:'field' },
       h('label', null, 'Purpose'),
       h('input', { type:'text', className:'input', list:'purpose-options', value:form.Vendor, onChange:e => set('Vendor', e.target.value), placeholder:'e.g. FEES visit, supply pickup' }),
       purposeOptions && purposeOptions.length > 0 && h('datalist', { id:'purpose-options' }, purposeOptions.map(v => h('option', { key:v, value:v })))
-    ),
-    !isMobilePage && h('div', { className:'field' },
-      h('label', null, 'Notes'),
-      h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
     )
   );
 }
@@ -2020,6 +2103,113 @@ function PurchaseOrderForm({ initial, categories, statuses, vendorOptions, onCan
 }
 
 // =====================================================================
+// Asset (equipment / capital purchase) form — mirrors the Purchase Order
+// form's structure. Desktop-only, no mobile variant (same as PO/Subscriptions).
+// =====================================================================
+function AssetForm({ initial, categories, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt }) {
+  const isEdit = !!(initial && initial.AssetId);
+  const [form, setForm] = useState(() => ({
+    Date: (initial && initial.Date) || todayStr(),
+    Description: (initial && initial.Description) || '',
+    Category: (initial && initial.Category) || categories[0] || 'Other Equipment',
+    Vendor: (initial && initial.Vendor) || '',
+    Cost: (initial && initial.Cost) || '',
+    Notes: (initial && initial.Notes) || ''
+  }));
+  const [file, setFile] = useState(null);
+  const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl } : null);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  function set(field, value) { setForm(f => ({ ...f, [field]: value })); }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErr('');
+    if (!form.Date) return setErr('Date is required.');
+    if (!form.Description) return setErr('Description is required.');
+    if (!form.Cost || Number(form.Cost) <= 0) return setErr('Enter a cost greater than zero.');
+    setSaving(true);
+    try {
+      const payload = { ...form, Cost: Number(form.Cost) };
+      let assetId = initial && initial.AssetId;
+      if (isEdit) {
+        await apiUpdate({ AssetId: assetId, ...payload });
+      } else {
+        const created = await apiCreate(payload);
+        assetId = created.AssetId;
+      }
+      if (file) {
+        const uploadFile = await compressReceiptImage_(file);
+        const base64Data = await fileToBase64_(uploadFile);
+        const uploaded = await apiUploadReceipt(assetId, uploadFile.name, uploadFile.type, base64Data);
+        await apiUpdate({ AssetId: assetId, ReceiptFileId: uploaded.fileId, ReceiptFileUrl: uploaded.url, ReceiptFileName: uploaded.name });
+      }
+      onSaved();
+    } catch (err2) {
+      setErr(err2.message || 'Something went wrong saving this asset.');
+    }
+    setSaving(false);
+  }
+
+  return h(ModalShell, {
+    title: isEdit ? 'Edit asset' : 'New asset',
+    onCancel, onSubmit: handleSubmit, saving,
+    submitLabel: isEdit ? 'Save changes' : 'Add asset'
+  },
+    err && h('div', { className:'field-error' }, err),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Date purchased'),
+        h('input', { type:'date', className:'input', value:form.Date, onChange:e => set('Date', e.target.value) })
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Category'),
+        h('select', { className:'input', value:form.Category, onChange:e => set('Category', e.target.value) },
+          categories.map(c => h('option', { key:c, value:c }, c))
+        )
+      )
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Description'),
+      h('input', { type:'text', className:'input', value:form.Description, onChange:e => set('Description', e.target.value), placeholder:'e.g. FEES videofluoroscopy unit' })
+    ),
+    h('div', { className:'modal-row-2' },
+      h('div', { className:'field' },
+        h('label', null, 'Vendor'),
+        h('input', { type:'text', className:'input', list:'asset-vendor-options', value:form.Vendor, onChange:e => set('Vendor', e.target.value) }),
+        vendorOptions && vendorOptions.length > 0 && h('datalist', { id:'asset-vendor-options' }, vendorOptions.map(v => h('option', { key:v, value:v })))
+      ),
+      h('div', { className:'field' },
+        h('label', null, 'Cost'),
+        h('div', { className:'amount-input-wrap' },
+          h('span', { className:'amount-prefix' }, '$'),
+          h('input', { type:'number', min:'0', step:'0.01', className:'input', value:form.Cost, onChange:e => set('Cost', e.target.value), placeholder:'0.00' })
+        )
+      )
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Notes'),
+      h('input', { type:'text', className:'input', value:form.Notes, onChange:e => set('Notes', e.target.value) })
+    ),
+    h('div', { className:'field' },
+      h('label', null, 'Receipt / invoice'),
+      existingReceipt && !file
+        ? h('div', { className:'receipt-chip' },
+            h(Icon, { name:'receipt' }),
+            h('a', { href:existingReceipt.url, target:'_blank', rel:'noopener noreferrer' }, existingReceipt.name || 'View receipt'),
+            h('button', { type:'button', className:'btn btn-ghost btn-sm', style:{ marginLeft:'auto' }, onClick:() => setExistingReceipt(null) }, 'Replace')
+          )
+        : h('label', { className:'receipt-drop' },
+            file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt/invoice',
+            h('input', { type:'file', accept:'image/*,application/pdf', style:{ display:'none' }, onChange:e => setFile(e.target.files[0] || null) })
+          )
+    ),
+    h('div', { className:'field-hint' }, "Equipment and other capital purchases are usually depreciated (or expensed under Section 179) rather than deducted all at once — this just keeps a clean, receipt-backed record for your accountant. These amounts aren't included in your regular expense totals.")
+  );
+}
+
+// =====================================================================
 // Expenses list/table view
 // =====================================================================
 // Column definitions for the Expenses table — click a header to sort by it,
@@ -2034,7 +2224,44 @@ const EXPENSE_COLUMNS = [
   { key:'Receipt', label:'Receipt', getValue:r => r.ReceiptFileUrl ? 1 : 0 },
 ];
 
+// Flags expenses that look like the same purchase entered more than once —
+// the two mistakes this actually catches in practice are a receipt scanned
+// or typed in twice on the same day, and the same purchase logged again a
+// day or two later after forgetting it was already entered. Mileage is
+// excluded: distinct trips routinely land on the same amount (a fixed rate
+// x round-trip distance) purely by coincidence, so a match there wouldn't
+// mean much. Returns a Map of ExpenseId -> the other expense record(s) it
+// matches, so the UI can both flag the row and explain why.
+const DUPLICATE_MATCH_WINDOW_DAYS = 3;
+function findDuplicateExpenses_(expenses) {
+  const candidates = expenses.filter(e => e.Category !== 'Mileage' && Number(e.Amount) > 0 && parseDate_(e.Date));
+  const matches = new Map();
+  function addMatch(a, b) {
+    if (!matches.has(a.ExpenseId)) matches.set(a.ExpenseId, []);
+    matches.get(a.ExpenseId).push(b);
+  }
+  for (let i = 0; i < candidates.length; i++) {
+    for (let j = i + 1; j < candidates.length; j++) {
+      const a = candidates[i], b = candidates[j];
+      if (Math.abs(Number(a.Amount) - Number(b.Amount)) > 0.004) continue; // must match to the penny
+      const dayDiff = Math.abs(parseDate_(a.Date) - parseDate_(b.Date)) / 86400000;
+      const sameVendor = a.Vendor && b.Vendor && a.Vendor.trim().toLowerCase() === b.Vendor.trim().toLowerCase();
+      // Same amount on the same day is worth a look regardless of vendor
+      // (that's the "scanned/entered the same receipt twice" case). Same
+      // vendor + amount within a few days catches the "logged it again a
+      // couple days later" case even if the date drifted slightly.
+      if (dayDiff === 0 || (sameVendor && dayDiff <= DUPLICATE_MATCH_WINDOW_DAYS)) {
+        addMatch(a, b);
+        addMatch(b, a);
+      }
+    }
+  }
+  return matches;
+}
+
 function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, quickFilter, onClearQuickFilter }) {
+  const duplicateMatches = useMemo(() => findDuplicateExpenses_(expenses), [expenses]);
+  const [duplicatesOnly, setDuplicatesOnly] = useState(false);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const restoredSortRef = useRef((() => { try { return JSON.parse(sessionStorage.getItem(LS_PREFIX+'expenses_table_sort')||'{}')||{}; } catch(_) { return {}; } })());
@@ -2060,6 +2287,7 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
       const yearStart = new Date(new Date().getFullYear(), 0, 1);
       rows = rows.filter(r => r.Category !== 'Mileage' && !r.ReceiptFileUrl && (parseDate_(r.Date)||0) >= yearStart);
     }
+    if (duplicatesOnly) rows = rows.filter(r => duplicateMatches.has(r.ExpenseId));
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       rows = rows.filter(r => (r.Vendor||'').toLowerCase().includes(q) || (r.Description||'').toLowerCase().includes(q) || (r.Notes||'').toLowerCase().includes(q));
@@ -2067,7 +2295,7 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
     const col = EXPENSE_COLUMNS.find(c => c.key === sortCol) || EXPENSE_COLUMNS[0];
     rows.sort((a,b) => { const cmp = compareForSort_(col.getValue(a), col.getValue(b)); return sortDir === 'asc' ? cmp : -cmp; });
     return rows;
-  }, [expenses, categoryFilter, quickFilter, search, sortCol, sortDir]);
+  }, [expenses, categoryFilter, quickFilter, duplicatesOnly, duplicateMatches, search, sortCol, sortDir]);
 
   function exportCsv() {
     const headers = ['Date','Category','Vendor','Description','Amount','PaymentMethod','Miles','MileageRate','StartLocation','Stops','EndLocation','Notes'];
@@ -2090,11 +2318,15 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
       h('span', { className:'pill pill-teal' }, 'Missing receipts · year to date'),
       h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:onClearQuickFilter }, 'Clear filter')
     ),
+    duplicateMatches.size > 0 && h('div', { className:'filter-row', style:{ marginBottom:'14px' } },
+      h('span', { className:'pill pill-warn' }, h(Icon,{name:'warning'}), duplicateMatches.size + ' possible ' + (duplicateMatches.size === 1 ? 'duplicate' : 'duplicates') + (duplicatesOnly ? ' · showing only these' : ' found')),
+      h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:() => setDuplicatesOnly(v => !v) }, duplicatesOnly ? 'Show all expenses' : 'Review')
+    ),
     h('div', { className:'card table-wrap' },
       filtered.length === 0
         ? h('div', { className:'empty-state' },
-            h('div', { className:'empty-state-title' }, quickFilter === 'missingReceiptsYtd' ? 'No missing receipts' : 'No expenses yet'),
-            h('p', null, quickFilter === 'missingReceiptsYtd' ? 'Every expense logged this year already has a receipt attached.' : 'Add your first expense to start tracking spend.')
+            h('div', { className:'empty-state-title' }, duplicatesOnly ? 'No possible duplicates' : (quickFilter === 'missingReceiptsYtd' ? 'No missing receipts' : 'No expenses yet')),
+            h('p', null, duplicatesOnly ? "None of your current filters match a flagged expense." : (quickFilter === 'missingReceiptsYtd' ? 'Every expense logged this year already has a receipt attached.' : 'Add your first expense to start tracking spend.'))
           )
         : h(React.Fragment, null,
             h('table', { className:'data-table' },
@@ -2106,10 +2338,20 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
                 }, col.label + sortArrow_(sortCol === col.key, sortDir))),
                 h('th', null, '')
               )),
-              h('tbody', null, filtered.map(r => h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
+              h('tbody', null, filtered.map(r => {
+                const dupes = duplicateMatches.get(r.ExpenseId);
+                return h('tr', { key:r.ExpenseId, onClick:() => onEdit(r) },
                 h('td', null, formatDate(r.Date)),
                 h('td', null, h('span', { className:'pill ' + categoryPillClass(r.Category) }, r.Category)),
-                h('td', null, r.Vendor || '—'),
+                h('td', null,
+                  h('div', { style:{ display:'flex', alignItems:'center', gap:'6px' } },
+                    r.Vendor || '—',
+                    dupes && h('span', {
+                      className:'pill pill-warn', style:{ padding:'2px 6px' },
+                      title:'Possible duplicate — matches ' + dupes.map(m => formatDate(m.Date) + ' · ' + formatCurrency(m.Amount) + (m.Vendor ? ' · ' + m.Vendor : '')).join('; ')
+                    }, h(Icon,{name:'warning'}))
+                  )
+                ),
                 h('td', null, r.PaymentMethod || '—'),
                 h('td', { className:'num' }, formatCurrency(r.Amount)),
                 h('td', null, r.ReceiptFileUrl ? h('a', { href:r.ReceiptFileUrl, target:'_blank', rel:'noopener noreferrer', style:{ color:'var(--teal-dark)', display:'inline-flex' }, onClick:e => e.stopPropagation() }, h(Icon,{name:'receipt'})) : '—'),
@@ -2119,7 +2361,8 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
                     h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
                   )
                 )
-              )))
+              );
+              }))
             ),
             h('div', { className:'table-summary' },
               h('span', null, 'Expenses log'),
@@ -2569,7 +2812,32 @@ function DashboardView({ expenses, setView, onMissingReceiptsClick }) {
 // receipts list. "Print / Save as PDF" hides the rest of the app and
 // prints only the .tax-summary-print block (see the @media print rule).
 // =====================================================================
-function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onYearChange }) {
+// Suggested Schedule C (Form 1040) line for each expense category, shown on
+// the Tax Summary as a starting point only. Several of these are genuinely
+// a judgment call (e.g. "Software & Subscriptions" could land under Other
+// Expenses or under Legal & Professional depending on what it is) — always
+// confirm the actual line with your accountant before filing.
+const SCHEDULE_C_LINE_MAP = {
+  'Mileage': 'Line 9 — Car and truck expenses',
+  'Equipment & Supplies': 'Line 22 — Supplies',
+  'Software & Subscriptions': 'Line 27a — Other expenses',
+  'Insurance': 'Line 15 — Insurance (other than health)',
+  'Marketing': 'Line 8 — Advertising',
+  'Professional Services': 'Line 17 — Legal & professional services',
+  'Travel & Lodging': 'Line 24a — Travel',
+  'Office Supplies': 'Line 22 — Supplies',
+  'Continuing Education': 'Line 27a — Other expenses',
+  'Dues & Licensing': 'Line 23 — Taxes and licenses',
+  'Phone & Internet': 'Line 27a — Other expenses',
+  'Meals': 'Line 24b — Deductible meals (50%)',
+  'Other': 'Line 27a — Other expenses'
+};
+const SCHEDULE_C_DEFAULT_LINE = 'Line 27a — Other expenses';
+// Only half of business meals are deductible on Schedule C — the row for
+// this category shows the full amount spent alongside the deductible half.
+const MEALS_DEDUCTIBLE_PCT = 0.5;
+
+function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onYearChange, assets }) {
   useEffect(() => {
     function handleAfterPrint() { document.body.classList.remove('printing-tax-summary'); }
     window.addEventListener('afterprint', handleAfterPrint);
@@ -2577,27 +2845,64 @@ function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onY
   }, []);
 
   const yearExpenses = useMemo(() => expenses.filter(r => { const d = parseDate_(r.Date); return d && d.getFullYear() === year; }), [expenses, year]);
-  const nonMileage = useMemo(() => yearExpenses.filter(r => r.Category !== 'Mileage'), [yearExpenses]);
+  // Health Insurance (Self-Employed) is real business-driven spending, so it
+  // still counts toward the receipts check below, but it isn't a Schedule C
+  // expense at all — it's deducted on Schedule 1 of the personal return —
+  // so it's carved out of the category table and the Schedule C total.
+  const allNonMileage = useMemo(() => yearExpenses.filter(r => r.Category !== 'Mileage'), [yearExpenses]);
+  const scheduleCRows = useMemo(() => allNonMileage.filter(r => r.Category !== 'Health Insurance (Self-Employed)'), [allNonMileage]);
+  const healthInsuranceRows = useMemo(() => allNonMileage.filter(r => r.Category === 'Health Insurance (Self-Employed)'), [allNonMileage]);
+  const healthInsuranceTotal = healthInsuranceRows.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
   const mileageRows = useMemo(() => yearExpenses.filter(r => r.Category === 'Mileage'), [yearExpenses]);
   const byCategory = useMemo(() => {
     const map = {};
-    nonMileage.forEach(r => { map[r.Category] = (map[r.Category] || 0) + (Number(r.Amount) || 0); });
-    return Object.entries(map).sort((a, b) => b[1] - a[1]);
-  }, [nonMileage]);
-  const nonMileageTotal = byCategory.reduce((s, [, amt]) => s + amt, 0);
+    scheduleCRows.forEach(r => {
+      const amt = Number(r.Amount) || 0;
+      const deductible = r.Category === 'Meals' ? amt * MEALS_DEDUCTIBLE_PCT : amt;
+      if (!map[r.Category]) map[r.Category] = { raw: 0, deductible: 0 };
+      map[r.Category].raw += amt;
+      map[r.Category].deductible += deductible;
+    });
+    return Object.entries(map).sort((a, b) => b[1].deductible - a[1].deductible);
+  }, [scheduleCRows]);
+  const nonMileageTotal = byCategory.reduce((s, [, v]) => s + v.deductible, 0);
   const totalMiles = mileageRows.reduce((s, r) => s + (Number(r.Miles) || 0), 0);
   const mileageTotal = mileageRows.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
   const grandTotal = nonMileageTotal + mileageTotal;
   const missingReceipts = useMemo(
-    () => nonMileage.filter(r => !r.ReceiptFileUrl).sort((a, b) => (parseDate_(a.Date) || 0) - (parseDate_(b.Date) || 0)),
-    [nonMileage]
+    () => allNonMileage.filter(r => !r.ReceiptFileUrl).sort((a, b) => (parseDate_(a.Date) || 0) - (parseDate_(b.Date) || 0)),
+    [allNonMileage]
   );
+  // Capital purchases (equipment, computers, etc) logged on the Assets page
+  // — shown for reference, never rolled into the expense total above, since
+  // these are typically depreciated or expensed under Section 179 rather
+  // than deducted outright in the year of purchase.
+  const yearAssets = useMemo(() => (assets || []).filter(r => { const d = parseDate_(r.Date); return d && d.getFullYear() === year; }), [assets, year]);
+  const assetsTotal = yearAssets.reduce((s, r) => s + (Number(r.Cost) || 0), 0);
 
   if (!open) return null;
 
   function handlePrint() {
     document.body.classList.add('printing-tax-summary');
     setTimeout(() => window.print(), 50);
+  }
+
+  function handleExportCsv() {
+    const headers = ['Section', 'Category', 'Suggested Schedule C line', 'Amount'];
+    const rows = [];
+    byCategory.forEach(([cat, v]) => {
+      const label = cat === 'Meals' ? ('Meals (' + formatCurrency(v.raw) + ' total, 50% deductible)') : cat;
+      rows.push(['Schedule C expenses', label, SCHEDULE_C_LINE_MAP[cat] || SCHEDULE_C_DEFAULT_LINE, v.deductible.toFixed(2)]);
+    });
+    rows.push(['Schedule C expenses', 'Mileage (' + totalMiles.toLocaleString(undefined,{maximumFractionDigits:1}) + ' mi)', SCHEDULE_C_LINE_MAP['Mileage'], mileageTotal.toFixed(2)]);
+    rows.push(['Schedule C expenses', 'Total business expenses', '', grandTotal.toFixed(2)]);
+    if (healthInsuranceTotal > 0) {
+      rows.push(['Not on Schedule C', 'Health Insurance (Self-Employed)', 'Schedule 1, Line 17 (personal return)', healthInsuranceTotal.toFixed(2)]);
+    }
+    if (yearAssets.length > 0) {
+      rows.push(['Capital purchases (not expensed)', 'Assets — see Assets page for detail', 'Form 4562 / depreciation or Section 179', assetsTotal.toFixed(2)]);
+    }
+    downloadCsv_('bdd-exp-tax-summary-' + year + '.csv', headers, rows);
   }
 
   const generatedLabel = new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
@@ -2622,25 +2927,55 @@ function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onY
             h('div', { style:{ fontSize:'11px', color:'var(--faint)', marginTop:'2px' } }, 'Generated ' + generatedLabel)
           ),
           h('table', { className:'data-table', style:{ marginBottom:'14px' } },
-            h('thead', null, h('tr', null, h('th', null, 'Category'), h('th', { className:'num' }, 'Amount'))),
+            h('thead', null, h('tr', null, h('th', null, 'Category'), h('th', null, 'Suggested Schedule C line'), h('th', { className:'num' }, 'Amount'))),
             h('tbody', null,
               byCategory.length === 0
-                ? h('tr', null, h('td', { colSpan:2, style:{ color:'var(--faint)' } }, 'No non-mileage expenses recorded for ' + year + '.'))
-                : byCategory.map(([cat, amt]) => h('tr', { key:cat }, h('td', null, cat), h('td', { className:'num' }, formatCurrency(amt)))),
+                ? h('tr', null, h('td', { colSpan:3, style:{ color:'var(--faint)' } }, 'No non-mileage expenses recorded for ' + year + '.'))
+                : byCategory.map(([cat, v]) => h('tr', { key:cat },
+                    h('td', null, cat === 'Meals' ? ('Meals (' + formatCurrency(v.raw) + ' total, 50% deductible)') : cat),
+                    h('td', { style:{ fontSize:'11.5px', color:'var(--muted)' } }, SCHEDULE_C_LINE_MAP[cat] || SCHEDULE_C_DEFAULT_LINE),
+                    h('td', { className:'num' }, formatCurrency(v.deductible))
+                  )),
               h('tr', null,
                 h('td', { style:{ fontWeight:700 } }, 'Mileage (' + totalMiles.toLocaleString(undefined,{maximumFractionDigits:1}) + ' mi)'),
+                h('td', { style:{ fontSize:'11.5px', color:'var(--muted)' } }, SCHEDULE_C_LINE_MAP['Mileage']),
                 h('td', { className:'num', style:{ fontWeight:700 } }, formatCurrency(mileageTotal))
               ),
               h('tr', null,
                 h('td', { style:{ fontWeight:800 } }, 'Total business expenses'),
+                h('td', null),
                 h('td', { className:'num', style:{ fontWeight:800 } }, formatCurrency(grandTotal))
               )
+            )
+          ),
+          healthInsuranceTotal > 0 && h('div', { style:{ marginBottom:'14px' } },
+            h('div', { style:{ fontSize:'13px', fontWeight:700, color:'var(--navy-deep)' } }, 'Self-employed health insurance (not part of the total above)'),
+            h('table', { className:'data-table', style:{ marginTop:'6px' } },
+              h('thead', null, h('tr', null, h('th', null, 'Category'), h('th', null, 'Where it goes instead'), h('th', { className:'num' }, 'Amount'))),
+              h('tbody', null, h('tr', null,
+                h('td', null, 'Health Insurance (Self-Employed)'),
+                h('td', { style:{ fontSize:'11.5px', color:'var(--muted)' } }, 'Schedule 1, Line 17 of your personal return'),
+                h('td', { className:'num' }, formatCurrency(healthInsuranceTotal))
+              ))
+            ),
+            h('div', { style:{ fontSize:'11px', color:'var(--faint)', marginTop:'4px' } }, "This isn't a Schedule C business expense — it's deducted on your personal return instead, so it's kept out of the total above.")
+          ),
+          yearAssets.length > 0 && h('div', { style:{ marginBottom:'14px' } },
+            h('div', { style:{ fontSize:'13px', fontWeight:700, color:'var(--navy-deep)' } }, 'Capital purchases logged this year (not part of the total above)'),
+            h('table', { className:'data-table', style:{ marginTop:'6px' } },
+              h('thead', null, h('tr', null, h('th', null, 'Date'), h('th', null, 'Description'), h('th', { className:'num' }, 'Cost'))),
+              h('tbody', null, yearAssets.map(a => h('tr', { key:a.AssetId },
+                h('td', null, formatDate(a.Date)), h('td', null, a.Description || a.Category || '—'), h('td', { className:'num' }, formatCurrency(a.Cost))
+              )))
+            ),
+            h('div', { style:{ fontSize:'11px', color:'var(--faint)', marginTop:'4px' } },
+              'Total: ' + formatCurrency(assetsTotal) + '. Equipment and other capital purchases are usually depreciated over time (or expensed under Section 179, Form 4562) rather than deducted immediately — see the Assets page and confirm treatment with your accountant.'
             )
           ),
           h('div', { style:{ marginBottom:'10px' } },
             h('div', { style:{ fontSize:'13px', fontWeight:700, color:'var(--navy-deep)' } }, 'Receipts on file'),
             h('div', { style:{ fontSize:'12px', color:'var(--muted)', marginTop:'2px' } },
-              (nonMileage.length - missingReceipts.length) + ' of ' + nonMileage.length + ' non-mileage expenses have a receipt attached' +
+              (allNonMileage.length - missingReceipts.length) + ' of ' + allNonMileage.length + ' non-mileage expenses have a receipt attached' +
               (missingReceipts.length ? ' — ' + missingReceipts.length + ' missing:' : '.')
             )
           ),
@@ -2651,19 +2986,20 @@ function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onY
             )))
           ),
           h('p', { style:{ fontSize:'10.5px', color:'var(--faint)', marginTop:'16px' } },
-            'Prepared by BDD EXP for recordkeeping and tax preparation purposes. Not tax advice — confirm categorization and deductibility with your accountant.'
+            'Prepared by BDD EXP for recordkeeping and tax preparation purposes. Not tax advice — the suggested Schedule C line numbers above are a starting point only; confirm categorization, deductibility, and depreciation treatment with your accountant.'
           )
         )
       ),
       h('div', { className:'modal-foot no-print' },
         h('button', { type:'button', className:'btn btn-ghost', onClick:onClose }, 'Close'),
+        h('button', { type:'button', className:'btn btn-ghost', onClick:handleExportCsv }, 'Export CSV'),
         h('button', { type:'button', className:'btn btn-teal', onClick:handlePrint }, 'Print / Save as PDF')
       )
     )
   );
 }
 
-function ReportsView({ expenses, categories }) {
+function ReportsView({ expenses, categories, assets }) {
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [showTaxSummary, setShowTaxSummary] = useState(false);
   const years = useMemo(() => {
@@ -2713,7 +3049,7 @@ function ReportsView({ expenses, categories }) {
         )
       )
     ),
-    h(TaxSummaryModal, { open:showTaxSummary, onClose:() => setShowTaxSummary(false), expenses, categories, year, years, onYearChange:setYear })
+    h(TaxSummaryModal, { open:showTaxSummary, onClose:() => setShowTaxSummary(false), expenses, categories, year, years, onYearChange:setYear, assets })
   );
 }
 
@@ -2834,6 +3170,110 @@ function PurchaseOrdersView({ purchaseOrders, categories, statuses, onAdd, onEdi
             h('div', { className:'table-summary' },
               h('span', null, 'Purchase orders'),
               h('span', null, h('strong', null, rows.length + (rows.length === 1 ? ' PO' : ' POs')))
+            )
+          )
+    )
+  );
+}
+
+// =====================================================================
+// Assets (equipment / capital purchases) list/table view — mirrors the
+// Purchase Orders table. Desktop-only.
+// =====================================================================
+const ASSET_COLUMNS = [
+  { key:'Date', label:'Date', getValue:r => { const d = parseDate_(r.Date); return d ? d.getTime() : 0; } },
+  { key:'Category', label:'Category', getValue:r => r.Category || '' },
+  { key:'Description', label:'Description', getValue:r => r.Description || '' },
+  { key:'Vendor', label:'Vendor', getValue:r => r.Vendor || '' },
+  { key:'Cost', label:'Cost', num:true, getValue:r => Number(r.Cost) || 0 },
+];
+
+function AssetsView({ assets, categories, onAdd, onEdit, onDelete }) {
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const restoredSortRef = useRef((() => { try { return JSON.parse(sessionStorage.getItem(LS_PREFIX+'asset_table_sort')||'{}')||{}; } catch(_) { return {}; } })());
+  const [sortCol, setSortCol] = useState(() => restoredSortRef.current.sortCol || 'Date');
+  const [sortDir, setSortDir] = useState(() => restoredSortRef.current.sortDir === 'asc' ? 'asc' : 'desc');
+  useEffect(() => sessionStorage.setItem(LS_PREFIX+'asset_table_sort', JSON.stringify({ sortCol, sortDir })), [sortCol, sortDir]);
+  function toggleSort(col) {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('asc'); }
+  }
+
+  const rows = useMemo(() => {
+    let list = assets.slice();
+    if (categoryFilter !== 'All') list = list.filter(r => r.Category === categoryFilter);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(r => (r.Vendor||'').toLowerCase().includes(q) || (r.Description||'').toLowerCase().includes(q) || (r.Notes||'').toLowerCase().includes(q));
+    }
+    const col = ASSET_COLUMNS.find(c => c.key === sortCol) || ASSET_COLUMNS[0];
+    list.sort((a,b) => { const cmp = compareForSort_(col.getValue(a), col.getValue(b)); return sortDir === 'asc' ? cmp : -cmp; });
+    return list;
+  }, [assets, categoryFilter, search, sortCol, sortDir]);
+
+  const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+  const ytdTotal = assets.filter(r => (parseDate_(r.Date)||0) >= yearStart).reduce((s,r) => s + (Number(r.Cost)||0), 0);
+
+  function exportCsv() {
+    const headers = ['Date','Category','Description','Vendor','Cost','Notes'];
+    const csvRows = rows.map(r => headers.map(hd => r[hd] === undefined || r[hd] === null ? '' : r[hd]));
+    downloadCsv_('bdd-exp-assets-' + todayStr() + '.csv', headers, csvRows);
+  }
+
+  return h('div', null,
+    h('div', { className:'kpi-grid', style:{ marginBottom:'18px', gridTemplateColumns:'repeat(2,minmax(0,1fr))' } },
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Assets logged'), h('div', { className:'kpi-value' }, assets.length)),
+      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Purchased YTD'), h('div', { className:'kpi-value' }, formatCurrency(ytdTotal)))
+    ),
+    h('div', { className:'field-hint', style:{ marginBottom:'14px' } }, "Capital purchases like equipment, computers, and furniture usually need to be depreciated (or expensed under Section 179) rather than deducted immediately — keep this log up to date and share it with your accountant at tax time. These amounts aren't included in your regular expense totals."),
+    h('div', { className:'filter-row', style:{ marginBottom:'14px', justifyContent:'space-between' } },
+      h('div', { className:'filter-row' },
+        h('input', { type:'text', className:'input', style:{ width:'220px' }, placeholder:'Search vendor, description…', value:search, onChange:e => setSearch(e.target.value) }),
+        h('select', { className:'input', style:{ width:'220px' }, value:categoryFilter, onChange:e => setCategoryFilter(e.target.value) },
+          h('option', { value:'All' }, 'All categories'),
+          categories.map(c => h('option', { key:c, value:c }, c))
+        )
+      ),
+      h('div', { style:{ display:'flex', gap:'10px' } },
+        h('button', { type:'button', className:'btn btn-ghost', onClick:exportCsv }, 'Export CSV'),
+        h('button', { type:'button', className:'btn btn-primary btn-sm', onClick:onAdd }, h(Icon,{name:'plus'}), 'New asset')
+      )
+    ),
+    h('div', { className:'card table-wrap' },
+      rows.length === 0
+        ? h('div', { className:'empty-state' },
+            h('div', { className:'empty-state-title' }, 'No assets logged yet'),
+            h('p', null, 'Use "New asset" above to record an equipment or capital purchase.')
+          )
+        : h(React.Fragment, null,
+            h('table', { className:'data-table' },
+              h('thead', null, h('tr', null,
+                ASSET_COLUMNS.map(col => h('th', {
+                  key:col.key,
+                  className:(col.num ? 'num ' : '') + 'sortable' + (sortCol === col.key ? ' sort-active' : ''),
+                  onClick:() => toggleSort(col.key)
+                }, col.label + sortArrow_(sortCol === col.key, sortDir))),
+                h('th', null, 'Receipt'),
+                h('th', null, '')
+              )),
+              h('tbody', null, rows.map(r => h('tr', { key:r.AssetId, onClick:() => onEdit(r) },
+                h('td', null, formatDate(r.Date)),
+                h('td', null, h('span', { className:'pill' }, r.Category)),
+                h('td', null, r.Description || '—'),
+                h('td', null, r.Vendor || '—'),
+                h('td', { className:'num' }, formatCurrency(r.Cost)),
+                h('td', null, r.ReceiptFileUrl ? h('a', { href:r.ReceiptFileUrl, target:'_blank', rel:'noopener noreferrer', style:{ color:'var(--teal-dark)', display:'inline-flex' }, onClick:e => e.stopPropagation() }, h(Icon,{name:'receipt'})) : '—'),
+                h('td', null,
+                  h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', whiteSpace:'nowrap' } },
+                    h('button', { type:'button', className:'btn btn-danger-ghost btn-sm', onClick:e => { e.stopPropagation(); onDelete(r); } }, h(Icon,{name:'trash'}))
+                  )
+                )
+              )))
+            ),
+            h('div', { className:'table-summary' },
+              h('span', null, 'Assets'),
+              h('span', null, h('strong', null, rows.length + (rows.length === 1 ? ' asset' : ' assets')))
             )
           )
     )
@@ -3006,7 +3446,7 @@ function SubscriptionsView({ subscriptions, categories, paymentMethods, onPauseR
 // =====================================================================
 // App shell
 // =====================================================================
-function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[], facilities:[], recurringSubscriptions:[] }; }
+function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[], assets:[], assetCategories:[], facilities:[], recurringSubscriptions:[] }; }
 
 // =====================================================================
 // Mobile app — a deliberately narrow, 3-screen experience for phones
@@ -3172,13 +3612,13 @@ function MobileApp({
       view === 'dashboard' && h(MobileDashboard, { expenses }),
       view === 'addExpense' && h(ExpenseForm, {
         variant:'page', minimal:true,
-        categories, paymentMethods, vendorOptions,
+        categories, paymentMethods, vendorOptions, expenses,
         initial: scanPrefill && scanPrefill.initial,
         initialReceiptFile: scanPrefill && scanPrefill.file,
         scanHint: !!(scanPrefill && scanPrefill.hint),
         onCancel:() => { setScanPrefill(null); setView('dashboard'); },
         onSaved:() => { setScanPrefill(null); setView('dashboard'); showToast('Expense added.'); },
-        apiCreate, apiUpdate, apiUploadReceipt
+        apiCreate, apiUpdate, apiUploadReceipt, apiScanReceipt
       }),
       view === 'addMileage' && h(MileageForm, {
         variant:'page',
@@ -3259,7 +3699,7 @@ function App() {
     return () => document.removeEventListener('pointerdown', clearSearchOutside);
   }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [modal, setModal] = useState(null); // null | { type:'expense'|'mileage'|'po', mode:'create'|'edit', expense?, po? }
+  const [modal, setModal] = useState(null); // null | { type:'expense'|'mileage'|'po'|'asset'|'subscriptionEdit', mode:'create'|'edit', expense?, po?, asset? }
   const [toast, setToast] = useState(null);
   const [sidebarTheme, setSidebarTheme] = useState(() => localStorage.getItem(LS_PREFIX+'sidebar_theme') === 'dark' ? 'dark' : 'light');
   const [showCalendar, setShowCalendar] = useState(() => localStorage.getItem(LS_PREFIX+'show_calendar') !== 'false');
@@ -3322,7 +3762,7 @@ function App() {
     setLoadError(null);
     try {
       const result = await apiGet();
-      const categories = (result.categories && result.categories.length) ? result.categories : ['Mileage','Equipment & Supplies','Software & Subscriptions','Insurance','Marketing','Professional Services','Travel & Lodging','Office Supplies','Other'];
+      const categories = (result.categories && result.categories.length) ? result.categories : ['Mileage','Equipment & Supplies','Software & Subscriptions','Insurance','Marketing','Professional Services','Travel & Lodging','Office Supplies','Continuing Education','Dues & Licensing','Phone & Internet','Meals','Health Insurance (Self-Employed)','Other'];
       const next = {
         expenses: result.expenses || [],
         settings: result.settings || { mileageRate:0.76 },
@@ -3331,6 +3771,8 @@ function App() {
         purchaseOrders: result.purchaseOrders || [],
         poCategories: (result.poCategories && result.poCategories.length) ? result.poCategories : categories.filter(c => c !== 'Mileage'),
         poStatuses: (result.poStatuses && result.poStatuses.length) ? result.poStatuses : ['Open','Received','Cancelled'],
+        assets: result.assets || [],
+        assetCategories: (result.assetCategories && result.assetCategories.length) ? result.assetCategories : ['Medical & Diagnostic Equipment','Computer & Technology','Furniture & Fixtures','Vehicle','Other Equipment'],
         // Distinct facility names read live from the CRM's own Accounts
         // sheet (see Code.gs's getCrmFacilities_) — an empty list here just
         // means the Facility name field on Add Mileage falls back to plain
@@ -3440,6 +3882,24 @@ function App() {
     setData(d => { const next = { ...d, purchaseOrders: d.purchaseOrders.filter(p => p.PoId !== poId) }; writeCache_(next); return next; });
   }, []);
 
+  const apiCreateAsset = useCallback(async (payload) => {
+    const res = await apiPost('createAsset', { data: payload });
+    if (!res.success) throw new Error(res.error || 'Could not save this asset.');
+    setData(d => { const next = { ...d, assets: [...d.assets, res.result] }; writeCache_(next); return next; });
+    return res.result;
+  }, []);
+  const apiUpdateAsset = useCallback(async (payload) => {
+    const res = await apiPost('updateAsset', { data: payload });
+    if (!res.success) throw new Error(res.error || 'Could not save changes.');
+    setData(d => { const next = { ...d, assets: d.assets.map(a => a.AssetId === payload.AssetId ? { ...a, ...payload } : a) }; writeCache_(next); return next; });
+    return res.result;
+  }, []);
+  const apiDeleteAsset = useCallback(async (assetId) => {
+    const res = await apiPost('deleteAsset', { assetId });
+    if (!res.success) throw new Error(res.error || 'Could not delete this asset.');
+    setData(d => { const next = { ...d, assets: d.assets.filter(a => a.AssetId !== assetId) }; writeCache_(next); return next; });
+  }, []);
+
   const apiCreateRecurringSub = useCallback(async (payload) => {
     const res = await apiPost('createRecurringSubscription', { data: payload });
     if (!res.success) throw new Error(res.error || 'Could not set up this recurring subscription.');
@@ -3502,6 +3962,8 @@ function App() {
       Date: todayStr(), Category: po.Category, Vendor: po.Vendor, Description: po.Description, Amount: po.Amount, Notes: po.Notes
     } });
   }
+  function openAddAsset() { setModal({ type:'asset', mode:'create' }); }
+  function openEditAsset(asset) { setModal({ type:'asset', mode:'edit', asset }); }
   // Sticky-header search results, ranked the same way as the CRM's global
   // search: exact/prefix/word-prefix matches on the name first, then
   // substring matches on the name, then a match found only in the record's
@@ -3564,6 +4026,11 @@ function App() {
     try { await apiDeletePO(po.PoId); showToast('Purchase order deleted.'); }
     catch (err) { showToast(err.message, 'error'); }
   }
+  async function handleDeleteAsset(asset) {
+    if (!window.confirm('Delete this asset? This cannot be undone.')) return;
+    try { await apiDeleteAsset(asset.AssetId); showToast('Asset deleted.'); }
+    catch (err) { showToast(err.message, 'error'); }
+  }
   function openEditSub(subscription) { setModal({ type:'subscriptionEdit', subscription }); }
   async function handlePauseResumeSub(subscription, nextActive) {
     try {
@@ -3582,6 +4049,7 @@ function App() {
     const linkedPO = modal && modal.po;
     setModal(null);
     if (type === 'po') { showToast(isEdit ? 'Purchase order updated.' : 'Purchase order created.'); return; }
+    if (type === 'asset') { showToast(isEdit ? 'Asset updated.' : 'Asset added.'); return; }
     if (type === 'mileage') { showToast(isEdit ? 'Mileage updated.' : 'Mileage added.'); return; }
     if (linkedPO && savedRecord && savedRecord.ExpenseId) {
       try { await apiUpdatePO({ PoId: linkedPO.PoId, RecordedExpenseId: savedRecord.ExpenseId }); }
@@ -3621,7 +4089,7 @@ function App() {
     );
   }
 
-  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', purchaseorders:'Purchase Orders', subscriptions:'Subscriptions' };
+  const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', purchaseorders:'Purchase Orders', subscriptions:'Subscriptions', assets:'Assets' };
 
   return h('div', { className:'app-shell' },
     h(Sidebar, {
@@ -3665,9 +4133,10 @@ function App() {
         view === 'dashboard' && h(DashboardView, { expenses:data.expenses, setView, onMissingReceiptsClick: () => { setExpensesQuickFilter('missingReceiptsYtd'); setView('expenses'); } }),
         view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDuplicate:openDuplicate, onDelete:handleDelete, quickFilter:expensesQuickFilter, onClearQuickFilter: () => setExpensesQuickFilter(null) }),
         view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete, onDuplicate:openDuplicate }),
-        view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories }),
+        view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories, assets:data.assets }),
         view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, categories:data.poCategories, statuses:data.poStatuses, onAdd:openAddPO, onEdit:openEditPO, onDuplicate:openDuplicatePO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense }),
-        view === 'subscriptions' && h(SubscriptionsView, { subscriptions:data.recurringSubscriptions, categories:data.categories.filter(c => c !== 'Mileage'), paymentMethods:data.paymentMethods, onPauseResume:handlePauseResumeSub, onEdit:openEditSub, onDelete:handleDeleteSub })
+        view === 'subscriptions' && h(SubscriptionsView, { subscriptions:data.recurringSubscriptions, categories:data.categories.filter(c => c !== 'Mileage'), paymentMethods:data.paymentMethods, onPauseResume:handlePauseResumeSub, onEdit:openEditSub, onDelete:handleDeleteSub }),
+        view === 'assets' && h(AssetsView, { assets:data.assets, categories:data.assetCategories, onAdd:openAddAsset, onEdit:openEditAsset, onDelete:handleDeleteAsset })
       )
     ),
     modal && modal.type === 'mileage' && h(MileageForm, {
@@ -3689,10 +4158,10 @@ function App() {
       presetCategory: modal.presetCategory,
       categories: data.categories.filter(c => c !== 'Mileage'),
       paymentMethods: data.paymentMethods,
-      vendorOptions,
+      vendorOptions, expenses: data.expenses,
       onCancel: () => setModal(null),
       onSaved: handleSaved,
-      apiCreate, apiUpdate, apiUploadReceipt, apiCreateRecurringSub,
+      apiCreate, apiUpdate, apiUploadReceipt, apiScanReceipt, apiCreateRecurringSub,
       recurringSubscriptions: data.recurringSubscriptions
     }),
     modal && modal.type === 'po' && h(PurchaseOrderForm, {
@@ -3703,6 +4172,14 @@ function App() {
       onCancel: () => setModal(null),
       onSaved: handleSaved,
       apiCreate: apiCreatePO, apiUpdate: apiUpdatePO, apiGeneratePo
+    }),
+    modal && modal.type === 'asset' && h(AssetForm, {
+      initial: modal.mode === 'edit' ? modal.asset : null,
+      categories: data.assetCategories,
+      vendorOptions,
+      onCancel: () => setModal(null),
+      onSaved: handleSaved,
+      apiCreate: apiCreateAsset, apiUpdate: apiUpdateAsset, apiUploadReceipt
     }),
     modal && modal.type === 'subscriptionEdit' && h(SubscriptionEditForm, {
       initial: modal.subscription,
