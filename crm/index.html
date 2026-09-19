@@ -6193,7 +6193,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.19-4';
+const CRM_BUILD_NUMBER = '2026.09.19-5';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -6380,7 +6380,7 @@ const VILLAGE_TO_TOWN = {
 const KNOWN_TOWNS = ['Barnstable', 'Bourne', 'Brewster', 'Chatham', 'Dennis', 'Eastham', 'Falmouth', 'Harwich', 'Mashpee', 'Orleans', 'Provincetown', 'Sandwich', 'Truro', 'Wellfleet', 'Yarmouth', 'Braintree', 'Duxbury', 'Hingham', 'Kingston', 'Milton', 'Pembroke', 'Quincy', 'Scituate', 'Cohasset', 'Hanover', 'Hull', 'Marshfield', 'Norwell', 'Plymouth', 'Rockland', 'Weymouth', 'New Bedford', 'Fall River', 'Dartmouth', 'Fairhaven', 'Somerset', 'Swansea', 'Westport', 'Acushnet', 'Taunton', 'Raynham', 'Middleborough', 'Middleboro', 'Easton', 'North Easton', 'Norton', 'Dighton', 'North Dighton', 'Bridgewater', 'East Bridgewater', 'West Bridgewater', 'Carver', 'Lakeville', 'Halifax', 'Rehoboth', 'Berkley', 'Dedham', 'Westwood', 'Norwood', 'Walpole', 'Foxborough', 'Mansfield', 'Needham', 'Canton', 'Stoughton', 'Wrentham', 'Sharon', 'Medfield', 'Norfolk', 'Franklin', 'Millis', 'Plainville'];
 
 // --- v2 additions: Relationship Stage / Contact Role / Activity logging ---
-const RELATIONSHIP_STAGES = ['Target', 'Contacted', 'Connected', 'Contract Discussion', 'Active Contract', 'Not a fit'];
+const RELATIONSHIP_STAGES = ['Target', 'Contacted', 'Connected', 'Contract Discussion', 'Active Contract', 'Not a Fit'];
 const CONTACT_ROLE_CATEGORIES = ['Clinical Champion', 'SLP', 'Director of Rehab', 'Rehab Director', 'Administrator', 'DON', 'Medical Director', 'Admissions', 'Case Management', 'Regional/Central Decision Maker', 'Referral Coordinator', 'Other'];
 const DECISION_MAKER_ROLE_CATEGORIES = ['Administrator', 'DON', 'Regional/Central Decision Maker'];
 const ACTIVITY_TYPES = ['Call', 'Voicemail', 'Visit', 'Email', 'Text', 'Meeting', 'Referral', 'Other'];
@@ -6397,7 +6397,7 @@ const ACTIVITY_TEMPLATES = [
 // terminal states; ambiguous outcomes remain at their current stage.
 function stageAfterActivity(currentStage, result) {
   const stage = currentStage || 'Target';
-  if (stage === 'Active Contract' || stage === 'Not a fit') return stage;
+  if (stage === 'Active Contract' || stage === 'Not a Fit') return stage;
   const connectedResults = ['Connected', 'Spoke with SLP', 'Spoke with Director of Rehab', 'Spoke with Administrator', 'Meeting completed', 'Interested'];
   const referralResults = ['Referral opportunity', 'Discussed Contract', 'Discussed referrals'];
   if (referralResults.includes(result) && ['Target','Contacted','Connected'].includes(stage)) return 'Contract Discussion';
@@ -6476,7 +6476,7 @@ function stageColor(stage) {
     'Connected': 'bg-amber-300 text-amber-900',
     'Contract Discussion': 'stage-contract-discussion',
     'Active Contract': 'bg-teal-500 text-white',
-    'Not a fit': 'bg-navy-100 text-navy-700/40'
+    'Not a Fit': 'bg-navy-100 text-navy-700/40'
   };
   const normalizedStage = String(stage || 'Target').trim();
   return map[normalizedStage] || 'bg-skyblue-100 text-navy-700/60';
@@ -9049,7 +9049,7 @@ function AccountDetail({
     const opportunity = computeOverallFeesOpportunity(candidate);
     return opportunity ? ({ 'Very High':4, 'High':3, 'Medium':2, 'Low':1 }[opportunity.label] || 0) : 0;
   };
-  const bestRelatedChainAccount = [...relatedChainAccounts].filter(candidate => !['Active Contract','Not a fit'].includes(candidate.RelationshipStage || 'Target')).sort((a,b) => {
+  const bestRelatedChainAccount = [...relatedChainAccounts].filter(candidate => !['Active Contract','Not a Fit'].includes(candidate.RelationshipStage || 'Target')).sort((a,b) => {
     const stageA = RELATIONSHIP_STAGES.indexOf(a.RelationshipStage || 'Target');
     const stageB = RELATIONSHIP_STAGES.indexOf(b.RelationshipStage || 'Target');
     return stageB - stageA || chainOpportunityRank(b) - chainOpportunityRank(a) || (Number(b.BedCount) || 0) - (Number(a.BedCount) || 0) || String(a.AccountName || '').localeCompare(String(b.AccountName || ''));
@@ -10125,7 +10125,7 @@ const NEW_MAP_STAGE_HEX = {
   'Connected': '#fbbf24',
   'Contract Discussion': '#cdebe7',
   'Active Contract': '#14b8a6',
-  'Not a fit': '#cbd5e1'
+  'Not a Fit': '#cbd5e1'
 };
 
 function newMapStageHex(stage) {
@@ -10986,7 +10986,7 @@ function TableView({
 // Pipeline view: accounts grouped into columns by RelationshipStage, so
 // you can see the whole prospect base's progress at a glance. Click-
 // through only (no drag-and-drop) -- change stage from the account page
-// itself, same as everywhere else. "Not a fit" accounts have a separate
+// itself, same as everywhere else. "Not a Fit" accounts have a separate
 // optional section below Target, rather than counting as active prospects.
 // Within each column, accounts are sorted by staleness (longest since
 // contact first), so whoever most needs attention floats to the top.
@@ -10999,11 +10999,11 @@ function PipelineView({
   region,
   setRegion
 }) {
-  const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a fit');
+  const stages = RELATIONSHIP_STAGES.filter(s => s !== 'Not a Fit');
   const restoredPipelineRef=useRef((()=>{try{return JSON.parse(sessionStorage.getItem('bdd_crm_pipeline_layout')||'{}')||{};}catch(_){return {};}})());
   const [desktopExpandedStages, setDesktopExpandedStages] = useState(() => {
     const restored = restoredPipelineRef.current;
-    if (Array.isArray(restored.desktopExpandedStages)) return restored.desktopExpandedStages.filter(stage => stages.includes(stage) || stage === 'Not a fit');
+    if (Array.isArray(restored.desktopExpandedStages)) return restored.desktopExpandedStages.filter(stage => stages.includes(stage) || stage === 'Not a Fit');
     // Preserve the previous edge-stage behavior while making the three middle
     // pipeline stages expanded by default for existing users.
     const initial = ['Contacted', 'Connected', 'Contract Discussion'];
@@ -11019,15 +11019,15 @@ function PipelineView({
   const pipelineGridStyle = { gridTemplateColumns: stages.map(stage => isDesktopStageExpanded(stage) ? 'minmax(0, 1fr)' : '168px').join(' ') };
   const columns = useMemo(() => {
     const byStage = {};
-    [...stages, 'Not a fit'].forEach(s => byStage[s] = []);
+    [...stages, 'Not a Fit'].forEach(s => byStage[s] = []);
     accounts.forEach(a => {
       const accountStage = String(a.RelationshipStage || '').trim();
       // Exclude terminal non-prospects before the unknown-stage Target fallback.
-      if (accountStage.toLowerCase() === 'not a fit') { byStage['Not a fit'].push(a); return; }
+      if (accountStage.toLowerCase() === 'not a fit') { byStage['Not a Fit'].push(a); return; }
       const stage = stages.includes(accountStage) ? accountStage : 'Target';
       byStage[stage].push(a);
     });
-    [...stages, 'Not a fit'].forEach(s => {
+    [...stages, 'Not a Fit'].forEach(s => {
       byStage[s].sort((a, b) => {
         const daysA = daysSince(a.LastContactDate);
         const daysB = daysSince(b.LastContactDate);
@@ -11047,7 +11047,7 @@ function PipelineView({
       'Connected': 'bg-amber-300 text-amber-900',
       'Contract Discussion': 'stage-contract-discussion',
       'Active Contract': 'bg-teal-500 text-white',
-      'Not a fit': 'stage-not-a-fit'
+      'Not a Fit': 'stage-not-a-fit'
     };
     return colors[stage] || stageColor(stage);
   };
@@ -11104,17 +11104,17 @@ function PipelineView({
   };
 
   const renderNotFitSection = () => {
-    if (!columns['Not a fit'].length) return null;
-    const expanded = isDesktopStageExpanded('Not a fit');
+    if (!columns['Not a Fit'].length) return null;
+    const expanded = isDesktopStageExpanded('Not a Fit');
     return React.createElement('section', { className:'pipeline-stage pipeline-stage-not-a-fit', style:{marginTop:16} },
       React.createElement('div', {className:'sticky top-0 z-20'},
-        React.createElement('button', {type:'button', className:'w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm stage-not-a-fit', onClick:()=>toggleDesktopStage('Not a fit'), 'aria-expanded':expanded},
+        React.createElement('button', {type:'button', className:'w-full px-2 py-2 rounded-lg text-xs font-semibold shadow-sm stage-not-a-fit', onClick:()=>toggleDesktopStage('Not a Fit'), 'aria-expanded':expanded},
           React.createElement('div', {className:'flex items-center justify-between gap-1 w-full'},
-            React.createElement('span', null, 'Not a fit'),
+            React.createElement('span', null, 'Not a Fit'),
             React.createElement('span', {className:'ml-auto flex items-center gap-1.5'},
-              React.createElement('span', {className:'opacity-80'}, columns['Not a fit'].length),
+              React.createElement('span', {className:'opacity-80'}, columns['Not a Fit'].length),
               React.createElement('span', {'aria-hidden':true}, expanded ? '−' : '+'))))),
-      expanded && React.createElement('div', {className:'bg-skyblue-100/30 rounded-b-lg py-2 space-y-2'}, columns['Not a fit'].map(a=>React.createElement('button', {key:a.AccountId,type:'button',className:'pipeline-today-card',onClick:()=>onSelect(a)},
+      expanded && React.createElement('div', {className:'bg-skyblue-100/30 rounded-b-lg py-2 space-y-2'}, columns['Not a Fit'].map(a=>React.createElement('button', {key:a.AccountId,type:'button',className:'pipeline-today-card',onClick:()=>onSelect(a)},
         React.createElement('p', {className:'pipeline-today-card-name'}, a.AccountName),
         React.createElement('p', {className:'pipeline-today-card-meta'}, [a.Region,getTown(a.Address),a.BedCount ? `${a.BedCount} beds` : null].filter(Boolean).join(' · '))))));
   };
@@ -11150,7 +11150,7 @@ function PipelineView({
       value: r
     }, r))), /*#__PURE__*/React.createElement("div", {
       className: "pipeline-mobile-list-v3"
-    }, stages.flatMap(stage => stage === 'Target' && columns['Not a fit'].length ? [stage, 'Not a fit'] : [stage]).map(stage => {
+    }, (columns['Not a Fit'].length ? ['Not a Fit', ...stages] : stages).map(stage => {
       const expanded = mobileExpandedStages.includes(stage);
       const isActiveReferrer = stage === 'Active Contract';
       return /*#__PURE__*/React.createElement("section", {
@@ -11339,7 +11339,7 @@ function ChainView({ accounts, onSelect }) {
     return opportunity ? ({ 'Very High':4, 'High':3, 'Medium':2, 'Low':1 }[opportunity.label] || 0) : 0;
   };
   const chooseBestNext = facilities => facilities
-    .filter(account => !['Active Contract','Not a fit'].includes(account.RelationshipStage || 'Target'))
+    .filter(account => !['Active Contract','Not a Fit'].includes(account.RelationshipStage || 'Target'))
     .sort((a, b) =>
       stageRank(b.RelationshipStage) - stageRank(a.RelationshipStage) ||
       opportunityRank(b) - opportunityRank(a) ||
@@ -11377,7 +11377,7 @@ function ChainView({ accounts, onSelect }) {
           /*#__PURE__*/React.createElement('span', null, `${group.facilities.length} facilit${group.facilities.length === 1 ? 'y' : 'ies'}${group.beds ? ` · ${group.beds.toLocaleString()} beds` : ''}${group.regions ? ` · ${group.regions} region${group.regions === 1 ? '' : 's'}` : ''}`)
         ),
         /*#__PURE__*/React.createElement('div', { className:'account-chain-overview' },
-          /*#__PURE__*/React.createElement('div', { className:'account-chain-stage-strip' }, RELATIONSHIP_STAGES.filter(stage => stage !== 'Not a fit' && group.stages[stage]).map(stage => /*#__PURE__*/React.createElement('span', { key:stage, className:`account-chain-stage-count ${stageColor(stage)}` }, `${group.stages[stage]} ${stage}`))),
+          /*#__PURE__*/React.createElement('div', { className:'account-chain-stage-strip' }, RELATIONSHIP_STAGES.filter(stage => stage !== 'Not a Fit' && group.stages[stage]).map(stage => /*#__PURE__*/React.createElement('span', { key:stage, className:`account-chain-stage-count ${stageColor(stage)}` }, `${group.stages[stage]} ${stage}`))),
           /*#__PURE__*/React.createElement('span', { className:'account-chain-penetration' }, `${group.active} of ${group.facilities.length} active`),
           /*#__PURE__*/React.createElement('span', { className:'account-chain-chevron', 'aria-hidden':'true' }, '⌄')
         )
@@ -12255,7 +12255,7 @@ function ActivityAnalyticsView({ accounts, activities, stageHistory, onSelect })
   const chartX=index=>model.periods.length===1?(plotLeft+plotRight)/2:plotLeft+(index/(model.periods.length-1))*(plotRight-plotLeft);
   const chartY=value=>plotBottom-(value/chartMax)*(plotBottom-plotTop);
   const chartPath=chartModel.counts.map((value,index)=>`${index?'L':'M'} ${chartX(index).toFixed(1)} ${chartY(value).toFixed(1)}`).join(' ');
-  const markerColors={'Contacted':'#d7a52d','Connected':'#f2bd26','Contract Discussion':'#2b8f88','Active Contract':'#0f766e','Not a fit':'#9ca3af'};
+  const markerColors={'Contacted':'#d7a52d','Connected':'#f2bd26','Contract Discussion':'#2b8f88','Active Contract':'#0f766e','Not a Fit':'#9ca3af'};
   const markerX=event=>plotLeft+Math.max(0,Math.min(1,(event._date-model.periods[0].start)/(model.periods[model.periods.length-1].end-model.periods[0].start)))*(plotRight-plotLeft);
   return /*#__PURE__*/React.createElement('div',{className:'analytics-activity-view'},
     /*#__PURE__*/React.createElement('section',{className:'home-card analytics-activity-toolbar'},
