@@ -319,10 +319,10 @@ try {
   html body .crm-toast {
     position:fixed !important;
     top:auto !important;
-    right:auto !important;
+    right:20px !important;
     bottom:20px !important;
-    left:50% !important;
-    transform:translateX(-50%) !important;
+    left:auto !important;
+    transform:none !important;
     z-index:9999 !important;
     display:inline-flex !important;
     align-items:center !important;
@@ -355,6 +355,15 @@ try {
     height:36px !important;
     min-height:36px !important;
     max-height:36px !important;
+  }
+  @media (max-width:640px) {
+    html body .crm-toast {
+      right:12px !important;
+      bottom:max(12px, env(safe-area-inset-bottom)) !important;
+      max-width:calc(100vw - 80px) !important;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
   }
   .contract-celebration {
     position:fixed; inset:0; z-index:12000; display:flex; align-items:center; justify-content:center;
@@ -6084,6 +6093,27 @@ try {
     body.saas-enabled .analytics-activity-last { text-align:left !important; color:#7b899b !important; }
     body.saas-enabled .analytics-activity-stage { display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; font-size:10px; font-weight:750; white-space:nowrap; }
     body.saas-enabled .analytics-activity-empty { padding:34px 18px; text-align:center; color:#8a96a7; font-size:13px; }
+    body.saas-enabled .analytics-momentum-card { padding:0; overflow:hidden; }
+    body.saas-enabled .analytics-momentum-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:17px 18px 8px; }
+    body.saas-enabled .analytics-momentum-legend { display:flex; align-items:center; gap:14px; color:#667085; font-size:11px; font-weight:650; white-space:nowrap; }
+    body.saas-enabled .analytics-momentum-legend span { display:inline-flex; align-items:center; gap:6px; }
+    body.saas-enabled .analytics-momentum-legend i.line { width:20px; height:3px; border-radius:3px; background:#0f766e; }
+    body.saas-enabled .analytics-momentum-legend i.dot { width:9px; height:9px; border-radius:50%; background:#2b8f88; }
+    body.saas-enabled .analytics-momentum-scroll { overflow-x:auto; padding:0 12px 8px; }
+    body.saas-enabled .analytics-momentum-chart { display:block; width:100%; min-width:660px; height:auto; }
+    body.saas-enabled .analytics-chart-grid { stroke:#e4ebf0; stroke-width:1; }
+    body.saas-enabled .analytics-chart-axis { fill:#7a8798; font-size:10px; font-weight:650; }
+    body.saas-enabled .analytics-chart-period { cursor:pointer; }
+    body.saas-enabled .analytics-chart-period:hover rect { fill:rgba(15,118,110,.035); }
+    body.saas-enabled .analytics-chart-line { fill:none; stroke:#0f766e; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; }
+    body.saas-enabled .analytics-chart-point { fill:#fff; stroke:#0f766e; stroke-width:3; cursor:pointer; }
+    body.saas-enabled .analytics-chart-point:hover { fill:#dff5f1; }
+    body.saas-enabled .analytics-chart-value { fill:#17324d; font-size:11px; font-weight:800; }
+    body.saas-enabled .analytics-chart-stage-label { fill:#98a2b3; font-size:9px; font-weight:800; letter-spacing:.1em; }
+    body.saas-enabled .analytics-chart-marker { cursor:pointer; }
+    body.saas-enabled .analytics-chart-marker circle { stroke:#fff; stroke-width:2; }
+    body.saas-enabled .analytics-chart-marker:hover circle { stroke:#17324d; }
+    body.saas-enabled .analytics-momentum-note { margin:-5px 18px 16px; color:#8a96a7; font-size:11px; }
   }
   @media (max-width:640px) {
     body.saas-enabled .analytics-activity-view { display:none !important; }
@@ -6163,7 +6193,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.18-9';
+const CRM_BUILD_NUMBER = '2026.09.19-2';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -6865,7 +6895,8 @@ function emptyCrmData_() {
     contacts: [],
     connections: [],
     activities: [],
-    referralActivity: []
+    referralActivity: [],
+    stageHistory: []
   };
 }
 
@@ -7448,8 +7479,7 @@ function Toast() {
     style: {
       position: 'fixed',
       bottom: '20px',
-      left: '50%',
-      transform: 'translateX(-50%)',
+      right: '20px',
       zIndex: 9999
     },
     className: "crm-toast"
@@ -12123,9 +12153,10 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
 }
 
 
-function ActivityAnalyticsView({ accounts, activities, onSelect }) {
+function ActivityAnalyticsView({ accounts, activities, stageHistory, onSelect }) {
   const safeAccounts=Array.isArray(accounts)?accounts.filter(a=>a&&typeof a==='object'):[];
   const safeActivities=Array.isArray(activities)?activities.filter(a=>a&&typeof a==='object'):[];
+  const safeStageHistory=Array.isArray(stageHistory)?stageHistory.filter(event=>event&&typeof event==='object'):[];
   const restoredAnalyticsRef=useRef((()=>{try{return JSON.parse(sessionStorage.getItem('bdd_crm_activity_analytics_state')||'{}')||{};}catch(_){return {};}})());
   const [periodMode,setPeriodMode]=useState(()=>['week','month'].includes(restoredAnalyticsRef.current.periodMode)?restoredAnalyticsRef.current.periodMode:'week');
   const [regionFilter,setRegionFilter]=useState(()=>restoredAnalyticsRef.current.regionFilter||'All Regions');
@@ -12175,10 +12206,46 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
   },[safeAccounts,safeActivities,accountMap,periodMode,regionFilter,typeFilter]);
   const periodLabel=periodMode==='week'?'Last 8 weeks':'Last 8 months';
   const currentChange=model.previous?Math.round(((model.current-model.previous)/model.previous)*100):null;
+  const chartModel=useMemo(()=>{
+    const counts=model.periods.map(period=>model.rows.reduce((sum,row)=>sum+(row.counts[period.key]||0),0));
+    const first=model.periods[0]?.start;
+    const last=model.periods[model.periods.length-1]?.end;
+    const inferredStageByResult={
+      'Connected':'Connected','Spoke with SLP':'Connected','Spoke with Director of Rehab':'Connected',
+      'Spoke with Administrator':'Connected','Meeting completed':'Connected','Interested':'Connected',
+      'Referral opportunity':'Contract Discussion','Discussed Contract':'Contract Discussion','Discussed referrals':'Contract Discussion'
+    };
+    const explicit=safeStageHistory.map((event,index)=>{
+      const date=new Date(event.Timestamp||event.Date||'');
+      return {...event,_date:date,_key:event.StageHistoryId||`stage-${index}`,_account:accountMap[event.AccountId]||null,_inferred:false};
+    });
+    const inferred=safeActivities.map((activity,index)=>{
+      const toStage=inferredStageByResult[activity.ActivityResult];
+      const date=new Date(activity.Timestamp||activity.ActivityDate||activity.Date||'');
+      return toStage?{AccountId:activity.AccountId,FromStage:'',ToStage:toStage,Trigger:activity.ActivityResult,_date:date,_key:`inferred-${activity.ActivityId||index}`,_account:accountMap[activity.AccountId]||null,_inferred:true}:null;
+    }).filter(Boolean);
+    const seen=new Set();
+    const markers=[...explicit,...inferred].filter(event=>event._account&&event._date&&!Number.isNaN(event._date.getTime())&&event._date>=first&&event._date<last)
+      .filter(event=>regionFilter==='All Regions'||event._account.Region===regionFilter)
+      .sort((a,b)=>a._date-b._date)
+      .filter(event=>{const key=`${event.AccountId}|${event.ToStage}|${event._date.toISOString().slice(0,10)}`;if(seen.has(key))return false;seen.add(key);return true;});
+    return {counts,markers};
+  },[model.periods,model.rows,safeStageHistory,safeActivities,accountMap,regionFilter]);
   const openActivityDrilldown=(row,period=null)=>{
     const items=model.normalized.filter(a=>a.AccountId===row.id&&(!period||(a._date>=period.start&&a._date<period.end))).sort((a,b)=>b._date-a._date);
     setActivityDrilldown({row,period,items});
   };
+  const openPeriodDrilldown=period=>{
+    const items=model.normalized.filter(a=>a._date>=period.start&&a._date<period.end).sort((a,b)=>b._date-a._date);
+    setActivityDrilldown({row:{id:'all',name:'All facilities',account:null},period,items});
+  };
+  const chartWidth=900,chartHeight=260,plotLeft=48,plotRight=880,plotTop=28,plotBottom=166;
+  const chartMax=Math.max(1,...chartModel.counts);
+  const chartX=index=>model.periods.length===1?(plotLeft+plotRight)/2:plotLeft+(index/(model.periods.length-1))*(plotRight-plotLeft);
+  const chartY=value=>plotBottom-(value/chartMax)*(plotBottom-plotTop);
+  const chartPath=chartModel.counts.map((value,index)=>`${index?'L':'M'} ${chartX(index).toFixed(1)} ${chartY(value).toFixed(1)}`).join(' ');
+  const markerColors={'Contacted':'#d7a52d','Connected':'#f2bd26','Contract Discussion':'#2b8f88','Active Contract':'#0f766e','Not a fit':'#9ca3af'};
+  const markerX=event=>plotLeft+Math.max(0,Math.min(1,(event._date-model.periods[0].start)/(model.periods[model.periods.length-1].end-model.periods[0].start)))*(plotRight-plotLeft);
   return /*#__PURE__*/React.createElement('div',{className:'analytics-activity-view'},
     /*#__PURE__*/React.createElement('section',{className:'home-card analytics-activity-toolbar'},
       /*#__PURE__*/React.createElement('div',{className:'analytics-activity-toolbar-copy'},/*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Relationship Activity'),/*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Outreach volume by facility and region across the most recent eight periods.')),
@@ -12189,6 +12256,17 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
       )
     ),
     /*#__PURE__*/React.createElement('div',{className:'analytics-activity-kpis'},[[model.total,'Activities · '+periodLabel],[model.activeFacilities,'Facilities reached'],[model.inactiveFacilities,'Facilities with no activity'],[model.current,currentChange===null?'Current period':'Current period · '+(currentChange>=0?'↑ ':'↓ ')+Math.abs(currentChange)+'% vs prior']].map(([value,label])=>/*#__PURE__*/React.createElement('div',{className:'analytics-activity-kpi',key:label},/*#__PURE__*/React.createElement('strong',null,value),/*#__PURE__*/React.createElement('span',null,label)))),
+    /*#__PURE__*/React.createElement('section',{className:'home-card analytics-momentum-card'},
+      /*#__PURE__*/React.createElement('div',{className:'analytics-momentum-head'},/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Activity & Pipeline Momentum'),/*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Activity volume with relationship-stage advances on the same timeline. Click a period to see its activity.')),/*#__PURE__*/React.createElement('div',{className:'analytics-momentum-legend'},/*#__PURE__*/React.createElement('span',null,/*#__PURE__*/React.createElement('i',{className:'line'}),'Activities'),/*#__PURE__*/React.createElement('span',null,/*#__PURE__*/React.createElement('i',{className:'dot'}),'Stage progression'))),
+      /*#__PURE__*/React.createElement('div',{className:'analytics-momentum-scroll'},/*#__PURE__*/React.createElement('svg',{className:'analytics-momentum-chart',viewBox:`0 0 ${chartWidth} ${chartHeight}`,role:'img','aria-label':`Activity over ${periodLabel.toLowerCase()} with ${chartModel.markers.length} stage progression markers`},
+        [0,.25,.5,.75,1].map(f=>/*#__PURE__*/React.createElement('g',{key:f},/*#__PURE__*/React.createElement('line',{x1:plotLeft,x2:plotRight,y1:chartY(chartMax*f),y2:chartY(chartMax*f),className:'analytics-chart-grid'}),/*#__PURE__*/React.createElement('text',{x:plotLeft-10,y:chartY(chartMax*f)+4,className:'analytics-chart-axis','textAnchor':'end'},Math.round(chartMax*f)))),
+        model.periods.map((period,index)=>/*#__PURE__*/React.createElement('g',{key:period.key,className:'analytics-chart-period',onClick:()=>openPeriodDrilldown(period)},/*#__PURE__*/React.createElement('rect',{x:index===0?plotLeft-22:(chartX(index-1)+chartX(index))/2,y:plotTop,width:index===model.periods.length-1?plotRight-((chartX(index-1)+chartX(index))/2):((chartX(index)+chartX(index+1))/2)-(index===0?plotLeft-22:(chartX(index-1)+chartX(index))/2),height:plotBottom-plotTop,fill:'transparent'}),/*#__PURE__*/React.createElement('text',{x:chartX(index),y:190,className:'analytics-chart-axis','textAnchor':'middle'},period.label))),
+        /*#__PURE__*/React.createElement('path',{d:chartPath,className:'analytics-chart-line'}),
+        chartModel.counts.map((value,index)=>/*#__PURE__*/React.createElement('g',{key:model.periods[index].key},/*#__PURE__*/React.createElement('circle',{cx:chartX(index),cy:chartY(value),r:5,className:'analytics-chart-point',onClick:()=>openPeriodDrilldown(model.periods[index])}),/*#__PURE__*/React.createElement('text',{x:chartX(index),y:chartY(value)-11,className:'analytics-chart-value','textAnchor':'middle'},value))),
+        /*#__PURE__*/React.createElement('text',{x:plotLeft,y:218,className:'analytics-chart-stage-label'},'STAGE PROGRESSION'),
+        chartModel.markers.map((event,index)=>/*#__PURE__*/React.createElement('g',{key:event._key,className:'analytics-chart-marker',onClick:()=>onSelect(event._account)},/*#__PURE__*/React.createElement('circle',{cx:markerX(event),cy:238-(index%2)*13,r:6,fill:markerColors[event.ToStage]||'#64748b'}),/*#__PURE__*/React.createElement('title',null,`${event._account.AccountName}: ${event.FromStage?event.FromStage+' → ':''}${event.ToStage} · ${event._date.toLocaleDateString()}${event._inferred?' · inferred from '+event.Trigger:''}`)))
+      )), chartModel.markers.length===0&&/*#__PURE__*/React.createElement('p',{className:'analytics-momentum-note'},'Stage markers will appear as accounts progress. Earlier markers are inferred where existing activity results clearly indicate a stage.'),
+    ),
     /*#__PURE__*/React.createElement('div',{className:'analytics-activity-grid'},
       /*#__PURE__*/React.createElement('section',{className:'home-card analytics-activity-table-card'},
         /*#__PURE__*/React.createElement('div',{className:'analytics-activity-table-head'},/*#__PURE__*/React.createElement('div',null,/*#__PURE__*/React.createElement('div',{className:'home-card-title'},'Facility Activity'),/*#__PURE__*/React.createElement('div',{className:'home-card-copy'},'Counts by '+periodMode+'; busiest facilities first.')),/*#__PURE__*/React.createElement('div',{className:'home-period'},model.rows.length+' facilit'+(model.rows.length===1?'y':'ies'))),
@@ -12207,7 +12285,7 @@ function ActivityAnalyticsView({ accounts, activities, onSelect }) {
           /*#__PURE__*/React.createElement('div',{className:'home-month-modal-title'},activityDrilldown.row.name),
           /*#__PURE__*/React.createElement('div',{className:'home-month-modal-copy'},activityDrilldown.period?`Activities for ${activityDrilldown.period.label}`:`All activities in ${periodLabel.toLowerCase()}`)
         ),/*#__PURE__*/React.createElement('button',{type:'button',className:'analytics-activity-drilldown-close',onClick:()=>setActivityDrilldown(null)},'Close')),
-        /*#__PURE__*/React.createElement('div',{className:'analytics-activity-drilldown-body divide-y divide-skyblue-100'},activityDrilldown.items.map(a=>/*#__PURE__*/React.createElement('button',{type:'button',key:a._key,className:'analytics-activity-drilldown-row w-full text-left hover:bg-skyblue-100/30',onClick:()=>activityDrilldown.row.account&&onSelect(activityDrilldown.row.account)},
+        /*#__PURE__*/React.createElement('div',{className:'analytics-activity-drilldown-body divide-y divide-skyblue-100'},activityDrilldown.items.map(a=>/*#__PURE__*/React.createElement('button',{type:'button',key:a._key,className:'analytics-activity-drilldown-row w-full text-left hover:bg-skyblue-100/30',onClick:()=>a._account&&onSelect(a._account)},
           /*#__PURE__*/React.createElement('div',{className:'flex justify-between gap-3'},/*#__PURE__*/React.createElement('strong',{className:'text-sm text-navy-900'},[a.ActivityType,a.ActivityResult].filter(Boolean).join(' — ')||'Activity'),/*#__PURE__*/React.createElement('span',{className:'text-xs text-navy-700/50'},a._date.toLocaleDateString())),
           a.Details&&/*#__PURE__*/React.createElement('div',{className:'text-sm text-navy-700/70 mt-1'},a.Details)
         )))
@@ -12314,7 +12392,7 @@ function normalizeAnalyticsRecord(record) {
   return normalized;
 }
 
-function HomeDashboard({ accounts, referralActivity, activities, onSelect, onToday, onAccounts, onPipeline, onDeleteReferral }) {
+function HomeDashboard({ accounts, referralActivity, activities, stageHistory, onSelect, onToday, onAccounts, onPipeline, onDeleteReferral }) {
   const safeAccounts=Array.isArray(accounts)?accounts.map(normalizeAnalyticsRecord).filter(Boolean):[];
   const safeReferralActivity=Array.isArray(referralActivity)?referralActivity.map(normalizeAnalyticsRecord).filter(Boolean):[];
   const safeActivities=Array.isArray(activities)?activities.map(normalizeAnalyticsRecord).filter(Boolean):[];
@@ -12598,7 +12676,7 @@ function HomeDashboard({ accounts, referralActivity, activities, onSelect, onTod
       }, /*#__PURE__*/React.createElement('span',{className:'account-list-view-icon','aria-hidden':'true'},'☑'), /*#__PURE__*/React.createElement('span',null,'Activity'))
     )),
 
-    homeView === 'activity' ? /*#__PURE__*/React.createElement(ActivityAnalyticsView,{accounts:safeAccounts,activities:safeActivities,onSelect}) : null,
+    homeView === 'activity' ? /*#__PURE__*/React.createElement(ActivityAnalyticsView,{accounts:safeAccounts,activities:safeActivities,stageHistory,onSelect}) : null,
 
     homeView === 'table' ? /*#__PURE__*/React.createElement('section',{className:'home-card home-table-card analytics-table-view'},
       /*#__PURE__*/React.createElement('div',{className:'home-card-head'},
@@ -13673,7 +13751,8 @@ function App() {
         contacts: result.contacts || [],
         connections: result.connections || [],
         activities: result.activities || [],
-        referralActivity: result.referralActivity || []
+        referralActivity: result.referralActivity || [],
+        stageHistory: result.stageHistory || []
       };
       setData(nextData);
       writeCrmCache_(nextData);
@@ -13706,7 +13785,8 @@ function App() {
           contacts: [...d.contacts.filter(c => c.AccountId !== accountId), ...(result.contacts || [])],
           connections: [...d.connections.filter(c => c.AccountId !== accountId), ...(result.connections || [])],
           activities: [...d.activities.filter(a => a.AccountId !== accountId), ...(result.activities || [])],
-          referralActivity: [...(d.referralActivity || []).filter(r => r.AccountId !== accountId), ...(result.referralActivity || [])]
+          referralActivity: [...(d.referralActivity || []).filter(r => r.AccountId !== accountId), ...(result.referralActivity || [])],
+          stageHistory: [...(d.stageHistory || []).filter(event => event.AccountId !== accountId), ...(result.stageHistory || [])]
         };
         writeCrmCache_(nextData);
         return nextData;
@@ -13842,8 +13922,7 @@ function App() {
       style: {
         position: 'fixed',
         bottom: '20px',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        right: '20px',
         zIndex: 9999
       },
       className: "crm-toast"
@@ -13978,6 +14057,7 @@ function App() {
       accounts: visibleAccounts,
       referralActivity: visibleReferralActivity,
       activities: data.activities,
+      stageHistory: data.stageHistory || [],
       onSelect: a => {
         sessionStorage.setItem('bdd_crm_home_scroll_y', String(window.scrollY));
         setSelectedId(a.AccountId);
