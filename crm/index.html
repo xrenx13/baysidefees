@@ -6193,7 +6193,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.19-3';
+const CRM_BUILD_NUMBER = '2026.09.19-4';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7159,7 +7159,18 @@ async function apiGet(extraParams) {
       token: getSessionToken(),
       ...(extraParams || {})
     });
-    const res = await fetch(`${API_URL}?${params.toString()}`);
+    const requestUrl = `${API_URL}?${params.toString()}`;
+    const retryDelaysMs = [750, 2000];
+    let res = await fetch(requestUrl, { cache: 'no-store' });
+    for (const retryDelayMs of retryDelaysMs) {
+      // Google Apps Script occasionally redirects a valid read request to a
+      // temporary googleusercontent URL that returns 404. A fresh GET creates
+      // a new redirect URL. Retry only that transient status; writes are never
+      // retried here, so this cannot duplicate user changes.
+      if (res.status !== 404) break;
+      await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+      res = await fetch(requestUrl, { cache: 'no-store' });
+    }
     if (!res.ok) throw new Error(`Server returned an error (status ${res.status}).`);
     let result;
     try {
