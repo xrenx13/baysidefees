@@ -279,6 +279,11 @@
      page instead of a floating card, with the submit button as a single
      full-width bar at the bottom. */
   .mobile-page-form { display:flex; flex-direction:column; min-height:100%; }
+  /* iOS/Android auto-zoom the whole page when a focused input's font is
+     under 16px — the .input default (13.5px) is fine on desktop but would
+     zoom in on every tap here, so mobile page forms override it back up to
+     16px (still visually consistent since these fields fill their own row). */
+  .mobile-page-form input.input, .mobile-page-form select.input, .mobile-page-form textarea.input { font-size:16px; }
   .mobile-page-form-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .mobile-page-back { display:flex; align-items:center; justify-content:center; width:32px; height:32px; flex:0 0 32px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:19px; line-height:1; color:#657084; cursor:pointer; }
   .mobile-page-form-title { font-size:16px; font-weight:750; color:var(--navy-deep); }
@@ -518,7 +523,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-41';
+const BUILD_NUMBER = '2026.09.19-42';
 
 // =====================================================================
 // Small utilities
@@ -1408,12 +1413,6 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
     setScanningReceipt(false);
   }
 
-  // One less tap on the mobile app: the keyboard is already up on Amount —
-  // the very first thing you'd type — the moment the screen opens.
-  useEffect(() => {
-    if (isMobilePage && amountInputRef.current) amountInputRef.current.focus();
-  }, [isMobilePage]);
-
   async function handleSubmit(e) {
     e.preventDefault();
     setErr('');
@@ -1579,7 +1578,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
           )
         : h('label', { className:'receipt-drop' },
             file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt',
-            h('input', { type:'file', accept:'image/*,application/pdf', capture:'environment', style:{ display:'none' }, onChange:e => handleReceiptFile(e.target.files[0] || null) })
+            h('input', { type:'file', accept:'image/*,application/pdf', style:{ display:'none' }, onChange:e => handleReceiptFile(e.target.files[0] || null) })
           ),
       // Same read-then-fill Document AI pass the mobile "Scan receipt"
       // button uses, just triggered from this field instead — see
@@ -1692,13 +1691,6 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
       }, loc.label))
     );
   }
-
-  // One less tap on the mobile app: Start location already defaults to a
-  // saved shortcut, so End location is the first thing that actually needs
-  // typing — focus it the moment the screen opens.
-  useEffect(() => {
-    if (isMobilePage && endInputRef.current) endInputRef.current.focus();
-  }, [isMobilePage]);
 
   useEffect(() => {
     if (!hasMapsKey) return;
