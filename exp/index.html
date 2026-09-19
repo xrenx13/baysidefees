@@ -307,6 +307,15 @@
      back to the Dashboard — faster feedback than waiting for the toast to
      appear on the next screen. */
   .btn-just-saved, .btn-just-saved:disabled { background:var(--good); color:#fff; opacity:1; }
+  /* Full-screen "Scanning receipt…" cover shown from the moment a photo is
+     picked from the Scan receipt nav button until Document AI responds —
+     the same spinner as the app's initial load screen (.full-loading),
+     just pinned above the mobile shell instead of inline in it. */
+  .scan-overlay { position:fixed; inset:0; z-index:60; background:rgba(246,247,249,.97); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--muted); font-size:13px; }
+  /* Note shown on the Add Expense form when it was opened via Scan receipt,
+     so it's clear the Vendor/Amount/Date/Category fields were guessed from
+     the photo and are worth a second look before saving. */
+  .scan-hint { font-size:11.5px; color:var(--teal-dark); font-weight:650; margin:-6px 0 4px; }
   @media (max-width:720px) {
     .toast { left:16px; right:16px; bottom:calc(70px + env(safe-area-inset-bottom)); text-align:center; }
   }
@@ -494,7 +503,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-29';
+const BUILD_NUMBER = '2026.09.19-30';
 
 // =====================================================================
 // Small utilities
@@ -747,6 +756,24 @@ function fileToBase64_(file) {
     reader.readAsDataURL(file);
   });
 }
+// Document AI reads a receipt's vendor name and total, but has no idea how
+// BDD categorizes its own spending — that's specific to this business, not
+// something a receipt states. Rather than a second API call or a hardcoded
+// vendor→category table to maintain, just look at what Melanie herself
+// chose the last time she logged an expense from this same vendor and
+// default to that. Falls back to null (letting ExpenseForm's own
+// last-used/first-category default take over) when the vendor is new.
+function guessCategoryFromVendor_(vendor, expenses) {
+  const needle = String(vendor || '').trim().toLowerCase();
+  if (!needle) return null;
+  const matches = (expenses || []).filter(e => {
+    const v = String(e.Vendor || '').trim().toLowerCase();
+    return v && (v === needle || v.includes(needle) || needle.includes(v));
+  });
+  if (!matches.length) return null;
+  matches.sort((a, b) => (parseDate_(b.Date) || 0) - (parseDate_(a.Date) || 0));
+  return matches[0].Category || null;
+}
 // A receipt straight off a phone camera is routinely 8-20MB — needlessly
 // slow to upload over cellular between facility visits, and it piles up in
 // the Drive receipts folder over time. It's a document to be read, not a
@@ -850,6 +877,7 @@ function Icon({ name }) {
     edit: h('path',{d:'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'}),
     house: h(React.Fragment, null, h('path',{d:'M4 11.5 12 4l8 7.5'}), h('path',{d:'M6 10.5V20a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9.5'})),
     building: h(React.Fragment, null, h('rect',{x:'5',y:'4',width:'14',height:'17',rx:'1.2'}), h('path',{d:'M12 9v6M9 12h6'}), h('path',{d:'M9 21v-3h6v3'})),
+    camera: h(React.Fragment, null, h('path',{d:'M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z'}), h('circle',{cx:'12',cy:'13.5',r:'3.4'})),
   };
   return h('span', { className:'nav-icon' }, h('svg', { viewBox:'0 0 24 24' }, paths[name] || null));
 }
@@ -1224,7 +1252,7 @@ function MobilePageShell({ title, headerRight, onCancel, onSubmit, saving, justS
 // MobilePageShell above, and minimal hides the recurring-subscription
 // section, which is a desktop/admin setup task, not a quick phone log.
 // =====================================================================
-function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt, apiCreateRecurringSub, recurringSubscriptions, variant, minimal }) {
+function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt, apiCreateRecurringSub, recurringSubscriptions, variant, minimal, initialReceiptFile, scanHint }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const partOfSubscription = isEdit && !!initial.RecurringTemplateId;
   // The expense row itself only carries a RecurringTemplateId — the actual
@@ -1250,7 +1278,10 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
       Notes: (initial && initial.Notes) || ''
     };
   });
-  const [file, setFile] = useState(null);
+  // Pre-attached when this screen was opened from "Scan receipt" — the
+  // photo that was just scanned becomes the receipt for the expense it
+  // just filled in, without asking Melanie to attach it a second time.
+  const [file, setFile] = useState(() => initialReceiptFile || null);
   const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl } : null);
   // Recurring subscriptions: only offered on a brand-new expense (see
   // partOfSubscription above for the read-only note shown when editing one
@@ -1390,6 +1421,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
   );
   return h(Shell, shellProps,
     err && h('div', { className:'field-error' }, err),
+    scanHint && !err && h('div', { className:'scan-hint' }, '✨ Auto-filled from your receipt photo — check it over before saving.'),
     // Desktop: Date + Category on one row, Amount on its own row below.
     // Mobile: Date lives in the header (see headerRight above), so Category
     // and Amount pair up on one row instead.
@@ -2878,14 +2910,19 @@ const MOBILE_NAV_ITEMS = [
   { key:'dashboard', label:'Dashboard', icon:'dashboard' },
   { key:'addMileage', label:'Add mileage', icon:'mileage' },
   { key:'addExpense', label:'Add expense', icon:'receipt' },
+  // Not a screen of its own — tapping it jumps straight to the camera/photo
+  // picker (see MobileApp's onScanClick) and only lands on the Add expense
+  // screen once a photo's been picked, pre-filled from the scan. Never
+  // shown "active" since there's no matching view.
+  { key:'scanReceipt', label:'Scan receipt', icon:'camera' },
 ];
 
-function MobileBottomNav({ view, setView }) {
+function MobileBottomNav({ view, setView, onScanClick }) {
   return h('nav', { className:'mobile-bottom-nav' },
     MOBILE_NAV_ITEMS.map(item => h('button', {
       key:item.key, type:'button',
       className:'mobile-nav-btn' + (view === item.key ? ' active' : ''),
-      onClick:() => setView(item.key)
+      onClick:() => (item.key === 'scanReceipt' ? onScanClick() : setView(item.key))
     }, h(Icon, { name:item.icon }), h('span', null, item.label)))
   );
 }
@@ -2946,8 +2983,55 @@ function MobileDashboard({ expenses }) {
 function MobileApp({
   view, setView, expenses, categories, paymentMethods, vendorOptions,
   mileagePurposeOptions, mileageLocationOptions, facilities, defaultMileageRate,
-  onSignOut, apiCreate, apiUpdate, apiUploadReceipt, showToast
+  onSignOut, apiCreate, apiUpdate, apiUploadReceipt, apiScanReceipt, showToast
 }) {
+  // Set only while a photo picked from "Scan receipt" is being read by
+  // Document AI; cleared once the Add expense screen opens (whether the
+  // scan succeeded, came back empty, or failed outright — see
+  // handleScanFileChosen).
+  const [scanning, setScanning] = useState(false);
+  // Carries what a successful (or failed) scan should hand to the Add
+  // expense screen: the guessed field values as an `initial`, the photo
+  // itself pre-attached as the receipt, and whether to show the "auto-
+  // filled" hint. Cleared on cancel/save so reopening Add expense from its
+  // own nav button afterward starts blank again.
+  const [scanPrefill, setScanPrefill] = useState(null);
+  const scanFileInputRef = useRef(null);
+
+  async function handleScanFileChosen(e) {
+    const rawFile = e.target.files[0];
+    e.target.value = ''; // allow picking the same file again next time
+    if (!rawFile) return;
+    setScanning(true);
+    try {
+      const file = await compressReceiptImage_(rawFile);
+      let initial = null;
+      try {
+        const base64Data = await fileToBase64_(file);
+        const scanned = await apiScanReceipt(file.type, base64Data);
+        if (scanned && (scanned.vendor || scanned.amount || scanned.date)) {
+          initial = {
+            Date: scanned.date || todayStr(),
+            Vendor: scanned.vendor || '',
+            Amount: scanned.amount != null ? String(scanned.amount) : '',
+            Category: guessCategoryFromVendor_(scanned.vendor, expenses) || undefined
+          };
+        } else {
+          showToast("Couldn't find much on that receipt — check the photo and fill in the rest.");
+        }
+      } catch (scanErr) {
+        showToast(scanErr.message || "Couldn't read that receipt — enter the details manually.");
+      }
+      // Whether or not the scan itself found anything, the photo the user
+      // just took is still worth keeping attached as the receipt — no
+      // reason to make them select it a second time in the form below.
+      setScanPrefill({ initial, file, hint: !!initial });
+      setView('addExpense');
+    } finally {
+      setScanning(false);
+    }
+  }
+
   return h('div', { className:'mobile-shell' },
     h('div', { className:'mobile-topbar' },
       h('div', { className:'mobile-topbar-brand' },
@@ -2964,8 +3048,11 @@ function MobileApp({
       view === 'addExpense' && h(ExpenseForm, {
         variant:'page', minimal:true,
         categories, paymentMethods, vendorOptions,
-        onCancel:() => setView('dashboard'),
-        onSaved:() => { setView('dashboard'); showToast('Expense added.'); },
+        initial: scanPrefill && scanPrefill.initial,
+        initialReceiptFile: scanPrefill && scanPrefill.file,
+        scanHint: !!(scanPrefill && scanPrefill.hint),
+        onCancel:() => { setScanPrefill(null); setView('dashboard'); },
+        onSaved:() => { setScanPrefill(null); setView('dashboard'); showToast('Expense added.'); },
         apiCreate, apiUpdate, apiUploadReceipt
       }),
       view === 'addMileage' && h(MileageForm, {
@@ -2976,7 +3063,12 @@ function MobileApp({
         apiCreate, apiUpdate
       })
     ),
-    h(MobileBottomNav, { view, setView })
+    h(MobileBottomNav, { view, setView, onScanClick:() => scanFileInputRef.current && scanFileInputRef.current.click() }),
+    h('input', {
+      ref:scanFileInputRef, type:'file', accept:'image/*', capture:'environment',
+      style:{ display:'none' }, onChange:handleScanFileChosen
+    }),
+    scanning && h('div', { className:'scan-overlay' }, h('div', { className:'spinner' }), h('p', null, 'Reading receipt…'))
   );
 }
 
@@ -3180,6 +3272,14 @@ function App() {
   const apiUploadReceipt = useCallback(async (expenseId, filename, mimeType, base64Data) => {
     const res = await apiPost('uploadReceipt', { expenseId, filename, mimeType, base64Data });
     if (!res.success) throw new Error(res.error || 'Could not upload the receipt.');
+    return res.result;
+  }, []);
+  // Sends the (already-compressed) receipt photo to Document AI's Expense
+  // Parser via Code.gs and gets back its best guess at vendor/amount/date —
+  // see MobileApp's handleScanFileChosen for how those pre-fill Add expense.
+  const apiScanReceipt = useCallback(async (mimeType, base64Data) => {
+    const res = await apiPost('scanReceipt', { mimeType, base64Data });
+    if (!res.success) throw new Error(res.error || "Couldn't read that receipt.");
     return res.result;
   }, []);
   const apiDelete = useCallback(async (expenseId) => {
@@ -3388,7 +3488,7 @@ function App() {
         facilities: data.facilities,
         defaultMileageRate: data.settings.mileageRate,
         onSignOut: handleSignOut,
-        apiCreate, apiUpdate, apiUploadReceipt,
+        apiCreate, apiUpdate, apiUploadReceipt, apiScanReceipt,
         showToast
       }),
       h(Toast, { toast })
