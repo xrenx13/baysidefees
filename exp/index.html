@@ -235,6 +235,56 @@
     .global-search { flex:1 1 100%; width:auto; max-width:none; }
   }
 
+  /* ---------- Mobile app (phones) ----------
+     Below the breakpoint, App() renders MobileApp instead of the full
+     desktop shell above: a deliberately narrow, 3-screen experience
+     (Dashboard / Add Expense / Add Mileage) switched with a fixed
+     icon-based bottom nav, rather than the hamburger-revealed version of
+     the full desktop sidebar. See useIsMobile()/MobileApp in the script. */
+  /* height (not min-height) so this has a definite size for its flex:1
+     child (.mobile-content, below) to compute "remaining space" against —
+     with only a min-height, a flex container with no explicit height sizes
+     itself to fit its children instead of the viewport, which is what let
+     .mobile-content grow past the screen under the fixed bottom nav. */
+  .mobile-shell { height:100vh; height:100dvh; display:flex; flex-direction:column; background:var(--canvas); overflow:hidden; }
+  .mobile-topbar { position:sticky; top:0; z-index:30; display:flex; align-items:center; justify-content:space-between; gap:10px; height:56px; padding:0 16px; background:rgba(246,247,249,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); }
+  .mobile-topbar-brand { display:flex; align-items:center; gap:9px; font-size:14.5px; font-weight:750; color:var(--navy-deep); }
+  .mobile-topbar-logo { width:26px; height:26px; border-radius:7px; object-fit:contain; background:var(--navy-deep); }
+  .mobile-signout-btn { display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:9px; border:1px solid var(--line); background:#fff; color:#657084; }
+  .mobile-signout-btn .nav-icon svg { width:16px; height:16px; }
+  /* min-height:0 overrides the flexbox default (a flex item's min-height is
+     "auto", i.e. at least its content's height) — the same gotcha fixed on
+     .sidebar-nav above. Without it, a tall form (Add Mileage, say) simply
+     grows this past the viewport instead of scrolling internally, and its
+     submit button ends up hidden under the fixed bottom nav bar. */
+  .mobile-content { flex:1; min-height:0; padding:16px 16px calc(84px + env(safe-area-inset-bottom)); overflow-y:auto; }
+  .mobile-kpi-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .mobile-kpi-tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 14px; }
+  .mobile-recent-row { display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid #f0f2f5; }
+  .mobile-recent-row:last-child { border-bottom:none; }
+  .mobile-recent-name { font-size:13px; font-weight:650; color:#39465a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mobile-recent-meta { font-size:11px; color:var(--faint); margin-top:1px; }
+  .mobile-recent-amount { font-size:13px; font-weight:750; color:var(--navy-deep); flex:0 0 auto; }
+  .mobile-bottom-nav { position:fixed; left:0; right:0; bottom:0; z-index:40; display:flex; background:#fff; border-top:1px solid var(--line); padding:6px 6px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -4px 16px rgba(8,20,40,.05); }
+  .mobile-nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 4px; border:0; background:transparent; color:#8a94a6; font-size:11px; font-weight:650; border-radius:10px; }
+  .mobile-nav-btn .nav-icon svg { width:21px; height:21px; }
+  .mobile-nav-btn.active { color:var(--teal-dark); }
+  /* Full-page shell for Add Expense / Add Mileage on mobile (MobilePageShell)
+     — the exact same form fields as the desktop modal (ExpenseForm /
+     MileageForm with variant:'page'), just laid out as a plain scrolling
+     page instead of a floating card, with the submit button as a single
+     full-width bar at the bottom. */
+  .mobile-page-form { display:flex; flex-direction:column; min-height:100%; }
+  .mobile-page-form-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .mobile-page-back { display:flex; align-items:center; justify-content:center; width:32px; height:32px; flex:0 0 32px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:19px; line-height:1; color:#657084; cursor:pointer; }
+  .mobile-page-form-title { font-size:16px; font-weight:750; color:var(--navy-deep); }
+  .mobile-page-form-body { display:grid; gap:14px; flex:1; }
+  .mobile-page-form-foot { margin-top:18px; }
+  .btn-block { width:100%; height:46px; font-size:14px; }
+  @media (max-width:720px) {
+    .toast { left:16px; right:16px; bottom:calc(70px + env(safe-area-inset-bottom)); text-align:center; }
+  }
+
   /* ---------- Cards, tiles, tables ---------- */
   .card { background:var(--surface); border:1px solid var(--line); border-radius:14px; }
   .card-pad { padding:18px 20px; }
@@ -405,7 +455,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.18-25';
+const BUILD_NUMBER = '2026.09.19-26';
 
 // =====================================================================
 // Small utilities
@@ -1095,12 +1145,37 @@ function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }
   );
 }
 
+// Alternate shell for ExpenseForm/MileageForm on the mobile app (see
+// MobileApp below): the exact same field markup as ModalShell above, laid
+// out as a plain full-height page — a back arrow + title up top, the
+// fields in a normal scrolling column, and one full-width submit bar
+// pinned to the bottom — instead of a floating dialog card. Picking the
+// shell is the only thing that changes; none of the form logic does.
+function MobilePageShell({ title, onCancel, onSubmit, saving, submitLabel, children }) {
+  const body = Array.isArray(children) ? children : [children];
+  return h('form', { className:'mobile-page-form', onSubmit },
+    h('div', { className:'mobile-page-form-head' },
+      h('button', { type:'button', className:'mobile-page-back', onClick:onCancel, 'aria-label':'Cancel', disabled:saving }, '‹'),
+      h('div', { className:'mobile-page-form-title' }, title)
+    ),
+    h('div', { className:'mobile-page-form-body' }, ...body),
+    h('div', { className:'mobile-page-form-foot' },
+      h('button', { type:'submit', className:'btn btn-teal btn-block', disabled:saving }, saving ? 'Saving…' : submitLabel)
+    )
+  );
+}
+
 // =====================================================================
 // Expense form (create/edit) — general business expenses only. Mileage has
 // its own dedicated form (MileageForm, below) so this one only ever shows
 // fields that actually apply: no start/end locations, no mileage rate.
+//
+// variant:'page' + minimal:true is how the mobile Add Expense screen uses
+// this same component (see MobileApp) — variant swaps ModalShell for
+// MobilePageShell above, and minimal hides the recurring-subscription
+// section, which is a desktop/admin setup task, not a quick phone log.
 // =====================================================================
-function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt, apiCreateRecurringSub, recurringSubscriptions }) {
+function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vendorOptions, onCancel, onSaved, apiCreate, apiUpdate, apiUploadReceipt, apiCreateRecurringSub, recurringSubscriptions, variant, minimal }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const partOfSubscription = isEdit && !!initial.RecurringTemplateId;
   // The expense row itself only carries a RecurringTemplateId — the actual
@@ -1200,7 +1275,8 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
     setSaving(false);
   }
 
-  return h(ModalShell, {
+  const Shell = variant === 'page' ? MobilePageShell : ModalShell;
+  return h(Shell, {
     title: isEdit ? 'Edit expense' : 'Add expense',
     onCancel, onSubmit: handleSubmit, saving,
     submitLabel: isEdit ? 'Save changes' : 'Add expense'
@@ -1263,7 +1339,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
       'Part of a recurring subscription' + (linkedTemplate ? ' (' + formatInterval_(linkedTemplate.IntervalUnit, linkedTemplate.IntervalCount).toLowerCase() + ')' : '') +
       '. Editing this saves just this one occurrence — manage the subscription itself from the Subscriptions page.'
     ),
-    !isEdit && h('div', { className:'field', style:{ borderTop:'1px solid var(--line)', paddingTop:'14px' } },
+    !isEdit && !minimal && h('div', { className:'field', style:{ borderTop:'1px solid var(--line)', paddingTop:'14px' } },
       h('label', { className:'checkbox-row', style:{ cursor:'pointer' } },
         h('input', { type:'checkbox', checked:recurring, onChange:e => setRecurring(e.target.checked) }),
         'This is a recurring subscription'
@@ -1307,7 +1383,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
 // ExpenseForm above. No payment method, no receipt, no category picker
 // (always Mileage) — just what a drive actually needs.
 // =====================================================================
-function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationOptions, facilityOptions, onCancel, onSaved, apiCreate, apiUpdate }) {
+function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationOptions, facilityOptions, onCancel, onSaved, apiCreate, apiUpdate, variant }) {
   const isEdit = !!(initial && initial.ExpenseId);
   const [form, setForm] = useState(() => ({
     Date: (initial && initial.Date) || todayStr(),
@@ -1418,7 +1494,8 @@ function MileageForm({ initial, defaultMileageRate, purposeOptions, endLocationO
     setSaving(false);
   }
 
-  return h(ModalShell, {
+  const Shell = variant === 'page' ? MobilePageShell : ModalShell;
+  return h(Shell, {
     title: isEdit ? 'Edit mileage' : 'Add mileage',
     onCancel, onSubmit: handleSubmit, saving,
     submitLabel: isEdit ? 'Save changes' : 'Add mileage'
@@ -2590,6 +2667,135 @@ function SubscriptionsView({ subscriptions, categories, paymentMethods, onPauseR
 // =====================================================================
 function emptyData_() { return { expenses:[], settings:{ mileageRate:0.76 }, categories:[], paymentMethods:[], purchaseOrders:[], poCategories:[], poStatuses:[], facilities:[], recurringSubscriptions:[] }; }
 
+// =====================================================================
+// Mobile app — a deliberately narrow, 3-screen experience for phones
+// (Dashboard / Add Expense / Add Mileage), switched with a fixed
+// icon-based bottom nav bar, instead of the hamburger-revealed version of
+// the full desktop sidebar. App() renders this in place of the desktop
+// shell once useIsMobile() reports a phone-width viewport.
+// =====================================================================
+function useIsMobile(breakpoint) {
+  const bp = breakpoint || 720;
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= bp);
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth <= bp); }
+    check();
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      window.removeEventListener('orientationchange', check);
+    };
+  }, [bp]);
+  return isMobile;
+}
+
+const MOBILE_NAV_ITEMS = [
+  { key:'dashboard', label:'Dashboard', icon:'dashboard' },
+  { key:'addExpense', label:'Add expense', icon:'receipt' },
+  { key:'addMileage', label:'Add mileage', icon:'mileage' },
+];
+
+function MobileBottomNav({ view, setView }) {
+  return h('nav', { className:'mobile-bottom-nav' },
+    MOBILE_NAV_ITEMS.map(item => h('button', {
+      key:item.key, type:'button',
+      className:'mobile-nav-btn' + (view === item.key ? ' active' : ''),
+      onClick:() => setView(item.key)
+    }, h(Icon, { name:item.icon }), h('span', null, item.label)))
+  );
+}
+
+// Read-only summary — the same underlying numbers as the desktop
+// Dashboard's KPI row and recent-activity card, just without the category
+// breakdown / spend-by-month charts or click-through to an Expenses log,
+// since browsing/editing past entries isn't one of the three things the
+// mobile app is meant to do.
+function MobileDashboard({ expenses }) {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const sum = rows => rows.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+  const inRange = (r, start) => { const d = parseDate_(r.Date); return d && d >= start; };
+  const mtd = expenses.filter(r => inRange(r, monthStart));
+  const ytd = expenses.filter(r => inRange(r, yearStart));
+  const mileageYtd = ytd.filter(r => r.Category === 'Mileage');
+  const missingReceipts = ytd.filter(r => r.Category !== 'Mileage' && !r.ReceiptFileUrl).length;
+  const recent = expenses.slice().sort((a, b) => (parseDate_(b.Date) || 0) - (parseDate_(a.Date) || 0)).slice(0, 5);
+
+  return h('div', null,
+    h('div', { className:'mobile-kpi-grid' },
+      h('div', { className:'mobile-kpi-tile' },
+        h('div', { className:'kpi-label' }, 'This month'),
+        h('div', { className:'kpi-value' }, formatCurrencyCompact(sum(mtd)))
+      ),
+      h('div', { className:'mobile-kpi-tile' },
+        h('div', { className:'kpi-label' }, 'Year to date'),
+        h('div', { className:'kpi-value' }, formatCurrencyCompact(sum(ytd)))
+      ),
+      h('div', { className:'mobile-kpi-tile' },
+        h('div', { className:'kpi-label' }, 'Mileage YTD'),
+        h('div', { className:'kpi-value' }, mileageYtd.reduce((s, r) => s + (Number(r.Miles) || 0), 0).toLocaleString(undefined, { maximumFractionDigits:0 }) + ' mi')
+      ),
+      h('div', { className:'mobile-kpi-tile' },
+        h('div', { className:'kpi-label' }, 'Missing receipts'),
+        h('div', { className:'kpi-value' }, missingReceipts)
+      )
+    ),
+    h('div', { className:'card card-pad', style:{ marginTop:'14px' } },
+      h('div', { className:'card-title' }, 'Recent activity'),
+      h('div', { style:{ marginTop:'8px' } },
+        recent.length === 0
+          ? h('p', { className:'card-copy' }, 'Nothing logged yet.')
+          : recent.map(r => h('div', { className:'mobile-recent-row', key:r.ExpenseId },
+              h('div', { style:{ minWidth:0 } },
+                h('div', { className:'mobile-recent-name' }, r.Vendor || r.Category),
+                h('div', { className:'mobile-recent-meta' }, formatDate(r.Date) + ' · ' + r.Category)
+              ),
+              h('div', { className:'mobile-recent-amount' }, formatCurrency(r.Amount))
+            ))
+      )
+    )
+  );
+}
+
+function MobileApp({
+  view, setView, expenses, categories, paymentMethods, vendorOptions,
+  mileagePurposeOptions, mileageLocationOptions, facilities, defaultMileageRate,
+  onSignOut, apiCreate, apiUpdate, apiUploadReceipt, showToast
+}) {
+  return h('div', { className:'mobile-shell' },
+    h('div', { className:'mobile-topbar' },
+      h('div', { className:'mobile-topbar-brand' },
+        h('img', { src:LOGO_DATA_URI, alt:'', className:'mobile-topbar-logo' }),
+        h('span', null, 'BDD EXP')
+      ),
+      h('button', {
+        type:'button', className:'mobile-signout-btn', 'aria-label':'Sign out', title:'Sign out',
+        onClick:() => { if (window.confirm('Sign out of BDD EXP?')) onSignOut(); }
+      }, h(Icon, { name:'logout' }))
+    ),
+    h('div', { className:'mobile-content' },
+      view === 'dashboard' && h(MobileDashboard, { expenses }),
+      view === 'addExpense' && h(ExpenseForm, {
+        variant:'page', minimal:true,
+        categories, paymentMethods, vendorOptions,
+        onCancel:() => setView('dashboard'),
+        onSaved:() => { setView('dashboard'); showToast('Expense added.'); },
+        apiCreate, apiUpdate, apiUploadReceipt
+      }),
+      view === 'addMileage' && h(MileageForm, {
+        variant:'page',
+        defaultMileageRate, purposeOptions:mileagePurposeOptions, endLocationOptions:mileageLocationOptions, facilityOptions:facilities,
+        onCancel:() => setView('dashboard'),
+        onSaved:() => { setView('dashboard'); showToast('Mileage added.'); },
+        apiCreate, apiUpdate
+      })
+    ),
+    h(MobileBottomNav, { view, setView })
+  );
+}
+
 function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(LS_PREFIX+'unlocked') === 'true' && !!sessionStorage.getItem(LS_PREFIX+'session_token'));
   const [startupCache] = useState(() => readCache_());
@@ -2600,6 +2806,10 @@ function App() {
   const [data, setData] = useState(() => startupCache ? Object.assign({}, emptyData_(), startupCache) : emptyData_());
   const [loading, setLoading] = useState(() => !startupCache);
   const [loadError, setLoadError] = useState(null);
+  // Below the phone-width breakpoint, render MobileApp's simplified
+  // 3-screen experience instead of the full desktop shell (see MobileApp).
+  const isMobile = useIsMobile();
+  const [mobileView, setMobileView] = useState('dashboard');
   // Browser back/forward support: same pushState/popstate pattern as BDD
   // CRM's setView — switching pages pushes a history entry so the phone/
   // browser back button (and the header's back button below) step back
@@ -2840,11 +3050,19 @@ function App() {
   }, []);
 
   function openAddExpense() {
+    // On the mobile app there's no modal layer at all — jump straight to
+    // its Add Expense screen instead (this is also what a PWA home-screen
+    // "Add expense" shortcut lands on for a phone install; see the
+    // ?action= effect below).
+    if (isMobile) { setMobileView('addExpense'); return; }
     // No presetCategory here — ExpenseForm falls back to whatever category
     // was used last time, so it doesn't override that remembered default.
     setModal({ type:'expense', mode:'create' });
   }
-  function openAddMileage() { setModal({ type:'mileage', mode:'create' }); }
+  function openAddMileage() {
+    if (isMobile) { setMobileView('addMileage'); return; }
+    setModal({ type:'mileage', mode:'create' });
+  }
   function openAddPO() { setModal({ type:'po', mode:'create' }); }
   function openRecordExpense(po) { setModal({ type:'expense', mode:'create', presetCategory: po.Category, po }); }
   function openEdit(expense) {
@@ -2972,6 +3190,25 @@ function App() {
 
   if (loading) {
     return h('div', { className:'full-loading' }, h('div', { className:'spinner' }), h('p', null, 'Loading BDD EXP…'));
+  }
+
+  if (isMobile) {
+    return h(React.Fragment, null,
+      h(MobileApp, {
+        view: mobileView, setView: setMobileView,
+        expenses: data.expenses,
+        categories: data.categories.filter(c => c !== 'Mileage'),
+        paymentMethods: data.paymentMethods,
+        vendorOptions,
+        mileagePurposeOptions, mileageLocationOptions,
+        facilities: data.facilities,
+        defaultMileageRate: data.settings.mileageRate,
+        onSignOut: handleSignOut,
+        apiCreate, apiUpdate, apiUploadReceipt,
+        showToast
+      }),
+      h(Toast, { toast })
+    );
   }
 
   const pageTitles = { dashboard:'Dashboard', expenses:'Expenses', mileage:'Mileage', reports:'Reports', purchaseorders:'Purchase Orders', subscriptions:'Subscriptions' };
