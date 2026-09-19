@@ -6193,7 +6193,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.19-5';
+const CRM_BUILD_NUMBER = '2026.09.19-6';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7179,8 +7179,26 @@ async function apiGet(extraParams) {
       throw new Error('Server returned an unexpected response — please try again.');
     }
     if (result.error === 'Unauthorized - please sign in again') {
-      handleUnauthorized({ requestType: 'GET', action: extraParams?.action || 'all' });
-      return emptyCrmData_();
+      const action = extraParams?.action || 'all';
+      // validateSession is already the independent confirmation request, so
+      // an explicit Unauthorized response here is authoritative. For every
+      // other GET, independently confirm before clearing local session state;
+      // Apps Script can occasionally reject one otherwise-valid request.
+      if (action === 'validateSession') {
+        handleUnauthorized({ requestType: 'GET', action, confirmed: true });
+        return emptyCrmData_();
+      }
+      const sessionIsValid = await confirmSessionAfterUnauthorized_();
+      if (sessionIsValid === true) {
+        throw new Error('This request could not be completed. Your CRM session is still active; please try again.');
+      }
+      if (sessionIsValid === false) {
+        handleUnauthorized({ requestType: 'GET', action, confirmed: true });
+        return emptyCrmData_();
+      }
+      // A delivery or network failure prevented confirmation. Preserve the
+      // local session instead of turning an inconclusive response into a logout.
+      throw new Error('Could not verify your CRM session. Please try again.');
     }
     return result;
   })();
@@ -7201,7 +7219,7 @@ async function apiGet(extraParams) {
 async function performApiPost_(action, payload, retryAttempt = 0) {
   const startedAt = performance.now();
   try {
-    const res = await fetch(API_URL, {
+    const fetchPost = () => fetch(API_URL, {
       method: 'POST',
       body: JSON.stringify({
         action,
@@ -7209,6 +7227,17 @@ async function performApiPost_(action, payload, retryAttempt = 0) {
         ...payload
       })
     });
+    let res = await fetchPost();
+    if (READ_ONLY_POST_ACTIONS_.has(action)) {
+      // These calls only retrieve calendar/email/contact suggestions, so a
+      // fresh request is safe when Google's temporary response URL returns
+      // 404. Never apply this retry path to create, update, or delete actions.
+      for (const retryDelayMs of [750, 2000]) {
+        if (res.status !== 404) break;
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        res = await fetchPost();
+      }
+    }
     if (!res.ok) {
       throw new Error(`Server returned an error (status ${res.status}).`);
     }

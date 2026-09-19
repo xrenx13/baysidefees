@@ -1,4 +1,4 @@
-const BDD_CRM_SHELL_CACHE = 'bdd-crm-shell-2026.09.19-4';
+const BDD_CRM_SHELL_CACHE = 'bdd-crm-shell-2026.09.19-6';
 const BDD_CRM_SHELL_FILES = [
   './',
   './index.html',
