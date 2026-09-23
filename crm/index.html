@@ -843,6 +843,21 @@ try {
     .today-desktop-quick-title { font-size:14px; font-weight:800; color:#15233b; }
     .today-desktop-quick-copy { margin-top:3px; font-size:12px; line-height:1.4; color:#8491a3; }
     .today-desktop-quick-btn { width:100%; min-height:42px; margin-top:12px; border:0; border-radius:9px; background:#0b1f3a; color:#fff; font-size:13px; font-weight:800; cursor:pointer; }
+    .today-todo { background:#fff; border:1px solid #dfe7ed; border-radius:14px; padding:16px; margin-bottom:22px; }
+    .today-todo-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .today-todo-title { font-size:14px; font-weight:800; color:#15233b; }
+    .today-todo-count { min-width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#eaf7f5; color:#0f766e; font-size:11px; font-weight:800; }
+    .today-todo-form { display:flex; gap:7px; margin-top:12px; }
+    .today-todo-input { min-width:0; flex:1; height:38px; border:1px solid #ccd9e3; border-radius:8px; padding:0 10px; color:#15233b; font-size:13px; }
+    .today-todo-add { width:38px; height:38px; flex:0 0 38px; border:0; border-radius:8px; background:#0b1f3a; color:#fff; font-size:20px; line-height:1; font-weight:500; cursor:pointer; }
+    .today-todo-list { display:grid; gap:2px; margin-top:10px; }
+    .today-todo-item { display:flex; align-items:flex-start; gap:9px; padding:7px 2px; color:#43556d; font-size:13px; line-height:1.35; cursor:pointer; }
+    .today-todo-check { width:17px; height:17px; flex:0 0 17px; margin:0; accent-color:#0f766e; cursor:pointer; }
+    .today-todo-item.done { color:#8491a3; text-decoration:line-through; }
+    .today-todo-empty { margin:11px 0 2px; color:#8491a3; font-size:12px; line-height:1.4; }
+    .today-todo-completed { margin-top:9px; padding-top:8px; border-top:1px solid #edf1f4; }
+    .today-todo-completed summary { color:#65758a; font-size:12px; font-weight:700; cursor:pointer; }
+    .today-todo-clear { margin:6px 0 0 28px; padding:0; border:0; background:transparent; color:#65758a; font-size:11px; font-weight:700; text-decoration:underline; cursor:pointer; }
     .today-followup-prominent { font-size:13px !important; font-weight:800; color:#43556d; }
     .today-followup-prominent.overdue { color:#b42318; }
     .today-followup-prominent.due { color:#9a6700; }
@@ -6193,7 +6208,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.19-6';
+const CRM_BUILD_NUMBER = '2026.09.20-2';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7228,10 +7243,11 @@ async function performApiPost_(action, payload, retryAttempt = 0) {
       })
     });
     let res = await fetchPost();
-    if (READ_ONLY_POST_ACTIONS_.has(action)) {
-      // These calls only retrieve calendar/email/contact suggestions, so a
-      // fresh request is safe when Google's temporary response URL returns
-      // 404. Never apply this retry path to create, update, or delete actions.
+    const canRetryTransient404 = READ_ONLY_POST_ACTIONS_.has(action) || action === 'verifyGoogleLogin';
+    if (canRetryTransient404) {
+      // Read-only calls and Google login verification are safe to submit
+      // again when Apps Script's temporary googleusercontent response URL
+      // returns 404. Create, update, and delete actions are never retried.
       for (const retryDelayMs of [750, 2000]) {
         if (res.status !== 404) break;
         await new Promise(resolve => setTimeout(resolve, retryDelayMs));
@@ -12091,6 +12107,53 @@ function TodayQuickLog({account,onClose,onSaved,onFullLog,nextAccount,onNextAcco
   );
 }
 
+function TodayTodoList() {
+  const storageKey='bdd_crm_today_todos';
+  const [items,setItems]=useState(()=>{
+    try {
+      const saved=JSON.parse(localStorage.getItem(storageKey)||'[]');
+      return Array.isArray(saved)?saved.filter(item=>item&&typeof item.text==='string'):[];
+    } catch (_) { return []; }
+  });
+  const [draft,setDraft]=useState('');
+  const save=next=>{
+    setItems(next);
+    try { localStorage.setItem(storageKey,JSON.stringify(next)); } catch (_) {}
+  };
+  const add=event=>{
+    event.preventDefault();
+    const text=draft.trim();
+    if(!text)return;
+    save([...items,{id:`todo_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,text,done:false}]);
+    setDraft('');
+  };
+  const toggle=id=>save(items.map(item=>item.id===id?{...item,done:!item.done}:item));
+  const active=items.filter(item=>!item.done);
+  const completed=items.filter(item=>item.done);
+  return /*#__PURE__*/React.createElement("section",{className:"today-todo",'aria-label':"To-do list"},
+    /*#__PURE__*/React.createElement("div",{className:"today-todo-head"},
+      /*#__PURE__*/React.createElement("div",{className:"today-todo-title"},"To-Do List"),
+      active.length>0&&/*#__PURE__*/React.createElement("span",{className:"today-todo-count",title:`${active.length} task${active.length===1?'':'s'} remaining`},active.length)
+    ),
+    /*#__PURE__*/React.createElement("form",{className:"today-todo-form",onSubmit:add},
+      /*#__PURE__*/React.createElement("input",{className:"today-todo-input",value:draft,onChange:e=>setDraft(e.target.value),placeholder:"Add a task…",'aria-label':"Add a task"}),
+      /*#__PURE__*/React.createElement("button",{type:"submit",className:"today-todo-add",'aria-label':"Add task",title:"Add task"},"+")
+    ),
+    active.length>0?/*#__PURE__*/React.createElement("div",{className:"today-todo-list"},active.map(item=>/*#__PURE__*/React.createElement("label",{key:item.id,className:"today-todo-item"},
+      /*#__PURE__*/React.createElement("input",{type:"checkbox",className:"today-todo-check",checked:false,onChange:()=>toggle(item.id)}),
+      /*#__PURE__*/React.createElement("span",null,item.text)
+    ))):completed.length===0&&/*#__PURE__*/React.createElement("div",{className:"today-todo-empty"},"Keep your personal priorities in view."),
+    completed.length>0&&/*#__PURE__*/React.createElement("details",{className:"today-todo-completed"},
+      /*#__PURE__*/React.createElement("summary",null,`Completed (${completed.length})`),
+      /*#__PURE__*/React.createElement("div",{className:"today-todo-list"},completed.map(item=>/*#__PURE__*/React.createElement("label",{key:item.id,className:"today-todo-item done"},
+        /*#__PURE__*/React.createElement("input",{type:"checkbox",className:"today-todo-check",checked:true,onChange:()=>toggle(item.id)}),
+        /*#__PURE__*/React.createElement("span",null,item.text)
+      ))),
+      /*#__PURE__*/React.createElement("button",{type:"button",className:"today-todo-clear",onClick:()=>save(items.filter(item=>!item.done))},"Clear completed")
+    )
+  );
+}
+
 function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAccount,onCompleteFollowUp,onBack}) {
   useEffect(()=>{
     const y=Number(sessionStorage.getItem('bdd_crm_today_scroll_y'))||0;
@@ -12177,6 +12240,7 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
           /*#__PURE__*/React.createElement("div",{className:"today-desktop-quick-copy"},"Record a call, email, visit, or meeting without leaving Today."),
           /*#__PURE__*/React.createElement("button",{type:"button",className:"today-desktop-quick-btn",onClick:()=>setPickerOpen(true)},"+ Log Activity")
         ),
+        /*#__PURE__*/React.createElement(TodayTodoList,null),
         /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Suggested Outreach",copy:"High-opportunity targets to work after committed follow-ups",accounts:suggested,urgency:"opportunity",whyFn:a=>{const d=daysSince(a.LastContactDate);return d===null?'High-opportunity target with no recorded outreach':`High-opportunity target with no contact in ${d} days`;}})
       )
     ),
@@ -13536,7 +13600,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       className:'saas-preference-row saas-today-sidebar-preference'
     }, /*#__PURE__*/React.createElement('div', {
       className:'saas-preference-copy'
-    }, /*#__PURE__*/React.createElement('strong', null, 'Show Today sidebar'), /*#__PURE__*/React.createElement('span', null, 'Display Quick Log Activity and Suggested Outreach beside the desktop work queue.')), /*#__PURE__*/React.createElement('button', {
+    }, /*#__PURE__*/React.createElement('strong', null, 'Show Today sidebar'), /*#__PURE__*/React.createElement('span', null, 'Display Quick Log Activity, To-Do List, and Suggested Outreach beside the desktop work queue.')), /*#__PURE__*/React.createElement('button', {
       type:'button',
       role:'switch',
       'aria-checked':showTodaySidebar,

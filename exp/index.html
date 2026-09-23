@@ -523,7 +523,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-42';
+const BUILD_NUMBER = '2026.09.19-43';
 
 // =====================================================================
 // Small utilities
@@ -3028,11 +3028,14 @@ function ReportsView({ expenses, categories, assets }) {
       h('table', { className:'data-table' },
         h('thead', null, h('tr', null, h('th', null, 'Category'), monthLabels.map(m => h('th', { key:m, className:'num' }, m)), h('th', { className:'num' }, 'Total'))),
         h('tbody', null,
-          Object.entries(matrix).filter(([,arr]) => arr.some(v => v>0)).map(([cat, arr]) => h('tr', { key:cat },
-            h('td', null, cat),
-            arr.map((v,i) => h('td', { key:i, className:'num' }, v ? formatCurrency(v) : '—')),
-            h('td', { className:'num', style:{ fontWeight:700 } }, formatCurrency(arr.reduce((s,v)=>s+v,0)))
-          )),
+          Object.entries(matrix).map(([cat, arr]) => {
+            const catTotal = arr.reduce((s,v)=>s+v,0);
+            return h('tr', { key:cat, style: catTotal === 0 ? { color:'var(--faint)' } : null },
+              h('td', null, cat),
+              arr.map((v,i) => h('td', { key:i, className:'num' }, v ? formatCurrency(v) : '—')),
+              h('td', { className:'num', style:{ fontWeight:700 } }, catTotal ? formatCurrency(catTotal) : '—')
+            );
+          }),
           h('tr', null,
             h('td', { style:{ fontWeight:700 } }, 'Total'),
             monthTotals.map((v,i) => h('td', { key:i, className:'num', style:{ fontWeight:700 } }, v ? formatCurrency(v) : '—')),
