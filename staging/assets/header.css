@@ -1,0 +1,29 @@
+
+/* Preserved current Bayside branding and header */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+.bayside-original-nav{position:sticky;top:0;z-index:1000;background:#081e3d;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:12px 2.5rem;min-height:82px;box-shadow:0 2px 20px rgba(0,0,0,.22);font-family:'Source Sans 3',sans-serif}
+.bayside-original-nav .nav-logo{display:flex;flex-direction:row;align-items:center;gap:.6rem;line-height:1.1;flex-shrink:0}
+.bayside-original-nav .nav-logo>a{display:flex;align-items:center;flex-shrink:0}
+.bayside-original-nav .nav-logo img{width:52px;height:52px;object-fit:contain}
+.bayside-original-nav .nav-logo .brand-name{font-family:'Playfair Display',Georgia,serif;font-size:clamp(19px,2.2vw,31px);font-weight:700;color:#fff;letter-spacing:.01em;white-space:nowrap}
+.bayside-original-nav .nav-logo .brand-tagline{font-size:clamp(9px,1vw,14px);color:#85bbdf;letter-spacing:.12em;text-transform:uppercase;font-weight:500;white-space:nowrap}
+.bayside-original-nav .nav-links{display:flex;align-items:center;gap:.15rem;list-style:none;margin:0;padding:0}
+.bayside-original-nav .nav-links a{display:block;color:rgba(255,255,255,.86);text-decoration:none;font-size:clamp(11px,.85vw,14px);font-weight:600;padding:.4rem .52rem;border-radius:4px;letter-spacing:.01em;white-space:nowrap}
+.bayside-original-nav .nav-links a:hover{color:#85bbdf;background:rgba(255,255,255,.06)}
+.bayside-original-nav .nav-links .nav-cta{background:#5b9fd4;color:#081e3d;font-weight:700;padding:.48rem .7rem}
+.bayside-original-nav .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:transparent;border:0}
+.bayside-original-nav .hamburger span{display:block;width:25px;height:2px;background:#fff;border-radius:2px}
+.bayside-original-mobile{display:none;position:fixed;top:76px;left:0;right:0;z-index:999;background:#081e3d;padding:12px 0 18px;box-shadow:0 8px 24px #0004;max-height:calc(100vh - 76px);overflow:auto;font-family:'Source Sans 3',sans-serif}
+.bayside-original-mobile.open{display:block}
+.bayside-original-mobile a{display:block;padding:10px 25px;color:#fff;text-decoration:none;border-bottom:1px solid #ffffff16}
+.bayside-original-mobile .mobile-cta{margin:12px 25px;background:#5b9fd4;color:#081e3d;text-align:center;border-radius:4px;font-weight:700}
+@media(max-width:1450px){.bayside-original-nav{padding:12px 22px}.bayside-original-nav .nav-links{display:none}.bayside-original-nav .hamburger{display:flex}}
+@media(max-width:650px){.bayside-original-nav{min-height:76px;padding:10px 12px}.bayside-original-nav .nav-logo img{width:38px;height:38px}.bayside-original-nav .nav-logo .brand-name{font-size:clamp(15px,4vw,22px);white-space:normal}.bayside-original-nav .nav-logo .brand-tagline{font-size:9px;white-space:normal;letter-spacing:.06em}.bayside-original-nav .nav-logo{gap:5px}}
+/* The image spans the entire hero. The headline, supporting copy and buttons remain accessible HTML. */
+.hero{height:clamp(530px,43vw,670px)!important}
+.hero-photo{inset:0!important;background-image:url('assets/approved-melanie-clinical-scene.jpg')!important;background-position:center center!important;background-size:cover!important}
+.hero-fade{background:linear-gradient(90deg,rgba(248,252,254,.98) 0%,rgba(248,252,254,.94) 28%,rgba(248,252,254,.78) 42%,rgba(248,252,254,.13) 66%,transparent 80%)!important}
+.hero-copy{width:53%!important;max-width:590px!important}
+.hero h1{font-size:clamp(39px,4vw,62px)!important;line-height:1.04!important}
+@media(max-width:900px){.hero{height:640px!important}.hero-photo{background-position:63% center!important}.hero-fade{background:linear-gradient(90deg,rgba(248,252,254,.99) 0%,rgba(248,252,254,.93) 46%,rgba(248,252,254,.35) 82%,transparent)!important}.hero-copy{width:75%!important}}
+@media(max-width:650px){.hero{height:730px!important}.hero-photo{background-position:70% center!important}.hero-fade{background:linear-gradient(180deg,#f8fcfe 0%,rgba(248,252,254,.98) 42%,rgba(248,252,254,.55) 66%,transparent 100%)!important}.hero-copy{width:100%!important}.hero h1{font-size:clamp(35px,9vw,45px)!important}}
