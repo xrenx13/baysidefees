@@ -5561,6 +5561,34 @@ try {
       z-index:110 !important;
       background:var(--saas-canvas);
     }
+
+    /* Remove the list wrapper's visual box for populated columns. The cards
+       keep their normal appearance, while the final card's sticky containing
+       block becomes the full-height stage rather than an artificial blank
+       column. */
+    body.saas-enabled .pipeline-stage-grid > .pipeline-stage > .sticky + div:has(> button.pipeline-today-card) {
+      display:contents !important;
+    }
+    body.saas-enabled .pipeline-stage-grid > .pipeline-stage > .sticky + div > button.pipeline-today-card:first-child {
+      margin-top:7px !important;
+    }
+    body.saas-enabled .pipeline-stage-grid > .pipeline-stage > .sticky + div > button.pipeline-today-card:last-child {
+      position:sticky !important;
+      top:calc(var(--saas-topbar) + 101px) !important;
+      z-index:100 !important;
+      background:#fff !important;
+      box-shadow:0 4px 12px rgba(15,23,42,.08) !important;
+    }
+
+    /* Not a Fit lives inside the Target column. Pin it immediately below the
+       Target header; the higher z-index lets it replace Target's final-card
+       placeholder when the Not a Fit section reaches the sticky stack. */
+    body.saas-enabled .pipeline-stage-target > .pipeline-stage-not-a-fit > .sticky {
+      position:sticky !important;
+      top:calc(var(--saas-topbar) + 101px) !important;
+      z-index:105 !important;
+      background:var(--saas-canvas) !important;
+    }
   }
 </style>
 <style id="bdd-mobile-analytics-kpi-columns">
@@ -6202,6 +6230,60 @@ try {
     .account-related-chain-list { grid-template-columns:1fr; }
   }
 </style>
+<style id="bdd-pipeline-card-edge-radius">
+  @media (min-width:641px) {
+    /* Match the Accounts listing: one visually joined group, continuous left
+       status rail, rounded outside corners, and square seams between rows. */
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card,
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card:first-child,
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card:last-child {
+      --pipeline-urgency-rail:#9fb4c6;
+      position:relative;
+      margin-top:-1px !important;
+      border:1px solid #dfe7ed !important;
+      border-left:1px solid #dfe7ed !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+      overflow:hidden;
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card:first-child {
+      margin-top:7px !important;
+      border-radius:12px 12px 0 0 !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card:last-child {
+      border-radius:0 0 12px 12px !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card:only-child {
+      border-radius:12px !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card:hover,
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card:focus-visible {
+      border:1px solid #d6e2e9 !important;
+      border-left:1px solid #d6e2e9 !important;
+      background:#f9fbfc !important;
+      box-shadow:none !important;
+    }
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card.urgent,
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card.urgent:hover { --pipeline-urgency-rail:#d92d20; }
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card.due-today,
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card.due-today:hover { --pipeline-urgency-rail:#d99a16; }
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card.opportunity,
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card.opportunity:hover { --pipeline-urgency-rail:#0f766e; }
+    body.saas-enabled .pipeline-stage > .sticky + div > button.pipeline-today-card::before {
+      content:'';
+      position:absolute;
+      z-index:1;
+      /* Cover the card border as well as its content edge. This removes the
+         one-pixel horizontal breaks where differently colored rails meet. */
+      left:-1px;
+      top:-1px;
+      bottom:-1px;
+      width:4px;
+      background:var(--pipeline-urgency-rail);
+      pointer-events:none;
+    }
+  }
+</style>
 </head>
 <body class="bg-navy-50 text-navy-900">
 <div id="crm-browser-underlay" aria-hidden="true"></div>
@@ -6215,7 +6297,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.24-5';
+const CRM_BUILD_NUMBER = '2026.09.24-20';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7027,7 +7109,18 @@ window.__crmPerf = {
 // the user back to the login gate. This intentionally excludes session tokens,
 // request URLs, API payloads, and CRM record data.
 const CRM_LOGOUT_DIAGNOSTIC_KEY = 'bdd_crm_logout_diagnostic_v1';
-const CRM_RESUME_VALIDATION_AFTER_MS = 15 * 60 * 1000;
+const CRM_RESUME_VALIDATION_AFTER_MS = 30 * 60 * 1000;
+const CRM_SESSION_VALIDATION_KEY = 'bdd_crm_session_last_validated_at';
+const CRM_SESSION_VALIDATION_FRESH_MS = 30 * 60 * 1000;
+
+function markSessionValidated_() {
+  sessionStorage.setItem(CRM_SESSION_VALIDATION_KEY, String(Date.now()));
+}
+
+function hasFreshSessionValidation_() {
+  const validatedAt = Number(sessionStorage.getItem(CRM_SESSION_VALIDATION_KEY)) || 0;
+  return validatedAt > 0 && Date.now() - validatedAt < CRM_SESSION_VALIDATION_FRESH_MS;
+}
 
 function readLogoutDiagnostic_() {
   try {
@@ -7128,7 +7221,10 @@ function handleUnauthorized(context = {}) {
   sessionStorage.removeItem('bdd_crm_user_email');
   sessionStorage.removeItem('bdd_crm_user_name');
   sessionStorage.removeItem('bdd_crm_session_started_at');
-  clearCrmCache_();
+  sessionStorage.removeItem(CRM_SESSION_VALIDATION_KEY);
+  // This is a trusted single-user installation. Keep the last successful
+  // payload behind the login gate so a future authorized login can render
+  // immediately even if Apps Script delivery is temporarily slow.
   window.location.reload();
 }
 
@@ -7137,13 +7233,20 @@ function getRequestKey_(extraParams) {
   return JSON.stringify(stableRequestValue_(safe));
 }
 
-// Apps Script can occasionally return Unauthorized for one POST even while
+// Apps Script can occasionally return Unauthorized for one request even while
 // the same session still works. Confirm independently before destroying the
-// user's session. Concurrent failures share one validation request.
+// user's session. All callers share one validation request, and any recent
+// successful authenticated request counts as validation so focus/visibility
+// events do not create redundant redirect chains.
 let sessionConfirmationPromise_ = null;
-async function confirmSessionAfterUnauthorized_() {
+async function validateSessionShared_(options = {}) {
+  const force = options.force === true;
+  if (!getSessionToken()) return false;
+  if (!force && hasFreshSessionValidation_()) return true;
   if (sessionConfirmationPromise_) return sessionConfirmationPromise_;
   sessionConfirmationPromise_ = (async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
       const params = new URLSearchParams({
         action: 'validateSession',
@@ -7151,23 +7254,24 @@ async function confirmSessionAfterUnauthorized_() {
         _: String(Date.now())
       });
       const requestUrl = `${API_URL}?${params.toString()}`;
-      let res = await fetch(requestUrl, { cache:'no-store' });
-      // Session validation is read-only. A fresh request is safe when Apps
-      // Script's temporary googleusercontent delivery URL returns a 404.
-      for (const retryDelayMs of [750, 2000]) {
-        if (res.status !== 404) break;
-        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
-        res = await fetch(requestUrl, { cache:'no-store' });
-      }
+      // One inconclusive validation must never fan out into several slow
+      // googleusercontent redirects. Normal data requests continue to prove
+      // session validity, while an explicit Unauthorized result remains
+      // authoritative.
+      const res = await fetch(requestUrl, { cache:'no-store', signal:controller.signal });
       if (!res.ok) return null;
       const result = await res.json();
-      if (result && result.success === true && result.valid === true) return true;
+      if (result && result.success === true && result.valid === true) {
+        markSessionValidated_();
+        return true;
+      }
       if (result && result.error === 'Unauthorized - please sign in again') return false;
       return null;
     } catch (err) {
-      console.warn('Could not independently confirm CRM session:', err);
+      if (err.name !== 'AbortError') console.warn('Could not independently confirm CRM session:', err);
       return null;
     } finally {
+      clearTimeout(timeoutId);
       sessionConfirmationPromise_ = null;
     }
   })();
@@ -7190,16 +7294,34 @@ async function apiGet(extraParams) {
       ...(extraParams || {})
     });
     const requestUrl = `${API_URL}?${params.toString()}`;
-    const retryDelaysMs = [750, 2000];
-    let res = await fetch(requestUrl, { cache: 'no-store' });
-    for (const retryDelayMs of retryDelaysMs) {
-      // Google Apps Script occasionally redirects a valid read request to a
-      // temporary googleusercontent URL that returns 404. A fresh GET creates
-      // a new redirect URL. Retry only that transient status; writes are never
-      // retried here, so this cannot duplicate user changes.
-      if (res.status !== 404) break;
-      await new Promise(resolve => setTimeout(resolve, retryDelayMs));
-      res = await fetch(requestUrl, { cache: 'no-store' });
+    // A normal full read completes in roughly 3–5 seconds. Google Apps Script
+    // occasionally leaves a redirect pending for 30–115 seconds before a 404.
+    // Bound each read attempt, then create one fresh redirect. GETs are
+    // read-only, so this cannot duplicate a user mutation.
+    const attemptDelaysMs = [0, 750];
+    let res = null;
+    let lastFetchError = null;
+    for (let attempt = 0; attempt < attemptDelaysMs.length; attempt += 1) {
+      if (attemptDelaysMs[attempt]) {
+        await new Promise(resolve => setTimeout(resolve, attemptDelaysMs[attempt]));
+      }
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      try {
+        res = await fetch(requestUrl, { cache:'no-store', signal:controller.signal });
+        lastFetchError = null;
+      } catch (err) {
+        lastFetchError = err;
+        res = null;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      if (res && res.status !== 404) break;
+      if (attempt === attemptDelaysMs.length - 1) break;
+    }
+    if (!res) {
+      if (lastFetchError && lastFetchError.name !== 'AbortError') throw lastFetchError;
+      throw new Error('The server is taking too long to respond. Saved CRM data is still available.');
     }
     if (!res.ok) throw new Error(`Server returned an error (status ${res.status}).`);
     let result;
@@ -7218,7 +7340,7 @@ async function apiGet(extraParams) {
         handleUnauthorized({ requestType: 'GET', action, confirmed: true });
         return emptyCrmData_();
       }
-      const sessionIsValid = await confirmSessionAfterUnauthorized_();
+      const sessionIsValid = await validateSessionShared_({ force:true });
       if (sessionIsValid === true) {
         throw new Error('This request could not be completed. Your CRM session is still active; please try again.');
       }
@@ -7230,6 +7352,9 @@ async function apiGet(extraParams) {
       // local session instead of turning an inconclusive response into a logout.
       throw new Error('Could not verify your CRM session. Please try again.');
     }
+    // Any successful authenticated read proves the session is valid and
+    // postpones the next resume-time validation for another 30 minutes.
+    markSessionValidated_();
     return result;
   })();
 
@@ -7279,7 +7404,7 @@ async function performApiPost_(action, payload, retryAttempt = 0) {
       throw new Error('Server returned an unexpected response — please try again.');
     }
     if (result.error === 'Unauthorized - please sign in again') {
-      const sessionIsValid = await confirmSessionAfterUnauthorized_();
+      const sessionIsValid = await validateSessionShared_({ force:true });
       if (sessionIsValid === true) {
         if (retryAttempt === 0) {
           recordCrmPerf_('POST unauthorized; session valid; retrying', startedAt, { action, ok: false });
@@ -7298,6 +7423,7 @@ async function performApiPost_(action, payload, retryAttempt = 0) {
       // local session unless the independent check explicitly says invalid.
       throw new Error('Could not verify your CRM session. Please try again.');
     }
+    if (action !== 'verifyGoogleLogin' && action !== 'logout') markSessionValidated_();
     recordCrmPerf_('POST completed', startedAt, { action, ok: true });
     return result;
   } catch (err) {
@@ -7367,6 +7493,7 @@ function Gate({
         sessionStorage.setItem('bdd_crm_user_name', result.result.name || '');
         sessionStorage.setItem('bdd_crm_session_token', result.result.sessionToken);
         sessionStorage.setItem('bdd_crm_session_started_at', String(Date.now()));
+        markSessionValidated_();
         window.__crmLogoutDiagnostic.clear();
         unlock();
       } else {
@@ -13827,10 +13954,11 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
 
 function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token'));
-  // A restored browser session is not trusted until the backend confirms it.
-  // Fresh sign-ins are already verified by verifyGoogleLogin and bypass this
-  // startup check through Gate's onUnlock callback below.
-  const [sessionReady, setSessionReady] = useState(() => !(sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token')));
+  // Do not block a refresh behind a separate validation round-trip. The
+  // authenticated data request below validates the same session while cached
+  // CRM data can render immediately; explicit Unauthorized responses still
+  // use the independent confirmation-and-sign-out safeguard.
+  const [sessionReady, setSessionReady] = useState(true);
   const sessionResumeRef = useRef({ inactiveSince: null, validating: false });
   // Read once at startup. If present, this lets the account list render on
   // the very first React paint while a live refresh runs in the background.
@@ -13881,7 +14009,10 @@ function App() {
     return()=>window.removeEventListener('popstate',handlePop);
   },[]);
   const [signingOut, setSigningOut] = useState(false);
-  const [includeTestData, setIncludeTestData] = useState(() => localStorage.getItem('bdd_crm_include_test_data') !== 'false');
+  const [includeTestData, setIncludeTestData] = useState(() => {
+    const continuingSignedInSession = sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token');
+    return continuingSignedInSession && localStorage.getItem('bdd_crm_include_test_data') === 'true';
+  });
   const [lastSyncedAt, setLastSyncedAt] = useState(() => localStorage.getItem('bdd_crm_last_synced_at') || '');
   // Remembers the last region selected across sessions (localStorage
   // persists even after closing the browser, unlike sessionStorage).
@@ -13939,6 +14070,16 @@ function App() {
     } catch (err) {
       console.error(err);
       setLoadError(err.message || 'Failed to load your accounts.');
+      // A temporary Apps Script delivery failure must not replace usable CRM
+      // data with a full-page error. Restore the same-user browser cache when
+      // available and surface the refresh failure as a small status message.
+      const cached = readCrmCache_();
+      if (cached) {
+        setData(current => current.accounts.length ? current : cached);
+        setTimeout(() => {
+          window.__crmShowToast && window.__crmShowToast('Live refresh delayed — showing saved data');
+        }, 0);
+      }
     } finally {
       setLoading(false);
       recordCrmPerf_('CRM full refresh', refreshStartedAt);
@@ -13978,7 +14119,7 @@ function App() {
     let cancelled = false;
 
     (async () => {
-      const sessionIsValid = await confirmSessionAfterUnauthorized_();
+      const sessionIsValid = await validateSessionShared_();
       if (cancelled) return;
       if (sessionIsValid === true) {
         // Older builds did not always record this value. Establish it after
@@ -14009,17 +14150,15 @@ function App() {
   useEffect(() => {
     if (!unlocked || !sessionReady) return;
 
-    // If the app became unlocked after a fresh sign-in (rather than a page
-    // reload), pick up any same-user cache now. Then refresh live data in
-    // the background either way.
-    if (!startupCache) {
-      const cached = readCrmCache_();
-      if (cached) {
-        setData(cached);
-        setLoading(false);
-      }
+    // Restore the same-user cache after every successful unlock. This also
+    // covers a manual sign-out/sign-in within the same mounted App instance,
+    // where startupCache still describes the earlier React render.
+    const cached = readCrmCache_();
+    if (cached) {
+      setData(cached);
+      setLoading(false);
     }
-    refresh({ showFullLoader: !startupCache && !readCrmCache_() });
+    refresh({ showFullLoader: !cached });
   }, [unlocked, sessionReady]);
   useEffect(() => {
     if (!unlocked || !sessionReady) return;
@@ -14034,7 +14173,11 @@ function App() {
       if (!inactiveSince || Date.now() - inactiveSince < CRM_RESUME_VALIDATION_AFTER_MS || sessionResumeRef.current.validating) return;
 
       sessionResumeRef.current.validating = true;
-      apiGet({ action: 'validateSession' }).catch(err => {
+      validateSessionShared_().then(sessionIsValid => {
+        if (sessionIsValid === false) {
+          handleUnauthorized({ requestType: 'GET', action: 'validateSession', confirmed: true });
+        }
+      }).catch(err => {
         // A temporary delivery/network failure should not sign the user out.
         // Only the backend's explicit Unauthorized response does that.
         console.warn('Could not validate the CRM session after resume:', err);
@@ -14078,7 +14221,10 @@ function App() {
     sessionStorage.removeItem('bdd_crm_user_email');
     sessionStorage.removeItem('bdd_crm_user_name');
     sessionStorage.removeItem('bdd_crm_session_started_at');
-    clearCrmCache_();
+    sessionStorage.removeItem(CRM_SESSION_VALIDATION_KEY);
+    // Keep the last successful payload on this single-user device so the next
+    // authorized login can render immediately while live data refreshes. An
+    // automatic security logout still clears it in handleUnauthorized().
     setData(emptyCrmData_());
     setSessionReady(true);
     setUnlocked(false);
@@ -14127,6 +14273,11 @@ function App() {
   if (!unlocked) return /*#__PURE__*/React.createElement(React.Fragment, null,
     /*#__PURE__*/React.createElement(Gate, {
       onUnlock: () => {
+        // Test records are opt-in for each authenticated session. A normal
+        // refresh preserves a manual testing choice, but every new Google
+        // login returns the production-facing CRM to real data only.
+        localStorage.setItem('bdd_crm_include_test_data', 'false');
+        setIncludeTestData(false);
         setSessionReady(true);
         setUnlocked(true);
       }
