@@ -217,6 +217,13 @@ try {
   .saas-modal input, .saas-modal select { width:100%; border:1px solid var(--saas-line); border-radius:9px; padding:9px 10px; font-size:13px; background:#fff; color:#0f172a; outline:none; }
   .saas-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
   .saas-preference-row { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:18px; padding:15px; border:1px solid #dbe5ed; border-radius:12px; background:#f7fafb; }
+  .saas-today-sidebar-group { margin-top:18px; border:1px solid #dbe5ed; border-radius:12px; background:#f7fafb; overflow:hidden; }
+  .saas-today-sidebar-group > .saas-preference-row { margin-top:0; border:0; border-radius:0; background:transparent; }
+  .saas-today-sidebar-child { margin:0 15px; padding:12px 0; border-top:0 !important; }
+  .saas-today-sidebar-child .saas-preference-copy { padding-left:18px; }
+  .saas-today-sidebar-child .saas-preference-copy strong { font-size:12.5px; }
+  .saas-today-sidebar-child.is-disabled { opacity:.5; }
+  .saas-today-sidebar-child .saas-switch:disabled { cursor:not-allowed; }
   .saas-preference-copy { min-width:0; }
   .saas-preference-copy strong { display:block; color:#132d4f; font-size:13px; }
   .saas-preference-copy span { display:block; margin-top:3px; color:#718096; font-size:11.5px; line-height:1.45; }
@@ -6208,7 +6215,7 @@ const {
   useCallback,
   useRef
 } = React;
-const CRM_BUILD_NUMBER = '2026.09.20-2a';
+const CRM_BUILD_NUMBER = '2026.09.24-5';
 
 // ---------------------------------------------------------------------
 // CONFIG — update these values before using this standalone file
@@ -7143,7 +7150,15 @@ async function confirmSessionAfterUnauthorized_() {
         token: getSessionToken(),
         _: String(Date.now())
       });
-      const res = await fetch(`${API_URL}?${params.toString()}`, { cache:'no-store' });
+      const requestUrl = `${API_URL}?${params.toString()}`;
+      let res = await fetch(requestUrl, { cache:'no-store' });
+      // Session validation is read-only. A fresh request is safe when Apps
+      // Script's temporary googleusercontent delivery URL returns a 404.
+      for (const retryDelayMs of [750, 2000]) {
+        if (res.status !== 404) break;
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        res = await fetch(requestUrl, { cache:'no-store' });
+      }
       if (!res.ok) return null;
       const result = await res.json();
       if (result && result.success === true && result.valid === true) return true;
@@ -12165,6 +12180,17 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
   const [pickerQuery,setPickerQuery]=useState('');
   const [completedLocal,setCompletedLocal]=useState(0);
   const [calendarMeetings,setCalendarMeetings]=useState(null);
+  const [showTodayTodo,setShowTodayTodo]=useState(()=>localStorage.getItem('bdd_crm_show_today_todo')!=='false');
+  const [showTodaySuggested,setShowTodaySuggested]=useState(()=>localStorage.getItem('bdd_crm_show_today_suggested')!=='false');
+  useEffect(()=>{
+    const syncSidebarPreferences=event=>{
+      const detail=event&&event.detail||{};
+      setShowTodayTodo(detail.showTodo!==undefined?!!detail.showTodo:localStorage.getItem('bdd_crm_show_today_todo')!=='false');
+      setShowTodaySuggested(detail.showSuggested!==undefined?!!detail.showSuggested:localStorage.getItem('bdd_crm_show_today_suggested')!=='false');
+    };
+    window.addEventListener('bdd-crm-today-sidebar-preferences',syncSidebarPreferences);
+    return()=>window.removeEventListener('bdd-crm-today-sidebar-preferences',syncSidebarPreferences);
+  },[]);
   useEffect(()=>{
     let cancelled=false;
     apiPost('getTopUpcomingMeetings',{}).then(response=>{
@@ -12240,11 +12266,11 @@ function TodayDashboard({accounts,contacts,connections,onSelect,onLog,onUpdateAc
           /*#__PURE__*/React.createElement("div",{className:"today-desktop-quick-copy"},"Record a call, email, visit, or meeting without leaving Today."),
           /*#__PURE__*/React.createElement("button",{type:"button",className:"today-desktop-quick-btn",onClick:()=>setPickerOpen(true)},"+ Log Activity")
         ),
-        /*#__PURE__*/React.createElement(TodayTodoList,null),
-        /*#__PURE__*/React.createElement(TodaySection,{...common,title:"Suggested Outreach",copy:"High-opportunity targets to work after committed follow-ups",accounts:suggested,urgency:"opportunity",whyFn:a=>{const d=daysSince(a.LastContactDate);return d===null?'High-opportunity target with no recorded outreach':`High-opportunity target with no contact in ${d} days`;}})
+        showTodayTodo&&/*#__PURE__*/React.createElement(TodayTodoList,null),
+        showTodaySuggested&&/*#__PURE__*/React.createElement(TodaySection,{...common,title:"Suggested Outreach",copy:"High-opportunity targets to work after committed follow-ups",accounts:suggested,urgency:"opportunity",whyFn:a=>{const d=daysSince(a.LastContactDate);return d===null?'High-opportunity target with no recorded outreach':`High-opportunity target with no contact in ${d} days`;}})
       )
     ),
-    !needsNow.length&&!comingUp.length&&!suggested.length&&/*#__PURE__*/React.createElement("div",{className:"today-empty"},"Your action queue is clear."),
+    !needsNow.length&&!comingUp.length&&(!showTodaySuggested||!suggested.length)&&/*#__PURE__*/React.createElement("div",{className:"today-empty"},"Your action queue is clear."),
     pickerOpen&&/*#__PURE__*/React.createElement("div",{className:"today-quick-backdrop",onMouseDown:e=>{if(e.target===e.currentTarget)setPickerOpen(false);}},
       /*#__PURE__*/React.createElement("div",{className:"today-quick-sheet"},
         /*#__PURE__*/React.createElement("div",{className:"today-quick-head"},/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{className:"today-quick-title"},"Log activity"),/*#__PURE__*/React.createElement("div",{className:"today-quick-sub"},"Choose a facility")),/*#__PURE__*/React.createElement("button",{type:"button",className:"today-quick-close mobile-modal-close",onClick:()=>setPickerOpen(false)},"Close")),
@@ -13325,6 +13351,8 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
   const [showTools, setShowTools] = useState(() => localStorage.getItem('bdd_crm_show_tools') !== 'false');
   const [showCalendar, setShowCalendar] = useState(() => localStorage.getItem('bdd_crm_show_calendar') !== 'false');
   const [showTodaySidebar, setShowTodaySidebar] = useState(() => localStorage.getItem('bdd_crm_show_today_sidebar') !== 'false');
+  const [showTodayTodo, setShowTodayTodo] = useState(() => localStorage.getItem('bdd_crm_show_today_todo') !== 'false');
+  const [showTodaySuggested, setShowTodaySuggested] = useState(() => localStorage.getItem('bdd_crm_show_today_suggested') !== 'false');
   useEffect(() => {
     document.body.classList.toggle('today-side-rail-hidden', !showTodaySidebar);
     return () => document.body.classList.remove('today-side-rail-hidden');
@@ -13358,6 +13386,23 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     const enabled = !!next;
     localStorage.setItem('bdd_crm_show_today_sidebar', enabled ? 'true' : 'false');
     setShowTodaySidebar(enabled);
+  };
+  const notifyTodaySidebarPreferences = (nextTodo, nextSuggested) => {
+    window.dispatchEvent(new CustomEvent('bdd-crm-today-sidebar-preferences', {
+      detail: { showTodo: nextTodo, showSuggested: nextSuggested }
+    }));
+  };
+  const updateShowTodayTodo = next => {
+    const enabled = !!next;
+    localStorage.setItem('bdd_crm_show_today_todo', enabled ? 'true' : 'false');
+    setShowTodayTodo(enabled);
+    notifyTodaySidebarPreferences(enabled, showTodaySuggested);
+  };
+  const updateShowTodaySuggested = next => {
+    const enabled = !!next;
+    localStorage.setItem('bdd_crm_show_today_suggested', enabled ? 'true' : 'false');
+    setShowTodaySuggested(enabled);
+    notifyTodaySidebarPreferences(showTodayTodo, enabled);
   };
   const applySidebarTheme = next => {
     const safeTheme = next === 'dark' ? 'dark' : 'light';
@@ -13567,7 +13612,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       className:'saas-preference-row'
     }, /*#__PURE__*/React.createElement('div', {
       className:'saas-preference-copy'
-    }, /*#__PURE__*/React.createElement('strong', null, 'Include test data'), /*#__PURE__*/React.createElement('span', { className:'saas-preference-mobile-hide' }, 'Show accounts and referral activity recorded by Test User throughout the CRM.')), /*#__PURE__*/React.createElement('button', {
+    }, /*#__PURE__*/React.createElement('strong', null, 'Include test data')), /*#__PURE__*/React.createElement('button', {
       type:'button',
       role:'switch',
       'aria-checked':!!includeTestData,
@@ -13578,7 +13623,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       className:'saas-preference-row saas-show-tools-preference'
     }, /*#__PURE__*/React.createElement('div', {
       className:'saas-preference-copy'
-    }, /*#__PURE__*/React.createElement('strong', null, 'Show tools'), /*#__PURE__*/React.createElement('span', null, 'Display external shortcuts in the left navigation.')), /*#__PURE__*/React.createElement('button', {
+    }, /*#__PURE__*/React.createElement('strong', null, 'Show tools')), /*#__PURE__*/React.createElement('button', {
       type:'button',
       role:'switch',
       'aria-checked':showTools,
@@ -13589,7 +13634,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       className:'saas-preference-row saas-show-calendar-preference'
     }, /*#__PURE__*/React.createElement('div', {
       className:'saas-preference-copy'
-    }, /*#__PURE__*/React.createElement('strong', null, 'Show calendar'), /*#__PURE__*/React.createElement('span', null, 'Display the monthly calendar in the desktop sidebar.')), /*#__PURE__*/React.createElement('button', {
+    }, /*#__PURE__*/React.createElement('strong', null, 'Show calendar')), /*#__PURE__*/React.createElement('button', {
       type:'button',
       role:'switch',
       'aria-checked':showCalendar,
@@ -13597,10 +13642,12 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       className:`saas-switch ${showCalendar ? 'on' : ''}`,
       onClick:()=>updateShowCalendar(!showCalendar)
     })), /*#__PURE__*/React.createElement('div', {
-      className:'saas-preference-row saas-today-sidebar-preference'
+      className:'saas-today-sidebar-group saas-today-sidebar-preference'
+    }, /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-row'
     }, /*#__PURE__*/React.createElement('div', {
       className:'saas-preference-copy'
-    }, /*#__PURE__*/React.createElement('strong', null, 'Show Today sidebar'), /*#__PURE__*/React.createElement('span', null, 'Display Quick Log Activity, To-Do List, and Suggested Outreach beside the desktop work queue.')), /*#__PURE__*/React.createElement('button', {
+    }, /*#__PURE__*/React.createElement('strong', null, 'Show Today sidebar')), /*#__PURE__*/React.createElement('button', {
       type:'button',
       role:'switch',
       'aria-checked':showTodaySidebar,
@@ -13608,6 +13655,30 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
       className:`saas-switch ${showTodaySidebar ? 'on' : ''}`,
       onClick:()=>updateShowTodaySidebar(!showTodaySidebar)
     })), /*#__PURE__*/React.createElement('div', {
+      className:`saas-preference-row saas-today-sidebar-child ${showTodaySidebar ? '' : 'is-disabled'}`
+    }, /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-copy'
+    }, /*#__PURE__*/React.createElement('strong', null, 'Show To-Do List')), /*#__PURE__*/React.createElement('button', {
+      type:'button',
+      role:'switch',
+      disabled:!showTodaySidebar,
+      'aria-checked':showTodayTodo,
+      'aria-label':'Show To-Do List',
+      className:`saas-switch ${showTodayTodo ? 'on' : ''}`,
+      onClick:()=>updateShowTodayTodo(!showTodayTodo)
+    })), /*#__PURE__*/React.createElement('div', {
+      className:`saas-preference-row saas-today-sidebar-child ${showTodaySidebar ? '' : 'is-disabled'}`
+    }, /*#__PURE__*/React.createElement('div', {
+      className:'saas-preference-copy'
+    }, /*#__PURE__*/React.createElement('strong', null, 'Show Suggested Outreach')), /*#__PURE__*/React.createElement('button', {
+      type:'button',
+      role:'switch',
+      disabled:!showTodaySidebar,
+      'aria-checked':showTodaySuggested,
+      'aria-label':'Show Suggested Outreach',
+      className:`saas-switch ${showTodaySuggested ? 'on' : ''}`,
+      onClick:()=>updateShowTodaySuggested(!showTodaySuggested)
+    }))), /*#__PURE__*/React.createElement('div', {
       className:'saas-preferences-grid'
     }, /*#__PURE__*/React.createElement('label', null, 'Default region', /*#__PURE__*/React.createElement('select', {
       value:preferenceRegion || 'Cape Cod',
@@ -13615,10 +13686,7 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
     }, ['All Regions','Cape Cod','South Shore','South Coast','Southeast','South Central'].map(option => /*#__PURE__*/React.createElement('option', { key:option, value:option }, option)))), /*#__PURE__*/React.createElement('label', null, 'Start page', /*#__PURE__*/React.createElement('select', {
       value:startPage || 'today',
       onChange:e=>onStartPageChange && onStartPageChange(e.target.value)
-    }, [['today','Today'],['list','Accounts'],['pipeline','Pipeline'],['home','Analytics']].map(([value,label]) => /*#__PURE__*/React.createElement('option', { key:value, value }, label)))), /*#__PURE__*/React.createElement('label', null, 'Sidebar theme', /*#__PURE__*/React.createElement('select', {
-      value:sidebarTheme,
-      onChange:e=>applySidebarTheme(e.target.value)
-    }, /*#__PURE__*/React.createElement('option', { value:'light' }, 'Light'), /*#__PURE__*/React.createElement('option', { value:'dark' }, 'Dark')))), /*#__PURE__*/React.createElement('div', {
+    }, [['today','Today'],['list','Accounts'],['pipeline','Pipeline'],['home','Analytics']].map(([value,label]) => /*#__PURE__*/React.createElement('option', { key:value, value }, label))))), /*#__PURE__*/React.createElement('div', {
       className:'saas-preference-sync'
     }, /*#__PURE__*/React.createElement('div', {
       className:'saas-preference-sync-copy'
@@ -13759,6 +13827,10 @@ function SaaSChrome({ activeView, pageTitle, onHome, onAccounts, onToday, onPipe
 
 function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token'));
+  // A restored browser session is not trusted until the backend confirms it.
+  // Fresh sign-ins are already verified by verifyGoogleLogin and bypass this
+  // startup check through Gate's onUnlock callback below.
+  const [sessionReady, setSessionReady] = useState(() => !(sessionStorage.getItem('bdd_crm_unlocked') === 'true' && !!sessionStorage.getItem('bdd_crm_session_token')));
   const sessionResumeRef = useRef({ inactiveSince: null, validating: false });
   // Read once at startup. If present, this lets the account list render on
   // the very first React paint while a live refresh runs in the background.
@@ -13902,7 +13974,40 @@ function App() {
     }
   }, []);
   useEffect(() => {
-    if (!unlocked) return;
+    if (!unlocked || sessionReady) return;
+    let cancelled = false;
+
+    (async () => {
+      const sessionIsValid = await confirmSessionAfterUnauthorized_();
+      if (cancelled) return;
+      if (sessionIsValid === true) {
+        // Older builds did not always record this value. Establish it after
+        // the backend has affirmatively validated the restored session so
+        // future logout diagnostics include a meaningful session age.
+        if (!sessionStorage.getItem('bdd_crm_session_started_at')) {
+          sessionStorage.setItem('bdd_crm_session_started_at', String(Date.now()));
+        }
+        setSessionReady(true);
+        return;
+      }
+      if (sessionIsValid === false) {
+        handleUnauthorized({ requestType: 'GET', action: 'validateSession', confirmed: true });
+        return;
+      }
+
+      // Do not destroy local credentials when Google delivery is temporarily
+      // inconclusive. Allow the normal data request to proceed; it has the
+      // same independent Unauthorized confirmation safeguards.
+      console.warn('Could not validate the stored CRM session at startup; continuing with protected data loading.');
+      setSessionReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [unlocked, sessionReady]);
+  useEffect(() => {
+    if (!unlocked || !sessionReady) return;
 
     // If the app became unlocked after a fresh sign-in (rather than a page
     // reload), pick up any same-user cache now. Then refresh live data in
@@ -13915,9 +14020,9 @@ function App() {
       }
     }
     refresh({ showFullLoader: !startupCache && !readCrmCache_() });
-  }, [unlocked]);
+  }, [unlocked, sessionReady]);
   useEffect(() => {
-    if (!unlocked) return;
+    if (!unlocked || !sessionReady) return;
 
     const markInactive = () => {
       if (!sessionResumeRef.current.inactiveSince) sessionResumeRef.current.inactiveSince = Date.now();
@@ -13958,7 +14063,7 @@ function App() {
       window.removeEventListener('focus', validateAfterResume);
       window.removeEventListener('pageshow', handlePageShow);
     };
-  }, [unlocked]);
+  }, [unlocked, sessionReady]);
   const signOut = useCallback(() => {
     // Sign out locally first so a slow Apps Script response never makes the
     // button look unresponsive. The server-side logout finishes in the
@@ -13975,6 +14080,7 @@ function App() {
     sessionStorage.removeItem('bdd_crm_session_started_at');
     clearCrmCache_();
     setData(emptyCrmData_());
+    setSessionReady(true);
     setUnlocked(false);
 
     apiPost('logout', { token: sessionToken }).catch(err => {
@@ -14020,7 +14126,10 @@ function App() {
   const referralSourceOptions = useMemo(() => uniqueSorted([...REFERRAL_SOURCE_DEFAULTS, ...visibleAccounts.map(a => a.ReferralSource)]), [visibleAccounts]);
   if (!unlocked) return /*#__PURE__*/React.createElement(React.Fragment, null,
     /*#__PURE__*/React.createElement(Gate, {
-      onUnlock: () => setUnlocked(true)
+      onUnlock: () => {
+        setSessionReady(true);
+        setUnlocked(true);
+      }
     }),
     signingOut && /*#__PURE__*/React.createElement("div", {
       style: {
@@ -14032,6 +14141,16 @@ function App() {
       className: "crm-toast"
     }, "Signing out…")
   );
+  if (!sessionReady) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "crm-loading-screen",
+      role: "status",
+      "aria-live": "polite"
+    }, /*#__PURE__*/React.createElement("div", null, "Checking session…"), /*#__PURE__*/React.createElement("div", {
+      className: "crm-loading-spinner",
+      "aria-hidden": "true"
+    }));
+  }
   if (loading) {
     return /*#__PURE__*/React.createElement("div", {
       className: "crm-loading-screen",
