@@ -144,3 +144,13 @@ html {scroll-padding-top:95px;}
   #shared-header .bayside-original-nav .nav-logo .brand-name{font-size:clamp(15px,4vw,22px)!important;white-space:normal!important}
   #shared-header .bayside-original-nav .nav-logo .brand-tagline{font-size:9px!important;letter-spacing:.06em!important;white-space:normal!important}
 }
+
+/* Reduce footer height without changing its branding or content. */
+.bayside-new-footer { padding-top:20px; padding-bottom:18px; }
+.bayside-new-footer .footer-inner { padding-bottom:12px; }
+.bayside-new-footer .footer-bottom { margin-top:12px; }
+@media (max-width:650px) {
+  .bayside-new-footer { padding-top:18px; padding-bottom:16px; }
+  .bayside-new-footer .footer-inner { padding-bottom:12px; }
+  .bayside-new-footer .footer-bottom { margin-top:12px; }
+}
