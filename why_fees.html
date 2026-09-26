@@ -4,16 +4,16 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>References | Bayside Dysphagia Diagnostics</title>
+<title>Why FEES | Bayside Dysphagia Diagnostics</title>
 <!-- Primary Meta Tags -->
-<meta content="Research references and clinical citations for Bayside Dysphagia Diagnostics mobile FEES services." name="description"/>
+<meta content="Bayside Dysphagia Diagnostics provides mobile FEES (Fiberoptic Endoscopic Evaluation of Swallowing) evaluations at nursing homes, SNFs, ALFs and LTACs across Cape Cod and the South Shore of Massachusetts — including Barnstable, Falmouth, Hyannis, Yarmouth, Chatham, Marshfield, Duxbury, and Scituate. Led by Melanie Reynolds, MS, CCC-SLP, a dysphagia specialist with 25+ years of clinical experience. Call (508) 534-8646." name="description"/>
 <meta content="FEES evaluation, mobile FEES, mobile FEES SLP, FEES swallowing evaluation, dysphagia evaluation, swallowing evaluation near me, speech language pathologist near me, mobile speech pathologist, dysphagia specialist Cape Cod, FEES Cape Cod, FEES South Shore Massachusetts, swallowing evaluation nursing home, SNF dysphagia evaluation, skilled nursing facility FEES, assisted living swallowing evaluation, LTAC FEES evaluation, Barnstable County SLP, Plymouth County speech pathology, Falmouth dysphagia, Hyannis speech therapy, Sandwich MA SLP, Yarmouth dysphagia, Harwich speech pathologist, Brewster dysphagia, Chatham SLP, Orleans MA dysphagia, Marshfield speech pathologist, Duxbury SLP, Scituate dysphagia, Norwell speech therapy, Hanover MA SLP, Pembroke dysphagia, Rockland speech pathologist, fiberoptic endoscopic evaluation of swallowing, aspiration pneumonia evaluation, silent aspiration assessment, Bayside Dysphagia Diagnostics, baysidefees.com" name="keywords"/>
 <meta content="Bayside Dysphagia Diagnostics" name="author"/>
 <meta content="index, follow" name="robots"/>
 <meta content="US-MA" name="geo.region"/>
 <meta content="Cape Cod, Massachusetts" name="geo.placename"/>
 <!-- Canonical URL -->
-<link href="https://www.baysidefees.com/references.html" rel="canonical"/>
+<link href="https://www.baysidefees.com/why_fees.html" rel="canonical"/>
 <link href="https://www.baysidefees.com/sitemap.xml" rel="sitemap" type="application/xml"/>
 <!-- Favicon -->
 <link href="favicon.ico" rel="icon" type="image/x-icon"/>
@@ -1027,75 +1027,116 @@
   .stat-desc { font-size: 0.87rem; color: var(--text-light); line-height: 1.6; }
 
 
+  /* Let the introductory copy span the same full container as the four cards. */
+  .feature-section .section-intro { max-width: none; width: 100%; }
+
+  /* Tighten space below the FEES benefit cards after removing their CTA. */
+  .feature-section { padding-bottom: 3.25rem; }
+  @media (max-width: 768px) { .feature-section { padding-bottom: 2.5rem; } }
+
   /* Research statistics: scoped to this section only. */
-  .research-stats-heading { color: var(--white); font-size: clamp(1.35rem, 2.5vw, 1.85rem); line-height: 1.3; margin: 2.3rem 0 0.65rem; font-weight: 800; }
-  .statement-inner .research-stats-intro { max-width: 900px; margin-bottom: 1.6rem; }
   .research-stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
   .research-stat-card { background: rgba(255,255,255,0.075); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; padding: 1.75rem 1.3rem; text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 225px; }
-  .research-stat-number { color: #a8d4ef; font-size: clamp(2rem, 3.4vw, 3.2rem); font-weight: 800; line-height: 1.1; margin-bottom: 0.85rem; }
+  .research-stat-card { transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s; }
+  .research-stat-card:hover { background: rgba(255,255,255,0.13); border-color: #a8d4ef; box-shadow: 0 10px 28px rgba(0,0,0,0.18); transform: translateY(-2px); }
+  .research-stat-number { font-family: 'Playfair Display', Georgia, serif; color: #a8d4ef; font-size: clamp(2rem, 3.4vw, 3.2rem); font-weight: 800; line-height: 1.1; margin-bottom: 0.85rem; }
   .statement-inner .research-stat-card p { color: rgba(255,255,255,0.9); font-size: 0.93rem; line-height: 1.65; margin: 0; }
   .research-reference { display: inline-flex; margin-top: 1.5rem; color: var(--white); font-weight: 700; text-underline-offset: 4px; }
   .research-reference:hover { color: #a8d4ef; }
   @media (max-width: 800px) { .research-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 540px) { .research-stats-grid { grid-template-columns: 1fr; } .research-stat-card { min-height: 0; padding: 1.5rem; } }
 
-
-.references-page .references-list li { flex-wrap:wrap; }
-.references-page .reference-source { margin-left:3rem; color:var(--blue-dark); font-weight:750; text-underline-offset:3px; }
-.references-page .evidence-note { background:#fff; border-left:4px solid var(--blue); padding:1.15rem 1.4rem; border-radius:8px; line-height:1.75; margin:0 0 1.8rem; }
-@media(max-width:760px){.references-page .reference-source{margin-left:0}}
 </style>
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&amp;display=swap" rel="stylesheet"/>
-<link href="shared-components.css" rel="stylesheet"/><style>
-/* References page, using the same design tokens and shared components as Why FEES. */
-.references-page { background: var(--sky); padding: 3.5rem 2.5rem 5rem; min-height: 65vh; }
-.references-page .section-inner { max-width: 980px; }
-.references-page .references-intro { color: var(--text-light); font-size: 1.03rem; max-width: 100%; width: 100%; margin: 0 0 2rem; }
-.references-page .references-list { list-style: none; counter-reset: references; display: grid; grid-template-columns: minmax(0,1fr); gap: .85rem; padding: 0; }
-.references-page .references-list li { counter-increment: references; display: flex; align-items: flex-start; gap: 1rem; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem 1.5rem; color: var(--text); font-size: .91rem; line-height: 1.75; overflow-wrap: anywhere; }
-.references-page .references-list li::before { content: counter(references); display: grid; place-items: center; flex: 0 0 2rem; height: 2rem; background: var(--navy); color: white; font-weight: 800; border-radius: 50%; font-size: .83rem; }
-.references-page .references-list li:hover { border-color: var(--blue); box-shadow: 0 8px 22px rgba(11,53,86,.06); }
-.references-page .references-list li em { font-style: italic; }
-.references-page .references-back { display: inline-flex; margin-top: 2rem; color: var(--blue-dark); font-weight: 700; text-decoration: none; }
-.references-page .references-back:hover { text-decoration: underline; }
-@media(max-width:760px){ .references-page { padding: 2.5rem 1.25rem 3.5rem; } .references-page .references-list {grid-template-columns:1fr;} .references-page .references-list li {padding:1.2rem;} }
-</style><style>
-/* Three equal, readable citation fields within each full-width card. */
-.references-page .references-list li { align-items: flex-start; overflow-wrap: normal; }
-.references-page .reference-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; width: 100%; min-width: 0; }
-.references-page .reference-columns > div { min-width: 0; overflow-wrap: break-word; word-break: normal; }
-.references-page .reference-journal { font-style: italic; }
-@media (max-width: 760px) { .references-page .reference-columns { grid-template-columns: 1fr; gap: .4rem; } }
-</style><style>
-/* Research resource directory relocated from Resources; intentionally separate from citation list. */
-.references-page + .resource-hub { padding: 4rem 2.5rem; background: #fff; }
-.references-page + .resource-hub .section-inner { max-width: 1000px; margin: 0 auto; }
-.references-page + .resource-hub .section-intro { max-width: 100%; width: 100%; }
-.references-page + .resource-hub .resource-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1.2rem; margin-top:2rem; }
-.references-page + .resource-hub .resource-card { background:#f8fbfd; border:1px solid var(--border); border-radius:16px; padding:1.65rem; display:flex; flex-direction:column; align-items:flex-start; }
-.references-page + .resource-hub .resource-audience { font-size:.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--blue-dark); margin-bottom:.7rem; }
-.references-page + .resource-hub .resource-card h3 { color:var(--navy); font-size:1.12rem; line-height:1.4; margin:0 0 .6rem; }
-.references-page + .resource-hub .resource-card p { color:var(--text-light); line-height:1.7; margin:0 0 1.1rem; flex:1; }
-.references-page + .resource-hub .resource-card a { font-weight:750; color:var(--blue-dark); text-decoration:underline; text-underline-offset:3px; }
-.references-return { background:#fff; padding:0 2.5rem 4rem; text-align:left; }
-.references-return .references-back { color:var(--blue-dark); font-weight:700; text-decoration:none; }
-@media(max-width:900px){.references-page + .resource-hub{padding:3rem 1.25rem}.references-page + .resource-hub .resource-grid{grid-template-columns:1fr}.references-return{padding:0 1.25rem 3rem}}
-</style></head>
-<body><div id="shared-header"></div><main class="references-page" id="references"><div class="section-inner"><div class="section-label">Research Citations</div><h1 class="section-title">References</h1><p class="references-intro">Selected publications related to dysphagia, instrumental assessment, and clinical outcomes. Follow linked titles to examine study methods, populations, and results.</p><div class="evidence-note"><strong>About the evidence:</strong> These publications address different populations and clinical questions. We have added direct publication links only where a matching article identifier could be established; remaining citations are listed without an unverified link.</div><ol class="references-list">
-<li><div class="reference-columns"><div class="reference-work">Aslam M, Vaezi MF. Dysphagia in the elderly.</div><div class="reference-journal"><em>Gastroenterol Hepatol (N Y).</em></div><div class="reference-details">2013 Dec;9(12):784-95. PMID: 24772045; PMCID: PMC3999993.</div></div><a class="reference-source" href="https://pubmed.ncbi.nlm.nih.gov/24772045/" target="_blank" rel="noopener noreferrer">Read original publication ↗</a></li>
-<li><div class="reference-columns"><div class="reference-work">Hansen T, Nielsen RL, Houlind MB, et al. Dysphagia Prevalence, Time Course, and Association with Probable Sarcopenia, Inactivity, Malnutrition, and Disease Status in Older Patients Admitted to an Emergency Department: A Secondary Analysis of Cohort Study Data.</div><div class="reference-journal"><em>Geriatrics (Basel).</em></div><div class="reference-details">2021;6(2):46. doi:10.3390/geriatrics6020046</div></div><a class="reference-source" href="https://pubmed.ncbi.nlm.nih.gov/33926079/" target="_blank" rel="noopener noreferrer">Read original publication ↗</a></li>
-<li><div class="reference-columns"><div class="reference-work">Engh MCN, Speyer R. Management of Dysphagia in Nursing Homes: A National Survey.</div><div class="reference-journal"><em>Dysphagia.</em></div><div class="reference-details">2022;37(2):266-276. doi:10.1007/s00455-021-10275-7</div></div><a class="reference-source" href="https://pubmed.ncbi.nlm.nih.gov/33660070/" target="_blank" rel="noopener noreferrer">Read original publication ↗</a></li>
-<li><div class="reference-columns"><div class="reference-work">Thiyagalingam S, Kulinski A, Thorsteinsdottir B, et al. Dysphagia in Older Adults.</div><div class="reference-journal"><em>Mayo Clinic Proceedings.</em></div><div class="reference-details">2021;96:488-497.</div></div></li>
-<li><div class="reference-columns"><div class="reference-work">Morley J. Dysphagia and Aspiration.</div><div class="reference-journal"><em>Journal of the American Medical Directors Association.</em></div><div class="reference-details">2015;16:631-634.</div></div></li>
-<li><div class="reference-columns"><div class="reference-work">Saito T, Hayashi K, Nakazawa H, Yagihashi F, Oikawa LO, Ota T. A Significant Association of Malnutrition with Dysphagia in Acute Patients.</div><div class="reference-journal"><em>Dysphagia.</em></div><div class="reference-details">2018;33(2):258-265. doi:10.1007/s00455-017-9855-6</div></div><a class="reference-source" href="https://doi.org/10.1007/s00455-017-9855-6" target="_blank" rel="noopener noreferrer">Read original publication ↗</a></li>
-<li><div class="reference-columns"><div class="reference-work">Wirth R, Pourhassan M, Streicher M, et al. The Impact of Dysphagia on Mortality of Nursing Home Residents: Results From the nutritionDay Project.</div><div class="reference-journal"><em>Journal of the American Medical Directors Association.</em></div><div class="reference-details">2018;19:775-778.</div></div><a class="reference-source" href="https://pubmed.ncbi.nlm.nih.gov/29778638/" target="_blank" rel="noopener noreferrer">Read original publication ↗</a></li>
-<li><div class="reference-columns"><div class="reference-work">Miles A, McFarlane M, Scott S, Hunting A. Cough response to aspiration in thin and thick fluids during FEES in hospitalized inpatients.</div><div class="reference-journal"><em>Int J Lang Commun Disord.</em></div><div class="reference-details">2018;53(5):909-918. doi:10.1111/1460-6984.12401</div></div><a class="reference-source" href="https://doi.org/10.1111/1460-6984.12401" target="_blank" rel="noopener noreferrer">Read original publication ↗</a></li>
-<li><div class="reference-columns"><div class="reference-work">Tanrıverdi M, Heybeli C, Çalım ÖF, et al. The relationship between oropharyngeal dysphagia and dehydration in older adults.</div><div class="reference-journal"><em>BMC Geriatr.</em></div><div class="reference-details">2024;24(1):885. doi:10.1186/s12877-024-05492-2</div></div><a class="reference-source" href="https://doi.org/10.1186/s12877-024-05492-2" target="_blank" rel="noopener noreferrer">Read original publication ↗</a></li>
-<li><div class="reference-columns"><div class="reference-work">Langmore SE, Skarupski KA, Park PS, Fries BE. Predictors of aspiration pneumonia in nursing home residents.</div><div class="reference-journal"><em>Dysphagia.</em></div><div class="reference-details">2002. doi:10.1007/s00455-002-0072-1</div></div><a class="reference-source" href="https://doi.org/10.1007/s00455-002-0072-1" target="_blank" rel="noopener noreferrer">Read original publication ↗</a></li>
-<li><div class="reference-columns"><div class="reference-work">Leder SB, Espinosa MS. Aspiration risk after acute stroke: Comparison of clinical examination and fiberoptic endoscopic evaluation of swallowing.</div><div class="reference-journal"><em>Dysphagia.</em></div><div class="reference-details">2002;17:214-218.</div></div></li>
-<li><div class="reference-columns"><div class="reference-work">Smith CH, Logemann JA, Colangelo LA, Rademaker AW, Pauloski BR. Incidence and patient characteristics associated with silent aspiration in the acute care setting.</div><div class="reference-journal"><em>Dysphagia.</em></div><div class="reference-details">1999;14:1-7.</div></div></li>
-<li><div class="reference-columns"><div class="reference-work">Smithard DG, O'Neill PA, Park C, et al. Can bedside assessment reliably exclude aspiration following acute stroke?</div><div class="reference-journal"><em>Age and Ageing.</em></div><div class="reference-details">1998;27(2):99-106.</div></div></li>
-<li><div class="reference-columns"><div class="reference-work">Murray J, Langmore SE, Ginsberg S, Dostie A. The significance of oropharyngeal secretions and swallowing frequency in predicting aspiration.</div><div class="reference-journal"><em>Dysphagia.</em></div><div class="reference-details">1996;11:99-103.</div></div></li>
-<li><div class="reference-columns"><div class="reference-work">Langmore SE, Logemann JA. After the clinical bedside swallowing examination: What next?</div><div class="reference-journal"><em>AJSLP.</em></div><div class="reference-details">1991;September:13-20.</div></div></li>
-</ol></div></main><section class="resource-hub" id="research-evidence"><div class="section-inner"><div class="section-label">Evidence & Inquiry</div><h2 class="section-title">Research &amp; Evidence</h2><p class="section-intro">Read original publications and explore the broader evidence. Explore research summaries, professional communities, and the scientific literature.</p><div class="resource-grid"><article class="resource-card"><span class="resource-audience">Research summaries</span><h3>ASHA Dysphagia Evidence Maps</h3><p>Locate reviews and research summaries to inform clinical questions.</p><a href="https://www.asha.org/evidence-maps/" target="_blank" rel="noopener noreferrer">Explore resource ↗</a></article><article class="resource-card"><span class="resource-audience">Research community</span><h3>Dysphagia Research Society</h3><p>Explore an interdisciplinary community focused on swallowing research and scientific exchange.</p><a href="https://www.dysphagiaresearch.org/" target="_blank" rel="noopener noreferrer">Explore resource ↗</a></article><article class="resource-card"><span class="resource-audience">Search the literature</span><h3>PubMed: FEES Research</h3><p>Search the National Library of Medicine’s biomedical literature for studies of fiberoptic endoscopic evaluation of swallowing.</p><a href="https://pubmed.ncbi.nlm.nih.gov/?term=fiberoptic+endoscopic+evaluation+of+swallowing" target="_blank" rel="noopener noreferrer">Explore resource ↗</a></article></div></div></section><div class="references-return"><a class="references-back" href="why_fees.html">← Back to Bayside Dysphagia Diagnostics</a></div><div id="shared-footer"></div><script defer="" src="shared-components.js"></script></body>
+
+<link href="shared-components.css" rel="stylesheet"/></head>
+<body>
+<div id="shared-header"></div>
+
+<section class="feature-section" id="why-fees">
+<div class="section-inner">
+<div class="section-label">Why Choose FEES</div>
+<h2 class="section-title">Why FEES? The Advantages Are Clear</h2>
+<p class="section-intro">FEES (Fiberoptic Endoscopic Evaluation of Swallowing) is a cost-effective and convenient tool for assessing swallowing disorders that provides direct visualization of the swallow in the patient's natural eating environment.</p>
+<div class="card-grid-4">
+<div class="feature-card">
+<div class="icon-circle"><svg stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><rect height="7" rx="1" width="15" x="3" y="11"></rect><path d="M18 13h2l1 2v3h-3"></path><circle cx="7.5" cy="18.5" r="1.5"></circle><circle cx="16" cy="18.5" r="1.5"></circle></svg></div>
+<h3>No Patient Transport</h3>
+<p>Evaluation happens at your facility, eliminating the logistics and risks associated with transporting medically complex residents.</p>
+</div>
+<div class="feature-card">
+<div class="icon-circle"><svg stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path><circle cx="12" cy="12" r="3"></circle></svg></div>
+<h3>No Radiation</h3>
+<p>FEES provides direct visualization without radiation exposure.</p>
+</div>
+<div class="feature-card">
+<div class="icon-circle"><svg stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M4 21V10a8 8 0 0116 0v11"></path><path d="M4 21h16"></path></svg></div>
+<h3>Evaluate the Patient in Their Real Environment</h3>
+<p>Assess swallowing using the patient's usual positioning, diet textures, and clinical environment.</p>
+</div>
+<div class="feature-card">
+<div class="icon-circle"><svg stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z"></path></svg></div>
+<h3>Immediate Clinical Insight</h3>
+<p>Findings are available in real time, allowing the care team to make informed decisions quickly.</p>
+</div>
+</div>
+<a class="section-cta-link" href="resources.html#questions">Learn more about FEES <span class="arrow">→</span></a>
+
+</div>
+</section>
+<section class="statement-section" id="research">
+<div class="section-inner statement-inner">
+<div class="section-label">The Research</div>
+<h2 class="section-title">Why Timely Dysphagia Assessment Matters</h2>
+<p>Dysphagia is common in older adults and can contribute to aspiration, malnutrition, dehydration, and avoidable complications. Instrumental assessment can provide the clinical information needed to develop an individualized, evidence-based plan of care.</p>
+<div class="research-stats-grid" aria-label="Research statistics about dysphagia">
+  <article class="research-stat-card"><div class="research-stat-number">50–70%</div><p>of elderly patients with dysphagia silently aspirate, meaning aspiration is missed on a bedside evaluation of swallowing</p></article>
+  <article class="research-stat-card"><div class="research-stat-number">75–80%</div><p>of all aspiration pneumonia cases occur in adults 65 and older</p></article>
+  <article class="research-stat-card"><div class="research-stat-number">50–75%</div><p>of older adults with dysphagia who rely on thickened liquids experience dehydration</p></article>
+  <article class="research-stat-card"><div class="research-stat-number">50–60%</div><p>of patients with dysphagia are diagnosed with malnutrition at discharge from acute hospital stay — often related to overly restricted modified diets</p></article>
+  <article class="research-stat-card"><div class="research-stat-number">40–70%</div><p>of patients in long-term care or nursing homes with dysphagia are malnourished</p></article>
+  <article class="research-stat-card"><div class="research-stat-number">10–30%</div><p>30-day mortality rate is between 10% to 30% for nursing home residents who develop pneumonia</p></article>
+</div>
+<a class="section-cta-link" href="references.html" style="color:#fff;">View the Research <span class="arrow">→</span></a>
+</div>
+</section>
+<section class="indicators-section" id="indicators">
+<div class="section-inner">
+<div class="section-label">Clinical Indicators</div>
+<h2 class="section-title">When Should You Consider a FEES Evaluation?</h2>
+<p class="section-intro">If your patient presents with any of the following, a FEES referral may be appropriate.</p>
+<div class="indicators-grid">
+<div class="indicator-card">
+<h4>Signs &amp; Symptoms</h4>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Coughing during meals</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Difficulty swallowing medications</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Food sticking</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Fatigue during meals</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Unexplained weight loss</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Dehydration or malnutrition</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Excessive secretions</p></div>
+</div>
+<div class="indicator-card">
+<h4>Clinical History</h4>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Recurrent pneumonia</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Stroke</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Dementia</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Parkinson's disease</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Progressive neurological disease</p></div>
+</div>
+<div class="indicator-card">
+<h4>Complex Patients</h4>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Trach/vent dependence</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Poor head/trunk control</p></div>
+<div class="indicator-item"><span class="indicator-dot"></span><p>Known anatomical abnormalities</p></div>
+</div>
+</div>
+<div class="indicators-cta">Not sure whether FEES is appropriate? <a href="contact.html#contact-form">Contact Bayside to discuss your patient.</a></div>
+</div>
+</section>
+<div id="shared-footer"></div>
+
+
+<script defer="True" src="shared-components.js"></script></body>
 </html>

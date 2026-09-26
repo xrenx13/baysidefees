@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@400;600;700&display=swap');
 .bayside-new-footer { background: var(--navy-deep); color: rgba(255,255,255,0.6); padding: 2.75rem 2.5rem 2rem; }
 .footer-inner {
     max-width: 1100px;
@@ -104,42 +105,38 @@ html {scroll-padding-top:95px;}
 .bayside-new-footer .footer-bottom a{text-decoration:none;color:rgba(255,255,255,.7)}
 @media(max-width:1100px){.bayside-original-nav .nav-links{display:none!important}.bayside-original-nav .hamburger{display:flex!important}}
 
-/* FINAL shared brand lock: keep index and secondary-page header branding identical. */
-#shared-header .bayside-original-nav .nav-logo {
-  display:flex!important;
-  flex-direction:row!important;
-  align-items:center!important;
-  gap:.6rem!important;
-  flex:0 0 auto!important;
-  min-width:0!important;
-  line-height:1.1!important;
+/* Compact header: the evaluation action remains inside the hamburger menu. */
+@media (max-width:1100px) {
+  #shared-header .bayside-original-nav .header-evaluation { display:none!important; }
+  #shared-header .bayside-original-nav .hamburger { margin-left:auto!important; }
 }
-#shared-header .bayside-original-nav .nav-logo > a {display:flex!important;align-items:center!important;flex:0 0 auto!important;}
-#shared-header .bayside-original-nav .nav-logo img {width:52px!important;height:52px!important;object-fit:contain!important;}
-#shared-header .bayside-original-nav .nav-logo > div {display:flex!important;flex-direction:column!important;line-height:1.15!important;}
+
+/* Restore the approved horizontal, serif header branding on every page. */
+
+#shared-header .bayside-original-nav .nav-logo {
+  display:flex!important; flex-direction:row!important; align-items:center!important;
+  gap:.6rem!important; flex:0 1 auto!important; min-width:0!important; line-height:1.1!important;
+}
+#shared-header .bayside-original-nav .nav-logo > a {
+  display:flex!important; align-items:center!important; flex:0 0 auto!important;
+}
+#shared-header .bayside-original-nav .nav-logo img {
+  width:52px!important; height:52px!important; object-fit:contain!important;
+}
+#shared-header .bayside-original-nav .nav-logo > div {
+  display:flex!important; flex-direction:column!important; min-width:0!important; line-height:1.15!important;
+}
 #shared-header .bayside-original-nav .nav-logo .brand-name {
-  display:block!important;
-  font-family:'Playfair Display',Georgia,'Times New Roman',serif!important;
-  font-size:31px!important;
-  font-weight:700!important;
-  font-style:normal!important;
-  line-height:1.12!important;
-  letter-spacing:.01em!important;
-  text-transform:none!important;
-  color:#fff!important;
-  white-space:nowrap!important;
+  display:block!important; font-family:'Playfair Display',Georgia,'Times New Roman',serif!important;
+  font-size:31px!important; font-weight:700!important; font-style:normal!important;
+  line-height:1.12!important; letter-spacing:.01em!important; text-transform:none!important;
+  color:#fff!important; white-space:nowrap!important;
 }
 #shared-header .bayside-original-nav .nav-logo .brand-tagline {
-  display:block!important;
-  font-family:'Source Sans 3',Arial,sans-serif!important;
-  font-size:12px!important;
-  font-weight:600!important;
-  font-style:normal!important;
-  line-height:1.3!important;
-  letter-spacing:.12em!important;
-  text-transform:uppercase!important;
-  color:#85bbdf!important;
-  white-space:nowrap!important;
+  display:block!important; font-family:'Source Sans 3',Arial,sans-serif!important;
+  font-size:12px!important; font-weight:600!important; font-style:normal!important;
+  line-height:1.3!important; letter-spacing:.12em!important; text-transform:uppercase!important;
+  color:#85bbdf!important; white-space:nowrap!important;
 }
 #shared-header {position:sticky!important;top:0!important;z-index:1000!important;}
 @media(max-width:650px){
