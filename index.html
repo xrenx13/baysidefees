@@ -352,7 +352,7 @@ html { scroll-padding-top: 0 !important; }
 #contact-form .form-group input,#contact-form .form-group textarea{box-sizing:border-box;padding:.75rem 1rem;border:1.5px solid var(--form-border);border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;color:var(--form-text);background:#fff;transition:border-color .2s,box-shadow .2s;outline:none;width:100%}
 #contact-form .form-group input:focus,#contact-form .form-group textarea:focus{border-color:var(--form-blue);box-shadow:0 0 0 3px rgba(47,143,196,.12)}
 #contact-form .form-group textarea{resize:vertical;min-height:130px}
-#contact-form .form-hipaa-note{font-size:.78rem;color:#c0392b;font-weight:600;margin-top:.3rem}
+#contact-form .form-hipaa-note{font-size:.78rem;color:var(--form-text);font-weight:600;margin-top:.3rem}
 #contact-form .form-submit{width:100%;padding:.95rem;background:var(--form-navy);color:#fff;border:0;border-radius:50px;font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:background .2s,transform .15s;margin-top:.5rem}
 #contact-form .form-submit:hover{background:var(--form-blue-dark);transform:translateY(-1px)}
 #contact-form .form-success{display:none;text-align:center;padding:2.5rem 1rem;color:var(--form-text);scroll-margin-top:110px}
@@ -482,7 +482,7 @@ html { scroll-padding-top: 0 !important; }
 <div class="form-group">
 <label for="message">Message</label>
 <textarea id="message" placeholder="How can we help you?"></textarea>
-<div class="form-hipaa-note">⚠ For general business inquiries only. Do not include patient names, dates of birth, diagnoses, medical record numbers, or other patient information. This form is not HIPAA-compliant. Please contact us to arrange a secure referral.</div>
+<div class="form-hipaa-note"><span aria-hidden="true">⚠️</span> This form is not HIPAA-compliant. Please contact us to arrange a secure referral. Do not include patient names, dates of birth, diagnoses, medical record numbers, or other patient information.</div>
 </div>
 <div class="g-recaptcha" data-sitekey="6LcMDdItAAAAADyu39RPedeapdy6j8h4GJZszkxn" style="margin:0 0 1rem;"></div>
 <button class="form-submit" onclick="handleFormSubmit()">Send Message</button>
