@@ -356,7 +356,10 @@
   .kpi-delta.down { color:var(--good); }
   .kpi-delta.flat { color:var(--muted); }
 
-  .bar-row { display:grid; grid-template-columns:150px 1fr 78px; align-items:center; gap:10px; padding:7px 0; }
+  .bar-row { display:grid; grid-template-columns:150px 1fr 78px; align-items:center; gap:10px; padding:7px 0; width:100%; border:0; background:none; font:inherit; text-align:left; }
+  .bar-row-clickable { cursor:pointer; border-radius:6px; transition:background .12s ease; padding-left:6px; padding-right:6px; margin:0 -6px; width:calc(100% + 12px); }
+  .bar-row-clickable:hover { background:#f2f6f8; }
+  .bar-row-clickable:hover .bar-row-label { color:var(--teal-dark); }
   .bar-row-label { font-size:12.5px; color:#39465a; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .bar-track { position:relative; height:20px; background:#eef1f4; border-radius:6px; overflow:hidden; }
   .bar-fill { position:absolute; inset:0 auto 0 0; height:100%; background:var(--teal); border-radius:6px; min-width:4px; }
@@ -369,7 +372,11 @@
      chopped off mid-line. */
   .dash-scroll-fade { -webkit-mask-image:linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%); mask-image:linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%); }
   .month-chart { display:flex; align-items:flex-end; gap:8px; }
-  .month-chart-col { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; height:100%; cursor:default; }
+  .month-chart-col { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; height:100%; cursor:default; border:0; background:none; font:inherit; padding:0; }
+  .month-chart-col-clickable { cursor:pointer; border-radius:6px; transition:background .12s ease; }
+  .month-chart-col-clickable:hover { background:#f2f6f8; }
+  .month-chart-col-clickable:hover .month-chart-fill { filter:brightness(1.1); }
+  .month-chart-col-clickable:hover .month-chart-label { color:var(--teal-dark); }
   .month-chart-value { height:15px; margin-bottom:4px; font-size:11px; font-weight:700; color:var(--navy-deep); font-variant-numeric:tabular-nums; white-space:nowrap; }
   .month-chart-track { width:100%; max-width:32px; flex:1 1 auto; display:flex; align-items:flex-end; background:#eef1f4; border-radius:5px 5px 2px 2px; overflow:hidden; }
   .month-chart-fill { width:100%; background:var(--teal); border-radius:5px 5px 0 0; transition:height .2s ease; }
@@ -393,6 +400,13 @@
   .pill-teal { background:var(--teal-wash); color:var(--teal-dark); }
   .pill-navy { background:#eef2f7; color:var(--navy-deep); }
   .pill-warn { background:#fff8e8; color:var(--warning); }
+  /* The duplicate-flag badge is a real <button> (see ExpensesView) so it's
+     clickable/keyboard-focusable to dismiss a false match — reset the
+     button chrome back to looking like the plain .pill-warn badge it
+     already was, just with a pointer cursor and a subtle hover to hint
+     it's interactive. */
+  .dupe-flag-btn { border:0; cursor:pointer; font:inherit; transition:.12s ease; }
+  .dupe-flag-btn:hover { background:#ffedc2; }
   .pill-danger { background:#fdecea; color:var(--danger); }
 
   .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; height:36px; padding:0 16px; border-radius:9px; font-size:13px; font-weight:650; cursor:pointer; border:1px solid transparent; transition:.15s ease; white-space:nowrap; }
@@ -523,7 +537,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-43';
+const BUILD_NUMBER = '2026.09.19-45';
 
 // =====================================================================
 // Small utilities
@@ -788,6 +802,18 @@ function fileToBase64_(file) {
 // two-point drives have a blank Stops value — this always returns an array,
 // never throws on old/blank/malformed data.
 function parseStops_(raw) {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter(s => typeof s === 'string' && s.trim()) : [];
+  } catch (e) {
+    return [];
+  }
+}
+// Duplicate-flag dismissals live in the same shape as Stops above: a JSON
+// array of ExpenseIds string, blank/malformed on any row that's never had
+// its duplicate flag dismissed. See findDuplicateExpenses_ below.
+function parseDismissedDuplicates_(raw) {
   if (!raw) return [];
   try {
     const arr = JSON.parse(raw);
@@ -2225,6 +2251,14 @@ const EXPENSE_COLUMNS = [
 // mean much. Returns a Map of ExpenseId -> the other expense record(s) it
 // matches, so the UI can both flag the row and explain why.
 const DUPLICATE_MATCH_WINDOW_DAYS = 3;
+// True once either side of the pair has recorded the other as dismissed —
+// checking both directions means a dismissal always "sticks" even if only
+// one of the two updateExpense calls that record it (see
+// handleDismissDuplicate in App) has made it back from the server yet.
+function isDismissedDuplicatePair_(a, b) {
+  if (parseDismissedDuplicates_(a.DismissedDuplicateIds).includes(b.ExpenseId)) return true;
+  return parseDismissedDuplicates_(b.DismissedDuplicateIds).includes(a.ExpenseId);
+}
 function findDuplicateExpenses_(expenses) {
   const candidates = expenses.filter(e => e.Category !== 'Mileage' && Number(e.Amount) > 0 && parseDate_(e.Date));
   const matches = new Map();
@@ -2242,7 +2276,7 @@ function findDuplicateExpenses_(expenses) {
       // (that's the "scanned/entered the same receipt twice" case). Same
       // vendor + amount within a few days catches the "logged it again a
       // couple days later" case even if the date drifted slightly.
-      if (dayDiff === 0 || (sameVendor && dayDiff <= DUPLICATE_MATCH_WINDOW_DAYS)) {
+      if ((dayDiff === 0 || (sameVendor && dayDiff <= DUPLICATE_MATCH_WINDOW_DAYS)) && !isDismissedDuplicatePair_(a, b)) {
         addMatch(a, b);
         addMatch(b, a);
       }
@@ -2251,7 +2285,7 @@ function findDuplicateExpenses_(expenses) {
   return matches;
 }
 
-function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, quickFilter, onClearQuickFilter }) {
+function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, onDismissDuplicate, quickFilter, onClearQuickFilter }) {
   const duplicateMatches = useMemo(() => findDuplicateExpenses_(expenses), [expenses]);
   const [duplicatesOnly, setDuplicatesOnly] = useState(false);
   const [search, setSearch] = useState('');
@@ -2272,12 +2306,28 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
   // filter from three visits ago.
   useEffect(() => () => { if (onClearQuickFilter) onClearQuickFilter(); }, []);
 
+  // quickFilter arrives as one of: { type:'missingReceiptsYtd' },
+  // { type:'category', category }, or { type:'range', start, end, category }
+  // (end/category may be null — see DashboardView's quickFilterProps).
+  const quickFilterLabel = !quickFilter ? null
+    : quickFilter.type === 'missingReceiptsYtd' ? 'Missing receipts · year to date'
+    : quickFilter.type === 'category' ? quickFilter.category
+    : quickFilter.type === 'range' ? quickFilter.label
+    : null;
+
   const filtered = useMemo(() => {
     let rows = expenses.slice();
     if (categoryFilter !== 'All') rows = rows.filter(r => r.Category === categoryFilter);
-    if (quickFilter === 'missingReceiptsYtd') {
+    if (quickFilter && quickFilter.type === 'missingReceiptsYtd') {
       const yearStart = new Date(new Date().getFullYear(), 0, 1);
       rows = rows.filter(r => r.Category !== 'Mileage' && !r.ReceiptFileUrl && (parseDate_(r.Date)||0) >= yearStart);
+    }
+    if (quickFilter && quickFilter.type === 'category') {
+      rows = rows.filter(r => r.Category === quickFilter.category);
+    }
+    if (quickFilter && quickFilter.type === 'range') {
+      rows = rows.filter(r => { const d = parseDate_(r.Date); return d && d >= quickFilter.start && (!quickFilter.end || d <= quickFilter.end); });
+      if (quickFilter.category) rows = rows.filter(r => r.Category === quickFilter.category);
     }
     if (duplicatesOnly) rows = rows.filter(r => duplicateMatches.has(r.ExpenseId));
     if (search.trim()) {
@@ -2295,6 +2345,22 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
     downloadCsv_('bdd-exp-expenses-' + todayStr() + '.csv', headers, rows);
   }
 
+  // Clicking the duplicate-flag badge asks once, then dismisses EVERY
+  // current match on this expense at once (almost always just one) — see
+  // the confirm copy below, which lists exactly what's being dismissed so
+  // it's clear what "not a duplicate" is agreeing to.
+  function handleDismissClick(expense, dupes, e) {
+    e.stopPropagation();
+    if (!onDismissDuplicate) return;
+    const list = dupes.map(m => '• ' + formatDate(m.Date) + ' · ' + formatCurrency(m.Amount) + (m.Vendor ? ' · ' + m.Vendor : '')).join('\n');
+    const msg = (dupes.length === 1
+      ? "Not actually a duplicate of this expense?\n\n"
+      : "Not actually a duplicate of any of these?\n\n") + list +
+      "\n\nIt won't be flagged as a possible duplicate against " + (dupes.length === 1 ? 'this one' : 'these') + ' again.';
+    if (!window.confirm(msg)) return;
+    onDismissDuplicate(expense, dupes);
+  }
+
   return h('div', null,
     h('div', { className:'filter-row', style:{ marginBottom:'16px', justifyContent:'space-between' } },
       h('div', { className:'filter-row' },
@@ -2306,8 +2372,8 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
       ),
       h('button', { type:'button', className:'btn btn-ghost', onClick:exportCsv }, 'Export CSV')
     ),
-    quickFilter === 'missingReceiptsYtd' && h('div', { className:'filter-row', style:{ marginBottom:'14px' } },
-      h('span', { className:'pill pill-teal' }, 'Missing receipts · year to date'),
+    quickFilterLabel && h('div', { className:'filter-row', style:{ marginBottom:'14px' } },
+      h('span', { className:'pill pill-teal' }, quickFilterLabel),
       h('button', { type:'button', className:'btn btn-ghost btn-sm', onClick:onClearQuickFilter }, 'Clear filter')
     ),
     duplicateMatches.size > 0 && h('div', { className:'filter-row', style:{ marginBottom:'14px' } },
@@ -2317,8 +2383,8 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
     h('div', { className:'card table-wrap' },
       filtered.length === 0
         ? h('div', { className:'empty-state' },
-            h('div', { className:'empty-state-title' }, duplicatesOnly ? 'No possible duplicates' : (quickFilter === 'missingReceiptsYtd' ? 'No missing receipts' : 'No expenses yet')),
-            h('p', null, duplicatesOnly ? "None of your current filters match a flagged expense." : (quickFilter === 'missingReceiptsYtd' ? 'Every expense logged this year already has a receipt attached.' : 'Add your first expense to start tracking spend.'))
+            h('div', { className:'empty-state-title' }, duplicatesOnly ? 'No possible duplicates' : (quickFilter && quickFilter.type === 'missingReceiptsYtd' ? 'No missing receipts' : quickFilter ? 'No matching expenses' : 'No expenses yet')),
+            h('p', null, duplicatesOnly ? "None of your current filters match a flagged expense." : (quickFilter && quickFilter.type === 'missingReceiptsYtd' ? 'Every expense logged this year already has a receipt attached.' : quickFilter ? 'Try clearing the filter to see everything.' : 'Add your first expense to start tracking spend.'))
           )
         : h(React.Fragment, null,
             h('table', { className:'data-table' },
@@ -2338,9 +2404,10 @@ function ExpensesView({ expenses, categories, onEdit, onDuplicate, onDelete, qui
                 h('td', null,
                   h('div', { style:{ display:'flex', alignItems:'center', gap:'6px' } },
                     r.Vendor || '—',
-                    dupes && h('span', {
-                      className:'pill pill-warn', style:{ padding:'2px 6px' },
-                      title:'Possible duplicate — matches ' + dupes.map(m => formatDate(m.Date) + ' · ' + formatCurrency(m.Amount) + (m.Vendor ? ' · ' + m.Vendor : '')).join('; ')
+                    dupes && h('button', {
+                      type:'button', className:'pill pill-warn dupe-flag-btn', style:{ padding:'2px 6px' },
+                      title:'Possible duplicate — matches ' + dupes.map(m => formatDate(m.Date) + ' · ' + formatCurrency(m.Amount) + (m.Vendor ? ' · ' + m.Vendor : '')).join('; ') + '. Click to mark as not a duplicate.',
+                      onClick: e => handleDismissClick(r, dupes, e)
                     }, h(Icon,{name:'warning'}))
                   )
                 ),
@@ -2666,7 +2733,7 @@ function MileageView({ expenses, onEdit, onDelete, onDuplicate }) {
 // =====================================================================
 // Dashboard — KPI tiles + spend-by-category bars + recent activity
 // =====================================================================
-function DashboardView({ expenses, setView, onMissingReceiptsClick }) {
+function DashboardView({ expenses, setView, onQuickFilter, onEditExpense }) {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const yearStart = new Date(now.getFullYear(), 0, 1);
@@ -2730,23 +2797,41 @@ function DashboardView({ expenses, setView, onMissingReceiptsClick }) {
   const maxMonth = Math.max.apply(null, monthTotals);
   const hasMonthData = maxMonth > 0;
 
+  // Everything below that's clickable — KPI tiles, category bars, month
+  // columns — funnels through this one prop: it hands a quick-filter
+  // descriptor up to App, which stores it and switches to the Expenses view,
+  // where ExpensesView interprets the descriptor's `type` to filter its
+  // rows. Keeping the shape-building here (rather than in App) means each
+  // clickable element can reach into its own already-computed local
+  // variables (monthStart, yearStart, etc) instead of recomputing them
+  // twice in two different components.
+  function quickFilterProps(filter) {
+    return {
+      role:'button', tabIndex:0,
+      onClick: () => onQuickFilter(filter),
+      onKeyDown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onQuickFilter(filter); } }
+    };
+  }
+
   return h('div', null,
     h('div', { className:'kpi-grid', style:{ marginBottom:'20px' } },
-      h('div', { className:'kpi-tile' },
+      h('div', Object.assign({ className:'kpi-tile kpi-tile-clickable', title:'View these expenses' }, quickFilterProps({ type:'range', start:monthStart, end:null, category:null, label:'This month' })),
         h('div', { className:'kpi-label' }, 'This month'),
         h('div', { className:'kpi-value' }, formatCurrencyCompact(mtdTotal)),
         mtdDelta !== null && h('div', { className:'kpi-delta ' + (mtdDelta > 0 ? 'up' : mtdDelta < 0 ? 'down' : 'flat') }, (mtdDelta>0?'↑ ':mtdDelta<0?'↓ ':'') + Math.abs(mtdDelta) + '% vs last month')
       ),
-      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Year to date'), h('div', { className:'kpi-value' }, formatCurrency(ytdTotal))),
-      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Mileage MTD'), h('div', { className:'kpi-value' }, mileageMtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')),
-      h('div', { className:'kpi-tile' }, h('div', { className:'kpi-label' }, 'Mileage YTD'), h('div', { className:'kpi-value' }, mileageYtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')),
-      h('div', {
-        className:'kpi-tile kpi-tile-clickable',
-        role:'button', tabIndex:0,
-        onClick: onMissingReceiptsClick,
-        onKeyDown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onMissingReceiptsClick(); } },
-        title:'View these expenses'
-      }, h('div', { className:'kpi-label' }, 'Missing receipts (YTD)'), h('div', { className:'kpi-value' }, missingReceipts))
+      h('div', Object.assign({ className:'kpi-tile kpi-tile-clickable', title:'View these expenses' }, quickFilterProps({ type:'range', start:yearStart, end:null, category:null, label:'Year to date' })),
+        h('div', { className:'kpi-label' }, 'Year to date'), h('div', { className:'kpi-value' }, formatCurrency(ytdTotal))
+      ),
+      h('div', Object.assign({ className:'kpi-tile kpi-tile-clickable', title:'View these expenses' }, quickFilterProps({ type:'range', start:monthStart, end:null, category:'Mileage', label:'Mileage · this month' })),
+        h('div', { className:'kpi-label' }, 'Mileage MTD'), h('div', { className:'kpi-value' }, mileageMtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')
+      ),
+      h('div', Object.assign({ className:'kpi-tile kpi-tile-clickable', title:'View these expenses' }, quickFilterProps({ type:'range', start:yearStart, end:null, category:'Mileage', label:'Mileage · year to date' })),
+        h('div', { className:'kpi-label' }, 'Mileage YTD'), h('div', { className:'kpi-value' }, mileageYtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')
+      ),
+      h('div', Object.assign({ className:'kpi-tile kpi-tile-clickable', title:'View these expenses' }, quickFilterProps({ type:'missingReceiptsYtd' })),
+        h('div', { className:'kpi-label' }, 'Missing receipts (YTD)'), h('div', { className:'kpi-value' }, missingReceipts)
+      )
     ),
     h('div', { style:{ display:'grid', gridTemplateColumns:'1.1fr .9fr', gap:'16px' }, className:'dash-grid' },
       h('div', { className:'card card-pad', style:{ display:'flex', flexDirection:'column' } },
@@ -2754,7 +2839,11 @@ function DashboardView({ expenses, setView, onMissingReceiptsClick }) {
         h('div', { ref:categoryListRef, className:'dash-scroll-list' + (categoryOverflowing ? ' dash-scroll-fade' : ''), style:{ marginTop:'12px', maxHeight:'236px' } },
           byCategory.length === 0
             ? h('p', { className:'card-copy' }, 'No expenses logged yet this year.')
-            : byCategory.map(([cat, amt]) => h('div', { className:'bar-row', key:cat },
+            : byCategory.map(([cat, amt]) => h('button', {
+                type:'button', className:'bar-row bar-row-clickable', key:cat,
+                title:'View ' + cat + ' expenses',
+                onClick:() => onQuickFilter({ type:'category', category:cat })
+              },
                 h('div', { className:'bar-row-label' }, cat),
                 h('div', { className:'bar-track' }, h('div', { className:'bar-fill', style:{ width: (maxCategory ? (amt/maxCategory*100) : 0) + '%' } })),
                 h('div', { className:'bar-row-value' }, formatCurrency(amt))
@@ -2766,7 +2855,7 @@ function DashboardView({ expenses, setView, onMissingReceiptsClick }) {
         h('div', { ref:recentListRef, className:'dash-scroll-list' + (recentOverflowing ? ' dash-scroll-fade' : ''), style:{ marginTop:'10px', maxHeight:'236px', display:'grid', gap:'2px', alignContent:'start' } },
           recent.length === 0
             ? h('p', { className:'card-copy' }, 'Nothing logged yet.')
-            : recent.map(r => h('div', { key:r.ExpenseId, style:{ display:'flex', justifyContent:'space-between', gap:'10px', padding:'9px 0', borderBottom:'1px solid #f0f2f5', cursor:'pointer' }, onClick:() => setView('expenses') },
+            : recent.map(r => h('div', { key:r.ExpenseId, style:{ display:'flex', justifyContent:'space-between', gap:'10px', padding:'9px 0', borderBottom:'1px solid #f0f2f5', cursor:'pointer' }, title:'Edit this expense', onClick:() => onEditExpense(r) },
                 h('div', { style:{ minWidth:0 } },
                   h('div', { style:{ fontSize:'12.5px', fontWeight:600, color:'#39465a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, r.Vendor || r.Category),
                   h('div', { style:{ fontSize:'11px', color:'var(--faint)' } }, formatDate(r.Date) + ' · ' + r.Category)
@@ -2780,13 +2869,27 @@ function DashboardView({ expenses, setView, onMissingReceiptsClick }) {
       h('div', { className:'card-title' }, 'Spend by month · ' + now.getFullYear()),
       hasMonthData
         ? h('div', { className:'month-chart', style:{ marginTop:'14px', height:'200px' } },
-            monthLabels.map((label, i) => h('div', { className:'month-chart-col', key:label, title: label + ' ' + now.getFullYear() + ': ' + formatCurrency(monthTotals[i]) },
-              h('div', { className:'month-chart-value' }, monthTotals[i] > 0 ? formatCurrencyCompact(monthTotals[i]) : ''),
-              h('div', { className:'month-chart-track' },
-                monthTotals[i] > 0 && h('div', { className:'month-chart-fill', style:{ height: (maxMonth ? (monthTotals[i]/maxMonth*100) : 0) + '%' } })
-              ),
-              h('div', { className:'month-chart-label' }, label)
-            ))
+            monthLabels.map((label, i) => {
+              const hasData = monthTotals[i] > 0;
+              const monthStartI = new Date(now.getFullYear(), i, 1);
+              const monthEndI = new Date(now.getFullYear(), i+1, 0, 23,59,59);
+              const baseProps = {
+                className:'month-chart-col' + (hasData ? ' month-chart-col-clickable' : ''),
+                key:label,
+                title: label + ' ' + now.getFullYear() + ': ' + formatCurrency(monthTotals[i]) + (hasData ? ' — click to view these expenses' : '')
+              };
+              const clickProps = hasData ? {
+                type:'button',
+                onClick: () => onQuickFilter({ type:'range', start:monthStartI, end:monthEndI, category:null, label: label + ' ' + now.getFullYear() })
+              } : {};
+              return h(hasData ? 'button' : 'div', Object.assign({}, baseProps, clickProps),
+                h('div', { className:'month-chart-value' }, monthTotals[i] > 0 ? formatCurrencyCompact(monthTotals[i]) : ''),
+                h('div', { className:'month-chart-track' },
+                  monthTotals[i] > 0 && h('div', { className:'month-chart-fill', style:{ height: (maxMonth ? (monthTotals[i]/maxMonth*100) : 0) + '%' } })
+                ),
+                h('div', { className:'month-chart-label' }, label)
+              );
+            })
           )
         : h('p', { className:'card-copy', style:{ marginTop:'8px' } }, 'No expenses logged yet this year.')
     ),
@@ -4016,6 +4119,30 @@ function App() {
     try { await apiDelete(expense.ExpenseId); showToast('Expense deleted.'); }
     catch (err) { showToast(err.message, 'error'); }
   }
+  // Persists a "not a duplicate" decision to BOTH expenses in the pair (see
+  // DismissedDuplicateIds in Code.gs) so findDuplicateExpenses_ stops
+  // flagging this specific match on either side of it, on any device, from
+  // here on — not just in this browser tab. `dupes` is the full current
+  // match list for `expense` at the moment the badge was clicked, so a row
+  // matching more than one other expense dismisses every one of them at
+  // once (see the confirm copy in ExpensesView).
+  async function handleDismissDuplicate(expense, dupes) {
+    try {
+      const ownIds = parseDismissedDuplicates_(expense.DismissedDuplicateIds);
+      dupes.forEach(other => { if (!ownIds.includes(other.ExpenseId)) ownIds.push(other.ExpenseId); });
+      await Promise.all([
+        apiUpdate({ ExpenseId: expense.ExpenseId, DismissedDuplicateIds: JSON.stringify(ownIds) }),
+        ...dupes.map(other => {
+          const otherIds = parseDismissedDuplicates_(other.DismissedDuplicateIds);
+          if (!otherIds.includes(expense.ExpenseId)) otherIds.push(expense.ExpenseId);
+          return apiUpdate({ ExpenseId: other.ExpenseId, DismissedDuplicateIds: JSON.stringify(otherIds) });
+        })
+      ]);
+      showToast('Marked as not a duplicate.');
+    } catch (err) {
+      showToast(err.message || 'Could not update this expense.', 'error');
+    }
+  }
   async function handleDeletePO(po) {
     if (!window.confirm('Delete this purchase order? This cannot be undone.')) return;
     try { await apiDeletePO(po.PoId); showToast('Purchase order deleted.'); }
@@ -4125,8 +4252,8 @@ function App() {
         )
       ),
       h('div', { className:'page' },
-        view === 'dashboard' && h(DashboardView, { expenses:data.expenses, setView, onMissingReceiptsClick: () => { setExpensesQuickFilter('missingReceiptsYtd'); setView('expenses'); } }),
-        view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDuplicate:openDuplicate, onDelete:handleDelete, quickFilter:expensesQuickFilter, onClearQuickFilter: () => setExpensesQuickFilter(null) }),
+        view === 'dashboard' && h(DashboardView, { expenses:data.expenses, setView, onQuickFilter: filter => { setExpensesQuickFilter(filter); setView('expenses'); }, onEditExpense: openEdit }),
+        view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDuplicate:openDuplicate, onDelete:handleDelete, onDismissDuplicate:handleDismissDuplicate, quickFilter:expensesQuickFilter, onClearQuickFilter: () => setExpensesQuickFilter(null) }),
         view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete, onDuplicate:openDuplicate }),
         view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories, assets:data.assets }),
         view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, categories:data.poCategories, statuses:data.poStatuses, onAdd:openAddPO, onEdit:openEditPO, onDuplicate:openDuplicatePO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense }),
