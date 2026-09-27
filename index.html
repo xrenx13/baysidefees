@@ -419,6 +419,7 @@ html { scroll-padding-top: 0 !important; }
 @media(max-width:800px){#contact-form .contact-sidebar{order:1;width:100%}#contact-form .contact-info-card{order:initial;width:100%}#contact-form .contact-form-wrap{order:2}}
 @media(max-width:600px){#contact-form .one-pager-card{padding:1.5rem 1.25rem}}
 </style>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head><body><div id="shared-header"></div>
 <main>
 <section class="hero" id="why-fees"><div class="hero-photo"></div><div class="hero-fade"></div><div class="hero-inner"><div class="hero-copy"><p class="kicker">Mobile FEES &amp; Swallow Diagnostics</p><h1>Expert FEES evaluations.<br/>Right where your patients are.</h1><p>Bayside provides mobile FEES (Fiberoptic Endoscopic Evaluation of Swallowing) services for skilled nursing, rehabilitation, assisted living, and other post-acute care settings across Cape Cod and the South Shore.</p><div class="hero-buttons"><a class="btn primary" href="index.html#contact-form">Request an Evaluation  →</a><a class="btn outline" href="why_fees.html">What is FEES</a></div></div></div><aside aria-label="Our impact" class="hero-card"><h3><span>Objective Findings.</span><span>Practical Recommendations.</span></h3><hr/><p>Results your care team can use to guide diet, strategies, positioning, and treatment.</p></aside></section>
@@ -475,6 +476,7 @@ html { scroll-padding-top: 0 !important; }
 <textarea id="message" placeholder="How can we help you?"></textarea>
 <div class="form-hipaa-note">⚠ NOTE: Please do not include any patient information as this form is not HIPAA compliant.</div>
 </div>
+<div class="g-recaptcha" data-sitekey="6LcMDdItAAAAADyu39RPedeapdy6j8h4GJZszkxn" style="margin:0 0 1rem;"></div>
 <button class="form-submit" onclick="handleFormSubmit()">Send Message</button>
 </div>
 </div>
@@ -516,6 +518,12 @@ html { scroll-padding-top: 0 !important; }
       return;
     }
 
+    const captchaToken = (typeof grecaptcha !== 'undefined') ? grecaptcha.getResponse() : '';
+    if (!captchaToken) {
+      alert('Please complete the I’m not a robot verification before sending.');
+      return;
+    }
+
     const btn = document.querySelector('.form-submit');
     btn.textContent = 'Sending...';
     btn.disabled = true;
@@ -526,13 +534,15 @@ html { scroll-padding-top: 0 !important; }
       phone: phone,
       facility: facility,
       role: role,
-      message: message
+      message: message,
+      'g-recaptcha-response': captchaToken
     }).then(function() {
       document.getElementById('contact-form-inner').style.display = 'none';
       document.getElementById('form-success').style.display = 'block';
     }, function(error) {
       btn.textContent = 'Send Message';
       btn.disabled = false;
+      if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
       alert('Something went wrong. Please try again or email us directly at info@baysidefees.com');
       console.error('EmailJS error:', error);
     });
