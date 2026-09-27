@@ -408,6 +408,17 @@ html { scroll-padding-top: 0 !important; }
 }
 </style>
 
+<style id="homepage-one-pager-card">
+/* Scoped to the new card and right-hand contact column only. */
+#contact-form .contact-sidebar{display:flex;flex-direction:column;gap:1.25rem;min-width:0}
+#contact-form .one-pager-card{background:#edf8fc;border:1px solid var(--form-border);border-radius:16px;padding:1.7rem 1.8rem;box-shadow:0 4px 24px rgba(11,53,86,.07);color:var(--form-text)}
+#contact-form .one-pager-card h3{font-size:1.2rem;line-height:1.3;color:var(--form-navy);margin:0 0 .7rem;font-weight:800}
+#contact-form .one-pager-card p{font-size:.9rem;line-height:1.6;margin:0 0 1.2rem}
+#contact-form .one-pager-card a{display:inline-flex;align-items:center;gap:.4rem;color:var(--form-blue-dark);font-size:.9rem;line-height:1.45;font-weight:800;text-decoration:none}
+#contact-form .one-pager-card a:hover{text-decoration:underline}
+@media(max-width:800px){#contact-form .contact-sidebar{order:1;width:100%}#contact-form .contact-info-card{order:initial;width:100%}#contact-form .contact-form-wrap{order:2}}
+@media(max-width:600px){#contact-form .one-pager-card{padding:1.5rem 1.25rem}}
+</style>
 </head><body><div id="shared-header"></div>
 <main>
 <section class="hero" id="why-fees"><div class="hero-photo"></div><div class="hero-fade"></div><div class="hero-inner"><div class="hero-copy"><p class="kicker">Mobile FEES &amp; Swallow Diagnostics</p><h1>Expert FEES evaluations.<br/>Right where your patients are.</h1><p>Bayside provides mobile FEES (Fiberoptic Endoscopic Evaluation of Swallowing) services for skilled nursing, rehabilitation, assisted living, and other post-acute care settings across Cape Cod and the South Shore.</p><div class="hero-buttons"><a class="btn primary" href="index.html#contact-form">Request an Evaluation  →</a><a class="btn outline" href="why_fees.html">What is FEES</a></div></div></div><aside aria-label="Our impact" class="hero-card"><h3><span>Objective Findings.</span><span>Practical Recommendations.</span></h3><hr/><p>Results your care team can use to guide diet, strategies, positioning, and treatment.</p></aside></section>
@@ -467,12 +478,19 @@ html { scroll-padding-top: 0 !important; }
 <button class="form-submit" onclick="handleFormSubmit()">Send Message</button>
 </div>
 </div>
+<div class="contact-sidebar">
 <aside class="contact-info-card" aria-label="Bayside contact information">
 <h3>Contact Information</h3>
 <div class="contact-detail"><span class="contact-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z"/></svg></span><div class="contact-detail-copy"><span class="contact-detail-label">Phone</span><a href="tel:+15085348646">(508) 534-8646</a></div></div>
 <div class="contact-detail"><span class="contact-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><div class="contact-detail-copy"><span class="contact-detail-label">Email</span><a href="mailto:info@baysidefees.com">info@baysidefees.com</a></div></div>
 <div class="contact-detail"><span class="contact-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div class="contact-detail-copy"><span class="contact-detail-label">Address</span><div class="contact-detail-address">100 Independence Drive, Suite 7<br>Hyannis, MA 02601</div></div></div>
 </aside>
+<aside class="one-pager-card" aria-label="Share Bayside one-pager with your team">
+<h3>Share With Your Team</h3>
+<p>A one-page overview of our mobile FEES service, clinical experience, and approach to care.</p>
+<a href="/why_bdd.pdf" target="_blank" rel="noopener">Download One-Pager (PDF) <span aria-hidden="true">↗</span></a>
+</aside>
+</div>
 </div>
 </div>
 </section>
