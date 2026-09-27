@@ -344,8 +344,9 @@
   .facility-map-card { overflow:hidden; }
   .facility-map { width:100%; height:280px; }
 
-  .kpi-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
-  @media (max-width:960px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .kpi-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:14px; }
+  @media (max-width:1150px) { .kpi-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media (max-width:640px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
   .kpi-tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
   .kpi-tile-clickable { cursor:pointer; transition:.15s ease; }
   .kpi-tile-clickable:hover { border-color:var(--teal); box-shadow:0 2px 10px rgba(15,118,110,.1); }
@@ -437,7 +438,8 @@
   .amount-input-wrap .input { padding-left:24px; }
 
   .modal-overlay { position:fixed; inset:0; background:rgba(8,20,40,.4); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; z-index:60; overflow-y:auto; }
-  .modal { width:min(560px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 70px rgba(8,20,40,.3); margin-bottom:5vh; }
+  .modal { width:min(560px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 70px rgba(8,20,40,.3); margin-bottom:5vh; position:relative; }
+  .modal-drop-overlay { position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; background:rgba(15,118,110,.09); border:2px dashed var(--teal); border-radius:16px; color:var(--teal-dark); font-size:14.5px; font-weight:700; text-align:center; padding:20px; pointer-events:none; }
   .modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid var(--line); }
   .modal-title { font-size:15px; font-weight:750; color:var(--navy-deep); }
   .modal-close { border:1px solid var(--line); border-radius:8px; background:#fff; color:#526174; font-size:11.5px; font-weight:650; line-height:1; cursor:pointer; padding:7px 12px; transition:.12s ease; }
@@ -537,7 +539,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-45';
+const BUILD_NUMBER = '2026.09.19-47';
 
 // =====================================================================
 // Small utilities
@@ -879,6 +881,13 @@ function compressReceiptImage_(file) {
     img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
     img.src = objectUrl;
   });
+}
+// The file input's accept="image/*,application/pdf" only filters what the OS
+// picker shows — it doesn't stop a drag-and-drop, which can carry any file
+// type. This is the drop path's equivalent check, called before a dropped
+// file is treated as a receipt.
+function isReceiptFileType_(f) {
+  return !!(f && f.type && (f.type === 'application/pdf' || f.type.indexOf('image/') === 0));
 }
 let _gmapsPromise = null;
 function loadGoogleMaps(apiKey) {
@@ -1260,10 +1269,53 @@ function categoryPillClass(cat) {
 // three separate forms below (Expense, Mileage, Purchase Order) so each of
 // those only has to describe its own fields.
 // =====================================================================
-function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }) {
+// onFileDrop is optional — only ExpenseForm passes it today, so every other
+// modal built on this shell (Purchase Orders, Assets, Subscriptions, etc)
+// is completely unaffected: with no onFileDrop, none of the drag handlers
+// below are even attached to the DOM. When it IS passed, dropping a file
+// anywhere on the modal card (not just the small "Receipt" field near the
+// bottom) attaches it — the counter tracks nested enter/leave pairs, since
+// those fire for every child element the cursor crosses while dragging,
+// not just the modal's own boundary.
+function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children, onFileDrop, dropHint }) {
   const body = Array.isArray(children) ? children : [children];
+  const [dragActive, setDragActive] = useState(false);
+  const dragDepthRef = useRef(0);
+  function isFileDrag(e) {
+    return !!(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files'));
+  }
+  function handleDragEnter(e) {
+    if (!onFileDrop || saving || !isFileDrag(e)) return;
+    e.preventDefault();
+    dragDepthRef.current++;
+    setDragActive(true);
+  }
+  function handleDragOver(e) {
+    if (!onFileDrop || saving || !isFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }
+  function handleDragLeave(e) {
+    if (!onFileDrop || saving) return;
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setDragActive(false);
+  }
+  function handleDrop(e) {
+    if (!onFileDrop || saving) return;
+    e.preventDefault();
+    dragDepthRef.current = 0;
+    setDragActive(false);
+    const dropped = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (dropped) onFileDrop(dropped);
+  }
   return h('div', { className:'modal-overlay', onClick: e => { if (e.target === e.currentTarget) onCancel(); } },
-    h('form', { className:'modal', onSubmit },
+    h('form', {
+      className:'modal', onSubmit,
+      onDragEnter: onFileDrop ? handleDragEnter : undefined,
+      onDragOver: onFileDrop ? handleDragOver : undefined,
+      onDragLeave: onFileDrop ? handleDragLeave : undefined,
+      onDrop: onFileDrop ? handleDrop : undefined
+    },
       h('div', { className:'modal-head' },
         h('div', { className:'modal-title' }, title),
         h('button', { type:'button', className:'modal-close', onClick:onCancel }, 'Close')
@@ -1272,6 +1324,10 @@ function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children }
       h('div', { className:'modal-foot' },
         h('button', { type:'button', className:'btn btn-ghost', onClick:onCancel, disabled:saving }, 'Cancel'),
         h('button', { type:'submit', className:'btn btn-teal', disabled:saving }, saving ? 'Saving…' : submitLabel)
+      ),
+      dragActive && h('div', { className:'modal-drop-overlay' },
+        h(Icon, { name:'receipt' }),
+        h('div', null, dropHint || 'Drop to attach as the receipt')
       )
     )
   );
@@ -1418,6 +1474,7 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
   async function handleReceiptFile(rawFile) {
     setFile(rawFile);
     setReceiptScanNote('');
+    setErr('');
     if (!rawFile || !apiScanReceipt) return;
     setScanningReceipt(true);
     try {
@@ -1437,6 +1494,21 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
       setReceiptScanNote('error');
     }
     setScanningReceipt(false);
+  }
+
+  // Desktop only (see the onFileDrop wiring in shellProps below) — dropping
+  // a receipt anywhere on the modal does exactly what attaching it via the
+  // Receipt field's own click-to-browse does, including the auto-fill scan.
+  // A non-image/PDF drop (dragging some unrelated file onto the modal by
+  // mistake) surfaces the same field-error banner shown for other form
+  // validation issues, rather than silently trying to upload it.
+  function handleReceiptDrop(droppedFile) {
+    if (!droppedFile) return;
+    if (!isReceiptFileType_(droppedFile)) {
+      setErr("That file doesn't look like a photo or PDF — drop an image or PDF of the receipt instead.");
+      return;
+    }
+    handleReceiptFile(droppedFile);
   }
 
   async function handleSubmit(e) {
@@ -1512,7 +1584,11 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
   const shellProps = {
     title: isEdit ? 'Edit expense' : 'Add expense',
     onCancel, onSubmit: handleSubmit, saving, justSaved,
-    submitLabel: isEdit ? 'Save changes' : 'Add expense'
+    submitLabel: isEdit ? 'Save changes' : 'Add expense',
+    // MobilePageShell (which ignores this) is used on mobile instead of
+    // ModalShell — drag-and-drop isn't a meaningful phone interaction, and
+    // MobilePageShell is a full page rather than a floating card to drop onto.
+    onFileDrop: isMobilePage ? undefined : handleReceiptDrop
   };
   // Same treatment as the mobile Add Mileage screen: the date moves into
   // the header, compact and right-justified, instead of taking its own row.
@@ -2733,7 +2809,7 @@ function MileageView({ expenses, onEdit, onDelete, onDuplicate }) {
 // =====================================================================
 // Dashboard — KPI tiles + spend-by-category bars + recent activity
 // =====================================================================
-function DashboardView({ expenses, setView, onQuickFilter, onEditExpense }) {
+function DashboardView({ expenses, setView, onQuickFilter, onEditExpense, onViewTaxSummary }) {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const yearStart = new Date(now.getFullYear(), 0, 1);
@@ -2749,11 +2825,27 @@ function DashboardView({ expenses, setView, onQuickFilter, onEditExpense }) {
   const mileageMtd = mtd.filter(r => r.Category === 'Mileage');
   const mileageYtd = ytd.filter(r => r.Category === 'Mileage');
   // Mileage entries never have a receipt to attach — they're a calculated
-  // distance × rate, not a purchase — so they shouldn't count as "missing."
-  const missingReceipts = ytd.filter(r => r.Category !== 'Mileage' && !r.ReceiptFileUrl).length;
+  // distance × rate, not a purchase — so they shouldn't count as "missing"
+  // or count toward the pool a completion % is measured against.
+  const receiptEligible = ytd.filter(r => r.Category !== 'Mileage');
+  const missingReceipts = receiptEligible.filter(r => !r.ReceiptFileUrl).length;
+  const receiptCompletionPct = receiptEligible.length > 0 ? Math.round(((receiptEligible.length - missingReceipts) / receiptEligible.length) * 100) : null;
 
   const mtdTotal = sum(mtd), lastMonthTotal = sum(lastMonth), ytdTotal = sum(ytd);
   const mtdDelta = lastMonthTotal > 0 ? Math.round(((mtdTotal - lastMonthTotal) / lastMonthTotal) * 100) : null;
+
+  const estimatedDeduction = useMemo(() => estimateYtdDeduction_(ytd), [ytd]);
+
+  // If more than one mileage rate shows up in this year's entries — most
+  // often because the IRS changed the standard rate mid-year — that's worth
+  // a nudge to double-check before filing, since it's easy to log a late-year
+  // drive at a rate that's since gone stale in the Preferences default.
+  const mileageRateBreakdown = useMemo(() => {
+    const counts = {};
+    mileageYtd.forEach(r => { const rate = Number(r.MileageRate); if (rate) counts[rate] = (counts[rate] || 0) + 1; });
+    return Object.entries(counts).map(([rate, count]) => ({ rate: Number(rate), count })).sort((a,b) => a.rate - b.rate);
+  }, [mileageYtd]);
+  const hasMixedMileageRates = mileageRateBreakdown.length > 1;
 
   const byCategory = useMemo(() => {
     const map = {};
@@ -2830,7 +2922,29 @@ function DashboardView({ expenses, setView, onQuickFilter, onEditExpense }) {
         h('div', { className:'kpi-label' }, 'Mileage YTD'), h('div', { className:'kpi-value' }, mileageYtd.reduce((s,r)=>s+(Number(r.Miles)||0),0).toLocaleString(undefined,{maximumFractionDigits:0}) + ' mi')
       ),
       h('div', Object.assign({ className:'kpi-tile kpi-tile-clickable', title:'View these expenses' }, quickFilterProps({ type:'missingReceiptsYtd' })),
-        h('div', { className:'kpi-label' }, 'Missing receipts (YTD)'), h('div', { className:'kpi-value' }, missingReceipts)
+        h('div', { className:'kpi-label' }, 'Receipts (YTD)'),
+        h('div', { className:'kpi-value' }, receiptCompletionPct === null ? '—' : receiptCompletionPct + '%'),
+        h('div', { className:'kpi-delta ' + (receiptCompletionPct === null ? 'flat' : missingReceipts === 0 ? 'down' : 'up') },
+          receiptCompletionPct === null ? 'No expenses yet' : missingReceipts === 0 ? 'All attached' : missingReceipts + ' missing'
+        )
+      ),
+      h('div', {
+        className:'kpi-tile kpi-tile-clickable',
+        role:'button', tabIndex:0,
+        title:'Open Tax Summary for the full breakdown',
+        onClick: onViewTaxSummary,
+        onKeyDown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onViewTaxSummary(); } }
+      },
+        h('div', { className:'kpi-label' }, 'Est. deduction (YTD)'), h('div', { className:'kpi-value' }, formatCurrencyCompact(estimatedDeduction)),
+        h('div', { className:'kpi-delta flat' }, 'Ballpark · tap for detail')
+      )
+    ),
+    hasMixedMileageRates && h('div', { className:'filter-row', style:{ marginBottom:'14px' } },
+      h('span', { className:'pill pill-warn' },
+        h(Icon,{name:'warning'}),
+        'Mileage logged at ' + mileageRateBreakdown.length + ' different rates this year (' +
+          mileageRateBreakdown.map(r => r.count + (r.count === 1 ? ' entry' : ' entries') + ' @ ' + formatCurrency(r.rate) + '/mi').join(', ') +
+          ') — worth a second look before filing.'
       )
     ),
     h('div', { style:{ display:'grid', gridTemplateColumns:'1.1fr .9fr', gap:'16px' }, className:'dash-grid' },
@@ -2931,6 +3045,25 @@ const SCHEDULE_C_DEFAULT_LINE = 'Line 27a — Other expenses';
 // Only half of business meals are deductible on Schedule C — the row for
 // this category shows the full amount spent alongside the deductible half.
 const MEALS_DEDUCTIBLE_PCT = 0.5;
+
+// A lightweight version of TaxSummaryModal's Schedule C math, used for the
+// Dashboard's "Est. deduction (YTD)" tile so there's a ballpark visible
+// without opening the full Tax Summary. Same exclusions as the real thing —
+// mileage is totaled separately (it's already a dollar figure computed at
+// its own per-entry rate), Health Insurance isn't a Schedule C expense at
+// all, and Meals is only 50% deductible — but this skips the per-category
+// breakdown, since the tile only needs one number.
+function estimateYtdDeduction_(ytdExpenses) {
+  let nonMileageDeductible = 0;
+  let mileageTotal = 0;
+  ytdExpenses.forEach(r => {
+    const amt = Number(r.Amount) || 0;
+    if (r.Category === 'Mileage') { mileageTotal += amt; return; }
+    if (r.Category === 'Health Insurance (Self-Employed)') return;
+    nonMileageDeductible += r.Category === 'Meals' ? amt * MEALS_DEDUCTIBLE_PCT : amt;
+  });
+  return nonMileageDeductible + mileageTotal;
+}
 
 function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onYearChange, assets }) {
   useEffect(() => {
@@ -3094,9 +3227,8 @@ function TaxSummaryModal({ open, onClose, expenses, categories, year, years, onY
   );
 }
 
-function ReportsView({ expenses, categories, assets }) {
+function ReportsView({ expenses, categories, assets, showTaxSummary, setShowTaxSummary }) {
   const [year, setYear] = useState(() => new Date().getFullYear());
-  const [showTaxSummary, setShowTaxSummary] = useState(false);
   const years = useMemo(() => {
     const set = new Set(expenses.map(r => { const d = parseDate_(r.Date); return d ? d.getFullYear() : null; }).filter(Boolean));
     set.add(new Date().getFullYear());
@@ -3758,6 +3890,10 @@ function App() {
   // pre-filtered to exactly those rows instead of just landing on the page
   // and leaving you to go find them yourself.
   const [expensesQuickFilter, setExpensesQuickFilter] = useState(null);
+  // Lifted out of ReportsView so the Dashboard's "Est. deduction (YTD)" tile
+  // can jump straight to the Tax Summary modal already open, the same way
+  // expensesQuickFilter lets its tiles jump into Expenses pre-filtered.
+  const [showTaxSummary, setShowTaxSummary] = useState(false);
   const historyDepthRef = useRef(0);
   const [canGoBack, setCanGoBack] = useState(false);
   const setView = useCallback(next => {
@@ -4252,10 +4388,10 @@ function App() {
         )
       ),
       h('div', { className:'page' },
-        view === 'dashboard' && h(DashboardView, { expenses:data.expenses, setView, onQuickFilter: filter => { setExpensesQuickFilter(filter); setView('expenses'); }, onEditExpense: openEdit }),
+        view === 'dashboard' && h(DashboardView, { expenses:data.expenses, setView, onQuickFilter: filter => { setExpensesQuickFilter(filter); setView('expenses'); }, onEditExpense: openEdit, onViewTaxSummary: () => { setShowTaxSummary(true); setView('reports'); } }),
         view === 'expenses' && h(ExpensesView, { expenses:data.expenses, categories:data.categories, onEdit:openEdit, onDuplicate:openDuplicate, onDelete:handleDelete, onDismissDuplicate:handleDismissDuplicate, quickFilter:expensesQuickFilter, onClearQuickFilter: () => setExpensesQuickFilter(null) }),
         view === 'mileage' && h(MileageView, { expenses:data.expenses, onEdit:openEdit, onDelete:handleDelete, onDuplicate:openDuplicate }),
-        view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories, assets:data.assets }),
+        view === 'reports' && h(ReportsView, { expenses:data.expenses, categories:data.categories, assets:data.assets, showTaxSummary, setShowTaxSummary }),
         view === 'purchaseorders' && h(PurchaseOrdersView, { purchaseOrders:data.purchaseOrders, categories:data.poCategories, statuses:data.poStatuses, onAdd:openAddPO, onEdit:openEditPO, onDuplicate:openDuplicatePO, onDelete:handleDeletePO, onRecordExpense:openRecordExpense }),
         view === 'subscriptions' && h(SubscriptionsView, { subscriptions:data.recurringSubscriptions, categories:data.categories.filter(c => c !== 'Mileage'), paymentMethods:data.paymentMethods, onPauseResume:handlePauseResumeSub, onEdit:openEditSub, onDelete:handleDeleteSub }),
         view === 'assets' && h(AssetsView, { assets:data.assets, categories:data.assetCategories, onAdd:openAddAsset, onEdit:openEditAsset, onDelete:handleDeleteAsset })
