@@ -1,4 +1,4 @@
-/* Shared header/footer for the five secondary pages only. The homepage is unchanged. */
+/* Shared header/footer for Bayside website pages. The homepage content is unchanged. */
 (async function () {
   async function insert(id, file) {
     const target = document.getElementById(id);
