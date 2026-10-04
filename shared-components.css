@@ -81,9 +81,8 @@
 .bayside-original-nav .header-evaluation:hover {background:#e7f3fb!important;}
 .bayside-original-nav .hamburger span {background:#fff!important;}
 html {scroll-padding-top:95px;}
-@media(max-width:1100px){.bayside-original-nav .nav-links{display:none!important}.bayside-original-nav .hamburger{display:flex!important;margin-left:0!important}.bayside-original-nav .header-evaluation{margin-left:auto!important}}
+@media(max-width:1250px){.bayside-original-nav .nav-links{display:none!important}.bayside-original-nav .hamburger{display:flex!important;margin-left:0!important}.bayside-original-nav .header-evaluation{margin-left:auto!important}}
 @media(max-width:650px){.bayside-original-nav{min-height:70px!important;padding:9px 14px!important;gap:10px!important}.bayside-original-nav .header-evaluation{font-size:15px!important;padding:10px 11px!important}.bayside-original-nav .nav-logo img{width:38px!important;height:38px!important}.bayside-original-nav .brand-name{font-size:clamp(13px,3.5vw,19px)!important}.bayside-original-nav .brand-tagline{font-size:7px!important}}
-@media(max-width:400px){.bayside-original-nav .header-evaluation{font-size:0!important;gap:0!important}.bayside-original-nav .header-evaluation span{font-size:17px!important}.bayside-original-nav .header-evaluation{width:36px!important;height:36px!important;padding:0!important}}
 
 
 .bayside-original-nav,.bayside-original-mobile,.bayside-new-footer{box-sizing:border-box}
@@ -103,10 +102,10 @@ html {scroll-padding-top:95px;}
 .bayside-new-footer .footer-brand-text{font-weight:700}
 .bayside-new-footer .footer-brand-tagline{text-transform:uppercase}
 .bayside-new-footer .footer-bottom a{text-decoration:none;color:rgba(255,255,255,.7)}
-@media(max-width:1100px){.bayside-original-nav .nav-links{display:none!important}.bayside-original-nav .hamburger{display:flex!important}}
+@media(max-width:1250px){.bayside-original-nav .nav-links{display:none!important}.bayside-original-nav .hamburger{display:flex!important}}
 
 /* Compact header: the evaluation action remains inside the hamburger menu. */
-@media (max-width:1100px) {
+@media (max-width:1250px) {
   #shared-header .bayside-original-nav .header-evaluation { display:none!important; }
   #shared-header .bayside-original-nav .hamburger { margin-left:auto!important; }
 }
@@ -153,4 +152,30 @@ html {scroll-padding-top:95px;}
   .bayside-new-footer { padding-top:18px; padding-bottom:16px; }
   .bayside-new-footer .footer-inner { padding-bottom:12px; }
   .bayside-new-footer .footer-bottom { margin-top:12px; }
+}
+
+/* Center the simplified footer content vertically. */
+.bayside-new-footer .footer-bottom { margin-top:0; min-height:42px; align-items:center; }
+
+/* Compact/mobile footer: legal row first, contact row second. Desktop/laptop stays unchanged. */
+@media (max-width:1100px) {
+  .bayside-new-footer .footer-bottom {
+    width:100%;
+    min-height:42px;
+    justify-content:center;
+    align-items:center;
+    gap:.65rem;
+  }
+  .bayside-new-footer .footer-copyright {
+    width:100%;
+    text-align:center;
+  }
+  .bayside-new-footer .footer-contact-row {
+    width:100%;
+    justify-content:space-between;
+    align-items:center;
+    gap:1rem!important;
+    flex-wrap:nowrap;
+  }
+  .bayside-new-footer .footer-contact-row a { white-space:nowrap; }
 }
