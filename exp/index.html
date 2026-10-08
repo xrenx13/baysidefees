@@ -467,6 +467,11 @@
   .receipt-chip { display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:#fafbfc; font-size:12.5px; }
   .receipt-chip a { color:var(--teal-dark); font-weight:650; text-decoration:none; }
   .receipt-chip a:hover { text-decoration:underline; }
+  .receipt-preview { margin-top:10px; border:1px solid var(--line); border-radius:12px; background:#f4f6f8; padding:10px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .receipt-preview-img { max-width:100%; max-height:360px; object-fit:contain; border-radius:8px; background:#fff; }
+  .receipt-preview-frame { width:100%; height:360px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .receipt-preview-openlink { font-size:12px; font-weight:650; color:var(--teal-dark); text-decoration:none; }
+  .receipt-preview-openlink:hover { text-decoration:underline; }
 
   .empty-state { text-align:center; padding:48px 20px; color:var(--muted); }
   .empty-state-title { font-size:14px; font-weight:700; color:var(--navy-deep); margin-bottom:6px; }
@@ -539,7 +544,7 @@ const CACHE_KEY = LS_PREFIX + 'cache_v1';
 // Bumped with each delivered change while actively developing — shown in
 // the sidebar footer so it's easy to confirm which build is live. Format:
 // YYYY.MM.DD-N, where N resets to 1 at the start of each new day.
-const BUILD_NUMBER = '2026.09.19-47';
+const BUILD_NUMBER = '2026.09.19-49';
 
 // =====================================================================
 // Small utilities
@@ -1308,7 +1313,17 @@ function ModalShell({ title, onCancel, onSubmit, saving, submitLabel, children, 
     const dropped = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
     if (dropped) onFileDrop(dropped);
   }
-  return h('div', { className:'modal-overlay', onClick: e => { if (e.target === e.currentTarget) onCancel(); } },
+  return h('div', {
+    className:'modal-overlay', onClick: e => { if (e.target === e.currentTarget) onCancel(); },
+    // Not gated on onFileDrop — this is damage control, not the feature
+    // itself. A drop the browser doesn't otherwise handle (one that lands on
+    // the dimmed backdrop rather than the card) defaults to navigating the
+    // whole tab to that file, which would blow away whatever was typed into
+    // this form. Blocking that default here costs nothing on a modal that
+    // doesn't support drop at all, and prevents that surprise on one that does.
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => e.preventDefault()
+  },
     h('form', {
       className:'modal', onSubmit,
       onDragEnter: onFileDrop ? handleDragEnter : undefined,
@@ -1401,7 +1416,32 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
   // photo that was just scanned becomes the receipt for the expense it
   // just filled in, without asking Melanie to attach it a second time.
   const [file, setFile] = useState(() => initialReceiptFile || null);
-  const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl } : null);
+  const [existingReceipt, setExistingReceipt] = useState(() => (initial && initial.ReceiptFileUrl) ? { name: initial.ReceiptFileName, url: initial.ReceiptFileUrl, fileId: initial.ReceiptFileId } : null);
+  // Lets the Receipt field show the actual image/PDF inline instead of just
+  // a filename, so you can check the amount/vendor against it without
+  // leaving the form. A freshly attached file (drag, drop, or click-browse)
+  // opens the preview automatically — that's the moment it's actually useful
+  // — while an existing receipt on an expense you're just editing stays
+  // collapsed behind a toggle, so re-opening an old entry doesn't balloon
+  // the modal every time.
+  const [previewOpen, setPreviewOpen] = useState(false);
+  useEffect(() => { if (file) setPreviewOpen(true); }, [file]);
+  // A newly picked file previews instantly from a local blob URL — no
+  // upload needed yet. An already-saved receipt previews via Drive's own
+  // embeddable viewer (handles both images and PDFs without the app needing
+  // to tell them apart). Revoking the blob URL on cleanup avoids leaking
+  // memory every time a different file is picked.
+  const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+  useEffect(() => {
+    if (!file || (file.type.indexOf('image/') !== 0 && file.type !== 'application/pdf')) { setFilePreviewUrl(null); return; }
+    const blobUrl = URL.createObjectURL(file);
+    setFilePreviewUrl(blobUrl);
+    return () => URL.revokeObjectURL(blobUrl);
+  }, [file]);
+  const receiptPreviewSrc = file
+    ? filePreviewUrl
+    : (existingReceipt && existingReceipt.fileId ? 'https://drive.google.com/file/d/' + existingReceipt.fileId + '/preview' : null);
+  const receiptPreviewIsLocalImage = !!(file && filePreviewUrl && file.type.indexOf('image/') === 0);
   // Recurring subscriptions: only offered on a brand-new expense (see
   // partOfSubscription above for the read-only note shown when editing one
   // that's already part of a subscription). Checking this creates a
@@ -1676,12 +1716,41 @@ function ExpenseForm({ initial, presetCategory, categories, paymentMethods, vend
         ? h('div', { className:'receipt-chip' },
             h(Icon, { name:'receipt' }),
             h('a', { href:existingReceipt.url, target:'_blank', rel:'noopener noreferrer' }, existingReceipt.name || 'View receipt'),
-            h('button', { type:'button', className:'btn btn-ghost btn-sm', style:{ marginLeft:'auto' }, onClick:() => setExistingReceipt(null) }, 'Replace')
+            receiptPreviewSrc && h('button', {
+              type:'button', className:'btn btn-ghost btn-sm', onClick:() => setPreviewOpen(v => !v)
+            }, previewOpen ? 'Hide preview' : 'Preview'),
+            // A <label> wrapping a hidden file input, styled as a button —
+            // same reliable native click-opens-the-file-picker mechanism as
+            // the "receipt-drop" dropzone below, so Replace opens the picker
+            // in one click instead of first revealing a second click target.
+            // Only clears existingReceipt once a file is actually chosen
+            // (inside handleReceiptFile, via setFile) — canceling the picker
+            // leaves the original receipt showing instead of an empty dropzone.
+            h('label', { className:'btn btn-ghost btn-sm', style:{ marginLeft: receiptPreviewSrc ? '0' : 'auto', cursor:'pointer', userSelect:'none' } },
+              'Replace',
+              h('input', { type:'file', accept:'image/*,application/pdf', style:{ display:'none' }, onChange:e => handleReceiptFile(e.target.files[0] || null) })
+            )
           )
-        : h('label', { className:'receipt-drop' },
+        : h('label', { className:'receipt-drop', style:{ userSelect:'none' } },
             file ? ('Selected: ' + file.name) : 'Click to attach a photo or PDF of the receipt',
             h('input', { type:'file', accept:'image/*,application/pdf', style:{ display:'none' }, onChange:e => handleReceiptFile(e.target.files[0] || null) })
           ),
+      // Lets you actually look at the receipt next to the Amount/Vendor
+      // fields above to double-check they match, instead of trusting memory
+      // or the OCR scan. A freshly attached file previews from a local blob
+      // URL (instant, no upload needed); an already-saved one previews
+      // through Drive's own embeddable viewer, which handles both images
+      // and PDFs without this needing to tell them apart.
+      previewOpen && receiptPreviewSrc && h('div', { className:'receipt-preview' },
+        receiptPreviewIsLocalImage
+          ? h('img', { src:receiptPreviewSrc, alt:'Receipt preview', className:'receipt-preview-img' })
+          : h('iframe', { src:receiptPreviewSrc, className:'receipt-preview-frame', title:'Receipt preview' }),
+        h('a', {
+          href: file ? receiptPreviewSrc : existingReceipt.url, target:'_blank', rel:'noopener noreferrer',
+          className:'receipt-preview-openlink'
+        }, 'Open full size')
+      ),
+      file && !receiptPreviewSrc && h('div', { className:'field-hint' }, "Can't preview this file type here — it'll still attach and upload normally."),
       // Same read-then-fill Document AI pass the mobile "Scan receipt"
       // button uses, just triggered from this field instead — see
       // handleReceiptFile above for exactly what it will and won't overwrite.
